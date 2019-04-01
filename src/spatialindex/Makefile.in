@@ -283,7 +283,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LTLIBRARIES = liblibrary.la
 INCLUDES = -I../../include
-liblibrary_la_SOURCES = Point.cc Region.cc LineSegment.cc MovingPoint.cc MovingRegion.cc TimePoint.cc TimeRegion.cc SpatialIndexImpl.cc
+liblibrary_la_SOURCES = Point.cc Region.cc LineSegment.cc MovingPoint.cc Mbbc.cc MovingRegion.cc TimePoint.cc TimeRegion.cc SpatialIndexImpl.cc
 all: all-am
 
 .SUFFIXES:

@@ -613,6 +613,9 @@
 				<File
 					RelativePath="..\src\spatialindex\MovingRegion.cc"
 					>
+                <File
+                    RelativePath="..\src\spatialindex\Mbbc.cc"
+                    >
 				</File>
 				<File
 					RelativePath="..\src\spatialindex\Point.cc"
@@ -896,6 +899,9 @@
 			<File
 				RelativePath="..\include\MovingRegion.h"
 				>
+            <File
+                RelativePath="..\include\MovingRegion.h"
+                >
 			</File>
 			<File
 				RelativePath="..\include\MVRTree.h"

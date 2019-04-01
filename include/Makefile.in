@@ -290,6 +290,7 @@ nobase_spatialindex_HEADERS = spatialindex/SpatialIndex.h \
 								spatialindex/TimeRegion.h \
 								spatialindex/MovingPoint.h \
 								spatialindex/MovingRegion.h \
+								spatialindex/Mbbc.h \
 								spatialindex/Version.h \
 								spatialindex/capi/BoundsQuery.h \
 								spatialindex/capi/CountVisitor.h \

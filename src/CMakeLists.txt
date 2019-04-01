@@ -77,6 +77,7 @@ set(SIDX_SPATIALINDEX_CPP
   "${SIDX_SRC_DIR}/spatialindex/LineSegment.cc"
   "${SIDX_SRC_DIR}/spatialindex/MovingPoint.cc"
   "${SIDX_SRC_DIR}/spatialindex/MovingRegion.cc"
+  "${SIDX_SRC_DIR}/spatialindex/Mbbc.cc"
   "${SIDX_SRC_DIR}/spatialindex/Point.cc"
   "${SIDX_SRC_DIR}/spatialindex/Region.cc"
   "${SIDX_SRC_DIR}/spatialindex/SpatialIndexImpl.cc"
