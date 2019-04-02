@@ -3,7 +3,7 @@ include_directories(../include)
 set (DIR geometry)
 set (SOURCES 
         Intersection
-        Mbbc
+        #Mbbc
         )
 
 foreach (test ${SOURCES})
