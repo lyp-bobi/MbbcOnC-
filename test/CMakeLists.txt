@@ -2,7 +2,8 @@ include_directories(../include)
 
 set (DIR geometry)
 set (SOURCES 
-        Intersection 
+        Intersection
+        Mbbc
         )
 
 foreach (test ${SOURCES})
@@ -48,6 +49,6 @@ set (SOURCES
 
 
 foreach (test ${SOURCES})
-    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc ${DIR}/RandomGenerator.cc)
+    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc ${DIR}/RandomGenerator.cc geometry/Mbbc.cc)
     target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
 endforeach()
