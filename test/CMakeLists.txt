@@ -49,6 +49,6 @@ set (SOURCES
 
 
 foreach (test ${SOURCES})
-    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc ${DIR}/RandomGenerator.cc geometry/Mbbc.cc)
+    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc ${DIR}/RandomGenerator.cc)
     target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
 endforeach()
