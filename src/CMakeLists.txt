@@ -33,6 +33,7 @@ set(SIDX_BASE_HPP
   "${SIDX_HEADERS_DIR}/Point.h"
   "${SIDX_HEADERS_DIR}/Region.h"
   "${SIDX_HEADERS_DIR}/RTree.h"
+  "${SIDX_HEADERS_DIR}/R2Tree.h"
   "${SIDX_HEADERS_DIR}/SpatialIndex.h"
   "${SIDX_HEADERS_DIR}/TimePoint.h"
   "${SIDX_HEADERS_DIR}/TimeRegion.h"
@@ -69,8 +70,7 @@ set(SIDX_CAPI_CPP
   "${SIDX_CAPI_DIR}/LeafQuery.cc"
   "${SIDX_CAPI_DIR}/ObjVisitor.cc"
   "${SIDX_CAPI_DIR}/sidx_api.cc"
-  "${SIDX_CAPI_DIR}/Utility.cc"
-)
+  "${SIDX_CAPI_DIR}/Utility.cc")
 
 
 set(SIDX_SPATIALINDEX_CPP
@@ -117,6 +117,23 @@ set(SIDX_RTREE_CPP
   "${SIDX_SRC_DIR}/rtree/Statistics.h"
 )
 list (APPEND SIDX_CPP ${SIDX_RTREE_CPP})
+
+set(SIDX_R2TREE_CPP
+        #"${SIDX_SRC_DIR}/r2tree/BulkLoader.cc"
+        #"${SIDX_SRC_DIR}/r2tree/BulkLoader.h"
+        #"${SIDX_SRC_DIR}/r2tree/Index.cc"
+        #"${SIDX_SRC_DIR}/r2tree/Index.h"
+        #"${SIDX_SRC_DIR}/r2tree/Leaf.cc"
+        #"${SIDX_SRC_DIR}/r2tree/Leaf.h"
+        "${SIDX_SRC_DIR}/r2tree/Node.cc"
+        "${SIDX_SRC_DIR}/r2tree/Node.h"
+        "${SIDX_SRC_DIR}/r2tree/PointerPoolNode.h"
+        "${SIDX_SRC_DIR}/r2tree/R2Tree.cc"
+        "${SIDX_SRC_DIR}/r2tree/R2Tree.h"
+        "${SIDX_SRC_DIR}/r2tree/Statistics.cc"
+        "${SIDX_SRC_DIR}/r2tree/Statistics.h"
+        )
+list (APPEND SIDX_CPP ${SIDX_R2TREE_CPP})
 
 set(SIDX_STORAGEMANAGER_CPP
   "${SIDX_SRC_DIR}/storagemanager/Buffer.cc"
