@@ -11,7 +11,7 @@
 #include "Node.h"
 //#include "Leaf.h"
 //#include "Index.h"
-//#include "BulkLoader.h"
+#include "BulkLoader.h"
 #include "R2Tree.h"
 
 using namespace SpatialIndex::R2Tree;
@@ -116,4 +116,84 @@ void SpatialIndex::R2Tree::Data::storeToByteArray(byte** data, uint32_t& len)
     memcpy(ptr, Mbbcdata, Mbbcsize);
     delete[] Mbbcdata;
     // ptr += Mbbcsize;
+}
+
+
+
+
+
+SpatialIndex::ISpatialIndex* SpatialIndex::R2Tree::returnR2Tree(SpatialIndex::IStorageManager& sm, Tools::PropertySet& ps)
+{
+    SpatialIndex::ISpatialIndex* si = new SpatialIndex::R2Tree::R2Tree(sm, ps);
+    return si;
+}
+
+SpatialIndex::ISpatialIndex* SpatialIndex::R2Tree::createNewR2Tree(
+        SpatialIndex::IStorageManager& sm,
+        double fillFactor,
+        uint32_t indexCapacity,
+        uint32_t leafCapacity,
+        uint32_t dimension,
+        id_type& indexIdentifier)
+{
+    Tools::Variant var;
+    Tools::PropertySet ps;
+
+    var.m_varType = Tools::VT_DOUBLE;
+    var.m_val.dblVal = fillFactor;
+    ps.setProperty("FillFactor", var);
+
+    var.m_varType = Tools::VT_ULONG;
+    var.m_val.ulVal = indexCapacity;
+    ps.setProperty("IndexCapacity", var);
+
+    var.m_varType = Tools::VT_ULONG;
+    var.m_val.ulVal = leafCapacity;
+    ps.setProperty("LeafCapacity", var);
+
+    var.m_varType = Tools::VT_ULONG;
+    var.m_val.ulVal = dimension;
+    ps.setProperty("Dimension", var);
+
+
+    ISpatialIndex* ret = returnR2Tree(sm, ps);
+
+    var.m_varType = Tools::VT_LONGLONG;
+    var = ps.getProperty("IndexIdentifier");
+    indexIdentifier = var.m_val.llVal;
+
+    return ret;
+}
+
+SpatialIndex::ISpatialIndex* SpatialIndex::R2Tree::createAndBulkLoadNewR2Tree(
+        BulkLoadMethod m,
+        IDataStream& stream,
+        SpatialIndex::IStorageManager& sm,
+        double fillFactor,
+        uint32_t indexCapacity,
+        uint32_t leafCapacity,
+        uint32_t dimension,
+        id_type& indexIdentifier)
+{
+    SpatialIndex::ISpatialIndex* tree = createNewR2Tree(sm, fillFactor, indexCapacity, leafCapacity, dimension, rv, indexIdentifier);
+
+    uint32_t bindex = static_cast<uint32_t>(std::floor(static_cast<double>(indexCapacity * fillFactor)));
+    uint32_t bleaf = static_cast<uint32_t>(std::floor(static_cast<double>(leafCapacity * fillFactor)));
+
+    SpatialIndex::R2Tree::BulkLoader bl;
+
+    switch (m)
+    {
+        case BLM_STR:
+            bl.bulkLoadUsingSTR(static_cast<R2Tree*>(tree), stream, bindex, bleaf, 10000, 100);
+            break;
+        case BLM_KDT:
+            bl.bulkLoadUsingKDT(static_cast<R2Tree*>(tree), stream, bindex, bleaf, 10000, 100);
+            break;
+        default:
+            throw Tools::IllegalArgumentException("createAndBulkLoadNewR2Tree: Unknown bulk load method.");
+            break;
+    }
+
+    return tree;
 }

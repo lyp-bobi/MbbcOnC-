@@ -32,16 +32,12 @@ namespace SpatialIndex
 {
 	namespace R2Tree
 	{
-		SIDX_DLL enum R2TreeVariant
-		{
-			RV_LINEAR = 0x0,
-			RV_QUADRATIC,
-			RV_RSTAR
-		};
+
 
 		SIDX_DLL enum BulkLoadMethod
 		{
-			BLM_STR = 0x0
+			BLM_STR = 0x1,
+			BLM_KDT = 0x2
 		};
 
 		SIDX_DLL enum PersistenObjectIdentifier
@@ -83,7 +79,6 @@ namespace SpatialIndex
 			uint32_t indexCapacity,
 			uint32_t leafCapacity,
 			uint32_t dimension,
-			R2TreeVariant rv,
 			id_type& indexIdentifier
 		);
 		SIDX_DLL ISpatialIndex* createAndBulkLoadNewR2Tree(
@@ -94,7 +89,6 @@ namespace SpatialIndex
 			uint32_t indexCapacity,
 			uint32_t leafCapacity,
 			uint32_t dimension,
-			R2TreeVariant rv,
 			id_type& indexIdentifier
 		);
 		SIDX_DLL ISpatialIndex* createAndBulkLoadNewR2Tree(

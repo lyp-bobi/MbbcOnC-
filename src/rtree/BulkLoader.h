@@ -40,7 +40,7 @@ namespace SpatialIndex
 				Record();
 				Record(const Region& r, id_type id, uint32_t len, byte* pData, uint32_t s);
 				~Record();
-				
+
 				bool operator<(const Record& r) const;
 
 				void storeToFile(Tools::TemporaryFile& f);

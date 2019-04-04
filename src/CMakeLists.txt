@@ -70,7 +70,7 @@ set(SIDX_CAPI_CPP
   "${SIDX_CAPI_DIR}/LeafQuery.cc"
   "${SIDX_CAPI_DIR}/ObjVisitor.cc"
   "${SIDX_CAPI_DIR}/sidx_api.cc"
-  "${SIDX_CAPI_DIR}/Utility.cc")
+  "${SIDX_CAPI_DIR}/Utility.cc" r2tree/BulkLoader.h)
 
 
 set(SIDX_SPATIALINDEX_CPP

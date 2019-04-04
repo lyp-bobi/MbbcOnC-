@@ -49,26 +49,11 @@ namespace SpatialIndex
             virtual bool isIndexValid();
             virtual void getStatistics(IStatistics** out) const;
 
+        private:
+            IStorageManager* m_pStorageManager;
 
-            class SIDX_DLL Data : public IData, public Tools::ISerializable
-            {
-            public:
-                Data(uint32_t len, byte* pData, Region& r, id_type id);
-                virtual ~Data();
+            id_type m_rootID, m_headerID;
 
-                virtual Data* clone();
-                virtual id_type getIdentifier() const;
-                virtual void getShape(IShape** out) const;
-                virtual void getData(uint32_t& len, byte** data) const;
-                virtual uint32_t getByteArraySize();
-                virtual void loadFromByteArray(const byte* data);
-                virtual void storeToByteArray(byte** data, uint32_t& len);
-
-                id_type m_id;
-                Region m_region;
-                byte* m_pData;
-                uint32_t m_dataLength;
-            }; // Data
-        };
+        };//R2Tree
     }
 }
