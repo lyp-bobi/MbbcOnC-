@@ -70,7 +70,7 @@ set(SIDX_CAPI_CPP
   "${SIDX_CAPI_DIR}/LeafQuery.cc"
   "${SIDX_CAPI_DIR}/ObjVisitor.cc"
   "${SIDX_CAPI_DIR}/sidx_api.cc"
-  "${SIDX_CAPI_DIR}/Utility.cc" r2tree/BulkLoader.h)
+  "${SIDX_CAPI_DIR}/Utility.cc" r2tree/BulkLoader.h r2tree/BulkLoader.cc r2tree/Leaf.h r2tree/Leaf.cc r2tree/Index.h r2tree/Index.cc)
 
 
 set(SIDX_SPATIALINDEX_CPP
@@ -119,12 +119,12 @@ set(SIDX_RTREE_CPP
 list (APPEND SIDX_CPP ${SIDX_RTREE_CPP})
 
 set(SIDX_R2TREE_CPP
-        #"${SIDX_SRC_DIR}/r2tree/BulkLoader.cc"
-        #"${SIDX_SRC_DIR}/r2tree/BulkLoader.h"
-        #"${SIDX_SRC_DIR}/r2tree/Index.cc"
-        #"${SIDX_SRC_DIR}/r2tree/Index.h"
-        #"${SIDX_SRC_DIR}/r2tree/Leaf.cc"
-        #"${SIDX_SRC_DIR}/r2tree/Leaf.h"
+        "${SIDX_SRC_DIR}/r2tree/BulkLoader.cc"
+        "${SIDX_SRC_DIR}/r2tree/BulkLoader.h"
+        "${SIDX_SRC_DIR}/r2tree/Index.cc"
+        "${SIDX_SRC_DIR}/r2tree/Index.h"
+        "${SIDX_SRC_DIR}/r2tree/Leaf.cc"
+        "${SIDX_SRC_DIR}/r2tree/Leaf.h"
         "${SIDX_SRC_DIR}/r2tree/Node.cc"
         "${SIDX_SRC_DIR}/r2tree/Node.h"
         "${SIDX_SRC_DIR}/r2tree/PointerPoolNode.h"

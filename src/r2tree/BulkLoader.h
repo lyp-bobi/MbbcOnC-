@@ -16,7 +16,7 @@ namespace SpatialIndex
             {
             public:
                 Record();
-                Record(const Region& r, id_type id, uint32_t len, byte* pData, uint32_t s);
+                Record(const Mbbc& r, id_type id, uint32_t len, byte* pData, uint32_t s);
                 ~Record();
 
                 bool operator<(const Record& r) const;
@@ -38,7 +38,7 @@ namespace SpatialIndex
                 id_type m_id;
                 uint32_t m_len;
                 byte* m_pData;
-                uint32_t m_s;
+                uint32_t m_s; //sorting dimension
             };
 
         public:

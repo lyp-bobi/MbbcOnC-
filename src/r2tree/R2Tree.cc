@@ -9,8 +9,8 @@
 
 #include <spatialindex/SpatialIndex.h>
 #include "Node.h"
-//#include "Leaf.h"
-//#include "Index.h"
+#include "Leaf.h"
+#include "Index.h"
 #include "BulkLoader.h"
 #include "R2Tree.h"
 
@@ -175,7 +175,7 @@ SpatialIndex::ISpatialIndex* SpatialIndex::R2Tree::createAndBulkLoadNewR2Tree(
         uint32_t dimension,
         id_type& indexIdentifier)
 {
-    SpatialIndex::ISpatialIndex* tree = createNewR2Tree(sm, fillFactor, indexCapacity, leafCapacity, dimension, rv, indexIdentifier);
+    SpatialIndex::ISpatialIndex* tree = createNewR2Tree(sm, fillFactor, indexCapacity, leafCapacity, dimension, indexIdentifier);
 
     uint32_t bindex = static_cast<uint32_t>(std::floor(static_cast<double>(indexCapacity * fillFactor)));
     uint32_t bleaf = static_cast<uint32_t>(std::floor(static_cast<double>(leafCapacity * fillFactor)));
@@ -196,4 +196,641 @@ SpatialIndex::ISpatialIndex* SpatialIndex::R2Tree::createAndBulkLoadNewR2Tree(
     }
 
     return tree;
+}
+
+
+
+SpatialIndex::ISpatialIndex* SpatialIndex::R2Tree::loadR2Tree(IStorageManager& sm, id_type indexIdentifier)
+{
+    Tools::Variant var;
+    Tools::PropertySet ps;
+
+    var.m_varType = Tools::VT_LONGLONG;
+    var.m_val.llVal = indexIdentifier;
+    ps.setProperty("IndexIdentifier", var);
+
+    return returnR2Tree(sm, ps);
+}
+
+SpatialIndex::R2Tree::R2Tree::R2Tree(IStorageManager& sm, Tools::PropertySet& ps) :
+        m_pStorageManager(&sm),
+        m_rootID(StorageManager::NewPage),
+        m_headerID(StorageManager::NewPage),
+        m_fillFactor(0.7),
+        m_indexCapacity(100),
+        m_leafCapacity(100),
+        m_dimension(2),
+        m_bTightMBRs(true),
+        m_pointPool(500),
+        m_MbbcPool(1000),
+        m_indexPool(100),
+        m_leafPool(100)
+{
+#ifdef HAVE_PTHREAD_H
+    pthread_mutex_init(&m_lock, NULL);
+#endif
+
+    Tools::Variant var = ps.getProperty("IndexIdentifier");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType == Tools::VT_LONGLONG) m_headerID = var.m_val.llVal;
+        else if (var.m_varType == Tools::VT_LONG) m_headerID = var.m_val.lVal;
+            // for backward compatibility only.
+        else throw Tools::IllegalArgumentException("R2Tree: Property IndexIdentifier must be Tools::VT_LONGLONG");
+
+        initOld(ps);
+    }
+    else
+    {
+        initNew(ps);
+        var.m_varType = Tools::VT_LONGLONG;
+        var.m_val.llVal = m_headerID;
+        ps.setProperty("IndexIdentifier", var);
+    }
+}
+
+SpatialIndex::R2Tree::R2Tree::~R2Tree()
+{
+#ifdef HAVE_PTHREAD_H
+    pthread_mutex_destroy(&m_lock);
+#endif
+
+    storeHeader();
+}
+
+
+
+//
+// ISpatialIndex interface
+//
+
+void SpatialIndex::R2Tree::R2Tree::insertData(uint32_t len, const byte* pData, const IShape& shape, id_type id)
+{
+    throw Tools::NotSupportedException("insertion on R2Tree is not supported now");
+}
+
+bool SpatialIndex::R2Tree::R2Tree::deleteData(const SpatialIndex::IShape &shape, SpatialIndex::id_type id) {
+    throw Tools::NotSupportedException("deletion on R2Tree is not supported now");
+}
+void SpatialIndex::R2Tree::R2Tree::containsWhatQuery(const SpatialIndex::IShape &query, SpatialIndex::IVisitor &v) {
+    throw Tools::NotSupportedException("not supported now");
+}
+
+void SpatialIndex::R2Tree::R2Tree::intersectsWithQuery(const SpatialIndex::IShape &query, SpatialIndex::IVisitor &v) {
+    throw Tools::NotSupportedException("not supported now");
+}
+
+void SpatialIndex::R2Tree::R2Tree::pointLocationQuery(const SpatialIndex::Point &query, SpatialIndex::IVisitor &v) {
+    throw Tools::NotSupportedException("not supported now");
+}
+
+void SpatialIndex::R2Tree::R2Tree::nearestNeighborQuery(uint32_t k, const SpatialIndex::IShape &query,
+                                                        SpatialIndex::IVisitor &v) {
+    throw Tools::NotSupportedException("not supported now");
+}
+void SpatialIndex::R2Tree::R2Tree::nearestNeighborQuery(uint32_t k, const SpatialIndex::IShape &query,
+                                                        SpatialIndex::IVisitor &v,
+                                                        SpatialIndex::INearestNeighborComparator &) {
+    throw Tools::NotSupportedException("not supported now");
+}
+
+void SpatialIndex::R2Tree::R2Tree::selfJoinQuery(const SpatialIndex::IShape &s, SpatialIndex::IVisitor &v) {
+    throw Tools::NotSupportedException("not supported now");
+}
+
+void SpatialIndex::R2Tree::R2Tree::queryStrategy(IQueryStrategy& qs)
+{
+#ifdef HAVE_PTHREAD_H
+    Tools::LockGuard lock(&m_lock);
+#endif
+
+    id_type next = m_rootID;
+    bool hasNext = true;
+
+    while (hasNext)
+    {
+        NodePtr n = readNode(next);
+        qs.getNextEntry(*n, next, hasNext);
+    }
+}
+
+
+void SpatialIndex::R2Tree::R2Tree::getIndexProperties(Tools::PropertySet& out) const
+{
+    Tools::Variant var;
+
+    // dimension
+    var.m_varType = Tools::VT_ULONG;
+    var.m_val.ulVal = m_dimension;
+    out.setProperty("Dimension", var);
+
+    // index capacity
+    var.m_varType = Tools::VT_ULONG;
+    var.m_val.ulVal = m_indexCapacity;
+    out.setProperty("IndexCapacity", var);
+
+    // leaf capacity
+    var.m_varType = Tools::VT_ULONG;
+    var.m_val.ulVal = m_leafCapacity;
+    out.setProperty("LeafCapacity", var);
+
+
+    // fill factor
+    var.m_varType = Tools::VT_DOUBLE;
+    var.m_val.dblVal = m_fillFactor;
+    out.setProperty("FillFactor", var);
+
+
+    // tight MBRs
+    var.m_varType = Tools::VT_BOOL;
+    var.m_val.blVal = m_bTightMBRs;
+    out.setProperty("EnsureTightMBRs", var);
+
+    // index pool capacity
+    var.m_varType = Tools::VT_ULONG;
+    var.m_val.ulVal = m_indexPool.getCapacity();
+    out.setProperty("IndexPoolCapacity", var);
+
+    // leaf pool capacity
+    var.m_varType = Tools::VT_ULONG;
+    var.m_val.ulVal = m_leafPool.getCapacity();
+    out.setProperty("LeafPoolCapacity", var);
+
+    // region pool capacity
+    var.m_varType = Tools::VT_ULONG;
+    var.m_val.ulVal = m_MbbcPool.getCapacity();
+    out.setProperty("RegionPoolCapacity", var);
+
+    // point pool capacity
+    var.m_varType = Tools::VT_ULONG;
+    var.m_val.ulVal = m_pointPool.getCapacity();
+    out.setProperty("PointPoolCapacity", var);
+}
+
+
+void SpatialIndex::R2Tree::R2Tree::addCommand(ICommand* pCommand, CommandType ct)
+{
+    throw Tools::NotSupportedException("not supported now");
+}
+
+bool SpatialIndex::R2Tree::R2Tree::isIndexValid() {
+    return true;
+}
+
+void SpatialIndex::R2Tree::R2Tree::getStatistics(IStatistics** out) const
+{
+    *out = new Statistics(m_stats);
+}
+
+
+void SpatialIndex::R2Tree::R2Tree::initNew(Tools::PropertySet& ps)
+{
+    Tools::Variant var;
+
+
+    // fill factor
+    // it cannot be larger than 50%, since linear and quadratic split algorithms
+    // require assigning to both nodes the same number of entries.
+    var = ps.getProperty("FillFactor");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_DOUBLE)
+            throw Tools::IllegalArgumentException("initNew: Property FillFactor was not of type Tools::VT_DOUBLE");
+
+        if (var.m_val.dblVal <= 0.0)
+            throw Tools::IllegalArgumentException("initNew: Property FillFactor was less than 0.0");
+
+        if ( var.m_val.dblVal >= 1.0)
+            throw Tools::IllegalArgumentException(  "initNew: Property FillFactor must be in range "
+                                                    "(0.0, 1.0) for RSTAR index type");
+        m_fillFactor = var.m_val.dblVal;
+    }
+
+    // index capacity
+    var = ps.getProperty("IndexCapacity");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_ULONG || var.m_val.ulVal < 4)
+            throw Tools::IllegalArgumentException("initNew: Property IndexCapacity must be Tools::VT_ULONG and >= 4");
+
+        m_indexCapacity = var.m_val.ulVal;
+    }
+
+    // leaf capacity
+    var = ps.getProperty("LeafCapacity");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_ULONG || var.m_val.ulVal < 4)
+            throw Tools::IllegalArgumentException("initNew: Property LeafCapacity must be Tools::VT_ULONG and >= 4");
+
+        m_leafCapacity = var.m_val.ulVal;
+    }
+
+
+    // dimension
+    var = ps.getProperty("Dimension");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_ULONG)
+            throw Tools::IllegalArgumentException("initNew: Property Dimension must be Tools::VT_ULONG");
+        if (var.m_val.ulVal <= 1)
+            throw Tools::IllegalArgumentException("initNew: Property Dimension must be greater than 1");
+
+        m_dimension = var.m_val.ulVal;
+    }
+
+    // tight MBRs
+    var = ps.getProperty("EnsureTightMBRs");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_BOOL)
+            throw Tools::IllegalArgumentException("initNew: Property EnsureTightMBRs must be Tools::VT_BOOL");
+
+        m_bTightMBRs = var.m_val.blVal;
+    }
+
+    // index pool capacity
+    var = ps.getProperty("IndexPoolCapacity");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_ULONG)
+            throw Tools::IllegalArgumentException("initNew: Property IndexPoolCapacity must be Tools::VT_ULONG");
+
+        m_indexPool.setCapacity(var.m_val.ulVal);
+    }
+
+    // leaf pool capacity
+    var = ps.getProperty("LeafPoolCapacity");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_ULONG)
+            throw Tools::IllegalArgumentException("initNew: Property LeafPoolCapacity must be Tools::VT_ULONG");
+
+        m_leafPool.setCapacity(var.m_val.ulVal);
+    }
+
+    // region pool capacity
+    var = ps.getProperty("RegionPoolCapacity");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_ULONG)
+            throw Tools::IllegalArgumentException("initNew: Property RegionPoolCapacity must be Tools::VT_ULONG");
+
+        m_MbbcPool.setCapacity(var.m_val.ulVal);
+    }
+
+    // point pool capacity
+    var = ps.getProperty("PointPoolCapacity");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_ULONG)
+            throw Tools::IllegalArgumentException("initNew: Property PointPoolCapacity must be Tools::VT_ULONG");
+
+        m_pointPool.setCapacity(var.m_val.ulVal);
+    }
+
+    m_infiniteMbbc.makeInfinite();
+
+    m_stats.m_u32TreeHeight = 1;
+    m_stats.m_nodesInLevel.push_back(0);
+
+    Leaf root(this, -1);
+    m_rootID = writeNode(&root);
+
+    storeHeader();
+}
+
+void SpatialIndex::R2Tree::R2Tree::initOld(Tools::PropertySet& ps)
+{
+    loadHeader();
+
+    // only some of the properties may be changed.
+    // the rest are just ignored.
+
+    Tools::Variant var;
+
+    // tight MBRs
+    var = ps.getProperty("EnsureTightMBRs");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_BOOL) throw Tools::IllegalArgumentException("initOld: Property EnsureTightMBRs must be Tools::VT_BOOL");
+
+        m_bTightMBRs = var.m_val.blVal;
+    }
+
+    // index pool capacity
+    var = ps.getProperty("IndexPoolCapacity");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_ULONG) throw Tools::IllegalArgumentException("initOld: Property IndexPoolCapacity must be Tools::VT_ULONG");
+
+        m_indexPool.setCapacity(var.m_val.ulVal);
+    }
+
+    // leaf pool capacity
+    var = ps.getProperty("LeafPoolCapacity");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_ULONG) throw Tools::IllegalArgumentException("initOld: Property LeafPoolCapacity must be Tools::VT_ULONG");
+
+        m_leafPool.setCapacity(var.m_val.ulVal);
+    }
+
+    // region pool capacity
+    var = ps.getProperty("RegionPoolCapacity");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_ULONG) throw Tools::IllegalArgumentException("initOld: Property RegionPoolCapacity must be Tools::VT_ULONG");
+
+        m_MbbcPool.setCapacity(var.m_val.ulVal);
+    }
+
+    // point pool capacity
+    var = ps.getProperty("PointPoolCapacity");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_ULONG) throw Tools::IllegalArgumentException("initOld: Property PointPoolCapacity must be Tools::VT_ULONG");
+
+        m_pointPool.setCapacity(var.m_val.ulVal);
+    }
+
+    m_infiniteMbbc.makeInfinite();
+}
+
+void SpatialIndex::R2Tree::R2Tree::storeHeader()
+{
+    const uint32_t headerSize =
+            sizeof(id_type) +						// m_rootID
+            sizeof(double) +						// m_fillFactor
+            sizeof(uint32_t) +						// m_indexCapacity
+            sizeof(uint32_t) +						// m_leafCapacity
+            sizeof(uint32_t) +						// m_dimension
+            sizeof(char) +							// m_bTightMBRs
+            sizeof(uint32_t) +						// m_stats.m_nodes
+            sizeof(uint64_t) +						// m_stats.m_data
+            sizeof(uint32_t) +						// m_stats.m_treeHeight
+            m_stats.m_u32TreeHeight * sizeof(uint32_t);	// m_stats.m_nodesInLevel
+
+    byte* header = new byte[headerSize];
+    byte* ptr = header;
+
+    memcpy(ptr, &m_rootID, sizeof(id_type));
+    ptr += sizeof(id_type);
+    memcpy(ptr, &m_fillFactor, sizeof(double));
+    ptr += sizeof(double);
+    memcpy(ptr, &m_indexCapacity, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+    memcpy(ptr, &m_leafCapacity, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+    memcpy(ptr, &m_dimension, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+    char c = (char) m_bTightMBRs;
+    memcpy(ptr, &c, sizeof(char));
+    ptr += sizeof(char);
+    memcpy(ptr, &(m_stats.m_u32Nodes), sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+    memcpy(ptr, &(m_stats.m_u64Data), sizeof(uint64_t));
+    ptr += sizeof(uint64_t);
+    memcpy(ptr, &(m_stats.m_u32TreeHeight), sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+
+    for (uint32_t cLevel = 0; cLevel < m_stats.m_u32TreeHeight; ++cLevel)
+    {
+        memcpy(ptr, &(m_stats.m_nodesInLevel[cLevel]), sizeof(uint32_t));
+        ptr += sizeof(uint32_t);
+    }
+
+    m_pStorageManager->storeByteArray(m_headerID, headerSize, header);
+
+    delete[] header;
+}
+
+
+
+void SpatialIndex::R2Tree::R2Tree::loadHeader()
+{
+    uint32_t headerSize;
+    byte* header = 0;
+    m_pStorageManager->loadByteArray(m_headerID, headerSize, &header);
+
+    byte* ptr = header;
+
+    memcpy(&m_rootID, ptr, sizeof(id_type));
+    ptr += sizeof(id_type);
+    memcpy(&m_fillFactor, ptr, sizeof(double));
+    ptr += sizeof(double);
+    memcpy(&m_indexCapacity, ptr, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+    memcpy(&m_leafCapacity, ptr, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+    memcpy(&m_dimension, ptr, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+    char c;
+    memcpy(&c, ptr, sizeof(char));
+    m_bTightMBRs = (c != 0);
+    ptr += sizeof(char);
+    memcpy(&(m_stats.m_u32Nodes), ptr, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+    memcpy(&(m_stats.m_u64Data), ptr, sizeof(uint64_t));
+    ptr += sizeof(uint64_t);
+    memcpy(&(m_stats.m_u32TreeHeight), ptr, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+
+    for (uint32_t cLevel = 0; cLevel < m_stats.m_u32TreeHeight; ++cLevel)
+    {
+        uint32_t cNodes;
+        memcpy(&cNodes, ptr, sizeof(uint32_t));
+        ptr += sizeof(uint32_t);
+        m_stats.m_nodesInLevel.push_back(cNodes);
+    }
+
+    delete[] header;
+}
+
+
+SpatialIndex::R2Tree::NodePtr SpatialIndex::R2Tree::R2Tree::readNode(id_type page)
+{
+    uint32_t dataLength;
+    byte* buffer;
+
+    try
+    {
+        m_pStorageManager->loadByteArray(page, dataLength, &buffer);
+    }
+    catch (InvalidPageException& e)
+    {
+        std::cerr << e.what() << std::endl;
+        throw;
+    }
+
+    try
+    {
+        uint32_t nodeType;
+        memcpy(&nodeType, buffer, sizeof(uint32_t));
+
+        NodePtr n;
+
+        if (nodeType == PersistentIndex) n = m_indexPool.acquire();
+        else if (nodeType == PersistentLeaf) n = m_leafPool.acquire();
+        else throw Tools::IllegalStateException("readNode: failed reading the correct node type information");
+
+        if (n.get() == 0)
+        {
+            if (nodeType == PersistentIndex) n = NodePtr(new Index(this, -1, 0), &m_indexPool);
+            else if (nodeType == PersistentLeaf) n = NodePtr(new Leaf(this, -1), &m_leafPool);
+        }
+
+        //n->m_pTree = this;
+        n->m_identifier = page;
+        n->loadFromByteArray(buffer);
+
+        ++(m_stats.m_u64Reads);
+        /*
+        for (size_t cIndex = 0; cIndex < m_readNodeCommands.size(); ++cIndex)
+        {
+            m_readNodeCommands[cIndex]->execute(*n);
+        }
+        */
+        delete[] buffer;
+        return n;
+    }
+    catch (...)
+    {
+        delete[] buffer;
+        throw;
+    }
+}
+SpatialIndex::id_type SpatialIndex::R2Tree::R2Tree::writeNode(Node* n)
+{
+    byte* buffer;
+    uint32_t dataLength;
+    n->storeToByteArray(&buffer, dataLength);
+
+    id_type page;
+    if (n->m_identifier < 0) page = StorageManager::NewPage;
+    else page = n->m_identifier;
+
+    try
+    {
+        m_pStorageManager->storeByteArray(page, dataLength, buffer);
+        delete[] buffer;
+    }
+    catch (InvalidPageException& e)
+    {
+        delete[] buffer;
+        std::cerr << e.what() << std::endl;
+        throw;
+    }
+
+    if (n->m_identifier < 0)
+    {
+        n->m_identifier = page;
+        ++(m_stats.m_u32Nodes);
+
+#ifndef NDEBUG
+        try
+        {
+            m_stats.m_nodesInLevel[n->m_level] = m_stats.m_nodesInLevel.at(n->m_level) + 1;
+        }
+        catch(...)
+        {
+            throw Tools::IllegalStateException("writeNode: writing past the end of m_nodesInLevel.");
+        }
+#else
+        m_stats.m_nodesInLevel[n->m_level] = m_stats.m_nodesInLevel[n->m_level] + 1;
+#endif
+    }
+
+    ++(m_stats.m_u64Writes);
+    /*
+    for (size_t cIndex = 0; cIndex < m_writeNodeCommands.size(); ++cIndex)
+    {
+        m_writeNodeCommands[cIndex]->execute(*n);
+    }
+    */
+    return page;
+}
+void SpatialIndex::R2Tree::R2Tree::deleteNode(Node* n)
+{
+    try
+    {
+        m_pStorageManager->deleteByteArray(n->m_identifier);
+    }
+    catch (InvalidPageException& e)
+    {
+        std::cerr << e.what() << std::endl;
+        throw;
+    }
+
+    --(m_stats.m_u32Nodes);
+    m_stats.m_nodesInLevel[n->m_level] = m_stats.m_nodesInLevel[n->m_level] - 1;
+    /*
+    for (size_t cIndex = 0; cIndex < m_deleteNodeCommands.size(); ++cIndex)
+    {
+        m_deleteNodeCommands[cIndex]->execute(*n);
+    }
+     */
+}
+
+
+/*
+void SpatialIndex::R2Tree::R2Tree::insertData_impl(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id)
+{
+    assert(mbbc.getDimension() == m_dimension);
+
+    std::stack<id_type> pathBuffer;
+    byte* overflowTable = 0;
+
+    try
+    {
+        NodePtr root = readNode(m_rootID);
+
+        overflowTable = new byte[root->m_level];
+        memset(overflowTable, 0, root->m_level);
+
+        NodePtr l = root->chooseSubtree(mbbc, 0, pathBuffer);
+        if (l.get() == root.get())
+        {
+            assert(root.unique());
+            root.relinquish();
+        }
+        l->insertData(dataLength, pData, mbbc, id, pathBuffer, overflowTable);
+
+        delete[] overflowTable;
+        ++(m_stats.m_u64Data);
+    }
+    catch (...)
+    {
+        delete[] overflowTable;
+        throw;
+    }
+}
+ */
+
+
+std::ostream& SpatialIndex::R2Tree::operator<<(std::ostream& os, const R2Tree& t)
+{
+    os	<< "Dimension: " << t.m_dimension << std::endl
+          << "Fill factor: " << t.m_fillFactor << std::endl
+          << "Index capacity: " << t.m_indexCapacity << std::endl
+          << "Leaf capacity: " << t.m_leafCapacity << std::endl
+          << "Tight MBRs: " << ((t.m_bTightMBRs) ? "enabled" : "disabled") << std::endl;
+
+
+    if (t.m_stats.getNumberOfNodesInLevel(0) > 0)
+        os	<< "Utilization: " << 100 * t.m_stats.getNumberOfData() / (t.m_stats.getNumberOfNodesInLevel(0) * t.m_leafCapacity) << "%" << std::endl
+              << t.m_stats;
+
+#ifndef NDEBUG
+    os	<< "Leaf pool hits: " << t.m_leafPool.m_hits << std::endl
+          << "Leaf pool misses: " << t.m_leafPool.m_misses << std::endl
+          << "Index pool hits: " << t.m_indexPool.m_hits << std::endl
+          << "Index pool misses: " << t.m_indexPool.m_misses << std::endl
+          << "Region pool hits: " << t.m_MbbcPool.m_hits << std::endl
+          << "Region pool misses: " << t.m_MbbcPool.m_misses << std::endl
+          << "Point pool hits: " << t.m_pointPool.m_hits << std::endl
+          << "Point pool misses: " << t.m_pointPool.m_misses << std::endl;
+#endif
+
+    return os;
 }

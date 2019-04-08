@@ -1,7 +1,7 @@
 //
 // Created by chuang on 4/3/19.
 //
-#include <spatialindex/SpatialIndex.h>
+#pragma once
 
 namespace SpatialIndex {
     namespace R2Tree {
@@ -46,11 +46,19 @@ namespace SpatialIndex {
 
         private:
             Node();
+            Node(R2Tree* pTree, id_type id, uint32_t level, uint32_t capacity);
 
             virtual Node& operator=(const Node&);
 
 
+            virtual void insertEntry(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id);
+            //virtual void deleteEntry(uint32_t index);
 
+            //virtual bool insertData(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id, std::stack<id_type>& pathBuffer, byte* overflowTable);
+            //virtual void reinsertData(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id, std::vector<uint32_t>& reinsert, std::vector<uint32_t>& keep);
+
+            //virtual NodePtr chooseSubtree(const Mbbc& mbbc, uint32_t level, std::stack<id_type>& pathBuffer) = 0;
+            virtual NodePtr findLeaf(const Mbbc& mbbc, id_type id, std::stack<id_type>& pathBuffer) = 0;
 
             R2Tree* m_pTree;
             // Parent of all nodes.
@@ -68,13 +76,13 @@ namespace SpatialIndex {
             uint32_t m_capacity;
             // Specifies the node capacity.
 
-            Region m_nodeMbbc;
+            Mbbc m_nodeMbbc;
             // The minimum bounding region enclosing all data contained in the node.
 
             byte** m_pData;
             // The data stored in the node.
 
-            RegionPtr* m_ptrMbbc;
+            MbbcPtr* m_ptrMbbc;
             // The corresponding data MBBCs.
 
             id_type* m_pIdentifier;

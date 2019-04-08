@@ -49,11 +49,59 @@ namespace SpatialIndex
             virtual bool isIndexValid();
             virtual void getStatistics(IStatistics** out) const;
 
+
+
         private:
+            void initNew(Tools::PropertySet&);
+            void initOld(Tools::PropertySet& ps);
+            void storeHeader();
+            void loadHeader();
+
+            //void insertData_impl(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id);
+            //void insertData_impl(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id, uint32_t level, byte* overflowTable);
+            //bool deleteData_impl(const Region& mbr, id_type id);
+
+            id_type writeNode(Node*);
+            NodePtr readNode(id_type page);
+            void deleteNode(Node*);
+
+            //void rangeQuery(RangeQueryType type, const IShape& query, IVisitor& v);
+
             IStorageManager* m_pStorageManager;
 
             id_type m_rootID, m_headerID;
 
+
+            double m_fillFactor;
+
+            uint32_t m_indexCapacity;
+
+            uint32_t m_leafCapacity;
+
+            uint32_t m_dimension;
+
+            Mbbc m_infiniteMbbc;
+
+            Statistics m_stats;
+
+            bool m_bTightMBRs;
+
+
+            Tools::PointerPool<Point> m_pointPool;
+            Tools::PointerPool<Mbbc> m_MbbcPool;
+            Tools::PointerPool<Node> m_indexPool;
+            Tools::PointerPool<Node> m_leafPool;
+
+#ifdef HAVE_PTHREAD_H
+            pthread_mutex_t m_lock;
+#endif
+
+            friend class Node;
+            friend class Leaf;
+            friend class Index;
+            friend class BulkLoader;
+
+            friend std::ostream& operator<<(std::ostream& os, const R2Tree& t);
         };//R2Tree
     }
 }

@@ -11,6 +11,15 @@
 
 using namespace SpatialIndex;
 
+Mbbc::Mbbc() {
+    m_smbr=*new Region;
+    m_embr=*new Region;
+    m_vmbr=*new Region;
+    m_pmbr=*new Region;
+    m_startTime=0;
+    m_endTime=0;
+}
+
 Mbbc::Mbbc(const SpatialIndex::Region &smbr, const SpatialIndex::Region &embr, const SpatialIndex::Region &vbr,
            const SpatialIndex::Region &pmbr, double tStart, double tEnd) {
     m_smbr=smbr;
@@ -167,10 +176,46 @@ bool Mbbc::intersectsMbbc(const Mbbc& in) const{return false;}
 
 bool Mbbc::containsShape(const SpatialIndex::IShape& in) const{return false;}
 bool Mbbc::touchesShape(const SpatialIndex::IShape& in) const{return false;}
-void Mbbc::getCenter(Point& out) const{m_pmbr.getCenter(out);}
+void Mbbc::getCenter(Point& out) const{
+    m_pmbr.getCenter(out);
+}
 uint32_t Mbbc::getDimension() const{return 3;}
 void Mbbc::getMBR(Region& out) const{out= m_pmbr;}
 double Mbbc::getArea() const{ return 0;}
 double Mbbc::getMinimumDistance(const IShape& in) const{return 0;}
 
+void Mbbc::makeInfinite()
+{
+    m_smbr.makeInfinite(2);
+    m_embr.makeInfinite(2);
+    m_vmbr.makeInfinite(2);
+    m_pmbr.makeInfinite(2);
+    m_startTime = -std::numeric_limits<double>::max();
+    m_endTime = std::numeric_limits<double>::max();
+}
 
+
+void Mbbc::combineMbbc(const Mbbc& r)
+{
+    assert(m_startTime=r.m_startTime);
+    m_smbr.combineRegion(r.m_smbr);
+    m_embr.combineRegion(r.m_embr);
+    m_vmbr.combineRegion(r.m_vmbr);
+    m_pmbr.combineRegion(r.m_pmbr);
+}
+
+bool Mbbc::containsMbbc(const SpatialIndex::Mbbc &r) {
+    if(!m_smbr.containsRegion(r.m_smbr)) return false;
+    if(!m_embr.containsRegion(r.m_embr)) return false;
+    if(!m_vmbr.containsRegion(r.m_vmbr)) return false;
+    if(!m_pmbr.containsRegion(r.m_pmbr)) return false;
+    if(m_startTime>r.m_startTime) return false;
+    if(m_endTime<r.m_endTime) return false;
+    return true;
+}
+
+void Mbbc::getCombinedMbbc(Mbbc& out, const Mbbc& in) const
+{
+    out = *this;
+    out.combineMbbc(in);
+}

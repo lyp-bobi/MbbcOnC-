@@ -11,6 +11,7 @@ namespace SpatialIndex
     class SIDX_DLL Mbbc: public Tools::IObject, public virtual IShape,public IEvolvingShape{
 
     public:
+        Mbbc();
         Mbbc(const Region &smbr, const Region &embr, const Region &vmbr, const Region &pmbr, double tStart, double tEnd);
         Mbbc(const Mbbc& in);
         virtual Mbbc &operator=(const Mbbc &r);
@@ -57,6 +58,11 @@ namespace SpatialIndex
         virtual bool intersectsLineSegment(const LineSegment& in) const;
         virtual bool containsPoint(const Point& in) const;
         virtual bool intersectsMbbc(const Mbbc& in) const;
+
+        virtual void combineMbbc(const Mbbc& in);
+        virtual bool containsMbbc(const Mbbc& in);
+        virtual void getCombinedMbbc(Mbbc& out, const Mbbc& in) const;
+
         Region m_smbr;
         Region m_embr;
         Region m_vmbr;
@@ -66,8 +72,9 @@ namespace SpatialIndex
 
         friend SIDX_DLL std::ostream operator<<(std::ostream os,const MovingRegion &r);
 
+        static const uint32_t m_dimension=2;
+        virtual void makeInfinite();
     private:
-
     };
 typedef Tools::PoolPointer<Mbbc> MbbcPtr;
 SIDX_DLL std::ostream& operator<<(std::ostream& os, const Mbbc& r);
