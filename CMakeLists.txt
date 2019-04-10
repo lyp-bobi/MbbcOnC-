@@ -2,7 +2,7 @@
 # top-level CMake configuration file for PDAL
 #
 # (based originally on the libLAS files copyright Mateusz Loskot)
-
+set (CMAKE_CXX_STANDARD 11)
 cmake_minimum_required(VERSION 2.6.0)
 project(spatialindex)
 

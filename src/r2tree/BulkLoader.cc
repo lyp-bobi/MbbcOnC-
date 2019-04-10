@@ -331,7 +331,7 @@ void BulkLoader::bulkLoadUsingSTR(
         Data* d = reinterpret_cast<Data*>(stream.getNext());
         if (d == 0)
             throw Tools::IllegalArgumentException(
-                    "bulkLoadUsingSTR: RTree bulk load expects SpatialIndex::RTree::Data entries."
+                    "bulkLoadUsingSTR: R2Tree bulk load expects SpatialIndex::RTree::Data entries."
             );
 
         es->insert(new ExternalSorter::Record(d->m_Mbbc, d->m_id, d->m_dataLength, d->m_pData, 0));

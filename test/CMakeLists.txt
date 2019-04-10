@@ -3,7 +3,6 @@ include_directories(../include)
 set (DIR geometry)
 set (SOURCES 
         Intersection
-        #Mbbc
         )
 
 foreach (test ${SOURCES})
@@ -50,5 +49,14 @@ set (SOURCES
 
 foreach (test ${SOURCES})
     add_executable(test-${DIR}-${test} ${DIR}/${test}.cc ${DIR}/RandomGenerator.cc)
+    target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
+endforeach()
+
+set (DIR r2tree)
+set (SOURCES
+        trajLoader
+        )
+foreach (test ${SOURCES})
+    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
     target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
 endforeach()
