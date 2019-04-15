@@ -459,5 +459,55 @@ void BulkLoader::bulkLoadUsingKDT(
         uint32_t pageSize, // The number of node entries per page.
         uint32_t numberOfPages // The total number of pages to use.
 ){
-    throw Tools::NotSupportedException("KDTlike BulkLoad is being implimenting");
+    if (! stream.hasNext())
+        throw Tools::IllegalArgumentException(
+                "R2Tree::BulkLoader::bulkLoadUsingKDT: Empty data stream given."
+        );
+
+    NodePtr n = pTree->readNode(pTree->m_rootID);
+    pTree->deleteNode(n.get());
+
+#ifndef NDEBUG
+    std::cerr << "R2Tree::BulkLoader: Sorting data." << std::endl;
+#endif
+
+    Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
+
+    while (stream.hasNext())
+    {
+        Data* d = reinterpret_cast<Data*>(stream.getNext());
+        if (d == 0)
+            throw Tools::IllegalArgumentException(
+                    "bulkLoadUsingSTR: R2Tree bulk load expects SpatialIndex::RTree::Data entries."
+            );
+
+        es->insert(new ExternalSorter::Record(d->m_Mbbc, d->m_id, d->m_dataLength, d->m_pData, 0));
+        d->m_pData = 0;
+        delete d;
+    }
+    es->sort();
+
+    pTree->m_stats.m_u64Data = es->getTotalEntries();
+
+    // create index levels.
+    uint32_t level = 0;
+
+    while (true)
+    {
+#ifndef NDEBUG
+        std::cerr << "RTree::BulkLoader: Building level " << level << std::endl;
+#endif
+
+        pTree->m_stats.m_nodesInLevel.push_back(0);
+
+        Tools::SmartPointer<ExternalSorter> es2 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
+        createLevel(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);
+        es = es2;
+
+        if (es->getTotalEntries() == 1) break;
+        es->sort();
+    }
+
+    pTree->m_stats.m_u32TreeHeight = level;
+    pTree->storeHeader();
 }

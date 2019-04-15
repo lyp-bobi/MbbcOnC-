@@ -13,6 +13,47 @@
 using namespace std;
 using namespace SpatialIndex;
 
+class MyDataStream1: public IDataStream{
+public:
+    vector<pair<int,Region>> mbrs;
+    int i=0;
+    MyDataStream1(vector<pair<int,Region>> other){mbrs=other;}
+    virtual bool hasNext() override
+    {
+        return i<mbrs.size();
+    }
+    virtual IData* getNext() override{
+        RTree::Data* d=new RTree::Data(sizeof(double), reinterpret_cast<byte*>(mbrs[i].second.m_pLow), mbrs[i].second, mbrs[i].first);
+        return d;
+    }
+    virtual uint32_t size()
+    {
+        throw Tools::NotSupportedException("Operation not supported.");
+    }
+
+    virtual void rewind(){i=0;}
+};
+class MyDataStream2: public IDataStream{
+public:
+    vector<pair<int,Mbbc>> mbbcs;
+    int i=0;
+    MyDataStream2(vector<pair<int,Mbbc>> other){mbbcs=other;}
+    virtual bool hasNext() override
+    {
+        return i<mbbcs.size();
+    }
+    virtual IData* getNext() override{
+        R2Tree::Data* d=new R2Tree::Data(sizeof(double), reinterpret_cast<byte*>(mbbcs[i].second.m_smbr.m_pLow), mbbcs[i].second, mbbcs[i].first);
+        return d;
+    }
+    virtual uint32_t size()
+    {
+        throw Tools::NotSupportedException("Operation not supported.");
+    }
+
+    virtual void rewind(){i=0;}
+};
+
 template <class Type>
 Type stringToNum(const string& str)
 {
@@ -106,6 +147,23 @@ Mbbc toMbbc(vector<xyt> seg){
     return *new Mbbc(*new Region(sLow,sHigh,2),*new Region(eLow,eHigh,2),
             *new Region(vLow,vHigh,2),*new Region(pLow,pHigh,2),stime,stime+10000);
 }
+Region toMbr(vector<xyt> seg){
+    if(seg.empty()) cout<<"no! a empty MBR!"<<endl;
+    double startx=seg.begin()->x,starty=seg.begin()->y,startt=seg.begin()->t;
+    double endx=seg.end()->x,endy=seg.end()->y,endt=seg.end()->t;
+    double minx=startx,maxx=startx,miny=starty,maxy=starty;
+    for(int i=0;i<seg.size();i++){
+        if(seg.at(i).x<minx) minx=seg.at(i).x;
+        if(seg.at(i).x>maxx) maxx=seg.at(i).x;
+        if(seg.at(i).y<miny) miny=seg.at(i).y;
+        if(seg.at(i).y>maxy) maxy=seg.at(i).y;
+    }
+
+    double pLow[2]={minx,miny};
+    double pHigh[2]={maxx,maxy};
+    double stime=int(startt/10000)*10000;
+    return *new Region(pLow,pHigh,2);
+}
 
 void loadCsvToMbbc(){
     ifstream inFile("/home/chuang/geolifedata.csv", ios::in);
@@ -114,7 +172,7 @@ void loadCsvToMbbc(){
     getline(inFile, lineStr);
     vector<int> ids;
     multimap<int,xyt> trajs;
-    vector< vector<Mbbc> > liar(24);
+    vector< vector< pair<int,Mbbc> > > liar(24);
     while (getline(inFile, lineStr)){
         //cout<<lineStr<<endl;
         string str;
@@ -148,7 +206,7 @@ void loadCsvToMbbc(){
 
             for(int j =0;j<24;j++){
                 if(!seg.at(j).empty()){
-                    liar.at(j).push_back(toMbbc(seg.at(j)));
+                    liar.at(j).push_back(make_pair(id,toMbbc(seg.at(j))));
                 }
             }
         }
@@ -160,8 +218,113 @@ void loadCsvToMbbc(){
 
 
 }
+class MyVisitor : public IVisitor
+{
+public:
+    size_t m_indexIO;
+    size_t m_leafIO;
+
+public:
+    MyVisitor() : m_indexIO(0), m_leafIO(0) {}
+
+    void visitNode(const INode& n)
+    {
+        if (n.isLeaf()) m_leafIO++;
+        else m_indexIO++;
+    }
+
+    void visitData(const IData& d)
+    {
+        IShape* pS;
+        d.getShape(&pS);
+        // do something.
+        delete pS;
+
+        // data should be an array of characters representing a Region as a string.
+        byte* pData = 0;
+        uint32_t cLen = 0;
+        d.getData(cLen, &pData);
+        // do something.
+        //string s = reinterpret_cast<char*>(pData);
+        //cout << s << endl;
+        delete[] pData;
+
+        cout << d.getIdentifier() << endl;
+        // the ID of this data entry is an answer to the query. I will just print it to stdout.
+    }
+
+    void visitData(std::vector<const IData*>& v)
+    {
+        cout << v[0]->getIdentifier() << " " << v[1]->getIdentifier() << endl;
+    }
+};
+void loadCsvToMbr(){
+    ifstream inFile("/home/chuang/geolifedata.csv", ios::in);
+    string lineStr;
+    //cout<<"hi"<<endl;
+    getline(inFile, lineStr);
+    vector<int> ids;
+    multimap<int,xyt> trajs;
+    vector< vector< pair<int,Region> > > liar(24);
+    while (getline(inFile, lineStr)){
+        //cout<<lineStr<<endl;
+        string str;
+        stringstream ss(lineStr);
+        getline(ss, str, ',');
+        int id= stringToNum<int>(str);
+        getline(ss, str, ',');
+        double x= stringToNum<double>(str);
+        getline(ss, str, ',');
+        double y= stringToNum<double>(str);
+        getline(ss, str, ',');
+        getline(ss, str, ',');
+        double t=naivetime(str);
+        xyt p={x,y,t};
+        ids.push_back(id);
+        trajs.insert(make_pair(id,p));
+    }
+    //cout<<ids.size();
+    for(int i=0;i<ids.size();i++){
+        int id= ids.at(i);
+        multimap<int,xyt>::iterator beg,end,iter;
+        vector<xyt> traj;
+        beg = trajs.lower_bound(id);
+        end = trajs.upper_bound(id);
+        for(iter=beg;iter!=end;iter++){
+            traj.push_back(iter->second);
+        }
+        trajs.erase(id);
+        if(!traj.empty()){
+            vector< vector<xyt> > seg = cuttraj(traj);//size 24
+
+            for(int j =0;j<24;j++){
+                if(!seg.at(j).empty()){
+                    liar.at(j).push_back(make_pair(id,toMbr(seg.at(j))));
+                }
+            }
+        }
+    }
+    MyDataStream1 ds1(liar.at(0));
+    string name = "name";
+    id_type indexIdentifier;
+    IStorageManager* diskfile = StorageManager::createNewDiskStorageManager(name, 4096);
+    // Create a new storage manager with the provided base name and a 4K page size.
+
+    StorageManager::IBuffer* file = StorageManager::createNewRandomEvictionsBuffer(*diskfile, 10, false);
+    // applies a main memory random buffer on top of the persistent storage manager
+    // (LRU buffer, etc can be created the same way).
+
+    ISpatialIndex* tree = RTree::createAndBulkLoadNewRTree(
+            RTree::BLM_STR, ds1, *file, 0.7, 4,4, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
+    double pLow[2]={39.5,116.3};
+    double pHigh[2]={-1,2};
+    const Point* p =new Point(pLow,2);
+    MyVisitor vis;
+    tree->intersectsWithQuery(*p,vis);
+}
+
 
 int main(){
-    loadCsvToMbbc();
+    loadCsvToMbr();
     return 0;
 }

@@ -24,6 +24,10 @@ namespace SpatialIndex
                 void storeToFile(Tools::TemporaryFile& f);
                 void loadFromFile(Tools::TemporaryFile& f);
 
+                bool cmp1(Record* const r1, Record* const r2){
+
+                }
+
                 struct SortAscending : public std::binary_function<Record* const, Record* const, bool>
                 {
                     bool operator()(Record* const r1, Record* const r2)
@@ -38,7 +42,7 @@ namespace SpatialIndex
                 id_type m_id;
                 uint32_t m_len;
                 byte* m_pData;
-                uint32_t m_s; //sorting dimension
+                uint32_t m_s;
             };
 
         public:
@@ -47,6 +51,7 @@ namespace SpatialIndex
 
             void insert(Record* r);
             void sort();
+            void sort(int type);
             Record* getNextRecord();
             uint64_t getTotalEntries() const;
 
