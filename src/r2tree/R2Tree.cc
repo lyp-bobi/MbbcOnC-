@@ -277,7 +277,7 @@ void SpatialIndex::R2Tree::R2Tree::containsWhatQuery(const SpatialIndex::IShape 
 }
 
 void SpatialIndex::R2Tree::R2Tree::intersectsWithQuery(const SpatialIndex::IShape &query, SpatialIndex::IVisitor &v) {
-    throw Tools::NotSupportedException("not supported now");
+    rangeQuery(IntersectionQuery, query, v);
 }
 
 void SpatialIndex::R2Tree::R2Tree::pointLocationQuery(const SpatialIndex::Point &query, SpatialIndex::IVisitor &v) {
@@ -833,4 +833,52 @@ std::ostream& SpatialIndex::R2Tree::operator<<(std::ostream& os, const R2Tree& t
 #endif
 
     return os;
+}
+
+
+
+
+void SpatialIndex::R2Tree::R2Tree::rangeQuery(RangeQueryType type, const IShape& query, IVisitor& v)
+{
+#ifdef HAVE_PTHREAD_H
+    Tools::LockGuard lock(&m_lock);
+#endif
+
+    std::stack<NodePtr> st;
+    NodePtr root = readNode(m_rootID);
+
+    if (root->m_children > 0 && root->m_nodeMbbc.intersectsShape(query)) st.push(root);
+
+    while (! st.empty())
+    {
+        NodePtr n = st.top(); st.pop();
+
+        if (n->m_level == 0)
+        {
+            v.visitNode(*n);
+
+            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
+            {
+                bool b;
+                if (type == ContainmentQuery) b = n->m_ptrMbbc[cChild]->containsShape(query);
+                else b = n->m_ptrMbbc[cChild]->intersectsShape(query);
+
+                if (b)
+                {
+                    Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMbbc[cChild]), n->m_pIdentifier[cChild]);
+                    v.visitData(data);
+                    ++(m_stats.m_u64QueryResults);
+                }
+            }
+        }
+        else
+        {
+            v.visitNode(*n);
+
+            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
+            {
+                if (n->m_ptrMbbc[cChild]->intersectsShape(query)) st.push(readNode(n->m_pIdentifier[cChild]));
+            }
+        }
+    }
 }

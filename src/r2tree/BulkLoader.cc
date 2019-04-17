@@ -639,10 +639,66 @@ void BulkLoader::bulkLoadUsingKDT(
                     "bulkLoadUsingSTR: R2Tree bulk load expects SpatialIndex::RTree::Data entries."
             );
 
-        es->insert(new ExternalSorter::Record(d->m_Mbbc, d->m_id, d->m_dataLength, d->m_pData, 0));
+        es->insert(new ExternalSorter::Record(d->m_Mbbc, d->m_id, d->m_dataLength, d->m_pData, 0),1);
         d->m_pData = 0;
         delete d;
     }
-    es->sort();
-
+    int nleaf=es->getTotalEntries()/bleaf;
+    int nlevel=1;
+    while(nleaf!=1){
+        nlevel++;
+        nleaf/=2;
+    }
+    pTree->m_stats.m_u64Data = es->getTotalEntries();
+    pTree->m_stats.m_u32TreeHeight = nlevel+1;
+    for(int i=0;i<nlevel;i++){
+        pTree->m_stats.m_nodesInLevel.push_back(0);
+    }
+    Node* nn=recuisiveBuildKdtree(pTree,es,bleaf,bindex,nlevel,pageSize,numberOfPages);
+    pTree->writeNode(nn);
+    pTree->m_rootID=nn->m_identifier;
 }
+
+Node* BulkLoader::recuisiveBuildKdtree(SpatialIndex::R2Tree::R2Tree *pTree,
+                                       Tools::SmartPointer<SpatialIndex::R2Tree::ExternalSorter> es,
+                                       uint32_t bleaf, uint32_t bindex, uint32_t level, uint32_t pageSize,
+                                       uint32_t numberOfPages) {
+    std::vector<ExternalSorter::Record*> node;
+    ExternalSorter::Record* r;
+    int gay=es->getTotalEntries();
+    es->sort(level%4+1);
+    if(es->getTotalEntries()<=bleaf){
+
+        for(int i=0;i<es->getTotalEntries();i++) {
+            r = es->getNextRecord();
+            node.push_back(r);
+        }
+        Node* n = createNode(pTree, node, level);
+        node.clear();
+        pTree->writeNode(n);
+
+        return n;
+    }
+    else{
+
+        Tools::SmartPointer<ExternalSorter> esL = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
+        Tools::SmartPointer<ExternalSorter> esR = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
+        u_int64_t len=es->getTotalEntries();
+        u_int64_t half=len/2;
+        for(u_int64_t i=0;i<half;i++){
+            esL->insert(es->getNextRecord(),level%4+1);
+        }
+        for(u_int64_t i=half;i<len;i++){
+            esR->insert(es->getNextRecord(),level%4+1);
+        }
+        Node* lNode=recuisiveBuildKdtree(pTree,esL,bleaf,bindex,level-1,pageSize,numberOfPages);
+        Node* rNode=recuisiveBuildKdtree(pTree,esR,bleaf,bindex,level-1,pageSize,numberOfPages);
+        node.push_back(new ExternalSorter::Record(lNode->m_nodeMbbc, lNode->m_identifier, 0, 0, 0));
+        node.push_back(new ExternalSorter::Record(rNode->m_nodeMbbc, rNode->m_identifier, 0, 0, 0));
+        Node* n = createNode(pTree, node, level);
+        node.clear();
+        pTree->writeNode(n);
+        return n;
+    }
+}
+

@@ -51,6 +51,7 @@ namespace SpatialIndex
 
 
 
+
         private:
             void initNew(Tools::PropertySet&);
             void initOld(Tools::PropertySet& ps);
@@ -65,7 +66,7 @@ namespace SpatialIndex
             NodePtr readNode(id_type page);
             void deleteNode(Node*);
 
-            //void rangeQuery(RangeQueryType type, const IShape& query, IVisitor& v);
+            void rangeQuery(RangeQueryType type, const IShape& query, IVisitor& v);
 
             IStorageManager* m_pStorageManager;
 

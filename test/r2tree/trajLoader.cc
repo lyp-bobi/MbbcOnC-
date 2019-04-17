@@ -269,7 +269,7 @@ void loadCsvToMbbc(){
     // (LRU buffer, etc can be created the same way).
 
     ISpatialIndex* tree = R2Tree::createAndBulkLoadNewR2Tree(
-            R2Tree::BLM_STR, ds2, *file, 0.9, 10,10,2, indexIdentifier);
+            R2Tree::BLM_KDT, ds2, *file, 0.9, 10,10,2, indexIdentifier);
     bool ret = tree->isIndexValid();
     if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
     else std::cerr << "The stucture seems O.K." << std::endl;

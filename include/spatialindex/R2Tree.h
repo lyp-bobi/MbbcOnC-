@@ -32,8 +32,6 @@ namespace SpatialIndex
 {
 	namespace R2Tree
 	{
-
-
 		SIDX_DLL enum BulkLoadMethod
 		{
 			BLM_STR = 0x1,

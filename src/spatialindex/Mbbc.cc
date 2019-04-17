@@ -170,7 +170,9 @@ bool Mbbc::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     getMBRAtTime(in.m_startTime,timed);
     return timed.intersectsRegion(in);
 }
-bool Mbbc::intersectsRegion(const Region& in) const{return false;}
+bool Mbbc::intersectsRegion(const Region& in) const{
+    return m_wmbr.intersectsShape(in);
+}
 bool Mbbc::intersectsLineSegment(const LineSegment& in) const{return false;}
 bool Mbbc::containsPoint(const Point& in) const{return false;}
 bool Mbbc::intersectsMbbc(const Mbbc& in) const{return false;}

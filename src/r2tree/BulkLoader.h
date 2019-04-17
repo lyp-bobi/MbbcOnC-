@@ -75,11 +75,11 @@ namespace SpatialIndex
             public:
                 int dim;
                 cmpR(int d):dim(d){}
-                bool operator()(const Record &r1,const Record &r2){
-                    if(dim==1) return r1.m_Mbbc.m_smbr.m_pLow[0]<r2.m_Mbbc.m_smbr.m_pLow[0];
-                    else if(dim==2) return r1.m_Mbbc.m_embr.m_pLow[0]<r2.m_Mbbc.m_embr.m_pLow[0];
-                    else if(dim==3) return r1.m_Mbbc.m_smbr.m_pLow[1]<r2.m_Mbbc.m_smbr.m_pLow[1];
-                    else if(dim==4) return r1.m_Mbbc.m_embr.m_pLow[1]<r2.m_Mbbc.m_embr.m_pLow[1];
+                bool operator()(Record* const r1, Record* const r2){
+                    if(dim==1) return r1->m_Mbbc.m_smbr.m_pLow[0]<r2->m_Mbbc.m_smbr.m_pLow[0];
+                    else if(dim==2) return r1->m_Mbbc.m_embr.m_pLow[0]<r2->m_Mbbc.m_embr.m_pLow[0];
+                    else if(dim==3) return r1->m_Mbbc.m_smbr.m_pLow[1]<r2->m_Mbbc.m_smbr.m_pLow[1];
+                    else if(dim==4) return r1->m_Mbbc.m_embr.m_pLow[1]<r2->m_Mbbc.m_embr.m_pLow[1];
                     else throw Tools::IllegalArgumentException("dimension what?");
                 }
             };
@@ -135,6 +135,15 @@ namespace SpatialIndex
                     uint32_t leafSize,
                     uint32_t level,
                     Tools::SmartPointer<ExternalSorter> es2,
+                    uint32_t pageSize,
+                    uint32_t numberOfPages
+            );
+            Node* recuisiveBuildKdtree(
+                    SpatialIndex::R2Tree::R2Tree* pTree,
+                    Tools::SmartPointer<ExternalSorter> es,
+                    uint32_t bleaf,
+                    uint32_t bindex,
+                    uint32_t level,
                     uint32_t pageSize,
                     uint32_t numberOfPages
             );
