@@ -15,7 +15,7 @@ Mbbc::Mbbc() {
     m_smbr=*new Region;
     m_embr=*new Region;
     m_vmbr=*new Region;
-    m_pmbr=*new Region;
+    m_wmbr=*new Region;
     m_startTime=0;
     m_endTime=0;
 }
@@ -25,7 +25,7 @@ Mbbc::Mbbc(const SpatialIndex::Region &smbr, const SpatialIndex::Region &embr, c
     m_smbr=smbr;
     m_embr=embr;
     m_vmbr=vbr;
-    m_pmbr=pmbr;
+    m_wmbr=pmbr;
     m_startTime=tStart;
     m_endTime=tEnd;
 }
@@ -33,7 +33,7 @@ Mbbc::Mbbc(const SpatialIndex::Mbbc &in) {
     m_smbr=in.m_smbr;
     m_embr=in.m_embr;
     m_vmbr=in.m_vmbr;
-    m_pmbr=in.m_pmbr;
+    m_wmbr=in.m_wmbr;
     m_startTime=in.m_startTime;
     m_endTime=in.m_endTime;
 }
@@ -45,7 +45,7 @@ Mbbc& Mbbc::operator=(const Mbbc& r)
         m_smbr=r.m_smbr;
         m_embr=r.m_embr;
         m_vmbr=r.m_vmbr;
-        m_pmbr=r.m_pmbr;
+        m_wmbr=r.m_wmbr;
         m_startTime=r.m_startTime;
         m_endTime=r.m_endTime;
     }
@@ -59,7 +59,7 @@ bool Mbbc::operator==(const SpatialIndex::Mbbc &r) const {
         m_endTime < r.m_endTime - std::numeric_limits<double>::epsilon() ||
         m_endTime > r.m_endTime + std::numeric_limits<double>::epsilon())
         return false;
-    if (!(m_smbr==r.m_smbr)||!(m_embr==r.m_embr)||!(m_vmbr==r.m_vmbr)||!(m_pmbr==r.m_pmbr))
+    if (!(m_smbr==r.m_smbr)||!(m_embr==r.m_embr)||!(m_vmbr==r.m_vmbr)||!(m_wmbr==r.m_wmbr))
         return false;
     return true;
 }
@@ -74,18 +74,18 @@ Mbbc* Mbbc::clone() {
 //
 uint32_t Mbbc::getByteArraySize() {
     return m_smbr.getByteArraySize()+m_embr.getByteArraySize()+m_vmbr.getByteArraySize()+
-        m_pmbr.getByteArraySize()+m_embr.getByteArraySize()+2 * sizeof(double);
+        m_wmbr.getByteArraySize()+2 * sizeof(double);
 }
 
-void Mbbc::loadFromByteArray(const byte *ptr) {
+void Mbbc::loadFromByteArray(const byte* ptr) {
     m_smbr.loadFromByteArray(ptr);
     ptr+=m_smbr.getByteArraySize();
     m_embr.loadFromByteArray(ptr);
     ptr+=m_embr.getByteArraySize();
     m_vmbr.loadFromByteArray(ptr);
     ptr+=m_vmbr.getByteArraySize();
-    m_pmbr.loadFromByteArray(ptr);
-    ptr+=m_pmbr.getByteArraySize();
+    m_wmbr.loadFromByteArray(ptr);
+    ptr+=m_wmbr.getByteArraySize();
     memcpy(&m_startTime, ptr, sizeof(double));
     ptr += sizeof(double);
     memcpy(&m_endTime, ptr, sizeof(double));
@@ -96,24 +96,25 @@ void Mbbc::storeToByteArray(byte **data, uint32_t &len) {
     len = getByteArraySize();
     *data = new byte[len];
     byte* ptr = *data;
-    byte** tmpb;
+    byte* tmpb;
     u_int32_t tmplen;
-    m_smbr.storeToByteArray(tmpb,tmplen);
-    memcpy(ptr, &tmpb, tmplen);
+    m_smbr.storeToByteArray(&tmpb,tmplen);
+    memcpy(ptr, tmpb, tmplen);
     ptr += tmplen;
-    m_embr.storeToByteArray(tmpb,tmplen);
-    memcpy(ptr, &tmpb, tmplen);
+    m_embr.storeToByteArray(&tmpb,tmplen);
+    memcpy(ptr, tmpb, tmplen);
     ptr += tmplen;
-    m_vmbr.storeToByteArray(tmpb,tmplen);
-    memcpy(ptr, &tmpb, tmplen);
+    m_vmbr.storeToByteArray(&tmpb,tmplen);
+    memcpy(ptr, tmpb, tmplen);
     ptr += tmplen;
-    m_pmbr.storeToByteArray(tmpb,tmplen);
-    memcpy(ptr, &tmpb, tmplen);
+    m_wmbr.storeToByteArray(&tmpb,tmplen);
+    memcpy(ptr, tmpb, tmplen);
     ptr += tmplen;
     memcpy(ptr, &m_startTime, sizeof(double));
     ptr += sizeof(double);
     memcpy(ptr, &m_endTime, sizeof(double));
     //ptr += sizeof(double);
+    assert(len==(ptr - *data)+sizeof(double));
 }
 //
 // IEvolvingShape interface
@@ -177,10 +178,10 @@ bool Mbbc::intersectsMbbc(const Mbbc& in) const{return false;}
 bool Mbbc::containsShape(const SpatialIndex::IShape& in) const{return false;}
 bool Mbbc::touchesShape(const SpatialIndex::IShape& in) const{return false;}
 void Mbbc::getCenter(Point& out) const{
-    m_pmbr.getCenter(out);
+    m_wmbr.getCenter(out);
 }
 uint32_t Mbbc::getDimension() const{return 3;}
-void Mbbc::getMBR(Region& out) const{out= m_pmbr;}
+void Mbbc::getMBR(Region& out) const{out= m_wmbr;}
 double Mbbc::getArea() const{ return 0;}
 double Mbbc::getMinimumDistance(const IShape& in) const{return 0;}
 
@@ -189,7 +190,7 @@ void Mbbc::makeInfinite()
     m_smbr.makeInfinite(2);
     m_embr.makeInfinite(2);
     m_vmbr.makeInfinite(2);
-    m_pmbr.makeInfinite(2);
+    m_wmbr.makeInfinite(2);
     m_startTime = -std::numeric_limits<double>::max();
     m_endTime = std::numeric_limits<double>::max();
 }
@@ -197,18 +198,18 @@ void Mbbc::makeInfinite()
 
 void Mbbc::combineMbbc(const Mbbc& r)
 {
-    assert(m_startTime=r.m_startTime);
+    //assert(m_startTime=r.m_startTime);
     m_smbr.combineRegion(r.m_smbr);
     m_embr.combineRegion(r.m_embr);
     m_vmbr.combineRegion(r.m_vmbr);
-    m_pmbr.combineRegion(r.m_pmbr);
+    m_wmbr.combineRegion(r.m_wmbr);
 }
 
 bool Mbbc::containsMbbc(const SpatialIndex::Mbbc &r) {
     if(!m_smbr.containsRegion(r.m_smbr)) return false;
     if(!m_embr.containsRegion(r.m_embr)) return false;
     if(!m_vmbr.containsRegion(r.m_vmbr)) return false;
-    if(!m_pmbr.containsRegion(r.m_pmbr)) return false;
+    if(!m_wmbr.containsRegion(r.m_wmbr)) return false;
     if(m_startTime>r.m_startTime) return false;
     if(m_endTime<r.m_endTime) return false;
     return true;

@@ -13,6 +13,47 @@
 using namespace std;
 using namespace SpatialIndex;
 
+class MyVisitor : public IVisitor
+{
+public:
+    size_t m_indexIO;
+    size_t m_leafIO;
+
+public:
+    MyVisitor() : m_indexIO(0), m_leafIO(0) {}
+
+    void visitNode(const INode& n)
+    {
+        if (n.isLeaf()) m_leafIO++;
+        else m_indexIO++;
+    }
+
+    void visitData(const IData& d)
+    {
+        IShape* pS;
+        d.getShape(&pS);
+        // do something.
+        delete pS;
+
+        // data should be an array of characters representing a Region as a string.
+        byte* pData = 0;
+        uint32_t cLen = 0;
+        d.getData(cLen, &pData);
+        // do something.
+        //string s = reinterpret_cast<char*>(pData);
+        //cout << s << endl;
+        delete[] pData;
+
+        cout << d.getIdentifier() << endl;
+        // the ID of this data entry is an answer to the query. I will just print it to stdout.
+    }
+
+    void visitData(std::vector<const IData*>& v)
+    {
+        cout << v[0]->getIdentifier() << " " << v[1]->getIdentifier() << endl;
+    }
+};
+
 class MyDataStream1: public IDataStream{
 public:
     vector<pair<int,Region>> mbrs;
@@ -24,6 +65,7 @@ public:
     }
     virtual IData* getNext() override{
         RTree::Data* d=new RTree::Data(sizeof(double), reinterpret_cast<byte*>(mbrs[i].second.m_pLow), mbrs[i].second, mbrs[i].first);
+        i++;
         return d;
     }
     virtual uint32_t size()
@@ -44,6 +86,7 @@ public:
     }
     virtual IData* getNext() override{
         R2Tree::Data* d=new R2Tree::Data(sizeof(double), reinterpret_cast<byte*>(mbbcs[i].second.m_smbr.m_pLow), mbbcs[i].second, mbbcs[i].first);
+        i++;
         return d;
     }
     virtual uint32_t size()
@@ -144,8 +187,8 @@ Mbbc toMbbc(vector<xyt> seg){
     double pLow[2]={minx,miny};
     double pHigh[2]={maxx,maxy};
     double stime=int(startt/10000)*10000;
-    return *new Mbbc(*new Region(sLow,sHigh,2),*new Region(eLow,eHigh,2),
-            *new Region(vLow,vHigh,2),*new Region(pLow,pHigh,2),stime,stime+10000);
+    return Mbbc(Region(sLow,sHigh,2),Region(eLow,eHigh,2),
+            Region(vLow,vHigh,2),Region(pLow,pHigh,2),stime,stime+10000);
 }
 Region toMbr(vector<xyt> seg){
     if(seg.empty()) cout<<"no! a empty MBR!"<<endl;
@@ -212,52 +255,43 @@ void loadCsvToMbbc(){
         }
 
     }
-    for (int i = 0; i < 24; ++i) {
-        cout<<liar.at(i).size()<<endl;
-    }
+//    for (int i = 0; i < 24; ++i) {
+//        cout<<liar.at(i).size()<<endl;
+//    }
+    MyDataStream2 ds2(liar.at(0));
+    string name = "name";
+    id_type indexIdentifier;
+    IStorageManager* diskfile = StorageManager::createNewDiskStorageManager(name, 4096);
+    // Create a new storage manager with the provided base name and a 4K page size.
 
+    StorageManager::IBuffer* file = StorageManager::createNewRandomEvictionsBuffer(*diskfile, 10, false);
+    // applies a main memory random buffer on top of the persistent storage manager
+    // (LRU buffer, etc can be created the same way).
+
+    ISpatialIndex* tree = R2Tree::createAndBulkLoadNewR2Tree(
+            R2Tree::BLM_STR, ds2, *file, 0.9, 10,10,2, indexIdentifier);
+    bool ret = tree->isIndexValid();
+    if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
+    else std::cerr << "The stucture seems O.K." << std::endl;
+
+    double pLow[2]={39.5,116.3};
+    double pHigh[2]={-1,2};
+    const Point* p =new Point(pLow,2);
+    MyVisitor vis;
+    tree->intersectsWithQuery(*p,vis);
+    std::cerr << *tree;
+    std::cerr << "Buffer hits: " << file->getHits() << std::endl;
+    std::cerr << "Index ID: " << indexIdentifier << std::endl;
+
+
+
+    cout<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
+    delete tree;
+    delete file;
+    delete diskfile;
 
 }
-class MyVisitor : public IVisitor
-{
-public:
-    size_t m_indexIO;
-    size_t m_leafIO;
 
-public:
-    MyVisitor() : m_indexIO(0), m_leafIO(0) {}
-
-    void visitNode(const INode& n)
-    {
-        if (n.isLeaf()) m_leafIO++;
-        else m_indexIO++;
-    }
-
-    void visitData(const IData& d)
-    {
-        IShape* pS;
-        d.getShape(&pS);
-        // do something.
-        delete pS;
-
-        // data should be an array of characters representing a Region as a string.
-        byte* pData = 0;
-        uint32_t cLen = 0;
-        d.getData(cLen, &pData);
-        // do something.
-        //string s = reinterpret_cast<char*>(pData);
-        //cout << s << endl;
-        delete[] pData;
-
-        cout << d.getIdentifier() << endl;
-        // the ID of this data entry is an answer to the query. I will just print it to stdout.
-    }
-
-    void visitData(std::vector<const IData*>& v)
-    {
-        cout << v[0]->getIdentifier() << " " << v[1]->getIdentifier() << endl;
-    }
-};
 void loadCsvToMbr(){
     ifstream inFile("/home/chuang/geolifedata.csv", ios::in);
     string lineStr;
@@ -315,16 +349,28 @@ void loadCsvToMbr(){
     // (LRU buffer, etc can be created the same way).
 
     ISpatialIndex* tree = RTree::createAndBulkLoadNewRTree(
-            RTree::BLM_STR, ds1, *file, 0.7, 4,4, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
+            RTree::BLM_STR, ds1, *file, 0.9, 10,10, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
     double pLow[2]={39.5,116.3};
     double pHigh[2]={-1,2};
     const Point* p =new Point(pLow,2);
     MyVisitor vis;
     tree->intersectsWithQuery(*p,vis);
+    std::cerr << *tree;
+    std::cerr << "Buffer hits: " << file->getHits() << std::endl;
+    std::cerr << "Index ID: " << indexIdentifier << std::endl;
+
+    bool ret = tree->isIndexValid();
+    if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
+    else std::cerr << "The stucture seems O.K." << std::endl;
+
+    cout<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
+    delete tree;
+    delete file;
+    delete diskfile;
 }
 
 
 int main(){
-    loadCsvToMbr();
+    loadCsvToMbbc();
     return 0;
 }

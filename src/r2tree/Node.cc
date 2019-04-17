@@ -29,14 +29,108 @@ Tools::IObject* Node::clone()
 // Tools::ISerializable interface
 //
 
-//todo: implement these
 uint32_t Node::getByteArraySize(){
-    return 0;
+    return
+            (sizeof(uint32_t) +
+             sizeof(uint32_t) +
+             sizeof(uint32_t) +
+             (m_children * (m_nodeMbbc.getByteArraySize() + sizeof(id_type) + sizeof(uint32_t))) +
+             m_totalDataLength +
+                    m_nodeMbbc.getByteArraySize());
 }
 
-void Node::loadFromByteArray(const byte* ptr){}
+void Node::loadFromByteArray(const byte* ptr){
 
-void Node::storeToByteArray(byte** data, uint32_t& len){}
+    m_nodeMbbc=m_pTree->m_infiniteMbbc;
+
+    // skip the node type information, it is not needed.
+    ptr += sizeof(uint32_t);
+
+    memcpy(&m_level, ptr, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+
+    memcpy(&m_children, ptr, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+
+    for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child)
+    {
+        m_ptrMbbc[u32Child] = m_pTree->m_MbbcPool.acquire();
+        *(m_ptrMbbc[u32Child]) = m_pTree->m_infiniteMbbc;
+
+        m_ptrMbbc[u32Child]->loadFromByteArray(ptr);
+        ptr += m_ptrMbbc[u32Child]->getByteArraySize();
+        memcpy(&(m_pIdentifier[u32Child]), ptr, sizeof(id_type));
+        ptr += sizeof(id_type);
+
+        memcpy(&(m_pDataLength[u32Child]), ptr, sizeof(uint32_t));
+        ptr += sizeof(uint32_t);
+
+        if (m_pDataLength[u32Child] > 0)
+        {
+            m_totalDataLength += m_pDataLength[u32Child];
+            m_pData[u32Child] = new byte[m_pDataLength[u32Child]];
+            memcpy(m_pData[u32Child], ptr, m_pDataLength[u32Child]);
+            ptr += m_pDataLength[u32Child];
+        }
+        else
+        {
+            m_pData[u32Child] = 0;
+        }
+
+        //m_nodeMBR.combineRegion(*(m_ptrMBR[u32Child]));
+    }
+
+    m_nodeMbbc.loadFromByteArray(ptr);
+
+}
+
+void Node::storeToByteArray(byte** data, uint32_t& len){
+    len = getByteArraySize();
+
+    *data = new byte[len];
+    byte* ptr = *data;
+
+    uint32_t nodeType;
+
+    if (m_level == 0) nodeType = PersistentLeaf;
+    else nodeType = PersistentIndex;
+
+    memcpy(ptr, &nodeType, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+
+    memcpy(ptr, &m_level, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+
+    memcpy(ptr, &m_children, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+    byte* tmpb;
+    u_int32_t tmplen;
+    for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child)
+    {
+
+        m_ptrMbbc[u32Child]->storeToByteArray(&tmpb,tmplen);
+        memcpy(ptr, tmpb, tmplen);
+        ptr += tmplen;
+
+        memcpy(ptr, &(m_pIdentifier[u32Child]), sizeof(id_type));
+        ptr += sizeof(id_type);
+
+        memcpy(ptr, &(m_pDataLength[u32Child]), sizeof(uint32_t));
+        ptr += sizeof(uint32_t);
+
+        if (m_pDataLength[u32Child] > 0)
+        {
+            memcpy(ptr, m_pData[u32Child], m_pDataLength[u32Child]);
+            ptr += m_pDataLength[u32Child];
+        }
+    }
+
+    m_nodeMbbc.storeToByteArray(&tmpb,tmplen);
+    memcpy(ptr, tmpb, tmplen);
+    //ptr += tmplen;
+    assert(len == (ptr - *data)+tmplen);
+
+}
 
 
 //

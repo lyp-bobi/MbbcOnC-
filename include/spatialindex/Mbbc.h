@@ -66,7 +66,7 @@ namespace SpatialIndex
         Region m_smbr;
         Region m_embr;
         Region m_vmbr;
-        Region m_pmbr;
+        Region m_wmbr;
         double m_startTime;
         double m_endTime;
 

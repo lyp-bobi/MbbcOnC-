@@ -84,10 +84,18 @@ int main(int argc, char** argv) {
     double oLow[2]={1.3,1.3};
     double oHigh[2]={4,4};
     //just for test, should use delete to free pointers
-    Mbbc m=*new Mbbc(*new Region(sLow,sHigh,2),*new Region(eLow,eHigh,2),
-                     *new Region(vLow,vHigh,2),*new Region(pLow,pHigh,2),0.0,1.0);
-    TimeRegion t=*new TimeRegion(oLow,oHigh,0.5,0.5,2);
+    Mbbc m=Mbbc(Region(sLow,sHigh,2),Region(eLow,eHigh,2),
+                     Region(vLow,vHigh,2),Region(pLow,pHigh,2),0.0,1.0);
+    Region r(sLow,sHigh,2);
+    TimeRegion t(oLow,oHigh,0.5,0.5,2);
     cout<<m.intersectsTimeRegion(t);
+    byte* d;
+    u_int32_t l;
+//    r.storeToByteArray(&d,l);
+//    cout<<d[30]<<endl;
+//    r.loadFromByteArray(d);
+    m.storeToByteArray(&d,l);
 
+    m.loadFromByteArray(d);
     return 0;
 }

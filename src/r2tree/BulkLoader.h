@@ -24,9 +24,6 @@ namespace SpatialIndex
                 void storeToFile(Tools::TemporaryFile& f);
                 void loadFromFile(Tools::TemporaryFile& f);
 
-                bool cmp1(Record* const r1, Record* const r2){
-
-                }
 
                 struct SortAscending : public std::binary_function<Record* const, Record* const, bool>
                 {
@@ -45,13 +42,14 @@ namespace SpatialIndex
                 uint32_t m_s;
             };
 
-        public:
+
             ExternalSorter(uint32_t u32PageSize, uint32_t u32BufferPages);
             virtual ~ExternalSorter();
 
             void insert(Record* r);
+            void insert(Record* r,int dim);
             void sort();
-            void sort(int type);
+            void sort(int dim);
             Record* getNextRecord();
             uint64_t getTotalEntries() const;
 
@@ -73,7 +71,30 @@ namespace SpatialIndex
                 Record* m_r;
                 uint32_t m_u32Index;
             };
-
+            class cmpR{
+            public:
+                int dim;
+                cmpR(int d):dim(d){}
+                bool operator()(const Record &r1,const Record &r2){
+                    if(dim==1) return r1.m_Mbbc.m_smbr.m_pLow[0]<r2.m_Mbbc.m_smbr.m_pLow[0];
+                    else if(dim==2) return r1.m_Mbbc.m_embr.m_pLow[0]<r2.m_Mbbc.m_embr.m_pLow[0];
+                    else if(dim==3) return r1.m_Mbbc.m_smbr.m_pLow[1]<r2.m_Mbbc.m_smbr.m_pLow[1];
+                    else if(dim==4) return r1.m_Mbbc.m_embr.m_pLow[1]<r2.m_Mbbc.m_embr.m_pLow[1];
+                    else throw Tools::IllegalArgumentException("dimension what?");
+                }
+            };
+            class cmpE{
+            public:
+                int dim;
+                cmpE(int d):dim(d){}
+                bool operator()(const PQEntry &e1,const PQEntry &e2){
+                    if(dim==1) return e1.m_r->m_Mbbc.m_smbr.m_pLow[0]<e2.m_r->m_Mbbc.m_smbr.m_pLow[0];
+                    else if(dim==2) return e1.m_r->m_Mbbc.m_embr.m_pLow[0]<e2.m_r->m_Mbbc.m_embr.m_pLow[0];
+                    else if(dim==3) return e1.m_r->m_Mbbc.m_smbr.m_pLow[1]<e2.m_r->m_Mbbc.m_smbr.m_pLow[1];
+                    else if(dim==4) return e1.m_r->m_Mbbc.m_embr.m_pLow[1]<e2.m_r->m_Mbbc.m_embr.m_pLow[1];
+                    else throw Tools::IllegalArgumentException("dimension what?");
+                }
+            };
         private:
             bool m_bInsertionPhase;
             uint32_t m_u32PageSize;

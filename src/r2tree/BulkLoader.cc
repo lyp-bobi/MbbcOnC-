@@ -64,8 +64,8 @@ void ExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)
         f.write(m_Mbbc.m_embr.m_pHigh[i]);
         f.write(m_Mbbc.m_vmbr.m_pLow[i]);
         f.write(m_Mbbc.m_vmbr.m_pHigh[i]);
-        f.write(m_Mbbc.m_pmbr.m_pLow[i]);
-        f.write(m_Mbbc.m_pmbr.m_pHigh[i]);
+        f.write(m_Mbbc.m_wmbr.m_pLow[i]);
+        f.write(m_Mbbc.m_wmbr.m_pHigh[i]);
     }
     f.write(m_Mbbc.m_startTime);
     f.write(m_Mbbc.m_endTime);
@@ -88,8 +88,8 @@ void ExternalSorter::Record::loadFromFile(Tools::TemporaryFile& f)
         m_Mbbc.m_embr.m_pHigh[i] = f.readDouble();
         m_Mbbc.m_vmbr.m_pLow[i] = f.readDouble();
         m_Mbbc.m_vmbr.m_pHigh[i] = f.readDouble();
-        m_Mbbc.m_pmbr.m_pLow[i] = f.readDouble();
-        m_Mbbc.m_pmbr.m_pHigh[i] = f.readDouble();
+        m_Mbbc.m_wmbr.m_pLow[i] = f.readDouble();
+        m_Mbbc.m_wmbr.m_pHigh[i] = f.readDouble();
     }
     m_Mbbc.m_startTime = f.readDouble();
     m_Mbbc.m_endTime = f.readDouble();
@@ -126,6 +126,31 @@ void ExternalSorter::insert(Record* r)
     if (m_buffer.size() >= m_u32PageSize * m_u32BufferPages)
     {
         std::sort(m_buffer.begin(), m_buffer.end(), Record::SortAscending());
+        Tools::TemporaryFile* tf = new Tools::TemporaryFile();
+        for (size_t j = 0; j < m_buffer.size(); ++j)
+        {
+            m_buffer[j]->storeToFile(*tf);
+            delete m_buffer[j];
+        }
+        m_buffer.clear();
+        tf->rewindForReading();
+        m_runs.push_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
+    }
+}
+void ExternalSorter::insert(Record* r,int dim)
+{
+    if (m_bInsertionPhase == false)
+        throw Tools::IllegalStateException("ExternalSorter::insert: Input has already been sorted.");
+
+    m_buffer.push_back(r);
+    ++m_u64TotalEntries;
+
+    // this will create the initial, sorted buckets before the
+    // external merge sort.
+    cmpR cmpr(dim);
+    if (m_buffer.size() >= m_u32PageSize * m_u32BufferPages)
+    {
+        std::sort(m_buffer.begin(), m_buffer.end(), cmpr);
         Tools::TemporaryFile* tf = new Tools::TemporaryFile();
         for (size_t j = 0; j < m_buffer.size(); ++j)
         {
@@ -181,6 +206,139 @@ void ExternalSorter::sort()
             std::vector<Tools::SmartPointer<Tools::TemporaryFile> > buckets;
             std::vector<std::queue<Record*> > buffers;
             std::priority_queue<PQEntry, std::vector<PQEntry>, PQEntry::SortAscending> pq;
+
+            // initialize buffers and priority queue.
+            std::list<Tools::SmartPointer<Tools::TemporaryFile> >::iterator it = m_runs.begin();
+            for (uint32_t i = 0; i < (std::min)(static_cast<uint32_t>(m_runs.size()), m_u32BufferPages); ++i)
+            {
+                buckets.push_back(*it);
+                buffers.push_back(std::queue<Record*>());
+
+                r = new Record();
+                r->loadFromFile(**it);
+                // a run cannot be empty initially, so this should never fail.
+                pq.push(PQEntry(r, i));
+
+                for (uint32_t j = 0; j < m_u32PageSize - 1; ++j)
+                {
+                    // fill the buffer with the rest of the page of records.
+                    try
+                    {
+                        r = new Record();
+                        r->loadFromFile(**it);
+                        buffers.back().push(r);
+                    }
+                    catch (Tools::EndOfStreamException)
+                    {
+                        delete r;
+                        break;
+                    }
+                }
+                ++it;
+            }
+
+            // exhaust buckets, buffers, and priority queue.
+            while (! pq.empty())
+            {
+                PQEntry e = pq.top(); pq.pop();
+                e.m_r->storeToFile(*tf);
+                delete e.m_r;
+
+                if (! buckets[e.m_u32Index]->eof() && buffers[e.m_u32Index].empty())
+                {
+                    for (uint32_t j = 0; j < m_u32PageSize; ++j)
+                    {
+                        try
+                        {
+                            r = new Record();
+                            r->loadFromFile(*buckets[e.m_u32Index]);
+                            buffers[e.m_u32Index].push(r);
+                        }
+                        catch (Tools::EndOfStreamException)
+                        {
+                            delete r;
+                            break;
+                        }
+                    }
+                }
+
+                if (! buffers[e.m_u32Index].empty())
+                {
+                    e.m_r = buffers[e.m_u32Index].front();
+                    buffers[e.m_u32Index].pop();
+                    pq.push(e);
+                }
+            }
+
+            tf->rewindForReading();
+
+            // check if another pass is needed.
+            uint32_t u32Count = std::min(static_cast<uint32_t>(m_runs.size()), m_u32BufferPages);
+            for (uint32_t i = 0; i < u32Count; ++i)
+            {
+                m_runs.pop_front();
+            }
+
+            if (m_runs.size() == 0)
+            {
+                m_sortedFile = tf;
+                break;
+            }
+            else
+            {
+                m_runs.push_back(tf);
+            }
+        }
+    }
+
+    m_bInsertionPhase = false;
+}
+
+void ExternalSorter::sort(int dim)
+{
+    cmpR cmpr(dim);
+    cmpE cmpe(dim);
+    if (m_bInsertionPhase == false)
+        throw Tools::IllegalStateException("ExternalSorter::sort: Input has already been sorted.");
+
+    if (m_runs.empty())
+    {
+        // The data fits in main memory. No need to store to disk.
+        std::sort(m_buffer.begin(), m_buffer.end(), cmpr);
+        m_bInsertionPhase = false;
+        return;
+    }
+
+    if (m_buffer.size() > 0)
+    {
+        // Whatever remained in the buffer (if not filled) needs to be stored
+        // as the final bucket.
+        std::sort(m_buffer.begin(), m_buffer.end(), cmpr);
+        Tools::TemporaryFile* tf = new Tools::TemporaryFile();
+        for (size_t j = 0; j < m_buffer.size(); ++j)
+        {
+            m_buffer[j]->storeToFile(*tf);
+            delete m_buffer[j];
+        }
+        m_buffer.clear();
+        tf->rewindForReading();
+        m_runs.push_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
+    }
+
+    if (m_runs.size() == 1)
+    {
+        m_sortedFile = m_runs.front();
+    }
+    else
+    {
+        Record* r = 0;
+
+        while (m_runs.size() > 1)
+        {
+            Tools::SmartPointer<Tools::TemporaryFile> tf(new Tools::TemporaryFile());
+            std::vector<Tools::SmartPointer<Tools::TemporaryFile> > buckets;
+            std::vector<std::queue<Record*> > buffers;
+            std::priority_queue<PQEntry, std::vector<PQEntry>, cmpE> pq(cmpe);
 
             // initialize buffers and priority queue.
             std::list<Tools::SmartPointer<Tools::TemporaryFile> >::iterator it = m_runs.begin();
@@ -468,7 +626,7 @@ void BulkLoader::bulkLoadUsingKDT(
     pTree->deleteNode(n.get());
 
 #ifndef NDEBUG
-    std::cerr << "R2Tree::BulkLoader: Sorting data." << std::endl;
+    std::cerr << "R2Tree::BulkLoader: Grouping Data." << std::endl;
 #endif
 
     Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
@@ -487,27 +645,4 @@ void BulkLoader::bulkLoadUsingKDT(
     }
     es->sort();
 
-    pTree->m_stats.m_u64Data = es->getTotalEntries();
-
-    // create index levels.
-    uint32_t level = 0;
-
-    while (true)
-    {
-#ifndef NDEBUG
-        std::cerr << "RTree::BulkLoader: Building level " << level << std::endl;
-#endif
-
-        pTree->m_stats.m_nodesInLevel.push_back(0);
-
-        Tools::SmartPointer<ExternalSorter> es2 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
-        createLevel(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);
-        es = es2;
-
-        if (es->getTotalEntries() == 1) break;
-        es->sort();
-    }
-
-    pTree->m_stats.m_u32TreeHeight = level;
-    pTree->storeHeader();
 }
