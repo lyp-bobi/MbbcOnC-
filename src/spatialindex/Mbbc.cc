@@ -16,16 +16,16 @@ Mbbc::Mbbc() {
     m_embr=*new Region;
     m_vmbr=*new Region;
     m_wmbr=*new Region;
-    m_startTime=0;
-    m_endTime=0;
+    m_startTime=std::numeric_limits<double>::max();;
+    m_endTime=-std::numeric_limits<double>::max();;
 }
 
 Mbbc::Mbbc(const SpatialIndex::Region &smbr, const SpatialIndex::Region &embr, const SpatialIndex::Region &vbr,
-           const SpatialIndex::Region &pmbr, double tStart, double tEnd) {
+           const SpatialIndex::Region &wmbr, double tStart, double tEnd) {
     m_smbr=smbr;
     m_embr=embr;
     m_vmbr=vbr;
-    m_wmbr=pmbr;
+    m_wmbr=wmbr;
     m_startTime=tStart;
     m_endTime=tEnd;
 }
@@ -127,19 +127,20 @@ void Mbbc::getMBRAtTime(double t, SpatialIndex::Region &out) const {
                 );
     }
     out.makeDimension(2);
-    double xlow=std::max(m_smbr.m_pLow[0]-(t-m_startTime)*m_vmbr.m_pLow[0],
+    double xlow=std::max(m_smbr.m_pLow[0]+(t-m_startTime)*m_vmbr.m_pLow[0],
             m_embr.m_pLow[0]-(m_endTime-t)*m_vmbr.m_pHigh[0]);
     double xhigh=std::min(m_smbr.m_pHigh[0]+(t-m_startTime)*m_vmbr.m_pHigh[0],
-                         m_embr.m_pHigh[0]+(m_endTime-t)*m_vmbr.m_pLow[0]);
-    double ylow=std::max(m_smbr.m_pLow[1]-(t-m_startTime)*m_vmbr.m_pLow[1],
+                         m_embr.m_pHigh[0]-(m_endTime-t)*m_vmbr.m_pLow[0]);
+    double ylow=std::max(m_smbr.m_pLow[1]+(t-m_startTime)*m_vmbr.m_pLow[1],
                          m_embr.m_pLow[1]-(m_endTime-t)*m_vmbr.m_pHigh[1]);
     double yhigh=std::min(m_smbr.m_pHigh[1]+(t-m_startTime)*m_vmbr.m_pHigh[1],
-                          m_embr.m_pHigh[1]+(m_endTime-t)*m_vmbr.m_pLow[1]);
+                          m_embr.m_pHigh[1]-(m_endTime-t)*m_vmbr.m_pLow[1]);
     out.m_pLow[0]=xlow;
     out.m_pLow[1]=ylow;
     out.m_pHigh[0]=xhigh;
     out.m_pHigh[1]=yhigh;
-    //std::cout<<xlow<<ylow<<xhigh<<yhigh<<std::endl;
+//    std::cout<<toString()<<std::endl;
+//    std::cout<<xlow<<" "<<ylow<<" "<<xhigh<<" "<<yhigh<<" "<<std::endl;
 }
 
 
@@ -168,6 +169,7 @@ bool Mbbc::intersectsShape(const SpatialIndex::IShape& s) const {
 bool Mbbc::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     Region timed;
     getMBRAtTime(in.m_startTime,timed);
+
     return timed.intersectsRegion(in);
 }
 bool Mbbc::intersectsRegion(const Region& in) const{
@@ -193,8 +195,8 @@ void Mbbc::makeInfinite()
     m_embr.makeInfinite(2);
     m_vmbr.makeInfinite(2);
     m_wmbr.makeInfinite(2);
-    m_startTime = -std::numeric_limits<double>::max();
-    m_endTime = std::numeric_limits<double>::max();
+    m_startTime = std::numeric_limits<double>::max();
+    m_endTime = -std::numeric_limits<double>::max();
 }
 
 
@@ -205,6 +207,8 @@ void Mbbc::combineMbbc(const Mbbc& r)
     m_embr.combineRegion(r.m_embr);
     m_vmbr.combineRegion(r.m_vmbr);
     m_wmbr.combineRegion(r.m_wmbr);
+    m_startTime = std::min(m_startTime, r.m_startTime);
+    m_endTime = std::max(m_endTime, r.m_endTime);
 }
 
 bool Mbbc::containsMbbc(const SpatialIndex::Mbbc &r) {
@@ -221,4 +225,25 @@ void Mbbc::getCombinedMbbc(Mbbc& out, const Mbbc& in) const
 {
     out = *this;
     out.combineMbbc(in);
+}
+const std::string Mbbc::toString() const{
+    std::string s ="smbr:"+ std::to_string(m_smbr.m_pLow[0])+" "+
+            std::to_string(m_smbr.m_pHigh[0])+" "+
+            std::to_string(m_smbr.m_pLow[1])+" "+
+            std::to_string(m_smbr.m_pHigh[1])+"\n"+
+            "embr:"+ std::to_string(m_embr.m_pLow[0])+" "+
+            std::to_string(m_embr.m_pHigh[0])+" "+
+            std::to_string(m_embr.m_pLow[1])+" "+
+            std::to_string(m_embr.m_pHigh[1])+"\n"+
+            "vmbr:"+ std::to_string(m_vmbr.m_pLow[0])+" "+
+            std::to_string(m_vmbr.m_pHigh[0])+" "+
+            std::to_string(m_vmbr.m_pLow[1])+" "+
+            std::to_string(m_vmbr.m_pHigh[1])+"\n"+
+            "wmbr:"+ std::to_string(m_wmbr.m_pLow[0])+" "+
+            std::to_string(m_wmbr.m_pHigh[0])+" "+
+            std::to_string(m_wmbr.m_pLow[1])+" "+
+            std::to_string(m_wmbr.m_pHigh[1])+"\n"+
+            "time:"+ std::to_string(m_startTime)+" "+
+            std::to_string(m_endTime);
+    return s;
 }

@@ -59,7 +59,7 @@ namespace Tools
 			}
 
 			#ifndef NDEBUG
-			std::cerr << "Lost pointers: " << m_pointerCount << std::endl;
+//			std::cerr << "Lost pointers: " << m_pointerCount << std::endl;
 			#endif
 		}
 

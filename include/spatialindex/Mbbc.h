@@ -63,6 +63,8 @@ namespace SpatialIndex
         virtual bool containsMbbc(const Mbbc& in);
         virtual void getCombinedMbbc(Mbbc& out, const Mbbc& in) const;
 
+        const std::string toString() const;
+
         Region m_smbr;
         Region m_embr;
         Region m_vmbr;

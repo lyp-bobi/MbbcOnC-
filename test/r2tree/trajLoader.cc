@@ -26,6 +26,7 @@ public:
     {
         if (n.isLeaf()) m_leafIO++;
         else m_indexIO++;
+
     }
 
     void visitData(const IData& d)
@@ -106,10 +107,18 @@ Type stringToNum(const string& str)
     return num;
 }
 double naivetime(string l){
-    int h = stringToNum<int>(l.substr(0,2));
-    int m = stringToNum<int>(l.substr(3,5));
-    int s = stringToNum<int>(l.substr(6,8));
-    return 10000*h+100*m+s;
+    if(l.size()==9){
+        int h = stringToNum<int>(l.substr(0,2));
+        int m = stringToNum<int>(l.substr(3,5));
+        int s = stringToNum<int>(l.substr(6,8));
+        return 10000*h+100*m+s;
+    } else{
+        int h = stringToNum<int>(l.substr(0,1));
+        int m = stringToNum<int>(l.substr(2,4));
+        int s = stringToNum<int>(l.substr(5,7));
+        return 10000*h+100*m+s;
+    }
+
 }
 struct xyt{
         double x;
@@ -138,12 +147,14 @@ vector< vector<xyt> > cuttraj(vector<xyt> traj){
     int oldpd=traj.at(0).t/10000;
     for(int i=0;i<traj.size();i++){
         int newpd=traj.at(i).t/10000;
-        //cout<<newpd<<endl;
         if(newpd!=oldpd){
             xyt mid1=makemid(traj.at(i-1),traj.at(i),(oldpd+1)*10000);
-            xyt mid2=makemid(traj.at(i-1),traj.at(i),newpd*10000);
             segments.at(oldpd).push_back(mid1);
-            segments.at(newpd).push_back(mid2);
+            if(int(traj.at(i).t)%10000!=0){
+                xyt mid2=makemid(traj.at(i-1),traj.at(i),newpd*10000);
+                segments.at(newpd).push_back(mid2);
+            }
+            oldpd=newpd;
         }
         segments.at(newpd).push_back(traj.at(i));
     }
@@ -153,7 +164,7 @@ vector< vector<xyt> > cuttraj(vector<xyt> traj){
 Mbbc toMbbc(vector<xyt> seg){
     if(seg.empty()) cout<<"no! a empty MBBC!"<<endl;
     double startx=seg.begin()->x,starty=seg.begin()->y,startt=seg.begin()->t;
-    double endx=seg.end()->x,endy=seg.end()->y,endt=seg.end()->t;
+    double endx=seg.back().x,endy=seg.back().y,endt=seg.back().t;
     double maxvxP=0,maxvxN=0,maxvyP=0,maxvyN=0;
     double minx=startx,maxx=startx,miny=starty,maxy=starty;
     for(int i=0;i<seg.size();i++){
@@ -161,6 +172,7 @@ Mbbc toMbbc(vector<xyt> seg){
             double vx=(seg.at(i).x-startx)/(seg.at(i).t-startt);
             if(vx>maxvxP) maxvxP=vx;
             if(vx<maxvxN) maxvxN=vx;
+
             double vy=(seg.at(i).y-starty)/(seg.at(i).t-startt);
             if(vy>maxvyP) maxvyP=vy;
             if(vy<maxvyN) maxvyN=vy;
@@ -173,6 +185,7 @@ Mbbc toMbbc(vector<xyt> seg){
             if(vy>maxvyP) maxvyP=vy;
             if(vy<maxvyN) maxvyN=vy;
         }
+
         if(seg.at(i).x<minx) minx=seg.at(i).x;
         if(seg.at(i).x>maxx) maxx=seg.at(i).x;
         if(seg.at(i).y<miny) miny=seg.at(i).y;
@@ -184,11 +197,11 @@ Mbbc toMbbc(vector<xyt> seg){
     double eHigh[2]={endx,endy};
     double vLow[2]={maxvxN,maxvyN};
     double vHigh[2]={maxvxP,maxvyP};
-    double pLow[2]={minx,miny};
-    double pHigh[2]={maxx,maxy};
+    double wLow[2]={minx,miny};
+    double wHigh[2]={maxx,maxy};
     double stime=int(startt/10000)*10000;
     return Mbbc(Region(sLow,sHigh,2),Region(eLow,eHigh,2),
-            Region(vLow,vHigh,2),Region(pLow,pHigh,2),stime,stime+10000);
+            Region(vLow,vHigh,2),Region(wLow,wHigh,2),stime,stime+10000);
 }
 Region toMbr(vector<xyt> seg){
     if(seg.empty()) cout<<"no! a empty MBR!"<<endl;
@@ -209,15 +222,14 @@ Region toMbr(vector<xyt> seg){
 }
 
 void loadCsvToMbbc(){
-    ifstream inFile("/home/chuang/geolifedata.csv", ios::in);
+    ifstream inFile("/home/chuang/geolifedatasimplify.csv", ios::in);
     string lineStr;
-    //cout<<"hi"<<endl;
+
     getline(inFile, lineStr);
     vector<int> ids;
     multimap<int,xyt> trajs;
     vector< vector< pair<int,Mbbc> > > liar(24);
     while (getline(inFile, lineStr)){
-        //cout<<lineStr<<endl;
         string str;
         stringstream ss(lineStr);
         getline(ss, str, ',');
@@ -233,7 +245,6 @@ void loadCsvToMbbc(){
         ids.push_back(id);
         trajs.insert(make_pair(id,p));
     }
-    //cout<<ids.size();
     for(int i=0;i<ids.size();i++){
         int id= ids.at(i);
         multimap<int,xyt>::iterator beg,end,iter;
@@ -249,7 +260,9 @@ void loadCsvToMbbc(){
 
             for(int j =0;j<24;j++){
                 if(!seg.at(j).empty()){
-                    liar.at(j).push_back(make_pair(id,toMbbc(seg.at(j))));
+                    Mbbc bc=toMbbc(seg.at(j));
+                    liar.at(j).push_back(make_pair(id,bc));
+//                    cout<<id<<"\n"<<bc.toString()<<"\n";
                 }
             }
         }
@@ -274,15 +287,15 @@ void loadCsvToMbbc(){
     if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
     else std::cerr << "The stucture seems O.K." << std::endl;
 
-    double pLow[2]={39.5,116.3};
-    double pHigh[2]={-1,2};
-    const Point* p =new Point(pLow,2);
+    double pLow[2]={32.4,115.1};
+    double pHigh[2]={39.6,116.5};
+    Region r(pLow,pHigh,2);
+    TimeRegion tr(pLow,pHigh,1000,1000,2);
     MyVisitor vis;
-    tree->intersectsWithQuery(*p,vis);
+    tree->intersectsWithQuery(tr,vis);
     std::cerr << *tree;
     std::cerr << "Buffer hits: " << file->getHits() << std::endl;
     std::cerr << "Index ID: " << indexIdentifier << std::endl;
-
 
 
     cout<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
@@ -293,7 +306,7 @@ void loadCsvToMbbc(){
 }
 
 void loadCsvToMbr(){
-    ifstream inFile("/home/chuang/geolifedata.csv", ios::in);
+    ifstream inFile("/home/chuang/geolifedatasimplify.csv", ios::in);
     string lineStr;
     //cout<<"hi"<<endl;
     getline(inFile, lineStr);
@@ -350,11 +363,12 @@ void loadCsvToMbr(){
 
     ISpatialIndex* tree = RTree::createAndBulkLoadNewRTree(
             RTree::BLM_STR, ds1, *file, 0.9, 10,10, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
-    double pLow[2]={39.5,116.3};
-    double pHigh[2]={-1,2};
-    const Point* p =new Point(pLow,2);
+    double pLow[2]={32.4,115.1};
+    double pHigh[2]={39.6,116.5};
+    Region r(pLow,pHigh,2);
+    TimeRegion tr(pLow,pHigh,4000,4000,2);
     MyVisitor vis;
-    tree->intersectsWithQuery(*p,vis);
+    tree->intersectsWithQuery(r,vis);
     std::cerr << *tree;
     std::cerr << "Buffer hits: " << file->getHits() << std::endl;
     std::cerr << "Index ID: " << indexIdentifier << std::endl;
@@ -371,6 +385,8 @@ void loadCsvToMbr(){
 
 
 int main(){
+    loadCsvToMbr();
+    cout<<"end\n"<<endl;
     loadCsvToMbbc();
     return 0;
 }

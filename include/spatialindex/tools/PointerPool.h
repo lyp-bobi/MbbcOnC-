@@ -63,6 +63,7 @@ namespace Tools
 
 		PoolPointer<X> acquire()
 		{
+//            std::cerr<<"pointercount "<<m_pointerCount<<std::endl;
 			X* p = 0;
 
 			if (! m_pool.empty())

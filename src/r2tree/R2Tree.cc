@@ -826,8 +826,8 @@ std::ostream& SpatialIndex::R2Tree::operator<<(std::ostream& os, const R2Tree& t
           << "Leaf pool misses: " << t.m_leafPool.m_misses << std::endl
           << "Index pool hits: " << t.m_indexPool.m_hits << std::endl
           << "Index pool misses: " << t.m_indexPool.m_misses << std::endl
-          << "Region pool hits: " << t.m_MbbcPool.m_hits << std::endl
-          << "Region pool misses: " << t.m_MbbcPool.m_misses << std::endl
+          << "Mbbc pool hits: " << t.m_MbbcPool.m_hits << std::endl
+          << "Mbbc pool misses: " << t.m_MbbcPool.m_misses << std::endl
           << "Point pool hits: " << t.m_pointPool.m_hits << std::endl
           << "Point pool misses: " << t.m_pointPool.m_misses << std::endl;
 #endif
@@ -856,7 +856,6 @@ void SpatialIndex::R2Tree::R2Tree::rangeQuery(RangeQueryType type, const IShape&
         if (n->m_level == 0)
         {
             v.visitNode(*n);
-
             for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
             {
                 bool b;

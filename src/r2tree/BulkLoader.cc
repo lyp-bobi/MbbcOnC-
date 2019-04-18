@@ -521,6 +521,7 @@ void BulkLoader::bulkLoadUsingSTR(
 
     pTree->m_stats.m_u32TreeHeight = level;
     pTree->storeHeader();
+//    std::cout<<"mbbcpool: "<< pTree->m_MbbcPool.m_pointerCount<<std::endl;
 }
 
 void BulkLoader::createLevel(
@@ -537,6 +538,8 @@ void BulkLoader::createLevel(
     uint64_t b = (level == 0) ? bleaf : bindex;
     uint64_t P = static_cast<uint64_t>(std::ceil(static_cast<double>(es->getTotalEntries()) / static_cast<double>(b)));
     uint64_t S = static_cast<uint64_t>(std::ceil(std::sqrt(static_cast<double>(P))));
+
+//    std::cerr<<"CRTLVL with"<<b<<" "<<P<<" "<<S<<" "<<level<<" "<<dimension<<std::endl;
 
     if (S == 1 || dimension == pTree->m_dimension - 1 || S * b == es->getTotalEntries())
     {
@@ -594,7 +597,7 @@ void BulkLoader::createLevel(
 Node* BulkLoader::createNode(SpatialIndex::R2Tree::R2Tree* pTree, std::vector<ExternalSorter::Record*>& e, uint32_t level)
 {
     Node* n;
-
+//    std::cerr<<"createNode at level"<<level<<std::endl;
     if (level == 0) n = new Leaf(pTree, -1);
     else n = new Index(pTree, -1, level);
 
@@ -655,7 +658,6 @@ void BulkLoader::bulkLoadUsingKDT(
         pTree->m_stats.m_nodesInLevel.push_back(0);
     }
     Node* nn=recuisiveBuildKdtree(pTree,es,bleaf,bindex,nlevel,pageSize,numberOfPages);
-    pTree->writeNode(nn);
     pTree->m_rootID=nn->m_identifier;
 }
 
@@ -663,9 +665,9 @@ Node* BulkLoader::recuisiveBuildKdtree(SpatialIndex::R2Tree::R2Tree *pTree,
                                        Tools::SmartPointer<SpatialIndex::R2Tree::ExternalSorter> es,
                                        uint32_t bleaf, uint32_t bindex, uint32_t level, uint32_t pageSize,
                                        uint32_t numberOfPages) {
+    //std::cerr<<"building"<<level<<std::endl;
     std::vector<ExternalSorter::Record*> node;
     ExternalSorter::Record* r;
-    int gay=es->getTotalEntries();
     es->sort(level%4+1);
     if(es->getTotalEntries()<=bleaf){
 
@@ -693,6 +695,9 @@ Node* BulkLoader::recuisiveBuildKdtree(SpatialIndex::R2Tree::R2Tree *pTree,
         }
         Node* lNode=recuisiveBuildKdtree(pTree,esL,bleaf,bindex,level-1,pageSize,numberOfPages);
         Node* rNode=recuisiveBuildKdtree(pTree,esR,bleaf,bindex,level-1,pageSize,numberOfPages);
+//        std::cout<<"grouping at level "<<level<<std::endl;
+//        std::cout<<lNode->m_nodeMbbc.toString()<<std::endl;
+//        std::cout<<rNode->m_nodeMbbc.toString()<<std::endl;
         node.push_back(new ExternalSorter::Record(lNode->m_nodeMbbc, lNode->m_identifier, 0, 0, 0));
         node.push_back(new ExternalSorter::Record(rNode->m_nodeMbbc, rNode->m_identifier, 0, 0, 0));
         Node* n = createNode(pTree, node, level);
