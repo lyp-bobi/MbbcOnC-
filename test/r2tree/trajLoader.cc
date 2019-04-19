@@ -219,7 +219,7 @@ Region toMbr(vector<xyt> seg){
     return Region(pLow,pHigh,2);
 }
 
-void loadCsvToMbbc(){
+void loadCsvToMbbc(R2Tree::BulkLoadMethod blm){
     ifstream inFile("/home/chuang/geolifedatasimplify.csv", ios::in);
     string lineStr;
 
@@ -280,7 +280,7 @@ void loadCsvToMbbc(){
     // (LRU buffer, etc can be created the same way).
 
     ISpatialIndex* tree = R2Tree::createAndBulkLoadNewR2Tree(
-            R2Tree::BLM_KDT, ds2, *file, 0.9, 4,4,2, indexIdentifier);
+            blm, ds2, *file, 0.9, 4,4,2, indexIdentifier);
     bool ret = tree->isIndexValid();
     if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
     else std::cerr << "The stucture seems O.K." << std::endl;
@@ -383,8 +383,10 @@ void loadCsvToMbr(){
 
 
 int main(){
-    loadCsvToMbr();
+//    loadCsvToMbr();
 //    cout<<"end\n"<<endl;
-    loadCsvToMbbc();
+    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR);
+    cout<<"\n\n\n\n";
+    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR2);
     return 0;
 }
