@@ -1402,7 +1402,7 @@ void SpatialIndex::RTree::RTree::rangeQuery(RangeQueryType type, const IShape& q
 	while (! st.empty())
 	{
 		NodePtr n = st.top(); st.pop();
-
+        
 		if (n->m_level == 0)
 		{
 			v.visitNode(*n);
@@ -1419,6 +1419,9 @@ void SpatialIndex::RTree::RTree::rangeQuery(RangeQueryType type, const IShape& q
 					v.visitData(data);
 					++(m_stats.m_u64QueryResults);
 				}
+//				else{
+//                    std::cout<<"ack failed\n"<<query.toString()<<"\n"<<n->m_ptrMBR[cChild]->toString()<<"\n";
+//                }
 			}
 		}
 		else
@@ -1431,6 +1434,7 @@ void SpatialIndex::RTree::RTree::rangeQuery(RangeQueryType type, const IShape& q
 			}
 		}
 	}
+    std::cout<<"Find "<<m_stats.m_u64QueryResults<<" results.\n";
 }
 
 void SpatialIndex::RTree::RTree::selfJoinQuery(id_type id1, id_type id2, const Region& r, IVisitor& vis)
@@ -1530,9 +1534,9 @@ std::ostream& SpatialIndex::RTree::operator<<(std::ostream& os, const RTree& t)
 		<< "Index pool misses: " << t.m_indexPool.m_misses << std::endl
 		<< "Region pool hits: " << t.m_regionPool.m_hits << std::endl
 		<< "Region pool misses: " << t.m_regionPool.m_misses << std::endl
-		<< "Point pool hits: " << t.m_pointPool.m_hits << std::endl
-		<< "Point pool misses: " << t.m_pointPool.m_misses << std::endl;
-	#endif
+        << "Point pool hits: " << t.m_pointPool.m_hits << std::endl
+        << "Point pool misses: " << t.m_pointPool.m_misses << std::endl;
+#endif
 
-	return os;
+    return os;
 }

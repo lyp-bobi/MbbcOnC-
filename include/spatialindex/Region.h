@@ -38,6 +38,8 @@ namespace SpatialIndex
 		Region(const Region& in);
 		virtual ~Region();
 
+        const std::string toString() const;
+
 		virtual Region& operator=(const Region& r);
 		virtual bool operator==(const Region&) const;
 

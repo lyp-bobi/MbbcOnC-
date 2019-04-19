@@ -539,8 +539,6 @@ void BulkLoader::createLevel(
     uint64_t P = static_cast<uint64_t>(std::ceil(static_cast<double>(es->getTotalEntries()) / static_cast<double>(b)));
     uint64_t S = static_cast<uint64_t>(std::ceil(std::sqrt(static_cast<double>(P))));
 
-//    std::cerr<<"CRTLVL with"<<b<<" "<<P<<" "<<S<<" "<<level<<" "<<dimension<<std::endl;
-
     if (S == 1 || dimension == pTree->m_dimension - 1 || S * b == es->getTotalEntries())
     {
         std::vector<ExternalSorter::Record*> node;
@@ -603,6 +601,7 @@ Node* BulkLoader::createNode(SpatialIndex::R2Tree::R2Tree* pTree, std::vector<Ex
 
     for (size_t cChild = 0; cChild < e.size(); ++cChild)
     {
+//        std::cout<<"level "<<level<<",child id"<<e[cChild]->m_id<<"\n";
         n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData, e[cChild]->m_Mbbc, e[cChild]->m_id);
         e[cChild]->m_pData = 0;
         delete e[cChild];
@@ -650,7 +649,7 @@ void BulkLoader::bulkLoadUsingKDT(
     int nlevel=1;
     while(nleaf!=1){
         nlevel++;
-        nleaf/=2;
+        nleaf/=bindex;
     }
     pTree->m_stats.m_u64Data = es->getTotalEntries();
     pTree->m_stats.m_u32TreeHeight = nlevel+1;
@@ -665,11 +664,12 @@ Node* BulkLoader::recuisiveBuildKdtree(SpatialIndex::R2Tree::R2Tree *pTree,
                                        Tools::SmartPointer<SpatialIndex::R2Tree::ExternalSorter> es,
                                        uint32_t bleaf, uint32_t bindex, uint32_t level, uint32_t pageSize,
                                        uint32_t numberOfPages) {
-    //std::cerr<<"building"<<level<<std::endl;
+    uint64_t b = (level == 0) ? bleaf : bindex;
+    uint64_t ent = es->getTotalEntries();
     std::vector<ExternalSorter::Record*> node;
     ExternalSorter::Record* r;
     es->sort(level%4+1);
-    if(es->getTotalEntries()<=bleaf){
+    if(level==0){
 
         for(int i=0;i<es->getTotalEntries();i++) {
             r = es->getNextRecord();
@@ -682,24 +682,17 @@ Node* BulkLoader::recuisiveBuildKdtree(SpatialIndex::R2Tree::R2Tree *pTree,
         return n;
     }
     else{
-
-        Tools::SmartPointer<ExternalSorter> esL = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
-        Tools::SmartPointer<ExternalSorter> esR = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
-        u_int64_t len=es->getTotalEntries();
-        u_int64_t half=len/2;
-        for(u_int64_t i=0;i<half;i++){
-            esL->insert(es->getNextRecord(),level%4+1);
+        std::vector<Tools::SmartPointer<ExternalSorter>> esG;
+        for(int i=0;i<b;i++) esG.push_back(Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages)));
+        u_int64_t len=ceil((ent+1)*1.0/b);
+        for(u_int64_t i=0;i<ent;i++){
+            esG.at(i/len)->insert(es->getNextRecord(),level%4+1);
         }
-        for(u_int64_t i=half;i<len;i++){
-            esR->insert(es->getNextRecord(),level%4+1);
+        for(int i=0;i<b;i++){
+            Node* tNode=recuisiveBuildKdtree(pTree,esG.at(i),bleaf,bindex,level-1,pageSize,numberOfPages);
+//            std::cout<<"node id"<<tNode->m_identifier<<" \n";
+            node.push_back(new ExternalSorter::Record(tNode->m_nodeMbbc, tNode->m_identifier, 0, 0, 0));
         }
-        Node* lNode=recuisiveBuildKdtree(pTree,esL,bleaf,bindex,level-1,pageSize,numberOfPages);
-        Node* rNode=recuisiveBuildKdtree(pTree,esR,bleaf,bindex,level-1,pageSize,numberOfPages);
-//        std::cout<<"grouping at level "<<level<<std::endl;
-//        std::cout<<lNode->m_nodeMbbc.toString()<<std::endl;
-//        std::cout<<rNode->m_nodeMbbc.toString()<<std::endl;
-        node.push_back(new ExternalSorter::Record(lNode->m_nodeMbbc, lNode->m_identifier, 0, 0, 0));
-        node.push_back(new ExternalSorter::Record(rNode->m_nodeMbbc, rNode->m_identifier, 0, 0, 0));
         Node* n = createNode(pTree, node, level);
         node.clear();
         pTree->writeNode(n);

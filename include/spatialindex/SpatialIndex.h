@@ -76,6 +76,7 @@ namespace SpatialIndex
 		virtual double getArea() const = 0;
 		virtual double getMinimumDistance(const IShape& in) const = 0;
 		virtual ~IShape() {}
+		virtual const std::string toString() const{std::string s="shape";return s;}
 	}; // IShape
 
 	class SIDX_DLL ITimeShape : public Tools::IInterval

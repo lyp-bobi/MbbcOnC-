@@ -868,6 +868,9 @@ void SpatialIndex::R2Tree::R2Tree::rangeQuery(RangeQueryType type, const IShape&
                     v.visitData(data);
                     ++(m_stats.m_u64QueryResults);
                 }
+//                else{
+//                    std::cout<<"ack failed\n"<<query.toString()<<"\n"<<n->m_ptrMbbc[cChild]->toString()<<"\n";
+//                }
             }
         }
         else
@@ -880,4 +883,5 @@ void SpatialIndex::R2Tree::R2Tree::rangeQuery(RangeQueryType type, const IShape&
             }
         }
     }
+    std::cout<<"Find "<<m_stats.m_u64QueryResults<<" results.\n";
 }

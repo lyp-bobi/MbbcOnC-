@@ -35,6 +35,7 @@ public:
         d.getShape(&pS);
         // do something.
         delete pS;
+//        cout<<"data"<<endl;
 
         // data should be an array of characters representing a Region as a string.
         byte* pData = 0;
@@ -206,7 +207,6 @@ Mbbc toMbbc(vector<xyt> seg){
 Region toMbr(vector<xyt> seg){
     if(seg.empty()) cout<<"no! a empty MBR!"<<endl;
     double startx=seg.begin()->x,starty=seg.begin()->y,startt=seg.begin()->t;
-    double endx=seg.end()->x,endy=seg.end()->y,endt=seg.end()->t;
     double minx=startx,maxx=startx,miny=starty,maxy=starty;
     for(int i=0;i<seg.size();i++){
         if(seg.at(i).x<minx) minx=seg.at(i).x;
@@ -214,11 +214,9 @@ Region toMbr(vector<xyt> seg){
         if(seg.at(i).y<miny) miny=seg.at(i).y;
         if(seg.at(i).y>maxy) maxy=seg.at(i).y;
     }
-
     double pLow[2]={minx,miny};
     double pHigh[2]={maxx,maxy};
-    double stime=int(startt/10000)*10000;
-    return *new Region(pLow,pHigh,2);
+    return Region(pLow,pHigh,2);
 }
 
 void loadCsvToMbbc(){
@@ -282,13 +280,13 @@ void loadCsvToMbbc(){
     // (LRU buffer, etc can be created the same way).
 
     ISpatialIndex* tree = R2Tree::createAndBulkLoadNewR2Tree(
-            R2Tree::BLM_KDT, ds2, *file, 0.9, 10,10,2, indexIdentifier);
+            R2Tree::BLM_KDT, ds2, *file, 0.9, 4,4,2, indexIdentifier);
     bool ret = tree->isIndexValid();
     if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
     else std::cerr << "The stucture seems O.K." << std::endl;
 
     double pLow[2]={32.4,115.1};
-    double pHigh[2]={39.6,116.5};
+    double pHigh[2]={40.0,116.5};
     Region r(pLow,pHigh,2);
     TimeRegion tr(pLow,pHigh,1000,1000,2);
     MyVisitor vis;
@@ -362,9 +360,9 @@ void loadCsvToMbr(){
     // (LRU buffer, etc can be created the same way).
 
     ISpatialIndex* tree = RTree::createAndBulkLoadNewRTree(
-            RTree::BLM_STR, ds1, *file, 0.9, 10,10, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
+            RTree::BLM_STR, ds1, *file, 0.9, 4,4, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
     double pLow[2]={32.4,115.1};
-    double pHigh[2]={39.6,116.5};
+    double pHigh[2]={40.0,116.5};
     Region r(pLow,pHigh,2);
     TimeRegion tr(pLow,pHigh,4000,4000,2);
     MyVisitor vis;
@@ -386,7 +384,7 @@ void loadCsvToMbr(){
 
 int main(){
     loadCsvToMbr();
-    cout<<"end\n"<<endl;
+//    cout<<"end\n"<<endl;
     loadCsvToMbbc();
     return 0;
 }

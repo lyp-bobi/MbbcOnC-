@@ -139,8 +139,7 @@ void Mbbc::getMBRAtTime(double t, SpatialIndex::Region &out) const {
     out.m_pLow[1]=ylow;
     out.m_pHigh[0]=xhigh;
     out.m_pHigh[1]=yhigh;
-//    std::cout<<toString()<<std::endl;
-//    std::cout<<xlow<<" "<<ylow<<" "<<xhigh<<" "<<yhigh<<" "<<std::endl;
+
 }
 
 
@@ -167,9 +166,9 @@ bool Mbbc::intersectsShape(const SpatialIndex::IShape& s) const {
 }
 
 bool Mbbc::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
+    if(!m_wmbr.intersectsRegion(in)) return false;
     Region timed;
     getMBRAtTime(in.m_startTime,timed);
-
     return timed.intersectsRegion(in);
 }
 bool Mbbc::intersectsRegion(const Region& in) const{
