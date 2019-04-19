@@ -568,7 +568,7 @@ void BulkLoader::createLevel(
 
 //    std::cerr<<"CRTLVL with"<<b<<" "<<P<<" "<<S<<" "<<level<<" "<<dimension<<std::endl;
 
-    if (S == 1 || dimension == pTree->m_dimension - 1 || S * b >= es->getTotalEntries())
+    if (S == 1 || dimension == 4+ pTree->m_dimension - 1 || S * b >= es->getTotalEntries())
     {
         std::vector<ExternalSorter::Record*> node;
         ExternalSorter::Record* r;
@@ -699,8 +699,8 @@ void BulkLoader::createLevel2(
     uint64_t P = static_cast<uint64_t>(std::ceil(static_cast<double>(es->getTotalEntries()) / static_cast<double>(b)));
     int remainDim=2*pTree->m_dimension-dimension;
     uint64_t S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P),1.0/remainDim)));
-    std::cout<<"P is "<<P<<"\n";
-    std::cout<<"remainDim"<<remainDim<<" S"<<S<<"\n";
+//    std::cout<<"P is "<<P<<"\n";
+//    std::cout<<"remainDim"<<remainDim<<" S"<<S<<"\n";
     if (S == 1 || dimension == 2*pTree->m_dimension - 1 || S * b >= es->getTotalEntries())
     {
         std::vector<ExternalSorter::Record*> node;
