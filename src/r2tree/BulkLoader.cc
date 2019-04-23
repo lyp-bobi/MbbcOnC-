@@ -533,7 +533,7 @@ void BulkLoader::bulkLoadUsingSTR(
     while (true)
     {
 #ifndef NDEBUG
-        std::cerr << "RTree::BulkLoader: Building level " << level << std::endl;
+        std::cerr << "R2Tree::BulkLoader: Building level " << level << std::endl;
 #endif
 
         pTree->m_stats.m_nodesInLevel.push_back(0);
@@ -632,7 +632,7 @@ void BulkLoader::bulkLoadUsingSTR2(
 ) {
     if (! stream.hasNext())
         throw Tools::IllegalArgumentException(
-                "RTree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
+                "R2Tree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
         );
 
     NodePtr n = pTree->readNode(pTree->m_rootID);
@@ -666,7 +666,7 @@ void BulkLoader::bulkLoadUsingSTR2(
     while (true)
     {
 #ifndef NDEBUG
-        std::cerr << "RTree::BulkLoader: Building level " << level << std::endl;
+        std::cerr << "R2Tree::BulkLoader: Building level " << level << std::endl;
 #endif
 
         pTree->m_stats.m_nodesInLevel.push_back(0);
@@ -699,8 +699,7 @@ void BulkLoader::createLevel2(
     uint64_t P = static_cast<uint64_t>(std::ceil(static_cast<double>(es->getTotalEntries()) / static_cast<double>(b)));
     int remainDim=2*pTree->m_dimension-dimension;
     uint64_t S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P),1.0/remainDim)));
-//    std::cout<<"P is "<<P<<"\n";
-//    std::cout<<"remainDim"<<remainDim<<" S"<<S<<"\n";
+//    std::cerr<<"CRTLVL with"<<b<<" "<<P<<" "<<S<<" "<<level<<" "<<dimension<<std::endl;
     if (S == 1 || dimension == 2*pTree->m_dimension - 1 || S * b >= es->getTotalEntries())
     {
         std::vector<ExternalSorter::Record*> node;

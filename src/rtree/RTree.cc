@@ -1434,7 +1434,6 @@ void SpatialIndex::RTree::RTree::rangeQuery(RangeQueryType type, const IShape& q
 			}
 		}
 	}
-    std::cout<<"Find "<<m_stats.m_u64QueryResults<<" results.\n";
 }
 
 void SpatialIndex::RTree::RTree::selfJoinQuery(id_type id1, id_type id2, const Region& r, IVisitor& vis)
@@ -1537,6 +1536,6 @@ std::ostream& SpatialIndex::RTree::operator<<(std::ostream& os, const RTree& t)
         << "Point pool hits: " << t.m_pointPool.m_hits << std::endl
         << "Point pool misses: " << t.m_pointPool.m_misses << std::endl;
 #endif
-
+    os<<"Number of results: "<<t.m_stats.getQueryResults()<< std::endl;
     return os;
 }

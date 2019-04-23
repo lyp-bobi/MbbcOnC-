@@ -834,7 +834,7 @@ std::ostream& SpatialIndex::R2Tree::operator<<(std::ostream& os, const R2Tree& t
           << "Point pool hits: " << t.m_pointPool.m_hits << std::endl
           << "Point pool misses: " << t.m_pointPool.m_misses << std::endl;
 #endif
-
+    os<<"Number of results: "<<t.m_stats.getQueryResults()<< std::endl;
     return os;
 }
 
@@ -886,5 +886,4 @@ void SpatialIndex::R2Tree::R2Tree::rangeQuery(RangeQueryType type, const IShape&
             }
         }
     }
-    std::cout<<"Find "<<m_stats.m_u64QueryResults<<" results.\n";
 }
