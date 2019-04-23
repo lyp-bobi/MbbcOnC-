@@ -8,6 +8,9 @@
 #include <string>
 #include <tuple>
 #include <map>
+#include<stdlib.h>
+#include<time.h>
+#define random(x,y) (((double)rand()/RAND_MAX)*(y-x+1)+x)
 #include <spatialindex/SpatialIndex.h>
 
 using namespace std;
@@ -46,7 +49,7 @@ public:
         //cout << s << endl;
         delete[] pData;
 
-        cout << d.getIdentifier() << endl;
+//        cout << d.getIdentifier() << endl;
         // the ID of this data entry is an answer to the query. I will just print it to stdout.
     }
 
@@ -219,92 +222,8 @@ Region toMbr(vector<xyt> seg){
     return Region(pLow,pHigh,2);
 }
 
-void loadCsvToMbbc(R2Tree::BulkLoadMethod blm){
-    ifstream inFile("/home/chuang/geolifedatasimplify.csv", ios::in);
-    string lineStr;
-
-    getline(inFile, lineStr);
-    vector<int> ids;
-    multimap<int,xyt> trajs;
-    vector< vector< pair<int,Mbbc> > > liar(24);
-    while (getline(inFile, lineStr)){
-        string str;
-        stringstream ss(lineStr);
-        getline(ss, str, ',');
-        int id= stringToNum<int>(str);
-        getline(ss, str, ',');
-        double x= stringToNum<double>(str);
-        getline(ss, str, ',');
-        double y= stringToNum<double>(str);
-        getline(ss, str, ',');
-        getline(ss, str, ',');
-        double t=naivetime(str);
-        xyt p={x,y,t};
-        ids.push_back(id);
-        trajs.insert(make_pair(id,p));
-    }
-    for(int i=0;i<ids.size();i++){
-        int id= ids.at(i);
-        multimap<int,xyt>::iterator beg,end,iter;
-        vector<xyt> traj;
-        beg = trajs.lower_bound(id);
-        end = trajs.upper_bound(id);
-        for(iter=beg;iter!=end;iter++){
-            traj.push_back(iter->second);
-        }
-        trajs.erase(id);
-        if(!traj.empty()){
-            vector< vector<xyt> > seg = cuttraj(traj);//size 24
-
-            for(int j =0;j<24;j++){
-                if(!seg.at(j).empty()){
-                    Mbbc bc=toMbbc(seg.at(j));
-                    liar.at(j).push_back(make_pair(id,bc));
-//                    cout<<id<<"\n"<<bc.toString()<<"\n";
-                }
-            }
-        }
-
-    }
-//    for (int i = 0; i < 24; ++i) {
-//        cout<<liar.at(i).size()<<endl;
-//    }
-    MyDataStream2 ds2(liar.at(0));
-    string name = "name";
-    id_type indexIdentifier;
-    IStorageManager* diskfile = StorageManager::createNewDiskStorageManager(name, 4096);
-    // Create a new storage manager with the provided base name and a 4K page size.
-
-    StorageManager::IBuffer* file = StorageManager::createNewRandomEvictionsBuffer(*diskfile, 10, false);
-    // applies a main memory random buffer on top of the persistent storage manager
-    // (LRU buffer, etc can be created the same way).
-
-    ISpatialIndex* tree = R2Tree::createAndBulkLoadNewR2Tree(
-            blm, ds2, *file, 0.9, 4,4,2, indexIdentifier);
-    bool ret = tree->isIndexValid();
-    if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
-    else std::cerr << "The stucture seems O.K." << std::endl;
-
-    double pLow[2]={32.4,115.1};
-    double pHigh[2]={40.0,116.5};
-    Region r(pLow,pHigh,2);
-    TimeRegion tr(pLow,pHigh,1000,1000,2);
-    MyVisitor vis;
-    tree->intersectsWithQuery(tr,vis);
-    std::cerr << *tree;
-    std::cerr << "Buffer hits: " << file->getHits() << std::endl;
-    std::cerr << "Index ID: " << indexIdentifier << std::endl;
-
-
-    cout<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
-    delete tree;
-    delete file;
-    delete diskfile;
-
-}
-
-void loadCsvToMbr(){
-    ifstream inFile("/home/chuang/geolifedatasimplify.csv", ios::in);
+void loadCsvToMbr(vector<TimeRegion> queries){
+    ifstream inFile("/home/chuang/geolifedata.csv", ios::in);
     string lineStr;
     //cout<<"hi"<<endl;
     getline(inFile, lineStr);
@@ -344,7 +263,7 @@ void loadCsvToMbr(){
 
             for(int j =0;j<24;j++){
                 if(!seg.at(j).empty()){
-                    liar.at(j).push_back(make_pair(id,toMbr(seg.at(j))));
+                    liar.at(0).push_back(make_pair(id,toMbr(seg.at(j))));
                 }
             }
         }
@@ -358,15 +277,21 @@ void loadCsvToMbr(){
     StorageManager::IBuffer* file = StorageManager::createNewRandomEvictionsBuffer(*diskfile, 10, false);
     // applies a main memory random buffer on top of the persistent storage manager
     // (LRU buffer, etc can be created the same way).
+    clock_t start,end;
+    start=clock();
 
     ISpatialIndex* tree = RTree::createAndBulkLoadNewRTree(
             RTree::BLM_STR, ds1, *file, 0.9, 4,4, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
-    double pLow[2]={32.4,115.1};
-    double pHigh[2]={40.0,116.5};
-    Region r(pLow,pHigh,2);
-    TimeRegion tr(pLow,pHigh,4000,4000,2);
+    end=clock();
+    cout<<"Tree Building Time: "<< end-start<<endl;
     MyVisitor vis;
-    tree->intersectsWithQuery(r,vis);
+    start=clock();
+    for(int i=0;i<queries.size();i++){
+        tree->intersectsWithQuery(queries.at(i),vis);
+    }
+    end=clock();
+    cout<<"Querying time: "<< end-start<<endl;
+    cout<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
     std::cerr << *tree;
     std::cerr << "Buffer hits: " << file->getHits() << std::endl;
     std::cerr << "Index ID: " << indexIdentifier << std::endl;
@@ -375,18 +300,120 @@ void loadCsvToMbr(){
     if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
     else std::cerr << "The stucture seems O.K." << std::endl;
 
-    cout<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
     delete tree;
     delete file;
     delete diskfile;
 }
 
 
+void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,vector<TimeRegion> queries){
+    ifstream inFile("/home/chuang/geolifedata.csv", ios::in);
+    string lineStr;
+
+    getline(inFile, lineStr);
+    vector<int> ids;
+    multimap<int,xyt> trajs;
+    vector< vector< pair<int,Mbbc> > > liar(24);
+    while (getline(inFile, lineStr)){
+        string str;
+        stringstream ss(lineStr);
+        getline(ss, str, ',');
+        int id= stringToNum<int>(str);
+        getline(ss, str, ',');
+        double x= stringToNum<double>(str);
+        getline(ss, str, ',');
+        double y= stringToNum<double>(str);
+        getline(ss, str, ',');
+        getline(ss, str, ',');
+        double t=naivetime(str);
+        xyt p={x,y,t};
+        ids.push_back(id);
+        trajs.insert(make_pair(id,p));
+    }
+    for(int i=0;i<ids.size();i++){
+        int id= ids.at(i);
+        multimap<int,xyt>::iterator beg,end,iter;
+        vector<xyt> traj;
+        beg = trajs.lower_bound(id);
+        end = trajs.upper_bound(id);
+        for(iter=beg;iter!=end;iter++){
+            traj.push_back(iter->second);
+        }
+        trajs.erase(id);
+        if(!traj.empty()){
+            vector< vector<xyt> > seg = cuttraj(traj);//size 24
+
+            for(int j =0;j<24;j++){
+                if(!seg.at(j).empty()){
+                    Mbbc bc=toMbbc(seg.at(j));
+                    bc.m_startTime=0;
+                    bc.m_endTime=10000;
+                    liar.at(0).push_back(make_pair(id,bc));
+//                    cout<<id<<"\n"<<bc.toString()<<"\n";
+                }
+            }
+        }
+
+    }
+//    for (int i = 0; i < 24; ++i) {
+//        cout<<liar.at(i).size()<<endl;
+//    }
+    MyDataStream2 ds2(liar.at(0));
+    string name = "name";
+    id_type indexIdentifier;
+    IStorageManager* diskfile = StorageManager::createNewDiskStorageManager(name, 4096);
+    // Create a new storage manager with the provided base name and a 4K page size.
+
+    StorageManager::IBuffer* file = StorageManager::createNewRandomEvictionsBuffer(*diskfile, 10, false);
+    // applies a main memory random buffer on top of the persistent storage manager
+    // (LRU buffer, etc can be created the same way).
+
+    clock_t start,end;
+    start=clock();
+    ISpatialIndex* tree = R2Tree::createAndBulkLoadNewR2Tree(
+            blm, ds2, *file, 0.9, 4,4,2, indexIdentifier);
+    end=clock();
+    cout<<"Tree Building time: "<< end-start<<endl;
+    bool ret = tree->isIndexValid();
+    if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
+    else std::cerr << "The stucture seems O.K." << std::endl;
+
+    MyVisitor vis;
+    start=clock();
+    for(int i=0;i<queries.size();i++){
+        tree->intersectsWithQuery(queries.at(i),vis);
+    }
+    end=clock();
+    cout<<"Querying time: "<< end-start<<endl;
+    cout<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
+    std::cerr << *tree;
+    std::cerr << "Buffer hits: " << file->getHits() << std::endl;
+    std::cerr << "Index ID: " << indexIdentifier << std::endl;
+
+
+    delete tree;
+    delete file;
+    delete diskfile;
+
+}
+
+
 int main(){
-//    loadCsvToMbr();
-//    cout<<"end\n"<<endl;
-    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR);
+    srand((int)time(NULL));
+    vector<TimeRegion> queries;
+    for (int i = 0; i < 100000; i++){
+        double pLow[2] = {random(31,40.5), random(110,122)};
+        double pHigh[2] = {pLow[0]+random(0,0.01), pLow[1]+random(0,0.01)};
+        Region r(pLow, pHigh, 2);
+        int t =int(random(0,10000));
+        TimeRegion tr(pLow, pHigh, t, t, 2);
+        queries.push_back(tr);
+    }
+    loadCsvToMbr(queries);
     cout<<"\n\n\n\n";
-    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR2);
+//    cout<<"end\n"<<endl;
+    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR,queries);
+    cout<<"\n\n\n\n";
+    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR2,queries);
     return 0;
 }
