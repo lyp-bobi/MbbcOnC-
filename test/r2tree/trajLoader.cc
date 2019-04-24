@@ -12,18 +12,21 @@
 #include<time.h>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x+1)+x)
 #include <spatialindex/SpatialIndex.h>
+#define sourceFile "/home/chuang/geolifedatasimplify.csv"
+//#define sourceFile "/home/chuang/geolifedata.csv"
+#define testtime 100
 
 using namespace std;
 using namespace SpatialIndex;
 
-class MyVisitor : public IVisitor
+class RangeVisitor : public IVisitor
 {
 public:
     size_t m_indexIO;
     size_t m_leafIO;
 
 public:
-    MyVisitor() : m_indexIO(0), m_leafIO(0) {}
+    RangeVisitor() : m_indexIO(0), m_leafIO(0) {}
 
     void visitNode(const INode& n)
     {
@@ -150,17 +153,17 @@ vector< vector<xyt> > cuttraj(vector<xyt> traj){
     vector< vector<xyt> > segments(24);
     int oldpd=traj.at(0).t/10000;
     for(int i=0;i<traj.size();i++){
-        int newpd=traj.at(i).t/10000;
+        int newpd=traj[i].t/10000;
         if(newpd!=oldpd){
-            xyt mid1=makemid(traj.at(i-1),traj.at(i),(oldpd+1)*10000);
+            xyt mid1=makemid(traj.at(i-1),traj[i],(oldpd+1)*10000);
             segments.at(oldpd).push_back(mid1);
-            if(int(traj.at(i).t)%10000!=0){
-                xyt mid2=makemid(traj.at(i-1),traj.at(i),newpd*10000);
+            if(int(traj[i].t)%10000!=0){
+                xyt mid2=makemid(traj.at(i-1),traj[i],newpd*10000);
                 segments.at(newpd).push_back(mid2);
             }
             oldpd=newpd;
         }
-        segments.at(newpd).push_back(traj.at(i));
+        segments.at(newpd).push_back(traj[i]);
     }
     return segments;
 }
@@ -172,28 +175,28 @@ Mbbc toMbbc(vector<xyt> seg){
     double maxvxP=0,maxvxN=0,maxvyP=0,maxvyN=0;
     double minx=startx,maxx=startx,miny=starty,maxy=starty;
     for(int i=0;i<seg.size();i++){
-        if(seg.at(i).t!=startt){
-            double vx=(seg.at(i).x-startx)/(seg.at(i).t-startt);
+        if(seg[i].t!=startt){
+            double vx=(seg[i].x-startx)/(seg[i].t-startt);
             if(vx>maxvxP) maxvxP=vx;
             if(vx<maxvxN) maxvxN=vx;
 
-            double vy=(seg.at(i).y-starty)/(seg.at(i).t-startt);
+            double vy=(seg[i].y-starty)/(seg[i].t-startt);
             if(vy>maxvyP) maxvyP=vy;
             if(vy<maxvyN) maxvyN=vy;
         }
-        if(seg.at(i).t!=endt){
-            double vx=(endx-seg.at(i).x)/(endt-seg.at(i).t);
+        if(seg[i].t!=endt){
+            double vx=(endx-seg[i].x)/(endt-seg[i].t);
             if(vx>maxvxP) maxvxP=vx;
             if(vx<maxvxN) maxvxN=vx;
-            double vy=(endy-seg.at(i).y)/(endt-seg.at(i).t);
+            double vy=(endy-seg[i].y)/(endt-seg[i].t);
             if(vy>maxvyP) maxvyP=vy;
             if(vy<maxvyN) maxvyN=vy;
         }
 
-        if(seg.at(i).x<minx) minx=seg.at(i).x;
-        if(seg.at(i).x>maxx) maxx=seg.at(i).x;
-        if(seg.at(i).y<miny) miny=seg.at(i).y;
-        if(seg.at(i).y>maxy) maxy=seg.at(i).y;
+        if(seg[i].x<minx) minx=seg[i].x;
+        if(seg[i].x>maxx) maxx=seg[i].x;
+        if(seg[i].y<miny) miny=seg[i].y;
+        if(seg[i].y>maxy) maxy=seg[i].y;
     }
     double sLow[2]={startx,starty};
     double sHigh[2]={startx,starty};
@@ -212,22 +215,22 @@ Region toMbr(vector<xyt> seg){
     double startx=seg.begin()->x,starty=seg.begin()->y,startt=seg.begin()->t;
     double minx=startx,maxx=startx,miny=starty,maxy=starty;
     for(int i=0;i<seg.size();i++){
-        if(seg.at(i).x<minx) minx=seg.at(i).x;
-        if(seg.at(i).x>maxx) maxx=seg.at(i).x;
-        if(seg.at(i).y<miny) miny=seg.at(i).y;
-        if(seg.at(i).y>maxy) maxy=seg.at(i).y;
+        if(seg[i].x<minx) minx=seg[i].x;
+        if(seg[i].x>maxx) maxx=seg[i].x;
+        if(seg[i].y<miny) miny=seg[i].y;
+        if(seg[i].y>maxy) maxy=seg[i].y;
     }
     double pLow[2]={minx,miny};
     double pHigh[2]={maxx,maxy};
     return Region(pLow,pHigh,2);
 }
 
-void loadCsvToMbr(vector<TimeRegion> queries){
-    ifstream inFile("/home/chuang/geolifedata.csv", ios::in);
+void loadCsvToMbr(vector<IShape*> &queries){
+    ifstream inFile(sourceFile, ios::in);
     string lineStr;
     //cout<<"hi"<<endl;
     getline(inFile, lineStr);
-    vector<int> ids;
+    set<int> ids;
     multimap<int,xyt> trajs;
     vector< vector< pair<int,Region> > > liar(24);
     while (getline(inFile, lineStr)){
@@ -244,12 +247,11 @@ void loadCsvToMbr(vector<TimeRegion> queries){
         getline(ss, str, ',');
         double t=naivetime(str);
         xyt p={x,y,t};
-        ids.push_back(id);
+        ids.insert(id);
         trajs.insert(make_pair(id,p));
     }
     //cout<<ids.size();
-    for(int i=0;i<ids.size();i++){
-        int id= ids.at(i);
+    for(auto id:ids){
         multimap<int,xyt>::iterator beg,end,iter;
         vector<xyt> traj;
         beg = trajs.lower_bound(id);
@@ -262,8 +264,8 @@ void loadCsvToMbr(vector<TimeRegion> queries){
             vector< vector<xyt> > seg = cuttraj(traj);//size 24
 
             for(int j =0;j<24;j++){
-                if(!seg.at(j).empty()){
-                    liar.at(0).push_back(make_pair(id,toMbr(seg.at(j))));
+                if(!seg[j].empty()){
+                    liar.at(0).push_back(make_pair(id,toMbr(seg[j])));
                 }
             }
         }
@@ -284,10 +286,11 @@ void loadCsvToMbr(vector<TimeRegion> queries){
             RTree::BLM_STR, ds1, *file, 0.9, 4,4, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
     end=clock();
     cout<<"Tree Building Time: "<< end-start<<endl;
-    MyVisitor vis;
+    RangeVisitor vis;
     start=clock();
     for(int i=0;i<queries.size();i++){
-        tree->intersectsWithQuery(queries.at(i),vis);
+        tree->intersectsWithQuery(*queries[i],vis);
+//        tree->nearestNeighborQuery(5,queries[i],vis);
     }
     end=clock();
     cout<<"Querying time: "<< end-start<<endl;
@@ -306,12 +309,12 @@ void loadCsvToMbr(vector<TimeRegion> queries){
 }
 
 
-void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,vector<TimeRegion> queries){
-    ifstream inFile("/home/chuang/geolifedata.csv", ios::in);
+void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,vector<IShape*> &queries){
+    ifstream inFile(sourceFile, ios::in);
     string lineStr;
 
     getline(inFile, lineStr);
-    vector<int> ids;
+    set<int> ids;
     multimap<int,xyt> trajs;
     vector< vector< pair<int,Mbbc> > > liar(24);
     while (getline(inFile, lineStr)){
@@ -327,11 +330,10 @@ void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,vector<TimeRegion> queries){
         getline(ss, str, ',');
         double t=naivetime(str);
         xyt p={x,y,t};
-        ids.push_back(id);
+        ids.insert(id);
         trajs.insert(make_pair(id,p));
     }
-    for(int i=0;i<ids.size();i++){
-        int id= ids.at(i);
+    for(auto id:ids){
         multimap<int,xyt>::iterator beg,end,iter;
         vector<xyt> traj;
         beg = trajs.lower_bound(id);
@@ -344,8 +346,8 @@ void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,vector<TimeRegion> queries){
             vector< vector<xyt> > seg = cuttraj(traj);//size 24
 
             for(int j =0;j<24;j++){
-                if(!seg.at(j).empty()){
-                    Mbbc bc=toMbbc(seg.at(j));
+                if(!seg[j].empty()){
+                    Mbbc bc=toMbbc(seg[j]);
                     bc.m_startTime=0;
                     bc.m_endTime=10000;
                     liar.at(0).push_back(make_pair(id,bc));
@@ -356,7 +358,7 @@ void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,vector<TimeRegion> queries){
 
     }
 //    for (int i = 0; i < 24; ++i) {
-//        cout<<liar.at(i).size()<<endl;
+//        cout<<liar[i].size()<<endl;
 //    }
     MyDataStream2 ds2(liar.at(0));
     string name = "name";
@@ -378,10 +380,11 @@ void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,vector<TimeRegion> queries){
     if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
     else std::cerr << "The stucture seems O.K." << std::endl;
 
-    MyVisitor vis;
+    RangeVisitor vis;
     start=clock();
     for(int i=0;i<queries.size();i++){
-        tree->intersectsWithQuery(queries.at(i),vis);
+        tree->intersectsWithQuery(*queries[i],vis);
+//        tree->nearestNeighborQuery(5,queries[i],vis);
     }
     end=clock();
     cout<<"Querying time: "<< end-start<<endl;
@@ -398,17 +401,66 @@ void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,vector<TimeRegion> queries){
 }
 
 
+//vector<pair<id_type ,Trajectory> > loadCsvToTrajs(){
+//    ifstream inFile(sourceFile, ios::in);
+//    string lineStr;
+//
+//    getline(inFile, lineStr);
+//    set<int> ids;
+//    multimap<int,xyt> trajs;
+//    vector< vector< pair<int,vector<xyt>> > > segs(24);
+//    while (getline(inFile, lineStr)){
+//        string str;
+//        stringstream ss(lineStr);
+//        getline(ss, str, ',');
+//        int id= stringToNum<int>(str);
+//        getline(ss, str, ',');
+//        double x= stringToNum<double>(str);
+//        getline(ss, str, ',');
+//        double y= stringToNum<double>(str);
+//        getline(ss, str, ',');
+//        getline(ss, str, ',');
+//        double t=naivetime(str);
+//        xyt p={x,y,t};
+//        ids.push_back(id);
+//        trajs.insert(make_pair(id,p));
+//    }
+//    for(int i=0;i<ids.size();i++){
+//        int id= ids.at(i);
+//        multimap<int,xyt>::iterator beg,end,iter;
+//        vector<xyt> traj;
+//        beg = trajs.lower_bound(id);
+//        end = trajs.upper_bound(id);
+//        for(iter=beg;iter!=end;iter++){
+//            traj.push_back(iter->second);
+//        }
+//        trajs.erase(id);
+//        if(!traj.empty()){
+//            vector< vector<xyt> > seg = cuttraj(traj);//size 24
+//
+//            for(int j =0;j<24;j++){
+//                if(!seg.at(j).empty()){
+////                    segs.at(j).push_back(make_pair(id,seg.at(j)));
+//                    segs.at(0).push_back(make_pair(id,seg.at(j)));
+//                }
+//            }
+//        }
+//    }
+//    return segs;
+//}
+
 int main(){
     srand((int)time(NULL));
-    vector<TimeRegion> queries;
-    for (int i = 0; i < 100000; i++){
+    vector<IShape*> queries;
+    for (int i = 0; i < testtime; i++){
         double pLow[2] = {random(31,40.5), random(110,122)};
         double pHigh[2] = {pLow[0]+random(0,0.01), pLow[1]+random(0,0.01)};
         Region r(pLow, pHigh, 2);
         int t =int(random(0,10000));
-        TimeRegion tr(pLow, pHigh, t, t, 2);
+        TimeRegion *tr=new TimeRegion(pLow, pHigh, t, t, 2);
         queries.push_back(tr);
     }
+
     loadCsvToMbr(queries);
     cout<<"\n\n\n\n";
 //    cout<<"end\n"<<endl;

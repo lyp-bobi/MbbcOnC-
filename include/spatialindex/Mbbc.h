@@ -2,8 +2,6 @@
 // Created by chuang on 4/1/19.
 //
 
-#ifndef SPATIALINDEX_MBBC_H
-#define SPATIALINDEX_MBBC_H
 #pragma once
 
 namespace SpatialIndex
@@ -51,6 +49,7 @@ namespace SpatialIndex
         virtual void getMBR(Region& out) const;
         virtual double getArea() const;
         virtual double getMinimumDistance(const IShape& in) const;
+        virtual double getMinimumDistance(const Region& in) const;
 
 
         virtual bool intersectsTimeRegion(const TimeRegion& in) const;
@@ -81,4 +80,3 @@ namespace SpatialIndex
 typedef Tools::PoolPointer<Mbbc> MbbcPtr;
 SIDX_DLL std::ostream& operator<<(std::ostream& os, const Mbbc& r);
 }
-#endif //SPATIALINDEX_MBBC_H

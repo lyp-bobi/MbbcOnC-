@@ -40,7 +40,7 @@ namespace SpatialIndex
             virtual void containsWhatQuery(const IShape& query, IVisitor& v);
             virtual void intersectsWithQuery(const IShape& query, IVisitor& v);
             virtual void pointLocationQuery(const Point& query, IVisitor& v);
-            virtual void nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v, INearestNeighborComparator&);
+            virtual void nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v, INearestNeighborComparator& nnc);
             virtual void nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v);
             virtual void selfJoinQuery(const IShape& s, IVisitor& v);
             virtual void queryStrategy(IQueryStrategy& qs);
@@ -96,7 +96,48 @@ namespace SpatialIndex
 #ifdef HAVE_PTHREAD_H
             pthread_mutex_t m_lock;
 #endif
+            class NNEntry
+            {
+            public:
+                id_type m_id;
+                IEntry* m_pEntry;
+                double m_minDist;
 
+                NNEntry(id_type id, IEntry* e, double f) : m_id(id), m_pEntry(e), m_minDist(f) {}
+                ~NNEntry() {}
+
+                struct ascending : public std::binary_function<NNEntry*, NNEntry*, bool>
+                {
+                    bool operator()(const NNEntry* __x, const NNEntry* __y) const { return __x->m_minDist > __y->m_minDist; }
+                };
+            }; // NNEntry
+
+            class NNComparator : public INearestNeighborComparator
+            {
+            public:
+                double getMinimumDistance(const IShape& query, const IShape& entry)
+                {
+                    return entry.getMinimumDistance(query);
+                }
+
+                double getMinimumDistance(const IShape& query, const IData& data)
+                {
+                    IShape* pS;
+                    data.getShape(&pS);
+                    double ret = pS->getMinimumDistance(query);
+                    delete pS;
+                    return ret;
+                }
+            }; // NNComparator
+
+            class ValidateEntry
+            {
+            public:
+                ValidateEntry(Region& r, NodePtr& pNode) : m_parentMBR(r), m_pNode(pNode) {}
+
+                Region m_parentMBR;
+                NodePtr m_pNode;
+            }; // ValidateEntry
             friend class Node;
             friend class Leaf;
             friend class Index;

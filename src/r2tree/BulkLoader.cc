@@ -850,7 +850,7 @@ Node* BulkLoader::recuisiveBuildKdtree(SpatialIndex::R2Tree::R2Tree *pTree,
             esG.at(i/len)->insert(es->getNextRecord(),level%4+1);
         }
         for(int i=0;i<b;i++){
-            Node* tNode=recuisiveBuildKdtree(pTree,esG.at(i),bleaf,bindex,level-1,pageSize,numberOfPages);
+            Node* tNode=recuisiveBuildKdtree(pTree,esG[i],bleaf,bindex,level-1,pageSize,numberOfPages);
 //            std::cout<<"node id"<<tNode->m_identifier<<" \n";
             node.push_back(new ExternalSorter::Record(tNode->m_nodeMbbc, tNode->m_identifier, 0, 0, 4));
         }

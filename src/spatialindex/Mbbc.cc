@@ -186,7 +186,28 @@ void Mbbc::getCenter(Point& out) const{
 uint32_t Mbbc::getDimension() const{return 3;}
 void Mbbc::getMBR(Region& out) const{out= m_wmbr;}
 double Mbbc::getArea() const{ return 0;}
-double Mbbc::getMinimumDistance(const IShape& in) const{return 0;}
+double Mbbc::getMinimumDistance(const IShape& in) const{
+    const Region* pr = dynamic_cast<const Region*>(&in);
+    if (pr != 0) return getMinimumDistance(*pr);
+
+
+    throw Tools::IllegalStateException(
+            "Region::getMinimumDistance: Not implemented yet!"
+    );
+}
+
+double Mbbc::getMinimumDistance(const SpatialIndex::Region &in) const {
+    //a naive implementation, could do better
+    double d1=m_smbr.getMinimumDistance(in);
+    double d2=m_smbr.getMinimumDistance(in);
+    double v=std::sqrt(pow(std::max(std::abs(m_vmbr.m_pLow[0]),std::abs(m_vmbr.m_pHigh[0])),2)+
+            pow(std::max(std::abs(m_vmbr.m_pLow[1]),std::abs(m_vmbr.m_pHigh[1])),2));
+    if(this->intersectsShape(in)){
+        return d1*d1/v+d2*d2/v;
+    } else{
+        return (d1+d2-v*(m_endTime-m_startTime))/2*(m_endTime-m_startTime)+d1*d1/v+d2*d2/v;
+    }
+}
 
 void Mbbc::makeInfinite()
 {

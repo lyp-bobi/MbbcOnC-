@@ -289,12 +289,75 @@ void SpatialIndex::R2Tree::R2Tree::pointLocationQuery(const SpatialIndex::Point 
 
 void SpatialIndex::R2Tree::R2Tree::nearestNeighborQuery(uint32_t k, const SpatialIndex::IShape &query,
                                                         SpatialIndex::IVisitor &v) {
-    throw Tools::NotSupportedException("not supported now");
+    if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
+    NNComparator nnc;
+    nearestNeighborQuery(k, query, v, nnc);
 }
 void SpatialIndex::R2Tree::R2Tree::nearestNeighborQuery(uint32_t k, const SpatialIndex::IShape &query,
                                                         SpatialIndex::IVisitor &v,
-                                                        SpatialIndex::INearestNeighborComparator &) {
-    throw Tools::NotSupportedException("not supported now");
+                                                        SpatialIndex::INearestNeighborComparator &nnc) {
+    if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
+
+#ifdef HAVE_PTHREAD_H
+    Tools::LockGuard lock(&m_lock);
+#endif
+
+    std::priority_queue<NNEntry*, std::vector<NNEntry*>, NNEntry::ascending> queue;
+
+    queue.push(new NNEntry(m_rootID, 0, 0.0));
+
+    uint32_t count = 0;
+    double knearest = 0.0;
+
+    while (! queue.empty())
+    {
+        NNEntry* pFirst = queue.top();
+
+        // report all nearest neighbors with equal greatest distances.
+        // (neighbors can be more than k, if many happen to have the same greatest distance).
+        if (count >= k && pFirst->m_minDist > knearest)	break;
+
+        queue.pop();
+
+        if (pFirst->m_pEntry == 0)
+        {
+            // n is a leaf or an index.
+            NodePtr n = readNode(pFirst->m_id);
+            v.visitNode(*n);
+
+            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
+            {
+                if (n->m_level == 0)
+                {
+                    Data* e = new Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMbbc[cChild]), n->m_pIdentifier[cChild]);
+                    // we need to compare the query with the actual data entry here, so we call the
+                    // appropriate getMinimumDistance method of NearestNeighborComparator.
+                    queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query, *e)));
+                }
+                else
+                {
+                    queue.push(new NNEntry(n->m_pIdentifier[cChild], 0, nnc.getMinimumDistance(query, *(n->m_ptrMbbc[cChild]))));
+                }
+            }
+        }
+        else
+        {
+            v.visitData(*(static_cast<IData*>(pFirst->m_pEntry)));
+            ++(m_stats.m_u64QueryResults);
+            ++count;
+            knearest = pFirst->m_minDist;
+            delete pFirst->m_pEntry;
+        }
+
+        delete pFirst;
+    }
+
+    while (! queue.empty())
+    {
+        NNEntry* e = queue.top(); queue.pop();
+        if (e->m_pEntry != 0) delete e->m_pEntry;
+        delete e;
+    }
 }
 
 void SpatialIndex::R2Tree::R2Tree::selfJoinQuery(const SpatialIndex::IShape &s, SpatialIndex::IVisitor &v) {
