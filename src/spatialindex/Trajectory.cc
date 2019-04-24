@@ -88,6 +88,9 @@ void Trajectory::storeToByteArray(byte **data, uint32_t &len) {
 // IShape interface
 //
 bool Trajectory::intersectsShape(const SpatialIndex::IShape& s) const {
+    const Trajectory* pTrajectory = dynamic_cast<const Trajectory*>(&s);
+    if (pTrajectory != 0) return intersectsTrajectory(*pTrajectory);
+
     const Mbbc* pbc = dynamic_cast<const Mbbc*>(&s);
     if (pbc != 0) return intersectsMbbc(*pbc);
 
@@ -103,8 +106,6 @@ bool Trajectory::intersectsShape(const SpatialIndex::IShape& s) const {
     const Point* ppt = dynamic_cast<const Point*>(&s);
     if (ppt != 0) return containsPoint(*ppt);
 
-    const Trajectory* pTrajectory = dynamic_cast<const Trajectory*>(&s);
-    if (pTrajectory != 0) return intersectsTrajectory(*pTrajectory);
 }
 
 //todo: check whether the link of points intersects Regions
@@ -171,14 +172,14 @@ void Trajectory::getMBR(Region& out) const{
 }
 double Trajectory::getArea() const{ return 0;}
 double Trajectory::getMinimumDistance(const IShape& s) const{
+    const Trajectory* pTrajectory = dynamic_cast<const Trajectory*>(&s);
+    if (pTrajectory != 0) return intersectsTrajectory(*pTrajectory);
+
     const Mbbc* pbc = dynamic_cast<const Mbbc*>(&s);
     if (pbc != 0) return getMinimumDistance(*pbc);
 
     const Region* pr = dynamic_cast<const Region*>(&s);
     if (pr != 0) return getMinimumDistance(*pr);
-
-    const Trajectory* pTrajectory = dynamic_cast<const Trajectory*>(&s);
-    if (pTrajectory != 0) return intersectsTrajectory(*pTrajectory);
 
     throw Tools::NotSupportedException(
             "Trajectory::getMinimumDistance: Not implemented yet!"
