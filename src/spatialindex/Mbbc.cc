@@ -152,6 +152,12 @@ bool Mbbc::intersectsShape(const SpatialIndex::IShape& s) const {
     const TimeRegion* ptr = dynamic_cast<const TimeRegion*>(&s);
     if (ptr != 0) return intersectsTimeRegion(*ptr);
 
+    const TimePoint* ptp = dynamic_cast<const TimePoint*>(&s);
+    if (ptp != 0) return intersectsTimePoint(*ptp);
+
+    const Trajectory* ptra = dynamic_cast<const Trajectory*>(&s);
+    if (ptra != 0) return ptra->intersectsShape(*this);
+
     const Region* pr = dynamic_cast<const Region*>(&s);
     if (pr != 0) return intersectsRegion(*pr);
 
@@ -171,6 +177,12 @@ bool Mbbc::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     getMBRAtTime(in.m_startTime,timed);
     return timed.intersectsRegion(in);
 }
+bool Mbbc::intersectsTimePoint(const SpatialIndex::TimePoint &in) const {
+    if(!m_wmbr.containsPoint(in)) return false;
+    Region timed;
+    getMBRAtTime(in.m_startTime,timed);
+    return timed.containsPoint(in);
+}
 bool Mbbc::intersectsRegion(const Region& in) const{
     return m_wmbr.intersectsShape(in);
 }
@@ -187,6 +199,8 @@ uint32_t Mbbc::getDimension() const{return 3;}
 void Mbbc::getMBR(Region& out) const{out= m_wmbr;}
 double Mbbc::getArea() const{ return 0;}
 double Mbbc::getMinimumDistance(const IShape& in) const{
+    const TimePoint* ptp = dynamic_cast<const TimePoint*>(&in);
+    if (ptp != 0) return getMinimumDistance(*ptp);
     const Region* pr = dynamic_cast<const Region*>(&in);
     if (pr != 0) return getMinimumDistance(*pr);
 
@@ -197,7 +211,7 @@ double Mbbc::getMinimumDistance(const IShape& in) const{
 }
 
 double Mbbc::getMinimumDistance(const SpatialIndex::Region &in) const {
-    //a naive implementation, could do better
+    //todo:a naive implementation, could do better
     double d1=m_smbr.getMinimumDistance(in);
     double d2=m_smbr.getMinimumDistance(in);
     double v=std::sqrt(pow(std::max(std::abs(m_vmbr.m_pLow[0]),std::abs(m_vmbr.m_pHigh[0])),2)+
@@ -207,6 +221,11 @@ double Mbbc::getMinimumDistance(const SpatialIndex::Region &in) const {
     } else{
         return (d1+d2-v*(m_endTime-m_startTime))/2*(m_endTime-m_startTime)+d1*d1/v+d2*d2/v;
     }
+}
+double Mbbc::getMinimumDistance(const SpatialIndex::TimePoint &in) const {
+    Region tmp;
+    getMBRAtTime(in.m_startTime,tmp);
+    return tmp.getMinimumDistance(in);
 }
 
 void Mbbc::makeInfinite()

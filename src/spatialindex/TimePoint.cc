@@ -301,3 +301,37 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const TimePoint& pt)
 
 	return os;
 }
+
+void swap(double &x,double &y){
+    double z;
+    z=x;x=y;y=z;
+}
+TimePoint TimePoint::makemid(TimePoint p1, TimePoint p2, double t){
+    assert(p1.m_dimension=p2.m_dimension);
+    int dim=p1.m_dimension;
+    double* p1c=new double[dim];
+    double* p2c=new double[dim];
+    double t1=p1.m_startTime;
+    double t2=p2.m_startTime;
+    for(int i=0;i<dim;i++){
+        p1c[i]=p1.m_pCoords[i];
+        p2c[i]=p2.m_pCoords[i];
+    }
+    if(t1>t2){
+        for(int i=0;i<dim;i++){
+            swap(p1c[i],p2c[i]);
+        }
+        swap(t1,t2);
+    }
+    double h1= (t-t1)/(t2-t1);
+    double h2= (t2-t)/(t2-t1);
+    double* p3c=new double[dim];
+    Tools::SmartPointer<double> p3cs(p3c);
+    for(int i=0;i<dim;i++){
+        p3c[i]=h1*p1c[i]+h2*p2c[i];
+    }
+    delete[](p1c);
+    delete[](p2c);
+
+    return TimePoint(p3c,t,t,dim);
+}

@@ -12,9 +12,10 @@
 #include<time.h>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x+1)+x)
 #include <spatialindex/SpatialIndex.h>
-#define sourceFile "/home/chuang/geolifedatasimplify.csv"
-//#define sourceFile "/home/chuang/geolifedata.csv"
-#define testtime 100
+//#define sourceFile "/home/chuang/geolifedatasimplify.csv"
+#define sourceFile "/home/chuang/geolifedata.csv"
+#define testtime 10000
+#define dimension 2
 
 using namespace std;
 using namespace SpatialIndex;
@@ -131,7 +132,7 @@ struct xyt{
         double x;
         double y;
         double t;
-    };
+        };
 void swap(double &x,double &y){
     double z;
     z=x;x=y;y=z;
@@ -225,7 +226,7 @@ Region toMbr(vector<xyt> seg){
     return Region(pLow,pHigh,2);
 }
 
-void loadCsvToMbr(vector<IShape*> &queries){
+void loadCsvToMbr(const vector<IShape*> &queries){
     ifstream inFile(sourceFile, ios::in);
     string lineStr;
     //cout<<"hi"<<endl;
@@ -309,7 +310,7 @@ void loadCsvToMbr(vector<IShape*> &queries){
 }
 
 
-void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,vector<IShape*> &queries){
+void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,const vector<IShape*> &queries){
     ifstream inFile(sourceFile, ios::in);
     string lineStr;
 
@@ -401,56 +402,63 @@ void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,vector<IShape*> &queries){
 }
 
 
-//vector<pair<id_type ,Trajectory> > loadCsvToTrajs(){
-//    ifstream inFile(sourceFile, ios::in);
-//    string lineStr;
-//
-//    getline(inFile, lineStr);
-//    set<int> ids;
-//    multimap<int,xyt> trajs;
-//    vector< vector< pair<int,vector<xyt>> > > segs(24);
-//    while (getline(inFile, lineStr)){
-//        string str;
-//        stringstream ss(lineStr);
-//        getline(ss, str, ',');
-//        int id= stringToNum<int>(str);
-//        getline(ss, str, ',');
-//        double x= stringToNum<double>(str);
-//        getline(ss, str, ',');
-//        double y= stringToNum<double>(str);
-//        getline(ss, str, ',');
-//        getline(ss, str, ',');
-//        double t=naivetime(str);
-//        xyt p={x,y,t};
-//        ids.push_back(id);
-//        trajs.insert(make_pair(id,p));
-//    }
-//    for(int i=0;i<ids.size();i++){
-//        int id= ids.at(i);
-//        multimap<int,xyt>::iterator beg,end,iter;
-//        vector<xyt> traj;
-//        beg = trajs.lower_bound(id);
-//        end = trajs.upper_bound(id);
-//        for(iter=beg;iter!=end;iter++){
-//            traj.push_back(iter->second);
-//        }
-//        trajs.erase(id);
-//        if(!traj.empty()){
-//            vector< vector<xyt> > seg = cuttraj(traj);//size 24
-//
-//            for(int j =0;j<24;j++){
-//                if(!seg.at(j).empty()){
-////                    segs.at(j).push_back(make_pair(id,seg.at(j)));
-//                    segs.at(0).push_back(make_pair(id,seg.at(j)));
-//                }
-//            }
-//        }
-//    }
-//    return segs;
-//}
+vector<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
+    //first level: vector of time period
+    //second level: vector of segments in the time period
+    ifstream inFile(sourceFile, ios::in);
+    string lineStr;
+
+    getline(inFile, lineStr);
+    set<id_type> ids;
+    multimap<id_type,xyt> trajs;
+    vector<vector<pair<id_type ,Trajectory> > > res(24);
+    while (getline(inFile, lineStr)){
+        string str;
+        stringstream ss(lineStr);
+        getline(ss, str, ',');
+        int id= stringToNum<int>(str);
+        getline(ss, str, ',');
+        double x= stringToNum<double>(str);
+        getline(ss, str, ',');
+        double y= stringToNum<double>(str);
+        getline(ss, str, ',');
+        getline(ss, str, ',');
+        double t=naivetime(str);
+        xyt p={x,y,t};
+        ids.insert(id);
+        trajs.insert(make_pair(id,p));
+    }
+    for(auto id:ids){
+        multimap<id_type ,xyt>::iterator beg,end,iter;
+        vector<xyt> traj;
+        beg = trajs.lower_bound(id);
+        end = trajs.upper_bound(id);
+        for(iter=beg;iter!=end;iter++){
+            traj.push_back(iter->second);
+        }
+        trajs.erase(id);
+        if(!traj.empty()){
+            vector< vector<xyt> > segs = cuttraj(traj);//size 24
+            for(int j =0;j<24;j++){
+                vector<xyt> seg;
+                vector<TimePoint> tps;
+                seg=segs[j];
+                for(auto p:seg){
+                    double xy[]={p.x,p.y};
+                    tps.push_back(TimePoint(xy,p.t,p.t,dimension));
+                }
+                if(!tps.empty()){
+                    res[j].push_back(make_pair(id,Trajectory(tps)));
+                }
+            }
+        }
+    }
+    return res;
+}
 
 int main(){
     srand((int)time(NULL));
+    auto trajs=loadCsvToTrajs();
     vector<IShape*> queries;
     for (int i = 0; i < testtime; i++){
         double pLow[2] = {random(31,40.5), random(110,122)};
@@ -459,13 +467,15 @@ int main(){
         int t =int(random(0,10000));
         TimeRegion *tr=new TimeRegion(pLow, pHigh, t, t, 2);
         queries.push_back(tr);
+//        queries.push_back(&trajs[0][i].second);
     }
 
-    loadCsvToMbr(queries);
-    cout<<"\n\n\n\n";
-//    cout<<"end\n"<<endl;
-    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR,queries);
-    cout<<"\n\n\n\n";
+//    loadCsvToMbr(queries);
+//    cout<<"\n\n\n\n";
+//    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR,queries);
+//    cout<<"\n\n\n\n";
     loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR2,queries);
+    cout<<"\n\n\n\n";
+    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR3,queries);
     return 0;
 }

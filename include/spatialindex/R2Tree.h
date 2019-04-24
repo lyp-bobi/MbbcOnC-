@@ -36,7 +36,8 @@ namespace SpatialIndex
 		{
             BLM_STR = 0x1,
             BLM_STR2 = 0x2,
-			BLM_KDT = 0x3
+            BLM_STR3 = 0x3,
+			BLM_KDT = 0x4
 		};
 
 		SIDX_DLL enum PersistenObjectIdentifier
