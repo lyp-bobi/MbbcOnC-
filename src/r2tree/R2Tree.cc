@@ -182,6 +182,7 @@ SpatialIndex::ISpatialIndex* SpatialIndex::R2Tree::createAndBulkLoadNewR2Tree(
 
     SpatialIndex::R2Tree::BulkLoader bl;
 
+    stream.rewind();//rewind for reading
     switch (m)
     {
         case BLM_STR:
@@ -945,11 +946,15 @@ void SpatialIndex::R2Tree::R2Tree::rangeQuery(RangeQueryType type, const IShape&
         else
         {
             v.visitNode(*n);
-
-            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
-            {
-                if (n->m_ptrMbbc[cChild]->intersectsShape(query)) st.push(readNode(n->m_pIdentifier[cChild]));
-            }
+//            if(n->m_level<3) {
+                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+                    if (n->m_ptrMbbc[cChild]->intersectsShape(query)) st.push(readNode(n->m_pIdentifier[cChild]));
+                }
+//            }else{
+//                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+//                    if (n->m_ptrMbbc[cChild]->m_wmbr.intersectsShape(query)) st.push(readNode(n->m_pIdentifier[cChild]));
+//                }
+//            }
         }
     }
 }

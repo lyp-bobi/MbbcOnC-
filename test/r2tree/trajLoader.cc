@@ -12,10 +12,12 @@
 #include<time.h>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x+1)+x)
 #include <spatialindex/SpatialIndex.h>
-//#define sourceFile "/home/chuang/geolifedatasimplify.csv"
-#define sourceFile "/home/chuang/geolifedata.csv"
+#define sourceFile "/home/chuang/geolifedatasimplify.csv"
+//#define sourceFile "/home/chuang/geolifedata.csv"
 #define testtime 10000
 #define dimension 2
+#define indexcap 4
+#define leafcap 4
 
 using namespace std;
 using namespace SpatialIndex;
@@ -63,11 +65,11 @@ public:
     }
 };
 
-class MyDataStream1: public IDataStream{
+class MbrStream: public IDataStream{
 public:
     vector<pair<int,Region>> mbrs;
     int i=0;
-    MyDataStream1(vector<pair<int,Region>> other){mbrs=other;}
+    MbrStream(vector<pair<int,Region>> other){mbrs=other;}
     virtual bool hasNext() override
     {
         return i<mbrs.size();
@@ -84,11 +86,11 @@ public:
 
     virtual void rewind(){i=0;}
 };
-class MyDataStream2: public IDataStream{
+class MbbcStream: public IDataStream{
 public:
     vector<pair<int,Mbbc>> mbbcs;
     int i=0;
-    MyDataStream2(vector<pair<int,Mbbc>> other){mbbcs=other;}
+    MbbcStream(vector<pair<int,Mbbc>> other){mbbcs=other;}
     virtual bool hasNext() override
     {
         return i<mbbcs.size();
@@ -101,6 +103,86 @@ public:
     virtual uint32_t size()
     {
         throw Tools::NotSupportedException("Operation not supported.");
+    }
+
+    virtual void rewind(){i=0;}
+};
+
+class TrajMbrStream: public IDataStream{
+public:
+    vector<pair<id_type,Region> > mbrs;
+    vector<pair<id_type,Trajectory> > trajs;
+
+    int i=0;
+    TrajMbrStream(vector<pair<id_type,Region> > otherr,vector<pair<id_type,Trajectory> > othert){
+        assert(mbrs.size()==trajs.size());
+        mbrs=otherr;
+        trajs=othert;
+    }
+    TrajMbrStream(vector<pair<id_type ,Trajectory> > period){
+        mbrs.clear();
+        for(auto idt:period){
+            Region mbr;
+            idt.second.getMBR(mbr);
+            mbrs.push_back(make_pair(idt.first,mbr));
+        }
+        trajs=period;
+    }
+    virtual bool hasNext() override
+    {
+        return i<mbrs.size();
+    }
+    virtual IData* getNext() override{
+        byte* data;
+        uint32_t len;
+        trajs[i].second.storeToByteArray(&data,len);
+        RTree::Data* d=new RTree::Data(len, data, mbrs[i].second, mbrs[i].first);
+        i++;
+        return d;
+    }
+    virtual uint32_t size()
+    {
+        return mbrs.size();
+    }
+
+    virtual void rewind(){i=0;}
+};
+
+class TrajMbbcStream: public IDataStream{
+public:
+    vector<pair<id_type,Mbbc> > mbbcs;
+    vector<pair<id_type,Trajectory> > trajs;
+
+    int i=0;
+    TrajMbbcStream(vector<pair<id_type,Mbbc> > otherbc,vector<pair<id_type,Trajectory> > othert){
+        assert(mbbcs.size()==trajs.size());
+        mbbcs=otherbc;
+        trajs=othert;
+    }
+    TrajMbbcStream(vector<pair<id_type ,Trajectory> > period){
+        mbbcs.clear();
+        for(auto idt:period){
+            Mbbc bc;
+            idt.second.getMbbc(bc);
+            mbbcs.push_back(make_pair(idt.first,bc));
+        }
+        trajs=period;
+    }
+    virtual bool hasNext() override
+    {
+        return i<mbbcs.size();
+    }
+    virtual IData* getNext() override{
+        byte* data;
+        uint32_t len;
+        trajs[i].second.storeToByteArray(&data,len);
+        R2Tree::Data* d=new R2Tree::Data(len, data, mbbcs[i].second, mbbcs[i].first);
+        i++;
+        return d;
+    }
+    virtual uint32_t size()
+    {
+        return mbbcs.size();
     }
 
     virtual void rewind(){i=0;}
@@ -226,52 +308,10 @@ Region toMbr(vector<xyt> seg){
     return Region(pLow,pHigh,2);
 }
 
-void loadCsvToMbr(const vector<IShape*> &queries){
-    ifstream inFile(sourceFile, ios::in);
-    string lineStr;
-    //cout<<"hi"<<endl;
-    getline(inFile, lineStr);
+void loadCsvToMbr(IDataStream &ds1,const vector<IShape*> &queries){
     set<int> ids;
     multimap<int,xyt> trajs;
     vector< vector< pair<int,Region> > > liar(24);
-    while (getline(inFile, lineStr)){
-        //cout<<lineStr<<endl;
-        string str;
-        stringstream ss(lineStr);
-        getline(ss, str, ',');
-        int id= stringToNum<int>(str);
-        getline(ss, str, ',');
-        double x= stringToNum<double>(str);
-        getline(ss, str, ',');
-        double y= stringToNum<double>(str);
-        getline(ss, str, ',');
-        getline(ss, str, ',');
-        double t=naivetime(str);
-        xyt p={x,y,t};
-        ids.insert(id);
-        trajs.insert(make_pair(id,p));
-    }
-    //cout<<ids.size();
-    for(auto id:ids){
-        multimap<int,xyt>::iterator beg,end,iter;
-        vector<xyt> traj;
-        beg = trajs.lower_bound(id);
-        end = trajs.upper_bound(id);
-        for(iter=beg;iter!=end;iter++){
-            traj.push_back(iter->second);
-        }
-        trajs.erase(id);
-        if(!traj.empty()){
-            vector< vector<xyt> > seg = cuttraj(traj);//size 24
-
-            for(int j =0;j<24;j++){
-                if(!seg[j].empty()){
-                    liar.at(0).push_back(make_pair(id,toMbr(seg[j])));
-                }
-            }
-        }
-    }
-    MyDataStream1 ds1(liar.at(0));
     string name = "name";
     id_type indexIdentifier;
     IStorageManager* diskfile = StorageManager::createNewDiskStorageManager(name, 4096);
@@ -284,7 +324,7 @@ void loadCsvToMbr(const vector<IShape*> &queries){
     start=clock();
 
     ISpatialIndex* tree = RTree::createAndBulkLoadNewRTree(
-            RTree::BLM_STR, ds1, *file, 0.9, 4,4, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
+            RTree::BLM_STR, ds1, *file, 0.9, indexcap,leafcap, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
     end=clock();
     cout<<"Tree Building Time: "<< end-start<<endl;
     RangeVisitor vis;
@@ -310,58 +350,10 @@ void loadCsvToMbr(const vector<IShape*> &queries){
 }
 
 
-void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,const vector<IShape*> &queries){
-    ifstream inFile(sourceFile, ios::in);
-    string lineStr;
-
-    getline(inFile, lineStr);
+void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,IDataStream &ds2,const vector<IShape*> &queries){
     set<int> ids;
     multimap<int,xyt> trajs;
     vector< vector< pair<int,Mbbc> > > liar(24);
-    while (getline(inFile, lineStr)){
-        string str;
-        stringstream ss(lineStr);
-        getline(ss, str, ',');
-        int id= stringToNum<int>(str);
-        getline(ss, str, ',');
-        double x= stringToNum<double>(str);
-        getline(ss, str, ',');
-        double y= stringToNum<double>(str);
-        getline(ss, str, ',');
-        getline(ss, str, ',');
-        double t=naivetime(str);
-        xyt p={x,y,t};
-        ids.insert(id);
-        trajs.insert(make_pair(id,p));
-    }
-    for(auto id:ids){
-        multimap<int,xyt>::iterator beg,end,iter;
-        vector<xyt> traj;
-        beg = trajs.lower_bound(id);
-        end = trajs.upper_bound(id);
-        for(iter=beg;iter!=end;iter++){
-            traj.push_back(iter->second);
-        }
-        trajs.erase(id);
-        if(!traj.empty()){
-            vector< vector<xyt> > seg = cuttraj(traj);//size 24
-
-            for(int j =0;j<24;j++){
-                if(!seg[j].empty()){
-                    Mbbc bc=toMbbc(seg[j]);
-                    bc.m_startTime=0;
-                    bc.m_endTime=10000;
-                    liar.at(0).push_back(make_pair(id,bc));
-//                    cout<<id<<"\n"<<bc.toString()<<"\n";
-                }
-            }
-        }
-
-    }
-//    for (int i = 0; i < 24; ++i) {
-//        cout<<liar[i].size()<<endl;
-//    }
-    MyDataStream2 ds2(liar.at(0));
     string name = "name";
     id_type indexIdentifier;
     IStorageManager* diskfile = StorageManager::createNewDiskStorageManager(name, 4096);
@@ -374,7 +366,7 @@ void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,const vector<IShape*> &queries){
     clock_t start,end;
     start=clock();
     ISpatialIndex* tree = R2Tree::createAndBulkLoadNewR2Tree(
-            blm, ds2, *file, 0.9, 4,4,2, indexIdentifier);
+            blm, ds2, *file, 0.9, indexcap,leafcap,2, indexIdentifier);
     end=clock();
     cout<<"Tree Building time: "<< end-start<<endl;
     bool ret = tree->isIndexValid();
@@ -445,10 +437,12 @@ vector<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
                 seg=segs[j];
                 for(auto p:seg){
                     double xy[]={p.x,p.y};
-                    tps.push_back(TimePoint(xy,p.t,p.t,dimension));
+                    double faket=int(p.t)%10000;
+                    tps.push_back(TimePoint(xy,faket,faket,dimension));
                 }
                 if(!tps.empty()){
-                    res[j].push_back(make_pair(id,Trajectory(tps)));
+//                    res[j].push_back(make_pair(id,Trajectory(tps)));
+                    res[0].push_back(make_pair(id,Trajectory(tps)));
                 }
             }
         }
@@ -456,9 +450,12 @@ vector<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
     return res;
 }
 
+
 int main(){
     srand((int)time(NULL));
-    auto trajs=loadCsvToTrajs();
+    vector<vector<pair<id_type ,Trajectory> > > trajs=loadCsvToTrajs();
+    TrajMbrStream ds1(trajs[0]);
+    TrajMbbcStream ds2(trajs[0]);
     vector<IShape*> queries;
     for (int i = 0; i < testtime; i++){
         double pLow[2] = {random(31,40.5), random(110,122)};
@@ -470,12 +467,12 @@ int main(){
 //        queries.push_back(&trajs[0][i].second);
     }
 
-//    loadCsvToMbr(queries);
-//    cout<<"\n\n\n\n";
-//    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR,queries);
-//    cout<<"\n\n\n\n";
-    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR2,queries);
+    loadCsvToMbr(ds1,queries);
     cout<<"\n\n\n\n";
-    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR3,queries);
+    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR,ds2,queries);
+    cout<<"\n\n\n\n";
+    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR2,ds2,queries);
+    cout<<"\n\n\n\n";
+    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR3,ds2,queries);
     return 0;
 }

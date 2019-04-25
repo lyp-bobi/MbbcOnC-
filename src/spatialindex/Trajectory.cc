@@ -50,13 +50,13 @@ uint32_t Trajectory::getByteArraySize() {
 }
 
 void Trajectory::loadFromByteArray(const byte* ptr) {
-    unsigned long len;
-    memcpy(&len, ptr, sizeof(unsigned long));
+    unsigned long size;
+    memcpy(&size, ptr, sizeof(unsigned long));
     ptr += sizeof(unsigned long);
-    std::vector<TimePoint> p(len);
-    for(int i=0;i<len;i++){
+    std::vector<TimePoint> p(size);
+    for(int i=0;i<size;i++){
         p[i].loadFromByteArray(ptr);
-        if(i!=len-1){
+        if(i!=size-1){
             ptr+=p[i].getByteArraySize();
         }
     }
@@ -72,10 +72,10 @@ void Trajectory::storeToByteArray(byte **data, uint32_t &len) {
     unsigned long size=points.size();
     memcpy(ptr, &size, sizeof(unsigned long));
     ptr += sizeof(unsigned long);
-    for(int i=0;i<len;i++){
+    for(int i=0;i<size;i++){
         points[i].storeToByteArray(&tmpb,tmplen);
         memcpy(ptr, tmpb, tmplen);
-        if(i!=len-1){
+        if(i!=size-1){
             ptr += tmplen;
         }
     }
@@ -169,6 +169,50 @@ void Trajectory::getMBR(Region& out) const{
     for(int i=0;i<points.size();i++){
         out.combinePoint(points[i]);
     }
+}
+void Trajectory::getMbbc(Mbbc& out) const{
+    out.makeInfinite();
+
+    double startx=points.begin()->m_pCoords[0],starty=points.begin()->m_pCoords[1],startt=points.begin()->m_startTime;
+    double endx=points.back().m_pCoords[0],endy=points.back().m_pCoords[1],endt=points.back().m_startTime;
+    double maxvxP=0,maxvxN=0,maxvyP=0,maxvyN=0;
+    double minx=startx,maxx=startx,miny=starty,maxy=starty;
+    for(int i=0;i<points.size();i++){
+        if(points[i].m_startTime!=startt){
+            double vx=(points[i].m_pCoords[0]-startx)/(points[i].m_startTime-startt);
+            if(vx>maxvxP) maxvxP=vx;
+            if(vx<maxvxN) maxvxN=vx;
+
+            double vy=(points[i].m_pCoords[1]-starty)/(points[i].m_startTime-startt);
+            if(vy>maxvyP) maxvyP=vy;
+            if(vy<maxvyN) maxvyN=vy;
+        }
+        if(points[i].m_startTime!=endt){
+            double vx=(endx-points[i].m_pCoords[0])/(endt-points[i].m_startTime);
+            if(vx>maxvxP) maxvxP=vx;
+            if(vx<maxvxN) maxvxN=vx;
+            double vy=(endy-points[i].m_pCoords[1])/(endt-points[i].m_startTime);
+            if(vy>maxvyP) maxvyP=vy;
+            if(vy<maxvyN) maxvyN=vy;
+        }
+
+        if(points[i].m_pCoords[0]<minx) minx=points[i].m_pCoords[0];
+        if(points[i].m_pCoords[0]>maxx) maxx=points[i].m_pCoords[0];
+        if(points[i].m_pCoords[1]<miny) miny=points[i].m_pCoords[1];
+        if(points[i].m_pCoords[1]>maxy) maxy=points[i].m_pCoords[1];
+    }
+    double sLow[2]={startx,starty};
+    double sHigh[2]={startx,starty};
+    double eLow[2]={endx,endy};
+    double eHigh[2]={endx,endy};
+    double vLow[2]={maxvxN,maxvyN};
+    double vHigh[2]={maxvxP,maxvyP};
+    double wLow[2]={minx,miny};
+    double wHigh[2]={maxx,maxy};
+    double stime=int(startt/10000)*10000;
+    out= Mbbc(Region(sLow,sHigh,2),Region(eLow,eHigh,2),
+                Region(vLow,vHigh,2),Region(wLow,wHigh,2),stime,stime+10000);
+
 }
 double Trajectory::getArea() const{ return 0;}
 double Trajectory::getMinimumDistance(const IShape& s) const{
