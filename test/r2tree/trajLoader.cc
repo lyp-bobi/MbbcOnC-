@@ -14,7 +14,7 @@
 #include <spatialindex/SpatialIndex.h>
 #define sourceFile "/home/chuang/geolifedatasimplify.csv"
 //#define sourceFile "/home/chuang/geolifedata.csv"
-#define testtime 10000
+#define testtime 100000
 #define dimension 2
 #define indexcap 4
 #define leafcap 4
@@ -454,8 +454,10 @@ vector<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
 int main(){
     srand((int)time(NULL));
     vector<vector<pair<id_type ,Trajectory> > > trajs=loadCsvToTrajs();
+    vector<vector<pair<id_type ,Trajectory> > >  empty;
     TrajMbrStream ds1(trajs[0]);
     TrajMbbcStream ds2(trajs[0]);
+    trajs.swap(empty);
     vector<IShape*> queries;
     for (int i = 0; i < testtime; i++){
         double pLow[2] = {random(31,40.5), random(110,122)};
@@ -466,13 +468,12 @@ int main(){
         queries.push_back(tr);
 //        queries.push_back(&trajs[0][i].second);
     }
-
-    loadCsvToMbr(ds1,queries);
-    cout<<"\n\n\n\n";
+//    loadCsvToMbr(ds1,queries);
+//    cout<<"\n\n\n\n";
     loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR,ds2,queries);
     cout<<"\n\n\n\n";
-    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR2,ds2,queries);
-    cout<<"\n\n\n\n";
+//    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR2,ds2,queries);
+//    cout<<"\n\n\n\n";
     loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR3,ds2,queries);
     return 0;
 }
