@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
     TimeRegion t(oLow,oHigh,0.5,0.5,2);
     cout<<m.intersectsTimeRegion(t);
     byte* d;
-    u_int32_t l;
+    uint32_t l;
 //    r.storeToByteArray(&d,l);
 //    cout<<d[30]<<endl;
 //    r.loadFromByteArray(d);

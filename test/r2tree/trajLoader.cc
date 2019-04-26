@@ -13,10 +13,10 @@
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x+1)+x)
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "/home/chuang/geolifedatasimplify.csv"
-#define sourceFile "/home/chuang/geolifedata.csv"
+#define sourceFile "D://geolifedata.csv"
 #define testtime 100000
 #define dimension 2
-#define indexcap 10
+#define indexcap 5
 #define leafcap 5
 
 using namespace std;
@@ -433,19 +433,19 @@ vector<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
         trajs.erase(id);
         if(!traj.empty()){
             vector< vector<xyt> > segs = cuttraj(traj);//size 24
-            for(int j =0;j<1;j++){
+            for(int j =0;j<24;j++){
                 vector<xyt> seg;
                 vector<TimePoint> tps;
                 seg=segs[j];
                 for(auto p:seg){
                     double xy[]={p.x,p.y};
-//                    double faket=int(p.t)%10000;
-//                    tps.push_back(TimePoint(xy,faket,faket,dimension));
-                    tps.push_back(TimePoint(xy,p.t,p.t,dimension));
+                    double faket=int(p.t)%10000;
+                    tps.push_back(TimePoint(xy,faket,faket,dimension));
+//                    tps.push_back(TimePoint(xy,p.t,p.t,dimension));
                 }
                 if(!tps.empty()){
-                    res[j].push_back(make_pair(id,Trajectory(tps)));
-//                    res[0].push_back(make_pair(id,Trajectory(tps)));
+//                    res[j].push_back(make_pair(id,Trajectory(tps)));
+                    res[0].push_back(make_pair(id,Trajectory(tps)));
                 }
             }
         }
@@ -458,13 +458,13 @@ int main(){
     srand((int)time(NULL));
     vector<vector<pair<id_type ,Trajectory> > > trajs=loadCsvToTrajs();
     vector<vector<pair<id_type ,Trajectory> > >  empty;
-    vector<pair<id_type ,Trajectory> > tjtjtj;
-    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
-    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
-    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
-    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
-    TrajMbrStream ds1(tjtjtj);
-    TrajMbbcStream ds2(tjtjtj);
+//    vector<pair<id_type ,Trajectory> > tjtjtj;
+//    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
+//    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
+//    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
+//    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
+    TrajMbrStream ds1(trajs[0]);
+    TrajMbbcStream ds2(trajs[0]);
     trajs.swap(empty);
     vector<IShape*> queries;
     for (int i = 0; i < testtime; i++){

@@ -932,8 +932,8 @@ Node* BulkLoader::recuisiveBuildKdtree(SpatialIndex::R2Tree::R2Tree *pTree,
     else{
         std::vector<Tools::SmartPointer<ExternalSorter>> esG;
         for(int i=0;i<b;i++) esG.push_back(Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages)));
-        u_int64_t len=ceil((ent+1)*1.0/b);
-        for(u_int64_t i=0;i<ent;i++){
+        uint64_t len=ceil((ent+1)*1.0/b);
+        for(uint64_t i=0;i<ent;i++){
             esG.at(i/len)->insert(es->getNextRecord(),level%4+1);
         }
         for(int i=0;i<b;i++){

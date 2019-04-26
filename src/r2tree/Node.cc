@@ -104,7 +104,7 @@ void Node::storeToByteArray(byte** data, uint32_t& len){
     memcpy(ptr, &m_children, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
     byte* tmpb;
-    u_int32_t tmplen;
+    uint32_t tmplen;
     for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child)
     {
 

@@ -68,7 +68,7 @@ void Trajectory::storeToByteArray(byte **data, uint32_t &len) {
     *data = new byte[len];
     byte* ptr = *data;
     byte* tmpb;
-    u_int32_t tmplen;
+    uint32_t tmplen;
     unsigned long size=points.size();
     memcpy(ptr, &size, sizeof(unsigned long));
     ptr += sizeof(unsigned long);

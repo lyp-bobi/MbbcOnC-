@@ -97,7 +97,7 @@ void Mbbc::storeToByteArray(byte **data, uint32_t &len) {
     *data = new byte[len];
     byte* ptr = *data;
     byte* tmpb;
-    u_int32_t tmplen;
+    uint32_t tmplen;
     m_smbr.storeToByteArray(&tmpb,tmplen);
     memcpy(ptr, tmpb, tmplen);
     ptr += tmplen;
