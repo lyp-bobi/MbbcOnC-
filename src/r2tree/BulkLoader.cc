@@ -38,63 +38,63 @@ ExternalSorter::Record::~Record()
 {
     delete[] m_pData;
 }
-//
-//bool ExternalSorter::Record::operator<(const Record& r) const
-//{
-//    if (m_s != r.m_s)
-//        throw Tools::IllegalStateException("ExternalSorter::Record::operator<: Incompatible sorting dimensions.");
-//    if(m_s==0||m_s==1){
-//        if (m_Mbbc.m_smbr.m_pHigh[m_s] + m_Mbbc.m_smbr.m_pLow[m_s]
-//            < r.m_Mbbc.m_smbr.m_pHigh[m_s] + r.m_Mbbc.m_smbr.m_pLow[m_s])
-//            return true;
-//        else
-//            return false;
-//    }
-//    else if(m_s==2||m_s==3){
-//        if (m_Mbbc.m_embr.m_pHigh[m_s-2] + m_Mbbc.m_embr.m_pLow[m_s-2]
-//            < r.m_Mbbc.m_embr.m_pHigh[m_s-2] + r.m_Mbbc.m_embr.m_pLow[m_s-2])
-//            return true;
-//        else
-//            return false;
-//    }
-//    else if(m_s==4||m_s==5){
-//        if (m_Mbbc.m_wmbr.m_pHigh[m_s-4] + m_Mbbc.m_wmbr.m_pLow[m_s-4]
-//            < r.m_Mbbc.m_wmbr.m_pHigh[m_s-4] + r.m_Mbbc.m_wmbr.m_pLow[m_s-4])
-//            return true;
-//        else
-//            return false;
-//    }
-//    else{
-//        throw Tools::IllegalArgumentException("sort:Dimension Error");
-//    }
-//
-//}
 
 bool ExternalSorter::Record::operator<(const Record& r) const
 {
     if (m_s != r.m_s)
         throw Tools::IllegalStateException("ExternalSorter::Record::operator<: Incompatible sorting dimensions.");
-    if(m_s==0||m_s==2){
-        int d=m_s/2;
-        return (m_Mbbc.m_smbr.m_pHigh[d] + m_Mbbc.m_smbr.m_pLow[d]
-                < r.m_Mbbc.m_smbr.m_pHigh[d] + r.m_Mbbc.m_smbr.m_pLow[d]);
-
+    if(m_s==0||m_s==1){
+        if (m_Mbbc.m_smbr.m_pHigh[m_s] + m_Mbbc.m_smbr.m_pLow[m_s]
+            < r.m_Mbbc.m_smbr.m_pHigh[m_s] + r.m_Mbbc.m_smbr.m_pLow[m_s])
+            return true;
+        else
+            return false;
     }
-    else if(m_s==1||m_s==3){
-        int d=(m_s-1)/2;
-        return (m_Mbbc.m_embr.m_pHigh[d] + m_Mbbc.m_embr.m_pLow[d]
-                < r.m_Mbbc.m_embr.m_pHigh[d] + r.m_Mbbc.m_embr.m_pLow[d]);
+    else if(m_s==2||m_s==3){
+        if (m_Mbbc.m_embr.m_pHigh[m_s-2] + m_Mbbc.m_embr.m_pLow[m_s-2]
+            < r.m_Mbbc.m_embr.m_pHigh[m_s-2] + r.m_Mbbc.m_embr.m_pLow[m_s-2])
+            return true;
+        else
+            return false;
     }
     else if(m_s==4||m_s==5){
-        return (m_Mbbc.m_wmbr.m_pHigh[m_s-4] + m_Mbbc.m_wmbr.m_pLow[m_s-4]
-                < r.m_Mbbc.m_wmbr.m_pHigh[m_s-4] + r.m_Mbbc.m_wmbr.m_pLow[m_s-4]);
+        if (m_Mbbc.m_wmbr.m_pHigh[m_s-4] + m_Mbbc.m_wmbr.m_pLow[m_s-4]
+            < r.m_Mbbc.m_wmbr.m_pHigh[m_s-4] + r.m_Mbbc.m_wmbr.m_pLow[m_s-4])
+            return true;
+        else
+            return false;
     }
-
     else{
         throw Tools::IllegalArgumentException("sort:Dimension Error");
     }
 
 }
+//
+//bool ExternalSorter::Record::operator<(const Record& r) const
+//{
+//    if (m_s != r.m_s)
+//        throw Tools::IllegalStateException("ExternalSorter::Record::operator<: Incompatible sorting dimensions.");
+//    if(m_s==0||m_s==2){
+//        int d=m_s/2;
+//        return (m_Mbbc.m_smbr.m_pHigh[d] + m_Mbbc.m_smbr.m_pLow[d]
+//                < r.m_Mbbc.m_smbr.m_pHigh[d] + r.m_Mbbc.m_smbr.m_pLow[d]);
+//
+//    }
+//    else if(m_s==1||m_s==3){
+//        int d=(m_s-1)/2;
+//        return (m_Mbbc.m_embr.m_pHigh[d] + m_Mbbc.m_embr.m_pLow[d]
+//                < r.m_Mbbc.m_embr.m_pHigh[d] + r.m_Mbbc.m_embr.m_pLow[d]);
+//    }
+//    else if(m_s==4||m_s==5){
+//        return (m_Mbbc.m_wmbr.m_pHigh[m_s-4] + m_Mbbc.m_wmbr.m_pLow[m_s-4]
+//                < r.m_Mbbc.m_wmbr.m_pHigh[m_s-4] + r.m_Mbbc.m_wmbr.m_pLow[m_s-4]);
+//    }
+//
+//    else{
+//        throw Tools::IllegalArgumentException("sort:Dimension Error");
+//    }
+//
+//}
 
 
 void ExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)

@@ -12,12 +12,12 @@
 #include<time.h>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x+1)+x)
 #include <spatialindex/SpatialIndex.h>
-#define sourceFile "/home/chuang/geolifedatasimplify.csv"
-//#define sourceFile "/home/chuang/geolifedata.csv"
+//#define sourceFile "/home/chuang/geolifedatasimplify.csv"
+#define sourceFile "/home/chuang/geolifedata.csv"
 #define testtime 100000
 #define dimension 2
-#define indexcap 4
-#define leafcap 4
+#define indexcap 10
+#define leafcap 5
 
 using namespace std;
 using namespace SpatialIndex;
@@ -197,17 +197,19 @@ Type stringToNum(const string& str)
     return num;
 }
 double naivetime(string l){
+    int h;
+    int m;
+    int s;
     if(l.size()==9){
-        int h = stringToNum<int>(l.substr(0,2));
-        int m = stringToNum<int>(l.substr(3,5));
-        int s = stringToNum<int>(l.substr(6,8));
-        return 10000*h+100*m+s;
+        h = stringToNum<int>(l.substr(0,2));
+        m = stringToNum<int>(l.substr(3,5));
+        s = stringToNum<int>(l.substr(6,8));
     } else{
-        int h = stringToNum<int>(l.substr(0,1));
-        int m = stringToNum<int>(l.substr(2,4));
-        int s = stringToNum<int>(l.substr(5,7));
-        return 10000*h+100*m+s;
+        h = stringToNum<int>(l.substr(0,1));
+        m = stringToNum<int>(l.substr(2,4));
+        s = stringToNum<int>(l.substr(5,7));
     }
+    return 10000*h+10000*m/60+100*s/60;
 
 }
 struct xyt{
@@ -431,18 +433,19 @@ vector<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
         trajs.erase(id);
         if(!traj.empty()){
             vector< vector<xyt> > segs = cuttraj(traj);//size 24
-            for(int j =0;j<24;j++){
+            for(int j =0;j<1;j++){
                 vector<xyt> seg;
                 vector<TimePoint> tps;
                 seg=segs[j];
                 for(auto p:seg){
                     double xy[]={p.x,p.y};
-                    double faket=int(p.t)%10000;
-                    tps.push_back(TimePoint(xy,faket,faket,dimension));
+//                    double faket=int(p.t)%10000;
+//                    tps.push_back(TimePoint(xy,faket,faket,dimension));
+                    tps.push_back(TimePoint(xy,p.t,p.t,dimension));
                 }
                 if(!tps.empty()){
-//                    res[j].push_back(make_pair(id,Trajectory(tps)));
-                    res[0].push_back(make_pair(id,Trajectory(tps)));
+                    res[j].push_back(make_pair(id,Trajectory(tps)));
+//                    res[0].push_back(make_pair(id,Trajectory(tps)));
                 }
             }
         }
@@ -455,8 +458,13 @@ int main(){
     srand((int)time(NULL));
     vector<vector<pair<id_type ,Trajectory> > > trajs=loadCsvToTrajs();
     vector<vector<pair<id_type ,Trajectory> > >  empty;
-    TrajMbrStream ds1(trajs[0]);
-    TrajMbbcStream ds2(trajs[0]);
+    vector<pair<id_type ,Trajectory> > tjtjtj;
+    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
+    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
+    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
+    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
+    TrajMbrStream ds1(tjtjtj);
+    TrajMbbcStream ds2(tjtjtj);
     trajs.swap(empty);
     vector<IShape*> queries;
     for (int i = 0; i < testtime; i++){
@@ -472,8 +480,8 @@ int main(){
 //    cout<<"\n\n\n\n";
     loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR,ds2,queries);
     cout<<"\n\n\n\n";
-//    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR2,ds2,queries);
-//    cout<<"\n\n\n\n";
+    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR2,ds2,queries);
+    cout<<"\n\n\n\n";
     loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR3,ds2,queries);
     return 0;
 }
