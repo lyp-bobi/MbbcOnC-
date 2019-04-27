@@ -14,7 +14,7 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "/home/chuang/geolifedatasimplify.csv"
 #define sourceFile "D://geolifedata.csv"
-#define testtime 100000
+#define testtime 1000
 #define dimension 2
 #define indexcap 5
 #define leafcap 5
@@ -91,6 +91,14 @@ public:
     vector<pair<int,Mbbc>> mbbcs;
     int i=0;
     MbbcStream(vector<pair<int,Mbbc>> other){mbbcs=other;}
+    MbbcStream(vector<pair<id_type ,Trajectory> > period){
+        mbbcs.clear();
+        for(auto idt:period){
+            Mbbc bc;
+            idt.second.getMbbc(bc);
+            mbbcs.emplace_back(make_pair(idt.first,bc));
+        }
+    }
     virtual bool hasNext() override
     {
         return i<mbbcs.size();
@@ -124,7 +132,7 @@ public:
         for(auto idt:period){
             Region mbr;
             idt.second.getMBR(mbr);
-            mbrs.push_back(make_pair(idt.first,mbr));
+            mbrs.emplace_back(make_pair(idt.first,mbr));
         }
         trajs=period;
     }
@@ -164,7 +172,7 @@ public:
         for(auto idt:period){
             Mbbc bc;
             idt.second.getMbbc(bc);
-            mbbcs.push_back(make_pair(idt.first,bc));
+            mbbcs.emplace_back(make_pair(idt.first,bc));
         }
         trajs=period;
     }
@@ -241,14 +249,14 @@ vector< vector<xyt> > cuttraj(vector<xyt> traj){
         int newpd=traj[i].t/10000;
         if(newpd!=oldpd){
             xyt mid1=makemid(traj.at(i-1),traj[i],(oldpd+1)*10000);
-            segments.at(oldpd).push_back(mid1);
+            segments.at(oldpd).emplace_back(mid1);
             if(int(traj[i].t)%10000!=0){
                 xyt mid2=makemid(traj.at(i-1),traj[i],newpd*10000);
-                segments.at(newpd).push_back(mid2);
+                segments.at(newpd).emplace_back(mid2);
             }
             oldpd=newpd;
         }
-        segments.at(newpd).push_back(traj[i]);
+        segments.at(newpd).emplace_back(traj[i]);
     }
     return segments;
 }
@@ -396,7 +404,7 @@ void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,IDataStream &ds2,const vector<ISha
 }
 
 
-vector<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
+list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
     //first level: vector of time period
     //second level: vector of segments in the time period
     ifstream inFile(sourceFile, ios::in);
@@ -405,7 +413,8 @@ vector<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
     getline(inFile, lineStr);
     set<id_type> ids;
     multimap<id_type,xyt> trajs;
-    vector<vector<pair<id_type ,Trajectory> > > res(24);
+    list<vector<pair<id_type ,Trajectory> > > res(24);
+    auto iperiod=res.begin();
     while (getline(inFile, lineStr)){
         string str;
         stringstream ss(lineStr);
@@ -428,7 +437,7 @@ vector<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
         beg = trajs.lower_bound(id);
         end = trajs.upper_bound(id);
         for(iter=beg;iter!=end;iter++){
-            traj.push_back(iter->second);
+            traj.emplace_back(iter->second);
         }
         trajs.erase(id);
         if(!traj.empty()){
@@ -440,12 +449,12 @@ vector<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
                 for(auto p:seg){
                     double xy[]={p.x,p.y};
                     double faket=int(p.t)%10000;
-                    tps.push_back(TimePoint(xy,faket,faket,dimension));
-//                    tps.push_back(TimePoint(xy,p.t,p.t,dimension));
+                    tps.emplace_back(TimePoint(xy,faket,faket,dimension));
+//                    tps.emplace_back(TimePoint(xy,p.t,p.t,dimension));
                 }
                 if(!tps.empty()){
-//                    res[j].push_back(make_pair(id,Trajectory(tps)));
-                    res[0].push_back(make_pair(id,Trajectory(tps)));
+                    iperiod->emplace_back(make_pair(id,Trajectory(tps)));
+//                    iperiod++;
                 }
             }
         }
@@ -456,16 +465,19 @@ vector<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
 
 int main(){
     srand((int)time(NULL));
-    vector<vector<pair<id_type ,Trajectory> > > trajs=loadCsvToTrajs();
-    vector<vector<pair<id_type ,Trajectory> > >  empty;
+    list<vector<pair<id_type ,Trajectory> > > trajs=loadCsvToTrajs();
+    vector<pair<id_type ,Trajectory> >   empty;
 //    vector<pair<id_type ,Trajectory> > tjtjtj;
 //    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
 //    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
 //    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
 //    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
-    TrajMbrStream ds1(trajs[0]);
-    TrajMbbcStream ds2(trajs[0]);
-    trajs.swap(empty);
+//    TrajMbrStream ds1(trajs[0]);
+//    TrajMbbcStream ds2(trajs[0]);
+    MbbcStream ds2(trajs.front());
+    for(auto period:trajs){
+        period.swap(empty);
+    }
     vector<IShape*> queries;
     for (int i = 0; i < testtime; i++){
         double pLow[2] = {random(31,40.5), random(110,122)};
@@ -473,8 +485,8 @@ int main(){
         Region r(pLow, pHigh, 2);
         int t =int(random(0,10000));
         TimeRegion *tr=new TimeRegion(pLow, pHigh, t, t, 2);
-        queries.push_back(tr);
-//        queries.push_back(&trajs[0][i].second);
+        queries.emplace_back(tr);
+//        queries.emplace_back(&trajs[0][i].second);
     }
 //    loadCsvToMbr(ds1,queries);
 //    cout<<"\n\n\n\n";

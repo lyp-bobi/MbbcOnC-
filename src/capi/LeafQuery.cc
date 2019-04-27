@@ -43,7 +43,7 @@ LeafQueryResult get_results(const SpatialIndex::INode* n)
 	std::vector<SpatialIndex::id_type> ids;
 	for (uint32_t cChild = 0; cChild < n->getChildrenCount(); cChild++)
 	{
-		ids.push_back(n->getChildIdentifier(cChild));
+		ids.emplace_back(n->getChildIdentifier(cChild));
 	}
 
 	result.SetIDs(ids);
@@ -69,7 +69,7 @@ void LeafQuery::getNextEntry(	const SpatialIndex::IEntry& entry,
 	}
 
 	if (n->isLeaf()) {
-		m_results.push_back(get_results(n));
+		m_results.emplace_back(get_results(n));
 	}
 			
 	if (! m_ids.empty())

@@ -506,14 +506,14 @@ bool Node::insertData(
 					assert(m_pTree->m_roots[m_pTree->m_roots.size() - 1].m_id == m_identifier);
 					m_pTree->m_roots[m_pTree->m_roots.size() - 1].m_startTime = m_nodeMBR.m_startTime;
 					m_pTree->m_roots[m_pTree->m_roots.size() - 1].m_endTime = m_nodeMBR.m_endTime;
-					m_pTree->m_roots.push_back(MVRTree::RootEntry(ptrR->m_identifier, ptrR->m_nodeMBR.m_startTime, ptrR->m_nodeMBR.m_endTime));
-					m_pTree->m_stats.m_treeHeight.push_back(ptrR->m_level + 1);
+					m_pTree->m_roots.emplace_back(MVRTree::RootEntry(ptrR->m_identifier, ptrR->m_nodeMBR.m_startTime, ptrR->m_nodeMBR.m_endTime));
+					m_pTree->m_stats.m_treeHeight.emplace_back(ptrR->m_level + 1);
 					m_pTree->m_stats.m_nodesInLevel.at(n->m_level) = m_pTree->m_stats.m_nodesInLevel[n->m_level] + 2;
 					if (m_level > 0) ++(m_pTree->m_stats.m_u32DeadIndexNodes);
 					else ++(m_pTree->m_stats.m_u32DeadLeafNodes);
 				}
 
-				if (ptrR->m_level >= m_pTree->m_stats.m_nodesInLevel.size()) m_pTree->m_stats.m_nodesInLevel.push_back(1);
+				if (ptrR->m_level >= m_pTree->m_stats.m_nodesInLevel.size()) m_pTree->m_stats.m_nodesInLevel.emplace_back(1);
 				else m_pTree->m_stats.m_nodesInLevel.at(ptrR->m_level) = m_pTree->m_stats.m_nodesInLevel[ptrR->m_level] + 1;
 
 				return true;
@@ -586,8 +586,8 @@ bool Node::insertData(
 					assert(m_pTree->m_roots[m_pTree->m_roots.size() - 1].m_id == m_identifier);
 					m_pTree->m_roots[m_pTree->m_roots.size() - 1].m_startTime = m_nodeMBR.m_startTime;
 					m_pTree->m_roots[m_pTree->m_roots.size() - 1].m_endTime = m_nodeMBR.m_endTime;
-					m_pTree->m_roots.push_back(MVRTree::RootEntry(ptrCopy->m_identifier, ptrCopy->m_nodeMBR.m_startTime, ptrCopy->m_nodeMBR.m_endTime));
-					m_pTree->m_stats.m_treeHeight.push_back(ptrCopy->m_level + 1);
+					m_pTree->m_roots.emplace_back(MVRTree::RootEntry(ptrCopy->m_identifier, ptrCopy->m_nodeMBR.m_startTime, ptrCopy->m_nodeMBR.m_endTime));
+					m_pTree->m_stats.m_treeHeight.emplace_back(ptrCopy->m_level + 1);
 
 					m_pTree->m_stats.m_nodesInLevel.at(ptrCopy->m_level) = m_pTree->m_stats.m_nodesInLevel[ptrCopy->m_level] + 1;
 					if (m_level > 0) ++(m_pTree->m_stats.m_u32DeadIndexNodes);
@@ -800,7 +800,7 @@ bool Node::deleteData(id_type id, double delTime, std::stack<id_type>& pathBuffe
 								*tmpR = m_nodeMBR;
 								tmpR->combineRegion(*(sibling->m_ptrMBR[cSiblingChild]));
 								double a = tmpR->getArea();
-								if (a <= m_nodeMBR.getArea() * 1.1) toCheck.push_back(DeleteDataEntry(cSiblingChild, a));
+								if (a <= m_nodeMBR.getArea() * 1.1) toCheck.emplace_back(DeleteDataEntry(cSiblingChild, a));
 							}
 						}
 					}
@@ -859,7 +859,7 @@ bool Node::deleteData(id_type id, double delTime, std::stack<id_type>& pathBuffe
 							}
 							++it1;
 						}
-						if (good) Sdel.push_back(toCheck[cCheck]);
+						if (good) Sdel.emplace_back(toCheck[cCheck]);
 					}
 
 					delete[] SiCounts;
@@ -1024,9 +1024,9 @@ bool Node::deleteData(id_type id, double delTime, std::stack<id_type>& pathBuffe
 					assert(m_pTree->m_roots[m_pTree->m_roots.size() - 1].m_id == m_identifier);
 					m_pTree->m_roots[m_pTree->m_roots.size() - 1].m_startTime = m_nodeMBR.m_startTime;
 					m_pTree->m_roots[m_pTree->m_roots.size() - 1].m_endTime = m_nodeMBR.m_endTime;
-					m_pTree->m_roots.push_back(MVRTree::RootEntry(root.m_identifier, root.m_nodeMBR.m_startTime, root.m_nodeMBR.m_endTime));
+					m_pTree->m_roots.emplace_back(MVRTree::RootEntry(root.m_identifier, root.m_nodeMBR.m_startTime, root.m_nodeMBR.m_endTime));
 
-					m_pTree->m_stats.m_treeHeight.push_back(1);
+					m_pTree->m_stats.m_treeHeight.emplace_back(1);
 					m_pTree->m_stats.m_nodesInLevel.at(root.m_level) = m_pTree->m_stats.m_nodesInLevel[root.m_level] + 1;
 				}
 				return true;
@@ -1091,8 +1091,8 @@ void Node::rtreeSplit(
 	uint32_t seed1, seed2;
 	pickSeeds(seed1, seed2, cTotal);
 
-	group1.push_back(seed1);
-	group2.push_back(seed2);
+	group1.emplace_back(seed1);
+	group2.emplace_back(seed2);
 
 	mask[seed1] = 1;
 	mask[seed2] = 1;
@@ -1115,7 +1115,7 @@ void Node::rtreeSplit(
 			{
 				if (mask[cChild] == 0)
 				{
-					group1.push_back(cChild);
+					group1.emplace_back(cChild);
 					mask[cChild] = 1;
 					--cRemaining;
 				}
@@ -1128,7 +1128,7 @@ void Node::rtreeSplit(
 			{
 				if (mask[cChild] == 0)
 				{
-					group2.push_back(cChild);
+					group2.emplace_back(cChild);
 					mask[cChild] = 1;
 					--cRemaining;
 				}
@@ -1174,37 +1174,37 @@ void Node::rtreeSplit(
 
 			if (md1 < md2)
 			{
-				group1.push_back(sel);
+				group1.emplace_back(sel);
 				group = 1;
 			}
 			else if (md2 < md1)
 			{
-				group2.push_back(sel);
+				group2.emplace_back(sel);
 				group = 2;
 			}
 			else if (a1 < a2)
 			{
-				group1.push_back(sel);
+				group1.emplace_back(sel);
 				group = 1;
 			}
 			else if (a2 < a1)
 			{
-				group2.push_back(sel);
+				group2.emplace_back(sel);
 				group = 2;
 			}
 			else if (group1.size() < group2.size())
 			{
-				group1.push_back(sel);
+				group1.emplace_back(sel);
 				group = 1;
 			}
 			else if (group2.size() < group1.size())
 			{
-				group2.push_back(sel);
+				group2.emplace_back(sel);
 				group = 2;
 			}
 			else
 			{
-				group1.push_back(sel);
+				group1.emplace_back(sel);
 				group = 1;
 			}
 			mask[sel] = 1;
@@ -1405,13 +1405,13 @@ void Node::rstarSplit(
 
 	for (cIndex = 0; cIndex < l1; ++cIndex)
 	{
-		group1.push_back(dataLow[cIndex]->m_index);
+		group1.emplace_back(dataLow[cIndex]->m_index);
 		delete dataLow[cIndex];
 	}
 
 	for (cIndex = l1; cIndex < cTotal; ++cIndex)
 	{
-		group2.push_back(dataLow[cIndex]->m_index);
+		group2.emplace_back(dataLow[cIndex]->m_index);
 		delete dataLow[cIndex];
 	}
 

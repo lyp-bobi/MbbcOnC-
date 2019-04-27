@@ -347,7 +347,7 @@ bool Node::insertData(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id, 
             m_pTree->writeNode(ptrR.get());
 
             m_pTree->m_stats.m_nodesInLevel[m_level] = 2;
-            m_pTree->m_stats.m_nodesInLevel.push_back(1);
+            m_pTree->m_stats.m_nodesInLevel.emplace_back(1);
             m_pTree->m_stats.m_u32TreeHeight = m_level + 2;
         }
         else

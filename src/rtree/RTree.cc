@@ -696,13 +696,13 @@ void SpatialIndex::RTree::RTree::addCommand(ICommand* pCommand, CommandType ct)
 	switch (ct)
 	{
 		case CT_NODEREAD:
-			m_readNodeCommands.push_back(Tools::SmartPointer<ICommand>(pCommand));
+			m_readNodeCommands.emplace_back(Tools::SmartPointer<ICommand>(pCommand));
 			break;
 		case CT_NODEWRITE:
-			m_writeNodeCommands.push_back(Tools::SmartPointer<ICommand>(pCommand));
+			m_writeNodeCommands.emplace_back(Tools::SmartPointer<ICommand>(pCommand));
 			break;
 		case CT_NODEDELETE:
-			m_deleteNodeCommands.push_back(Tools::SmartPointer<ICommand>(pCommand));
+			m_deleteNodeCommands.emplace_back(Tools::SmartPointer<ICommand>(pCommand));
 			break;
 	}
 }
@@ -968,7 +968,7 @@ void SpatialIndex::RTree::RTree::initNew(Tools::PropertySet& ps)
 	m_infiniteRegion.makeInfinite(m_dimension);
 
 	m_stats.m_u32TreeHeight = 1;
-	m_stats.m_nodesInLevel.push_back(0);
+	m_stats.m_nodesInLevel.emplace_back(0);
 
 	Leaf root(this, -1);
 	m_rootID = writeNode(&root);
@@ -1183,7 +1183,7 @@ void SpatialIndex::RTree::RTree::loadHeader()
 		uint32_t cNodes;
 		memcpy(&cNodes, ptr, sizeof(uint32_t));
 		ptr += sizeof(uint32_t);
-		m_stats.m_nodesInLevel.push_back(cNodes);
+		m_stats.m_nodesInLevel.emplace_back(cNodes);
 	}
 
 	delete[] header;
@@ -1462,8 +1462,8 @@ void SpatialIndex::RTree::RTree::selfJoinQuery(id_type id1, id_type id2, const R
 							std::vector<const IData*> v;
 							Data e1(n1->m_pDataLength[cChild1], n1->m_pData[cChild1], *(n1->m_ptrMBR[cChild1]), n1->m_pIdentifier[cChild1]);
 							Data e2(n2->m_pDataLength[cChild2], n2->m_pData[cChild2], *(n2->m_ptrMBR[cChild2]), n2->m_pIdentifier[cChild2]);
-							v.push_back(&e1);
-							v.push_back(&e2);
+							v.emplace_back(&e1);
+							v.emplace_back(&e2);
 							vis.visitData(v);
 						}
 					}

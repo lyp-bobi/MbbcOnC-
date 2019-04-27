@@ -271,7 +271,7 @@ DiskStorageManager::DiskStorageManager(Tools::PropertySet& ps) : m_pageSize(0), 
 				m_indexFile.read(reinterpret_cast<char*>(&page), sizeof(id_type));
 				if (m_indexFile.fail())
 					throw Tools::IllegalStateException("SpatialIndex::DiskStorageManager: Corrupted storage manager index file.");
-				e->m_pages.push_back(page);
+				e->m_pages.emplace_back(page);
 			}
 			m_pageIndex.insert(std::pair<id_type, Entry* >(id, e));
 		}
@@ -423,7 +423,7 @@ void DiskStorageManager::storeByteArray(id_type& page, const uint32_t len, const
 
 			ptr += cLen;
 			cRem -= cLen;
-			e->m_pages.push_back(cPage);
+			e->m_pages.emplace_back(cPage);
 		}
 
 		page = e->m_pages[0];
@@ -481,7 +481,7 @@ void DiskStorageManager::storeByteArray(id_type& page, const uint32_t len, const
 
 			ptr += cLen;
 			cRem -= cLen;
-			e->m_pages.push_back(cPage);
+			e->m_pages.emplace_back(cPage);
 		}
 
 		while (cNext < oldEntry->m_pages.size())

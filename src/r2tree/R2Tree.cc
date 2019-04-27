@@ -562,7 +562,7 @@ void SpatialIndex::R2Tree::R2Tree::initNew(Tools::PropertySet& ps)
     m_infiniteMbbc.makeInfinite();
 
     m_stats.m_u32TreeHeight = 1;
-    m_stats.m_nodesInLevel.push_back(0);
+    m_stats.m_nodesInLevel.emplace_back(0);
 
     Leaf root(this, -1);
     m_rootID = writeNode(&root);
@@ -711,7 +711,7 @@ void SpatialIndex::R2Tree::R2Tree::loadHeader()
         uint32_t cNodes;
         memcpy(&cNodes, ptr, sizeof(uint32_t));
         ptr += sizeof(uint32_t);
-        m_stats.m_nodesInLevel.push_back(cNodes);
+        m_stats.m_nodesInLevel.emplace_back(cNodes);
     }
 
     delete[] header;

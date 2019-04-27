@@ -645,7 +645,7 @@ bool Node::insertData(uint32_t dataLength, byte* pData, MovingRegion& mbr, id_ty
 			m_pTree->writeNode(ptrR.get());
 
 			m_pTree->m_stats.m_nodesInLevel[m_level] = 2;
-			m_pTree->m_stats.m_nodesInLevel.push_back(1);
+			m_pTree->m_stats.m_nodesInLevel.emplace_back(1);
 			m_pTree->m_stats.m_treeHeight = m_level + 2;
 		}
 		else
@@ -716,13 +716,13 @@ void Node::reinsertData(uint32_t dataLength, byte* pData, MovingRegion& mbr, id_
 
 	for (cCount = 0; cCount < cReinsert; ++cCount)
 	{
-		reinsert.push_back(v[cCount]->m_index);
+		reinsert.emplace_back(v[cCount]->m_index);
 		delete v[cCount];
 	}
 
 	for (cCount = cReinsert; cCount < m_capacity + 1; ++cCount)
 	{
-		keep.push_back(v[cCount]->m_index);
+		keep.emplace_back(v[cCount]->m_index);
 		delete v[cCount];
 	}
 
@@ -751,8 +751,8 @@ void Node::rtreeSplit(uint32_t dataLength, byte* pData, Region& mbr, id_type id,
 	uint32_t seed1, seed2;
 	pickSeeds(seed1, seed2);
 
-	group1.push_back(seed1);
-	group2.push_back(seed2);
+	group1.emplace_back(seed1);
+	group2.emplace_back(seed2);
 
 	mask[seed1] = 1;
 	mask[seed2] = 1;
@@ -775,7 +775,7 @@ void Node::rtreeSplit(uint32_t dataLength, byte* pData, Region& mbr, id_type id,
 			{
 				if (mask[cChild] == 0)
 				{
-					group1.push_back(cChild);
+					group1.emplace_back(cChild);
 					mask[cChild] = 1;
 					--cRemaining;
 				}
@@ -788,7 +788,7 @@ void Node::rtreeSplit(uint32_t dataLength, byte* pData, Region& mbr, id_type id,
 			{
 				if (mask[cChild] == 0)
 				{
-					group2.push_back(cChild);
+					group2.emplace_back(cChild);
 					mask[cChild] = 1;
 					--cRemaining;
 				}
@@ -834,37 +834,37 @@ void Node::rtreeSplit(uint32_t dataLength, byte* pData, Region& mbr, id_type id,
 
 			if (md1 < md2)
 			{
-				group1.push_back(sel);
+				group1.emplace_back(sel);
 				group = 1;
 			}
 			else if (md2 < md1)
 			{
-				group2.push_back(sel);
+				group2.emplace_back(sel);
 				group = 2;
 			}
 			else if (a1 < a2)
 			{
-				group1.push_back(sel);
+				group1.emplace_back(sel);
 				group = 1;
 			}
 			else if (a2 < a1)
 			{
-				group2.push_back(sel);
+				group2.emplace_back(sel);
 				group = 2;
 			}
 			else if (group1.size() < group2.size())
 			{
-				group1.push_back(sel);
+				group1.emplace_back(sel);
 				group = 1;
 			}
 			else if (group2.size() < group1.size())
 			{
-				group2.push_back(sel);
+				group2.emplace_back(sel);
 				group = 2;
 			}
 			else
 			{
-				group1.push_back(sel);
+				group1.emplace_back(sel);
 				group = 1;
 			}
 			mask[sel] = 1;
@@ -1078,13 +1078,13 @@ void Node::rstarSplit(uint32_t dataLength, byte* pData, MovingRegion& mbr, id_ty
 
 	for (cIndex = 0; cIndex < l1; ++cIndex)
 	{
-		group1.push_back(dataLow[cIndex]->m_index);
+		group1.emplace_back(dataLow[cIndex]->m_index);
 		delete dataLow[cIndex];
 	}
 
 	for (cIndex = l1; cIndex <= m_capacity; ++cIndex)
 	{
-		group2.push_back(dataLow[cIndex]->m_index);
+		group2.emplace_back(dataLow[cIndex]->m_index);
 		delete dataLow[cIndex];
 	}
 

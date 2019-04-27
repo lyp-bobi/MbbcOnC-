@@ -52,7 +52,7 @@ void ObjVisitor::visitData(const SpatialIndex::IData& d)
 	
 	nResults += 1;
 	
-	m_vector.push_back(item);
+	m_vector.emplace_back(item);
 }
 
 void ObjVisitor::visitData(std::vector<const SpatialIndex::IData*>& )

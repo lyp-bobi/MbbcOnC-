@@ -133,7 +133,7 @@ void ExternalSorter::insert(Record* r)
 	if (m_bInsertionPhase == false)
 		throw Tools::IllegalStateException("ExternalSorter::insert: Input has already been sorted.");
 
-	m_buffer.push_back(r);
+	m_buffer.emplace_back(r);
 	++m_u64TotalEntries;
 
 	// this will create the initial, sorted buckets before the
@@ -149,7 +149,7 @@ void ExternalSorter::insert(Record* r)
 		}
 		m_buffer.clear();
 		tf->rewindForReading();
-		m_runs.push_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
+		m_runs.emplace_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
 	}
 }
 
@@ -179,7 +179,7 @@ void ExternalSorter::sort()
 		}
 		m_buffer.clear();
 		tf->rewindForReading();
-		m_runs.push_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
+		m_runs.emplace_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
 	}
 
 	if (m_runs.size() == 1)
@@ -201,8 +201,8 @@ void ExternalSorter::sort()
 			std::list<Tools::SmartPointer<Tools::TemporaryFile> >::iterator it = m_runs.begin();
 			for (uint32_t i = 0; i < (std::min)(static_cast<uint32_t>(m_runs.size()), m_u32BufferPages); ++i)
 			{
-				buckets.push_back(*it);
-				buffers.push_back(std::queue<Record*>());
+				buckets.emplace_back(*it);
+				buffers.emplace_back(std::queue<Record*>());
 
 				r = new Record();
 				r->loadFromFile(**it);
@@ -276,7 +276,7 @@ void ExternalSorter::sort()
 			}
 			else
 			{
-				m_runs.push_back(tf);
+				m_runs.emplace_back(tf);
 			}
 		}
 	}
@@ -366,7 +366,7 @@ void BulkLoader::bulkLoadUsingSTR(
 		std::cerr << "RTree::BulkLoader: Building level " << level << std::endl;
 		#endif
 
-		pTree->m_stats.m_nodesInLevel.push_back(0);
+		pTree->m_stats.m_nodesInLevel.emplace_back(0);
 
 		Tools::SmartPointer<ExternalSorter> es2 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
 		createLevel(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);
@@ -403,7 +403,7 @@ void BulkLoader::createLevel(
 		while (true)
 		{
 			try { r = es->getNextRecord(); } catch (Tools::EndOfStreamException) { break; }
-			node.push_back(r);
+			node.emplace_back(r);
 
 			if (node.size() == b)
 			{

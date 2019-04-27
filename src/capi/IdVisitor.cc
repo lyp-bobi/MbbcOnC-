@@ -46,7 +46,7 @@ void IdVisitor::visitData(const SpatialIndex::IData& d)
 {
 	nResults += 1;
 	
-	m_vector.push_back(d.getIdentifier());
+	m_vector.emplace_back(d.getIdentifier());
 }
 
 void IdVisitor::visitData(std::vector<const SpatialIndex::IData*>& )

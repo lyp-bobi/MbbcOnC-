@@ -460,13 +460,13 @@ void SpatialIndex::MVRTree::MVRTree::addCommand(ICommand* pCommand, CommandType 
 	switch (ct)
 	{
 		case CT_NODEREAD:
-			m_readNodeCommands.push_back(Tools::SmartPointer<ICommand>(pCommand));
+			m_readNodeCommands.emplace_back(Tools::SmartPointer<ICommand>(pCommand));
 			break;
 		case CT_NODEWRITE:
-			m_writeNodeCommands.push_back(Tools::SmartPointer<ICommand>(pCommand));
+			m_writeNodeCommands.emplace_back(Tools::SmartPointer<ICommand>(pCommand));
 			break;
 		case CT_NODEDELETE:
-			m_deleteNodeCommands.push_back(Tools::SmartPointer<ICommand>(pCommand));
+			m_deleteNodeCommands.emplace_back(Tools::SmartPointer<ICommand>(pCommand));
 			break;
 	}
 }
@@ -734,14 +734,14 @@ void SpatialIndex::MVRTree::MVRTree::initNew(Tools::PropertySet& ps)
 
 	m_infiniteRegion.makeInfinite(m_dimension);
 
-	m_stats.m_treeHeight.push_back(1);
-	m_stats.m_nodesInLevel.push_back(1);
+	m_stats.m_treeHeight.emplace_back(1);
+	m_stats.m_nodesInLevel.emplace_back(1);
 
 	Leaf root(this, -1);
 	root.m_nodeMBR.m_startTime = 0.0;
 	root.m_nodeMBR.m_endTime = std::numeric_limits<double>::max();
 	writeNode(&root);
-	m_roots.push_back(RootEntry(root.m_identifier, root.m_nodeMBR.m_startTime, root.m_nodeMBR.m_endTime));
+	m_roots.emplace_back(RootEntry(root.m_identifier, root.m_nodeMBR.m_startTime, root.m_nodeMBR.m_endTime));
 
 	storeHeader();
 }
@@ -979,7 +979,7 @@ void SpatialIndex::MVRTree::MVRTree::loadHeader()
 		ptr += sizeof(double);
 		memcpy(&(e.m_endTime), ptr, sizeof(double));
 		ptr += sizeof(double);
-		m_roots.push_back(e);
+		m_roots.emplace_back(e);
 	}
 
 	memcpy(&m_treeVariant, ptr, sizeof(MVRTreeVariant));
@@ -1021,7 +1021,7 @@ void SpatialIndex::MVRTree::MVRTree::loadHeader()
 	{
 		uint32_t u32I;
 		memcpy(&u32I, ptr, sizeof(uint32_t));
-		m_stats.m_treeHeight.push_back(u32I);
+		m_stats.m_treeHeight.emplace_back(u32I);
 		ptr += sizeof(uint32_t);
 	}
 
@@ -1043,7 +1043,7 @@ void SpatialIndex::MVRTree::MVRTree::loadHeader()
 		uint32_t u32I;
 		memcpy(&u32I, ptr, sizeof(uint32_t));
 		ptr += sizeof(uint32_t);
-		m_stats.m_nodesInLevel.push_back(u32I);
+		m_stats.m_nodesInLevel.emplace_back(u32I);
 	}
 
 	delete[] header;
@@ -1303,7 +1303,7 @@ void SpatialIndex::MVRTree::MVRTree::findRootIdentifiers(const Tools::IInterval&
 	for (size_t cRoot = 0; cRoot < m_roots.size(); ++cRoot)
 	{
 		RootEntry& e = m_roots[cRoot];
-		if (ti.intersectsInterval(Tools::IT_RIGHTOPEN, e.m_startTime, e.m_endTime)) ids.push_back(e.m_id);
+		if (ti.intersectsInterval(Tools::IT_RIGHTOPEN, e.m_startTime, e.m_endTime)) ids.emplace_back(e.m_id);
 	}
 }
 

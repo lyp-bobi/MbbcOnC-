@@ -86,7 +86,7 @@ void MemoryStorageManager::storeByteArray(id_type& page, const uint32_t len, con
 
 		if (m_emptyPages.empty())
 		{
-			m_buffer.push_back(e);
+			m_buffer.emplace_back(e);
 			page = m_buffer.size() - 1;
 		}
 		else

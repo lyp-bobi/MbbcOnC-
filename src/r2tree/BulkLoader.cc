@@ -164,7 +164,7 @@ void ExternalSorter::insert(Record* r)
     if (m_bInsertionPhase == false)
         throw Tools::IllegalStateException("ExternalSorter::insert: Input has already been sorted.");
 
-    m_buffer.push_back(r);
+    m_buffer.emplace_back(r);
     ++m_u64TotalEntries;
 
     // this will create the initial, sorted buckets before the
@@ -180,7 +180,7 @@ void ExternalSorter::insert(Record* r)
         }
         m_buffer.clear();
         tf->rewindForReading();
-        m_runs.push_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
+        m_runs.emplace_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
     }
 }
 void ExternalSorter::insert(Record* r,int dim)
@@ -188,7 +188,7 @@ void ExternalSorter::insert(Record* r,int dim)
     if (m_bInsertionPhase == false)
         throw Tools::IllegalStateException("ExternalSorter::insert: Input has already been sorted.");
 
-    m_buffer.push_back(r);
+    m_buffer.emplace_back(r);
     ++m_u64TotalEntries;
 
     // this will create the initial, sorted buckets before the
@@ -205,7 +205,7 @@ void ExternalSorter::insert(Record* r,int dim)
         }
         m_buffer.clear();
         tf->rewindForReading();
-        m_runs.push_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
+        m_runs.emplace_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
     }
 }
 
@@ -235,7 +235,7 @@ void ExternalSorter::sort()
         }
         m_buffer.clear();
         tf->rewindForReading();
-        m_runs.push_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
+        m_runs.emplace_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
     }
 
     if (m_runs.size() == 1)
@@ -257,8 +257,8 @@ void ExternalSorter::sort()
             std::list<Tools::SmartPointer<Tools::TemporaryFile> >::iterator it = m_runs.begin();
             for (uint32_t i = 0; i < (std::min)(static_cast<uint32_t>(m_runs.size()), m_u32BufferPages); ++i)
             {
-                buckets.push_back(*it);
-                buffers.push_back(std::queue<Record*>());
+                buckets.emplace_back(*it);
+                buffers.emplace_back(std::queue<Record*>());
 
                 r = new Record();
                 r->loadFromFile(**it);
@@ -332,7 +332,7 @@ void ExternalSorter::sort()
             }
             else
             {
-                m_runs.push_back(tf);
+                m_runs.emplace_back(tf);
             }
         }
     }
@@ -368,7 +368,7 @@ void ExternalSorter::sort(int dim)
         }
         m_buffer.clear();
         tf->rewindForReading();
-        m_runs.push_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
+        m_runs.emplace_back(Tools::SmartPointer<Tools::TemporaryFile>(tf));
     }
 
     if (m_runs.size() == 1)
@@ -390,8 +390,8 @@ void ExternalSorter::sort(int dim)
             std::list<Tools::SmartPointer<Tools::TemporaryFile> >::iterator it = m_runs.begin();
             for (uint32_t i = 0; i < (std::min)(static_cast<uint32_t>(m_runs.size()), m_u32BufferPages); ++i)
             {
-                buckets.push_back(*it);
-                buffers.push_back(std::queue<Record*>());
+                buckets.emplace_back(*it);
+                buffers.emplace_back(std::queue<Record*>());
 
                 r = new Record();
                 r->loadFromFile(**it);
@@ -465,7 +465,7 @@ void ExternalSorter::sort(int dim)
             }
             else
             {
-                m_runs.push_back(tf);
+                m_runs.emplace_back(tf);
             }
         }
     }
@@ -556,7 +556,7 @@ void BulkLoader::bulkLoadUsingSTR(
         std::cerr << "R2Tree::BulkLoader: Building level " << level << std::endl;
 #endif
 
-        pTree->m_stats.m_nodesInLevel.push_back(0);
+        pTree->m_stats.m_nodesInLevel.emplace_back(0);
 
         Tools::SmartPointer<ExternalSorter> es2 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
         createLevel(pTree, es, 4, bleaf, bindex, level++, es2, pageSize, numberOfPages);
@@ -596,7 +596,7 @@ void BulkLoader::createLevel(
         while (true)
         {
             try { r = es->getNextRecord(); } catch (Tools::EndOfStreamException) { break; }
-            node.push_back(r);
+            node.emplace_back(r);
 
             if (node.size() == b)
             {
@@ -689,7 +689,7 @@ void BulkLoader::bulkLoadUsingSTR2(
         std::cerr << "R2Tree::BulkLoader: Building level " << level << std::endl;
 #endif
 
-        pTree->m_stats.m_nodesInLevel.push_back(0);
+        pTree->m_stats.m_nodesInLevel.emplace_back(0);
 
         Tools::SmartPointer<ExternalSorter> es2 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
         createLevel2(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);
@@ -729,7 +729,7 @@ void BulkLoader::createLevel2(
         while (true)
         {
             try { r = es->getNextRecord(); } catch (Tools::EndOfStreamException) { break; }
-            node.push_back(r);
+            node.emplace_back(r);
 
             if (node.size() == b)
             {
@@ -839,7 +839,7 @@ void BulkLoader::bulkLoadUsingSTR3(
         std::cerr << "R2Tree::BulkLoader: Building level " << level << std::endl;
 #endif
 
-        pTree->m_stats.m_nodesInLevel.push_back(0);
+        pTree->m_stats.m_nodesInLevel.emplace_back(0);
 
         Tools::SmartPointer<ExternalSorter> es2 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
         if(level==0){
@@ -902,7 +902,7 @@ void BulkLoader::bulkLoadUsingKDT(
     pTree->m_stats.m_u64Data = es->getTotalEntries();
     pTree->m_stats.m_u32TreeHeight = nlevel+1;
     for(int i=0;i<nlevel;i++){
-        pTree->m_stats.m_nodesInLevel.push_back(0);
+        pTree->m_stats.m_nodesInLevel.emplace_back(0);
     }
     Node* nn=recuisiveBuildKdtree(pTree,es,bleaf,bindex,nlevel,pageSize,numberOfPages);
     pTree->m_rootID=nn->m_identifier;
@@ -921,7 +921,7 @@ Node* BulkLoader::recuisiveBuildKdtree(SpatialIndex::R2Tree::R2Tree *pTree,
 
         for(int i=0;i<es->getTotalEntries();i++) {
             r = es->getNextRecord();
-            node.push_back(r);
+            node.emplace_back(r);
         }
         Node* n = createNode(pTree, node, level);
         node.clear();
@@ -931,7 +931,7 @@ Node* BulkLoader::recuisiveBuildKdtree(SpatialIndex::R2Tree::R2Tree *pTree,
     }
     else{
         std::vector<Tools::SmartPointer<ExternalSorter>> esG;
-        for(int i=0;i<b;i++) esG.push_back(Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages)));
+        for(int i=0;i<b;i++) esG.emplace_back(Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages)));
         uint64_t len=ceil((ent+1)*1.0/b);
         for(uint64_t i=0;i<ent;i++){
             esG.at(i/len)->insert(es->getNextRecord(),level%4+1);
@@ -939,7 +939,7 @@ Node* BulkLoader::recuisiveBuildKdtree(SpatialIndex::R2Tree::R2Tree *pTree,
         for(int i=0;i<b;i++){
             Node* tNode=recuisiveBuildKdtree(pTree,esG[i],bleaf,bindex,level-1,pageSize,numberOfPages);
 //            std::cout<<"node id"<<tNode->m_identifier<<" \n";
-            node.push_back(new ExternalSorter::Record(tNode->m_nodeMbbc, tNode->m_identifier, 0, 0, 4));
+            node.emplace_back(new ExternalSorter::Record(tNode->m_nodeMbbc, tNode->m_identifier, 0, 0, 4));
         }
         Node* n = createNode(pTree, node, level);
         node.clear();
