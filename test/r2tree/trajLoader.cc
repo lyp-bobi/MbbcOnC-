@@ -14,7 +14,7 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "/home/chuang/geolifedatasimplify.csv"
 #define sourceFile "D://geolifedata.csv"
-#define testtime 1000
+#define testtime 100000
 #define dimension 2
 #define indexcap 5
 #define leafcap 5
