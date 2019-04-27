@@ -10,10 +10,10 @@
 #include <map>
 #include<stdlib.h>
 #include<time.h>
-#define random(x,y) (((double)rand()/RAND_MAX)*(y-x+1)+x)
+#define random(x,y) (((double)rand()/RAND_MAX)*(y-x)+x)
 #include <spatialindex/SpatialIndex.h>
-//#define sourceFile "/home/chuang/geolifedatasimplify.csv"
-#define sourceFile "D://geolifedata.csv"
+#define sourceFile "D://geolifedatasimplify.csv"
+//#define sourceFile "D://geolifedata.csv"
 #define testtime 100000
 #define dimension 2
 #define indexcap 5
@@ -217,7 +217,7 @@ double naivetime(string l){
         m = stringToNum<int>(l.substr(2,4));
         s = stringToNum<int>(l.substr(5,7));
     }
-    return 10000*h+10000*m/60+100*s/60;
+    return 10000*h+160*m+1.6*s;
 
 }
 struct xyt{
