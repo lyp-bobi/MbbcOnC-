@@ -47,9 +47,7 @@ namespace SpatialIndex
             virtual ~ExternalSorter();
 
             void insert(Record* r);
-            void insert(Record* r,int dim);
             void sort();
-            void sort(int dim);
             Record* getNextRecord();
             uint64_t getTotalEntries() const;
 
@@ -134,15 +132,6 @@ namespace SpatialIndex
                     uint32_t numberOfPages // The total number of pages to use.
             );
 
-            void bulkLoadUsingKDT(
-                    R2Tree* pTree,
-                    IDataStream& stream,
-                    uint32_t bindex,
-                    uint32_t bleaf,
-                    uint32_t pageSize, // The number of node entries per page.
-                    uint32_t numberOfPages // The total number of pages to use.
-            );
-
         protected:
             void createLevel(
                     R2Tree* pTree,
@@ -163,16 +152,6 @@ namespace SpatialIndex
                     uint32_t leafSize,
                     uint32_t level,
                     Tools::SmartPointer<ExternalSorter> es2,
-                    uint32_t pageSize,
-                    uint32_t numberOfPages
-            );
-
-            Node* recuisiveBuildKdtree(
-                    SpatialIndex::R2Tree::R2Tree* pTree,
-                    Tools::SmartPointer<ExternalSorter> es,
-                    uint32_t bleaf,
-                    uint32_t bindex,
-                    uint32_t level,
                     uint32_t pageSize,
                     uint32_t numberOfPages
             );

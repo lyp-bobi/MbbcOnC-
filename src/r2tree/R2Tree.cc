@@ -194,9 +194,6 @@ SpatialIndex::ISpatialIndex* SpatialIndex::R2Tree::createAndBulkLoadNewR2Tree(
         case BLM_STR3:
             bl.bulkLoadUsingSTR3(static_cast<R2Tree*>(tree), stream, bindex, bleaf, 10000, 100);
             break;
-        case BLM_KDT:
-            bl.bulkLoadUsingKDT(static_cast<R2Tree*>(tree), stream, bindex, bleaf, 10000, 100);
-            break;
         default:
             throw Tools::IllegalArgumentException("createAndBulkLoadNewR2Tree: Unknown bulk load method.");
             break;

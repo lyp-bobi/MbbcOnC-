@@ -10,11 +10,12 @@
 #include <map>
 #include<stdlib.h>
 #include<time.h>
+#include <cmath>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x)+x)
 #include <spatialindex/SpatialIndex.h>
-#define sourceFile "D://geolifedatasimplify.csv"
-//#define sourceFile "D://geolifedata.csv"
-#define testtime 100000
+//#define sourceFile "D://geolifedatasimplify.csv"
+#define sourceFile "D://geolifedata.csv"
+#define testtime 50000
 #define dimension 2
 #define indexcap 5
 #define leafcap 5
@@ -69,7 +70,14 @@ class MbrStream: public IDataStream{
 public:
     vector<pair<int,Region>> mbrs;
     int i=0;
-    MbrStream(vector<pair<int,Region>> other){mbrs=other;}
+    MbrStream(vector<pair<id_type ,Trajectory> > period){
+        mbrs.clear();
+        for(auto idt:period){
+            Region br;
+            idt.second.getMBR(br);
+            mbrs.emplace_back(make_pair(idt.first,br));
+        }
+    }
     virtual bool hasNext() override
     {
         return i<mbrs.size();
@@ -90,7 +98,6 @@ class MbbcStream: public IDataStream{
 public:
     vector<pair<int,Mbbc>> mbbcs;
     int i=0;
-    MbbcStream(vector<pair<int,Mbbc>> other){mbbcs=other;}
     MbbcStream(vector<pair<id_type ,Trajectory> > period){
         mbbcs.clear();
         for(auto idt:period){
@@ -208,7 +215,7 @@ double naivetime(string l){
     int h;
     int m;
     int s;
-    if(l.size()==9){
+    if(l.size()==8){
         h = stringToNum<int>(l.substr(0,2));
         m = stringToNum<int>(l.substr(3,5));
         s = stringToNum<int>(l.substr(6,8));
@@ -248,160 +255,21 @@ vector< vector<xyt> > cuttraj(vector<xyt> traj){
     for(int i=0;i<traj.size();i++){
         int newpd=traj[i].t/10000;
         if(newpd!=oldpd){
-            xyt mid1=makemid(traj.at(i-1),traj[i],(oldpd+1)*10000);
+            if(newpd<oldpd) break;
+            xyt mid1=makemid(traj.at(i-1),traj[i],(oldpd+1)*10000-0.001);
             segments.at(oldpd).emplace_back(mid1);
-            if(int(traj[i].t)%10000!=0){
+            if(int(floor(traj[i].t))%10000!=0){
                 xyt mid2=makemid(traj.at(i-1),traj[i],newpd*10000);
                 segments.at(newpd).emplace_back(mid2);
             }
             oldpd=newpd;
         }
         segments.at(newpd).emplace_back(traj[i]);
+//        cout<<traj[i].t<<"\n";
     }
     return segments;
 }
 
-Mbbc toMbbc(vector<xyt> seg){
-    if(seg.empty()) cout<<"no! a empty MBBC!"<<endl;
-    double startx=seg.begin()->x,starty=seg.begin()->y,startt=seg.begin()->t;
-    double endx=seg.back().x,endy=seg.back().y,endt=seg.back().t;
-    double maxvxP=0,maxvxN=0,maxvyP=0,maxvyN=0;
-    double minx=startx,maxx=startx,miny=starty,maxy=starty;
-    for(int i=0;i<seg.size();i++){
-        if(seg[i].t!=startt){
-            double vx=(seg[i].x-startx)/(seg[i].t-startt);
-            if(vx>maxvxP) maxvxP=vx;
-            if(vx<maxvxN) maxvxN=vx;
-
-            double vy=(seg[i].y-starty)/(seg[i].t-startt);
-            if(vy>maxvyP) maxvyP=vy;
-            if(vy<maxvyN) maxvyN=vy;
-        }
-        if(seg[i].t!=endt){
-            double vx=(endx-seg[i].x)/(endt-seg[i].t);
-            if(vx>maxvxP) maxvxP=vx;
-            if(vx<maxvxN) maxvxN=vx;
-            double vy=(endy-seg[i].y)/(endt-seg[i].t);
-            if(vy>maxvyP) maxvyP=vy;
-            if(vy<maxvyN) maxvyN=vy;
-        }
-
-        if(seg[i].x<minx) minx=seg[i].x;
-        if(seg[i].x>maxx) maxx=seg[i].x;
-        if(seg[i].y<miny) miny=seg[i].y;
-        if(seg[i].y>maxy) maxy=seg[i].y;
-    }
-    double sLow[2]={startx,starty};
-    double sHigh[2]={startx,starty};
-    double eLow[2]={endx,endy};
-    double eHigh[2]={endx,endy};
-    double vLow[2]={maxvxN,maxvyN};
-    double vHigh[2]={maxvxP,maxvyP};
-    double wLow[2]={minx,miny};
-    double wHigh[2]={maxx,maxy};
-    double stime=int(startt/10000)*10000;
-    return Mbbc(Region(sLow,sHigh,2),Region(eLow,eHigh,2),
-            Region(vLow,vHigh,2),Region(wLow,wHigh,2),stime,stime+10000);
-}
-Region toMbr(vector<xyt> seg){
-    if(seg.empty()) cout<<"no! a empty MBR!"<<endl;
-    double startx=seg.begin()->x,starty=seg.begin()->y,startt=seg.begin()->t;
-    double minx=startx,maxx=startx,miny=starty,maxy=starty;
-    for(int i=0;i<seg.size();i++){
-        if(seg[i].x<minx) minx=seg[i].x;
-        if(seg[i].x>maxx) maxx=seg[i].x;
-        if(seg[i].y<miny) miny=seg[i].y;
-        if(seg[i].y>maxy) maxy=seg[i].y;
-    }
-    double pLow[2]={minx,miny};
-    double pHigh[2]={maxx,maxy};
-    return Region(pLow,pHigh,2);
-}
-
-void loadCsvToMbr(IDataStream &ds1,const vector<IShape*> &queries){
-    set<int> ids;
-    multimap<int,xyt> trajs;
-    vector< vector< pair<int,Region> > > liar(24);
-    string name = "name";
-    id_type indexIdentifier;
-    IStorageManager* diskfile = StorageManager::createNewDiskStorageManager(name, 4096);
-    // Create a new storage manager with the provided base name and a 4K page size.
-
-    StorageManager::IBuffer* file = StorageManager::createNewRandomEvictionsBuffer(*diskfile, 10, false);
-    // applies a main memory random buffer on top of the persistent storage manager
-    // (LRU buffer, etc can be created the same way).
-    clock_t start,end;
-    start=clock();
-
-    ISpatialIndex* tree = RTree::createAndBulkLoadNewRTree(
-            RTree::BLM_STR, ds1, *file, 0.9, indexcap,leafcap, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
-    end=clock();
-    cout<<"Tree Building Time: "<< end-start<<endl;
-    RangeVisitor vis;
-    start=clock();
-    for(int i=0;i<queries.size();i++){
-        tree->intersectsWithQuery(*queries[i],vis);
-//        tree->nearestNeighborQuery(5,queries[i],vis);
-    }
-    end=clock();
-    cout<<"Querying time: "<< end-start<<endl;
-    cout<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
-    std::cerr << *tree;
-    std::cerr << "Buffer hits: " << file->getHits() << std::endl;
-    std::cerr << "Index ID: " << indexIdentifier << std::endl;
-
-    bool ret = tree->isIndexValid();
-    if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
-    else std::cerr << "The stucture seems O.K." << std::endl;
-
-    delete tree;
-    delete file;
-    delete diskfile;
-}
-
-
-void loadCsvToMbbc(R2Tree::BulkLoadMethod blm,IDataStream &ds2,const vector<IShape*> &queries){
-    set<int> ids;
-    multimap<int,xyt> trajs;
-    vector< vector< pair<int,Mbbc> > > liar(24);
-    string name = "name";
-    id_type indexIdentifier;
-    IStorageManager* diskfile = StorageManager::createNewDiskStorageManager(name, 4096);
-    // Create a new storage manager with the provided base name and a 4K page size.
-
-    StorageManager::IBuffer* file = StorageManager::createNewRandomEvictionsBuffer(*diskfile, 10, false);
-    // applies a main memory random buffer on top of the persistent storage manager
-    // (LRU buffer, etc can be created the same way).
-
-    clock_t start,end;
-    start=clock();
-    ISpatialIndex* tree = R2Tree::createAndBulkLoadNewR2Tree(
-            blm, ds2, *file, 0.9, indexcap,leafcap,2, indexIdentifier);
-    end=clock();
-    cout<<"Tree Building time: "<< end-start<<endl;
-    bool ret = tree->isIndexValid();
-    if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
-    else std::cerr << "The stucture seems O.K." << std::endl;
-
-    RangeVisitor vis;
-    start=clock();
-    for(int i=0;i<queries.size();i++){
-        tree->intersectsWithQuery(*queries[i],vis);
-//        tree->nearestNeighborQuery(5,queries[i],vis);
-    }
-    end=clock();
-    cout<<"Querying time: "<< end-start<<endl;
-    cout<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
-    std::cerr << *tree;
-    std::cerr << "Buffer hits: " << file->getHits() << std::endl;
-    std::cerr << "Index ID: " << indexIdentifier << std::endl;
-
-
-    delete tree;
-    delete file;
-    delete diskfile;
-
-}
 
 
 list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
@@ -441,14 +309,13 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
         }
         trajs.erase(id);
         if(!traj.empty()){
+//            cout<<id<<endl;
             vector< vector<xyt> > segs = cuttraj(traj);//size 24
             for(int j =0;j<24;j++){
-                vector<xyt> seg;
                 vector<TimePoint> tps;
-                seg=segs[j];
-                for(auto p:seg){
+                for(auto p:segs[j]){
                     double xy[]={p.x,p.y};
-                    double faket=int(p.t)%10000;
+                    double faket=int(floor(p.t))%10000;
                     tps.emplace_back(TimePoint(xy,faket,faket,dimension));
 //                    tps.emplace_back(TimePoint(xy,p.t,p.t,dimension));
                 }
@@ -461,19 +328,30 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
     }
     return res;
 }
+void TreeQuery(ISpatialIndex* tree,IDataStream &ds2,const vector<IShape*> &queries){
+    clock_t start,end;
+    cout<<"Tree Building time: "<< end-start<<endl;
+    bool ret = tree->isIndexValid();
+    if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
+    else std::cerr << "The stucture seems O.K." << std::endl;
 
+    RangeVisitor vis;
+    start=clock();
+    for(int i=0;i<queries.size();i++){
+        tree->intersectsWithQuery(*queries[i],vis);
+//        tree->nearestNeighborQuery(5,queries[i],vis);
+    }
+    end=clock();
+    cout<<"Querying time: "<< end-start<<endl;
+    cout<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
+    std::cerr << *tree;
+}
 
 int main(){
     srand((int)time(NULL));
     list<vector<pair<id_type ,Trajectory> > > trajs=loadCsvToTrajs();
     vector<pair<id_type ,Trajectory> >   empty;
-//    vector<pair<id_type ,Trajectory> > tjtjtj;
-//    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
-//    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
-//    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
-//    tjtjtj.insert(tjtjtj.end(),   trajs[0].begin(),   trajs[0].end());
-//    TrajMbrStream ds1(trajs[0]);
-//    TrajMbbcStream ds2(trajs[0]);
+    MbbcStream ds1(trajs.front());
     MbbcStream ds2(trajs.front());
     for(auto period:trajs){
         period.swap(empty);
@@ -483,17 +361,39 @@ int main(){
         double pLow[2] = {random(31,40.5), random(110,122)};
         double pHigh[2] = {pLow[0]+random(0,0.01), pLow[1]+random(0,0.01)};
         Region r(pLow, pHigh, 2);
+//        cout<<pLow[0]<<","<<pLow[1]<<endl;
         int t =int(random(0,10000));
         TimeRegion *tr=new TimeRegion(pLow, pHigh, t, t, 2);
         queries.emplace_back(tr);
 //        queries.emplace_back(&trajs[0][i].second);
     }
-//    loadCsvToMbr(ds1,queries);
-//    cout<<"\n\n\n\n";
-    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR,ds2,queries);
-    cout<<"\n\n\n\n";
-    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR2,ds2,queries);
-    cout<<"\n\n\n\n";
-    loadCsvToMbbc(R2Tree::BulkLoadMethod::BLM_STR3,ds2,queries);
+
+
+    string name = "name";
+    id_type indexIdentifier1,indexIdentifier2,indexIdentifier3,indexIdentifier4;
+    IStorageManager *diskfile1 = StorageManager::createNewDiskStorageManager(name, 4096),
+        *diskfile2 = StorageManager::createNewDiskStorageManager(name, 4096),
+        *diskfile3 = StorageManager::createNewDiskStorageManager(name, 4096),
+        *diskfile4 = StorageManager::createNewDiskStorageManager(name, 4096);
+    // Create a new storage manager with the provided base name and a 4K page size.
+    StorageManager::IBuffer *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
+        *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false),
+        *file3 = StorageManager::createNewRandomEvictionsBuffer(*diskfile3, 10, false),
+        *file4 = StorageManager::createNewRandomEvictionsBuffer(*diskfile4, 10, false);
+    // applies a main memory random buffer on top of the persistent storage manager
+    // (LRU buffer, etc can be created the same way).
+    ISpatialIndex* r = RTree::createAndBulkLoadNewRTree(
+            RTree::BLM_STR, ds1, *file1, 0.9, indexcap,leafcap, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier1);
+    ISpatialIndex* r21 = R2Tree::createAndBulkLoadNewR2Tree(
+            R2Tree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap,leafcap,2, indexIdentifier2);
+    ISpatialIndex* r22 = R2Tree::createAndBulkLoadNewR2Tree(
+            R2Tree::BulkLoadMethod::BLM_STR2, ds2, *file3, 0.9, indexcap,leafcap,2, indexIdentifier3);
+    ISpatialIndex* r23 = R2Tree::createAndBulkLoadNewR2Tree(
+            R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap,leafcap,2, indexIdentifier4);
+
+    TreeQuery(r,ds1,queries);
+    TreeQuery(r21,ds2,queries);
+    TreeQuery(r22,ds2,queries);
+    TreeQuery(r23,ds2,queries);
     return 0;
 }
