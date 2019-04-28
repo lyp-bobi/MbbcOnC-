@@ -13,8 +13,8 @@
 #include <cmath>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x)+x)
 #include <spatialindex/SpatialIndex.h>
-//#define sourceFile "D://geolifedatasimplify.csv"
-#define sourceFile "D://geolifedata.csv"
+#define sourceFile "D://geolifedatasimplify.csv"
+//#define sourceFile "D://geolifedata.csv"
 #define testtime 100000
 #define dimension 2
 #define indexcap 5
@@ -70,9 +70,9 @@ class MbrStream: public IDataStream{
 public:
     vector<pair<int,Region>> mbrs;
     int i=0;
-    void feedTraj(vector<pair<id_type ,Trajectory> > period){
+    void feedTraj(const vector<pair<id_type ,Trajectory> > *period){
         mbrs.clear();
-        for(auto idt:period){
+        for(auto idt:*period){
             Region br;
             idt.second.getMBR(br);
             mbrs.emplace_back(make_pair(idt.first,br));
@@ -100,9 +100,9 @@ class MbbcStream: public IDataStream{
 public:
     vector<pair<int,Mbbc>> mbbcs;
     int i=0;
-    void feedTraj(vector<pair<id_type ,Trajectory> > period){
+    void feedTraj(const vector<pair<id_type ,Trajectory> > *period){
         mbbcs.clear();
-        for(auto idt:period){
+        for(auto idt:*period){
             Mbbc bc;
             idt.second.getMbbc(bc);
             mbbcs.emplace_back(make_pair(idt.first,bc));
@@ -352,8 +352,8 @@ int main(){
     vector<pair<id_type ,Trajectory> >   empty;
     MbrStream ds1;
     MbbcStream ds2;
-    ds1.feedTraj(trajs.front());
-    ds2.feedTraj(trajs.front());
+    ds1.feedTraj(&trajs.front());
+    ds2.feedTraj(&trajs.front());
 //    for(auto period:trajs){
 //        period.swap(empty);
 //    }
