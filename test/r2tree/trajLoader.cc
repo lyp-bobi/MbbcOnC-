@@ -13,8 +13,8 @@
 #include <cmath>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x)+x)
 #include <spatialindex/SpatialIndex.h>
-#define sourceFile "D://geolifedatasimplify.csv"
-//#define sourceFile "D://geolifedata.csv"
+//#define sourceFile "D://geolifedatasimplify.csv"
+#define sourceFile "D://geolifedata.csv"
 #define testtime 100000
 #define dimension 2
 #define indexcap 5
@@ -257,8 +257,8 @@ vector< vector<xyt> > cuttraj(vector<xyt> traj){
     int oldpd=traj.at(0).t/10000;
     for(int i=0;i<traj.size();i++){
         int newpd=traj[i].t/10000;
-        if(newpd!=oldpd){
-            if(newpd<oldpd) break;
+        if(newpd<oldpd) break;
+        if(newpd-1==oldpd){
             xyt mid1=makemid(traj.at(i-1),traj[i],(oldpd+1)*10000-0.001);
             segments.at(oldpd).emplace_back(mid1);
             if(int(floor(traj[i].t))%10000!=0){
