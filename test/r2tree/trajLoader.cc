@@ -15,7 +15,7 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 #define sourceFile "D://geolifedata.csv"
-#define testtime 50000
+#define testtime 100000
 #define dimension 2
 #define indexcap 5
 #define leafcap 5
@@ -70,13 +70,14 @@ class MbrStream: public IDataStream{
 public:
     vector<pair<int,Region>> mbrs;
     int i=0;
-    MbrStream(vector<pair<id_type ,Trajectory> > period){
+    void feedTraj(vector<pair<id_type ,Trajectory> > period){
         mbrs.clear();
         for(auto idt:period){
             Region br;
             idt.second.getMBR(br);
             mbrs.emplace_back(make_pair(idt.first,br));
         }
+        rewind();
     }
     virtual bool hasNext() override
     {
@@ -89,22 +90,24 @@ public:
     }
     virtual uint32_t size()
     {
-        throw Tools::NotSupportedException("Operation not supported.");
+        return mbrs.size();
     }
 
     virtual void rewind(){i=0;}
 };
+
 class MbbcStream: public IDataStream{
 public:
     vector<pair<int,Mbbc>> mbbcs;
     int i=0;
-    MbbcStream(vector<pair<id_type ,Trajectory> > period){
+    void feedTraj(vector<pair<id_type ,Trajectory> > period){
         mbbcs.clear();
         for(auto idt:period){
             Mbbc bc;
             idt.second.getMbbc(bc);
             mbbcs.emplace_back(make_pair(idt.first,bc));
         }
+        rewind();
     }
     virtual bool hasNext() override
     {
@@ -117,7 +120,7 @@ public:
     }
     virtual uint32_t size()
     {
-        throw Tools::NotSupportedException("Operation not supported.");
+        return mbbcs.size();
     }
 
     virtual void rewind(){i=0;}
@@ -328,12 +331,8 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
     }
     return res;
 }
-void TreeQuery(ISpatialIndex* tree,IDataStream &ds2,const vector<IShape*> &queries){
+void TreeQuery(ISpatialIndex* tree,const vector<IShape*> &queries){
     clock_t start,end;
-    cout<<"Tree Building time: "<< end-start<<endl;
-    bool ret = tree->isIndexValid();
-    if (ret == false) std::cerr << "ERROR: Structure is invalid!" << std::endl;
-    else std::cerr << "The stucture seems O.K." << std::endl;
 
     RangeVisitor vis;
     start=clock();
@@ -342,20 +341,22 @@ void TreeQuery(ISpatialIndex* tree,IDataStream &ds2,const vector<IShape*> &queri
 //        tree->nearestNeighborQuery(5,queries[i],vis);
     }
     end=clock();
-    cout<<"Querying time: "<< end-start<<endl;
-    cout<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
-    std::cerr << *tree;
+    cerr<<"Querying time: "<< end-start<<endl;
+    cerr<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
+    cerr << *tree;
 }
 
 int main(){
     srand((int)time(NULL));
     list<vector<pair<id_type ,Trajectory> > > trajs=loadCsvToTrajs();
     vector<pair<id_type ,Trajectory> >   empty;
-    MbbcStream ds1(trajs.front());
-    MbbcStream ds2(trajs.front());
-    for(auto period:trajs){
-        period.swap(empty);
-    }
+    MbrStream ds1;
+    MbbcStream ds2;
+    ds1.feedTraj(trajs.front());
+    ds2.feedTraj(trajs.front());
+//    for(auto period:trajs){
+//        period.swap(empty);
+//    }
     vector<IShape*> queries;
     for (int i = 0; i < testtime; i++){
         double pLow[2] = {random(31,40.5), random(110,122)};
@@ -369,12 +370,12 @@ int main(){
     }
 
 
-    string name = "name";
+    string name1 = "name1",name2 = "name2",name3 = "name3",name4 = "name4";
     id_type indexIdentifier1,indexIdentifier2,indexIdentifier3,indexIdentifier4;
-    IStorageManager *diskfile1 = StorageManager::createNewDiskStorageManager(name, 4096),
-        *diskfile2 = StorageManager::createNewDiskStorageManager(name, 4096),
-        *diskfile3 = StorageManager::createNewDiskStorageManager(name, 4096),
-        *diskfile4 = StorageManager::createNewDiskStorageManager(name, 4096);
+    IStorageManager *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
+        *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096),
+        *diskfile3 = StorageManager::createNewDiskStorageManager(name3, 4096),
+        *diskfile4 = StorageManager::createNewDiskStorageManager(name4, 4096);
     // Create a new storage manager with the provided base name and a 4K page size.
     StorageManager::IBuffer *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
         *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false),
@@ -383,7 +384,7 @@ int main(){
     // applies a main memory random buffer on top of the persistent storage manager
     // (LRU buffer, etc can be created the same way).
     ISpatialIndex* r = RTree::createAndBulkLoadNewRTree(
-            RTree::BLM_STR, ds1, *file1, 0.9, indexcap,leafcap, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier1);
+            RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap,leafcap, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier1);
     ISpatialIndex* r21 = R2Tree::createAndBulkLoadNewR2Tree(
             R2Tree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap,leafcap,2, indexIdentifier2);
     ISpatialIndex* r22 = R2Tree::createAndBulkLoadNewR2Tree(
@@ -391,9 +392,13 @@ int main(){
     ISpatialIndex* r23 = R2Tree::createAndBulkLoadNewR2Tree(
             R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap,leafcap,2, indexIdentifier4);
 
-    TreeQuery(r,ds1,queries);
-    TreeQuery(r21,ds2,queries);
-    TreeQuery(r22,ds2,queries);
-    TreeQuery(r23,ds2,queries);
+    cerr<<"start query!"<<endl<<endl<<endl;
+    TreeQuery(r,queries);
+    cout<<"\n\n\n\n";
+    TreeQuery(r21,queries);
+    cout<<"\n\n\n\n";
+    TreeQuery(r22,queries);
+    cout<<"\n\n\n\n";
+    TreeQuery(r23,queries);
     return 0;
 }
