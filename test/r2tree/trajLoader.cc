@@ -232,20 +232,20 @@ double naivetime(string l){
     }
     return 10000*h+160*m+1.6*s;
 }
-#define cut 10000
 int getPeriod(double time){
-    return int(floor(time))/cut;
+    int pd= int(floor(time))/PeriodLen;
+    return pd;
 }
 int getMaxPeriod(){
-    return 240000/cut;
+    return 240000/PeriodLen;
 }
 double getPeriodStart(double time){
     int pd=getPeriod(time);
-    return pd*cut;
+    return pd*PeriodLen;
 }
 double getPeriodEnd(double time){
     int pd=getPeriod(time);
-    return (pd+1)*cut-0.000001;
+    return (pd+1)*PeriodLen-0.00001;
 }
 
 struct xyt{
@@ -253,16 +253,13 @@ struct xyt{
         double y;
         double t;
         };
-void swap(double &x,double &y){
-    double z;
-    z=x;x=y;y=z;
-}
 xyt makemid(xyt p1, xyt p2, double t){
-    if(p1.t>p2.t){
-        swap(p1.x,p2.x);
-        swap(p1.y,p2.y);
-        swap(p1.t,p2.t);
-    }
+    if(t>p2.t)
+        cout<<p1.x<<" "<<p2.x<<endl<<
+                p1.y<<" "<<p2.y<<endl<<
+                p1.t<<" "<<p2.t<<" "<<t<<endl;
+    assert(p1.t<=t);
+    assert(t<=p2.t);
     double h1= (t-p1.t)/(p2.t-p1.t);
     double h2= (p2.t-t)/(p2.t-p1.t);
     double x=h1*p1.x+h2*p2.x;
@@ -274,13 +271,13 @@ vector< vector<xyt> > cuttraj(vector<xyt> traj){
     vector< vector<xyt> > segments(getMaxPeriod());
     int oldpd=getPeriod(traj.at(0).t);
     for(int i=0;i<traj.size();i++){
+        if(traj[i].t<traj[i-1].t) break;//stop reading when coming to a new day
         int newpd=getPeriod(traj[i].t);
-        if(newpd<oldpd) break;
         if(newpd-1==oldpd){
-            xyt mid1=makemid(traj.at(i-1),traj[i],getPeriodEnd(oldpd));
+            xyt mid1=makemid(traj[i-1],traj[i],getPeriodEnd(traj[i-1].t));
             segments.at(oldpd).emplace_back(mid1);
-            if(int(floor(traj[i].t))%10000!=0){
-                xyt mid2=makemid(traj.at(i-1),traj[i],getPeriodStart(newpd));
+            if(traj[i].t-getPeriodStart(traj[i].t!=0)){
+                xyt mid2=makemid(traj[i-1],traj[i],getPeriodStart(traj[i].t));
                 segments.at(newpd).emplace_back(mid2);
             }
             oldpd=newpd;
@@ -303,7 +300,6 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
     set<id_type> ids;
     multimap<id_type,xyt> trajs;
     list<vector<pair<id_type ,Trajectory> > > res(getMaxPeriod());
-    auto iperiod=res.begin();
     while (getline(inFile, lineStr)){
         string str;
         stringstream ss(lineStr);
@@ -319,6 +315,7 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
         xyt p={x,y,t};
         ids.insert(id);
         trajs.insert(make_pair(id,p));
+//        if(id==14718) cout<<x<<" "<<y<<" "<<t<<" "<<endl;
     }
     for(auto id:ids){
         multimap<id_type ,xyt>::iterator beg,end,iter;
@@ -332,6 +329,7 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
         if(!traj.empty()){
 //            cout<<id<<endl;
             vector< vector<xyt> > segs = cuttraj(traj);
+            auto iperiod=res.begin();
             for(int j =0;j<getMaxPeriod();j++){
                 vector<TimePoint> tps;
                 for(auto p:segs[j]){
@@ -341,7 +339,7 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
 //                    tps.emplace_back(TimePoint(xy,p.t,p.t,dimension));
                 }
                 if(!tps.empty()){
-                    iperiod->emplace_back(make_pair(id,Trajectory(tps)));
+                    iperiod->emplace_back(make_pair(id*1000+j,Trajectory(tps)));
 //                    iperiod++;
                 }
             }
@@ -378,10 +376,10 @@ int main(){
     vector<IShape*> queries;
     for (int i = 0; i < testtime; i++){
         double pLow[2] = {random(31,40.5), random(110,122)};
-        double pHigh[2] = {pLow[0]+random(0,0.1), pLow[1]+random(0,0.1)};
+        double pHigh[2] = {pLow[0]+random(0.01,0.1), pLow[1]+random(0.01,0.1)};
         Region r(pLow, pHigh, 2);
 //        cout<<pLow[0]<<","<<pLow[1]<<endl;
-        int t =int(random(0,cut));
+        int t =int(random(0,PeriodLen));
         TimeRegion *tr=new TimeRegion(pLow, pHigh, t, t, 2);
         queries.emplace_back(tr);
 //        queries.emplace_back(&trajs[0][i].second);
@@ -405,18 +403,18 @@ int main(){
             RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap,leafcap, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier1);
     ISpatialIndex* r21 = R2Tree::createAndBulkLoadNewR2Tree(
             R2Tree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap,leafcap,2, indexIdentifier2);
-//    ISpatialIndex* r22 = R2Tree::createAndBulkLoadNewR2Tree(
-//            R2Tree::BulkLoadMethod::BLM_STR2, ds2, *file3, 0.9, indexcap,leafcap,2, indexIdentifier3);
-//    ISpatialIndex* r23 = R2Tree::createAndBulkLoadNewR2Tree(
-//            R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap,leafcap,2, indexIdentifier4);
+    ISpatialIndex* r22 = R2Tree::createAndBulkLoadNewR2Tree(
+            R2Tree::BulkLoadMethod::BLM_STR2, ds2, *file3, 0.9, indexcap,leafcap,2, indexIdentifier3);
+    ISpatialIndex* r23 = R2Tree::createAndBulkLoadNewR2Tree(
+            R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap,leafcap,2, indexIdentifier4);
 
     cerr<<"start query!"<<endl<<endl<<endl;
     TreeQuery(r,queries);
     cout<<"\n\n\n\n";
     TreeQuery(r21,queries);
-//    cout<<"\n\n\n\n";
-//    TreeQuery(r22,queries);
-//    cout<<"\n\n\n\n";
-//    TreeQuery(r23,queries);
+    cout<<"\n\n\n\n";
+    TreeQuery(r22,queries);
+    cout<<"\n\n\n\n";
+    TreeQuery(r23,queries);
     return 0;
 }

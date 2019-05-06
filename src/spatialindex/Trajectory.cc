@@ -190,6 +190,9 @@ void Trajectory::getMbbc(Mbbc& out) const{
         if(points[i].m_startTime!=endt){
             double vx=(endx-points[i].m_pCoords[0])/(endt-points[i].m_startTime);
             if(vx>maxvxP) maxvxP=vx;
+            if(vx>1)
+                std::cout<<"WARNING"<<points[i].toString()<<std::endl<<endx
+                <<" "<<endt<<std::endl;
             if(vx<maxvxN) maxvxN=vx;
             double vy=(endy-points[i].m_pCoords[1])/(endt-points[i].m_startTime);
             if(vy>maxvyP) maxvyP=vy;
@@ -209,9 +212,9 @@ void Trajectory::getMbbc(Mbbc& out) const{
     double vHigh[2]={maxvxP,maxvyP};
     double wLow[2]={minx,miny};
     double wHigh[2]={maxx,maxy};
-    double stime=int(startt/10000)*10000;
+    double stime=int(startt/PeriodLen)*PeriodLen;
     out= Mbbc(Region(sLow,sHigh,2),Region(eLow,eHigh,2),
-                Region(vLow,vHigh,2),Region(wLow,wHigh,2),stime,stime+10000);
+                Region(vLow,vHigh,2),Region(wLow,wHigh,2),stime,stime+PeriodLen);
 
 }
 double Trajectory::getArea() const{ return 0;}

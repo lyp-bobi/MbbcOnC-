@@ -335,3 +335,10 @@ TimePoint TimePoint::makemid(TimePoint p1, TimePoint p2, double t){
 
     return TimePoint(p3c,t,t,dim);
 }
+const std::string TimePoint::toString() const {
+    std::string s;
+    s="Time:" + std::to_string(m_startTime)+
+            "\nPoints: "+std::to_string(m_pCoords[0])+","
+            +std::to_string(m_pCoords[1]);
+    return s;
+}

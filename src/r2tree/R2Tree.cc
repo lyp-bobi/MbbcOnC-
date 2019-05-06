@@ -933,6 +933,7 @@ void SpatialIndex::R2Tree::R2Tree::rangeQuery(RangeQueryType type, const IShape&
                     Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMbbc[cChild]), n->m_pIdentifier[cChild]);
                     v.visitData(data);
                     ++(m_stats.m_u64QueryResults);
+//                    std::cout<<n->m_ptrMbbc[cChild]->toString();
                 }
 //                else{
 //                    std::cout<<"ack failed\n"<<query.toString()<<"\n"<<n->m_ptrMbbc[cChild]->toString()<<"\n";
