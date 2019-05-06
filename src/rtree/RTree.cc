@@ -1536,6 +1536,5 @@ std::ostream& SpatialIndex::RTree::operator<<(std::ostream& os, const RTree& t)
         << "Point pool hits: " << t.m_pointPool.m_hits << std::endl
         << "Point pool misses: " << t.m_pointPool.m_misses << std::endl;
 #endif
-    os<<"Number of results: "<<t.m_stats.getQueryResults()<< std::endl;
     return os;
 }

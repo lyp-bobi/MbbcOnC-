@@ -23,6 +23,8 @@
 using namespace std;
 using namespace SpatialIndex;
 
+
+
 class RangeVisitor : public IVisitor
 {
 public:
@@ -214,6 +216,7 @@ Type stringToNum(const string& str)
     iss >> num;
     return num;
 }
+//time division related
 double naivetime(string l){
     int h;
     int m;
@@ -228,8 +231,23 @@ double naivetime(string l){
         s = stringToNum<int>(l.substr(5,7));
     }
     return 10000*h+160*m+1.6*s;
-
 }
+#define cut 10000
+int getPeriod(double time){
+    return int(floor(time))/cut;
+}
+int getMaxPeriod(){
+    return 240000/cut;
+}
+double getPeriodStart(double time){
+    int pd=getPeriod(time);
+    return pd*cut;
+}
+double getPeriodEnd(double time){
+    int pd=getPeriod(time);
+    return (pd+1)*cut-0.000001;
+}
+
 struct xyt{
         double x;
         double y;
@@ -253,16 +271,16 @@ xyt makemid(xyt p1, xyt p2, double t){
     return ret;
 }
 vector< vector<xyt> > cuttraj(vector<xyt> traj){
-    vector< vector<xyt> > segments(24);
-    int oldpd=traj.at(0).t/10000;
+    vector< vector<xyt> > segments(getMaxPeriod());
+    int oldpd=getPeriod(traj.at(0).t);
     for(int i=0;i<traj.size();i++){
-        int newpd=traj[i].t/10000;
+        int newpd=getPeriod(traj[i].t);
         if(newpd<oldpd) break;
         if(newpd-1==oldpd){
-            xyt mid1=makemid(traj.at(i-1),traj[i],(oldpd+1)*10000-0.001);
+            xyt mid1=makemid(traj.at(i-1),traj[i],getPeriodEnd(oldpd));
             segments.at(oldpd).emplace_back(mid1);
             if(int(floor(traj[i].t))%10000!=0){
-                xyt mid2=makemid(traj.at(i-1),traj[i],newpd*10000);
+                xyt mid2=makemid(traj.at(i-1),traj[i],getPeriodStart(newpd));
                 segments.at(newpd).emplace_back(mid2);
             }
             oldpd=newpd;
@@ -284,7 +302,7 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
     getline(inFile, lineStr);
     set<id_type> ids;
     multimap<id_type,xyt> trajs;
-    list<vector<pair<id_type ,Trajectory> > > res(24);
+    list<vector<pair<id_type ,Trajectory> > > res(getMaxPeriod());
     auto iperiod=res.begin();
     while (getline(inFile, lineStr)){
         string str;
@@ -313,12 +331,12 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
         trajs.erase(id);
         if(!traj.empty()){
 //            cout<<id<<endl;
-            vector< vector<xyt> > segs = cuttraj(traj);//size 24
-            for(int j =0;j<24;j++){
+            vector< vector<xyt> > segs = cuttraj(traj);
+            for(int j =0;j<getMaxPeriod();j++){
                 vector<TimePoint> tps;
                 for(auto p:segs[j]){
                     double xy[]={p.x,p.y};
-                    double faket=int(floor(p.t))%10000;
+                    double faket=p.t-getPeriodStart(p.t);
                     tps.emplace_back(TimePoint(xy,faket,faket,dimension));
 //                    tps.emplace_back(TimePoint(xy,p.t,p.t,dimension));
                 }
@@ -342,7 +360,7 @@ void TreeQuery(ISpatialIndex* tree,const vector<IShape*> &queries){
     }
     end=clock();
     cerr<<"Querying time: "<< end-start<<endl;
-    cerr<<"vis"<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
+    cerr<<"VISIT NODE "<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
     cerr << *tree;
 }
 
@@ -360,10 +378,10 @@ int main(){
     vector<IShape*> queries;
     for (int i = 0; i < testtime; i++){
         double pLow[2] = {random(31,40.5), random(110,122)};
-        double pHigh[2] = {pLow[0]+random(0,0.01), pLow[1]+random(0,0.01)};
+        double pHigh[2] = {pLow[0]+random(0,0.1), pLow[1]+random(0,0.1)};
         Region r(pLow, pHigh, 2);
 //        cout<<pLow[0]<<","<<pLow[1]<<endl;
-        int t =int(random(0,10000));
+        int t =int(random(0,cut));
         TimeRegion *tr=new TimeRegion(pLow, pHigh, t, t, 2);
         queries.emplace_back(tr);
 //        queries.emplace_back(&trajs[0][i].second);
@@ -387,18 +405,18 @@ int main(){
             RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap,leafcap, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier1);
     ISpatialIndex* r21 = R2Tree::createAndBulkLoadNewR2Tree(
             R2Tree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap,leafcap,2, indexIdentifier2);
-    ISpatialIndex* r22 = R2Tree::createAndBulkLoadNewR2Tree(
-            R2Tree::BulkLoadMethod::BLM_STR2, ds2, *file3, 0.9, indexcap,leafcap,2, indexIdentifier3);
-    ISpatialIndex* r23 = R2Tree::createAndBulkLoadNewR2Tree(
-            R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap,leafcap,2, indexIdentifier4);
+//    ISpatialIndex* r22 = R2Tree::createAndBulkLoadNewR2Tree(
+//            R2Tree::BulkLoadMethod::BLM_STR2, ds2, *file3, 0.9, indexcap,leafcap,2, indexIdentifier3);
+//    ISpatialIndex* r23 = R2Tree::createAndBulkLoadNewR2Tree(
+//            R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap,leafcap,2, indexIdentifier4);
 
     cerr<<"start query!"<<endl<<endl<<endl;
     TreeQuery(r,queries);
     cout<<"\n\n\n\n";
     TreeQuery(r21,queries);
-    cout<<"\n\n\n\n";
-    TreeQuery(r22,queries);
-    cout<<"\n\n\n\n";
-    TreeQuery(r23,queries);
+//    cout<<"\n\n\n\n";
+//    TreeQuery(r22,queries);
+//    cout<<"\n\n\n\n";
+//    TreeQuery(r23,queries);
     return 0;
 }
