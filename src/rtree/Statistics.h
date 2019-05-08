@@ -57,6 +57,7 @@ namespace SpatialIndex
 			virtual uint64_t getMisses() const;
 			virtual uint64_t getAdjustments() const;
 			virtual uint64_t getQueryResults() const;
+            virtual uint64_t getExactQueryResults() const;
 			virtual uint32_t getTreeHeight() const;
 			virtual uint32_t getNumberOfNodesInLevel(uint32_t l) const;
 
@@ -78,6 +79,8 @@ namespace SpatialIndex
 			uint64_t m_u64Adjustments;
 
 			uint64_t m_u64QueryResults;
+
+            uint64_t m_u64ExactQueryResults;
 
 			uint64_t m_u64Data;
 

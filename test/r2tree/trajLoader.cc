@@ -134,7 +134,7 @@ public:
     vector<pair<id_type,Trajectory> > *trajs;
 
     int i=0;
-    TrajMbrStream(vector<pair<id_type ,Trajectory> > *period){
+    void feedTraj(vector<pair<id_type ,Trajectory> > *period){
         mbrs.clear();
         for(auto idt:*period){
             Region mbr;
@@ -142,6 +142,7 @@ public:
             mbrs.emplace_back(make_pair(idt.first,mbr));
         }
         trajs=period;
+        rewind();
     }
     virtual bool hasNext() override
     {
@@ -169,7 +170,7 @@ public:
     vector<pair<id_type,Trajectory> > *trajs;
 
     int i=0;
-    TrajMbbcStream(vector<pair<id_type ,Trajectory> > *period){
+    void feedTraj(vector<pair<id_type ,Trajectory> > *period){
         mbbcs.clear();
         for(auto idt:*period){
             Mbbc bc;
@@ -177,6 +178,7 @@ public:
             mbbcs.emplace_back(make_pair(idt.first,bc));
         }
         trajs=period;
+        rewind();
     }
     virtual bool hasNext() override
     {
@@ -356,8 +358,8 @@ int main(){
     srand((int)time(NULL));
     list<vector<pair<id_type ,Trajectory> > > trajs=loadCsvToTrajs();
     vector<pair<id_type ,Trajectory> >   empty;
-    MbrStream ds1;
-    MbbcStream ds2;
+    TrajMbrStream ds1;
+    TrajMbbcStream ds2;
     ds1.feedTraj(&trajs.front());
     ds2.feedTraj(&trajs.front());
 //    for(auto period:trajs){

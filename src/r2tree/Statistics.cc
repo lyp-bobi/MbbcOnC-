@@ -46,6 +46,7 @@ Statistics::Statistics(const Statistics& s)
 	m_u32Nodes  = s.m_u32Nodes;
 	m_u64Adjustments = s.m_u64Adjustments;
 	m_u64QueryResults = s.m_u64QueryResults;
+    m_u64ExactQueryResults = s.m_u64ExactQueryResults;
 	m_u64Data = s.m_u64Data;
 	m_u32TreeHeight = s.m_u32TreeHeight;
 	m_nodesInLevel = s.m_nodesInLevel;
@@ -67,6 +68,7 @@ Statistics& Statistics::operator=(const Statistics& s)
 		m_u32Nodes  = s.m_u32Nodes;
 		m_u64Adjustments = s.m_u64Adjustments;
 		m_u64QueryResults = s.m_u64QueryResults;
+        m_u64ExactQueryResults = s.m_u64ExactQueryResults;
 		m_u64Data = s.m_u64Data;
 		m_u32TreeHeight = s.m_u32TreeHeight;
 		m_nodesInLevel = s.m_nodesInLevel;
@@ -119,7 +121,10 @@ uint64_t Statistics::getQueryResults() const
 {
 	return m_u64QueryResults;
 }
-
+uint64_t Statistics::getExactQueryResults() const
+{
+    return m_u64ExactQueryResults;
+}
 uint32_t Statistics::getTreeHeight() const
 {
 	return m_u32TreeHeight;
@@ -150,6 +155,7 @@ void Statistics::reset()
 	m_u32Nodes  = 0;
 	m_u64Adjustments = 0;
 	m_u64QueryResults = 0;
+    m_u64ExactQueryResults = 0;
 	m_u64Data = 0;
 	m_u32TreeHeight = 0;
 	m_nodesInLevel.clear();
@@ -172,7 +178,8 @@ std::ostream& SpatialIndex::R2Tree::operator<<(std::ostream& os, const Statistic
 
 	os	<< "Splits: " << s.m_u64Splits << std::endl
 		<< "Adjustments: " << s.m_u64Adjustments << std::endl
-		<< "Query results: " << s.m_u64QueryResults << std::endl;
+		<< "Query results: " << s.m_u64QueryResults << std::endl
+        << "Exact Query results: " << s.m_u64ExactQueryResults << std::endl;
 
 	return os;
 }
