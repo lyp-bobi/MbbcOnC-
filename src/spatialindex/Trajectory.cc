@@ -175,11 +175,21 @@ void Trajectory::getMbbc(Mbbc& out) const{
 
     double startx=points.begin()->m_pCoords[0],starty=points.begin()->m_pCoords[1],startt=points.begin()->m_startTime;
     double endx=points.back().m_pCoords[0],endy=points.back().m_pCoords[1],endt=points.back().m_startTime;
-    double maxvxP=0,maxvxN=0,maxvyP=0,maxvyN=0;
+    double maxvxP=-std::numeric_limits<double>::max(),
+        maxvxN=std::numeric_limits<double>::max(),
+        maxvyP=-std::numeric_limits<double>::max(),
+        maxvyN=std::numeric_limits<double>::max();
     double minx=startx,maxx=startx,miny=starty,maxy=starty;
     for(int i=0;i<points.size();i++){
-        if(points[i].m_startTime!=startt){
+        if(points[i].m_startTime-startt>10){
             double vx=(points[i].m_pCoords[0]-startx)/(points[i].m_startTime-startt);
+//            if(vx>0.0005)
+//                std::cout<<points[i].m_pCoords[0]<<"\n"
+//                        <<points[i].m_pCoords[1]<<"\n"
+//                        <<points[i].m_startTime<<"\n"
+//                        <<startx<<"\n"
+//                        <<starty<<"\n"
+//                        <<startt<<"\n\n\n\n\n";
             if(vx>maxvxP) maxvxP=vx;
             if(vx<maxvxN) maxvxN=vx;
 
@@ -187,12 +197,9 @@ void Trajectory::getMbbc(Mbbc& out) const{
             if(vy>maxvyP) maxvyP=vy;
             if(vy<maxvyN) maxvyN=vy;
         }
-        if(points[i].m_startTime!=endt){
+        if(endt-points[i].m_startTime>10){
             double vx=(endx-points[i].m_pCoords[0])/(endt-points[i].m_startTime);
             if(vx>maxvxP) maxvxP=vx;
-            if(vx>1)
-                std::cout<<"WARNING"<<points[i].toString()<<std::endl<<endx
-                <<" "<<endt<<std::endl;
             if(vx<maxvxN) maxvxN=vx;
             double vy=(endy-points[i].m_pCoords[1])/(endt-points[i].m_startTime);
             if(vy>maxvyP) maxvyP=vy;

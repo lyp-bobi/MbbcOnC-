@@ -918,7 +918,7 @@ void SpatialIndex::R2Tree::R2Tree::rangeQuery(RangeQueryType type, const IShape&
     while (! st.empty())
     {
         NodePtr n = st.top(); st.pop();
-
+//        std::cout<<"\n level"<<n->m_level<<"\n node\n"<<n->m_nodeMbbc.toString();
         if (n->m_level == 0)
         {
             v.visitNode(*n);
@@ -930,6 +930,7 @@ void SpatialIndex::R2Tree::R2Tree::rangeQuery(RangeQueryType type, const IShape&
 
                 if (b)
                 {
+//                    std::cout<<"\n LEAF!!\n"<<n->m_nodeMbbc.toString();
                     Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMbbc[cChild]), n->m_pIdentifier[cChild]);
                     v.visitData(data);
                     ++(m_stats.m_u64QueryResults);

@@ -13,9 +13,9 @@
 #include <cmath>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x)+x)
 #include <spatialindex/SpatialIndex.h>
-//#define sourceFile "D://geolifedatasimplify.csv"
-#define sourceFile "D://geolifedata.csv"
-#define testtime 100000
+#define sourceFile "D://geolifedatasimplify.csv"
+//#define sourceFile "D://geolifedata.csv"
+#define testtime 100
 #define dimension 2
 #define indexcap 5
 #define leafcap 5
@@ -54,8 +54,8 @@ public:
         uint32_t cLen = 0;
         d.getData(cLen, &pData);
         // do something.
-        //string s = reinterpret_cast<char*>(pData);
-        //cout << s << endl;
+//        double *s = reinterpret_cast<double*>(pData);
+//        cout << *s << endl;
         delete[] pData;
 
 //        cout << d.getIdentifier() << endl;
@@ -131,17 +131,12 @@ public:
 class TrajMbrStream: public IDataStream{
 public:
     vector<pair<id_type,Region> > mbrs;
-    vector<pair<id_type,Trajectory> > trajs;
+    vector<pair<id_type,Trajectory> > *trajs;
 
     int i=0;
-    TrajMbrStream(vector<pair<id_type,Region> > otherr,vector<pair<id_type,Trajectory> > othert){
-        assert(mbrs.size()==trajs.size());
-        mbrs=otherr;
-        trajs=othert;
-    }
-    TrajMbrStream(vector<pair<id_type ,Trajectory> > period){
+    TrajMbrStream(vector<pair<id_type ,Trajectory> > *period){
         mbrs.clear();
-        for(auto idt:period){
+        for(auto idt:*period){
             Region mbr;
             idt.second.getMBR(mbr);
             mbrs.emplace_back(make_pair(idt.first,mbr));
@@ -155,7 +150,7 @@ public:
     virtual IData* getNext() override{
         byte* data;
         uint32_t len;
-        trajs[i].second.storeToByteArray(&data,len);
+        trajs->at(i).second.storeToByteArray(&data,len);
         RTree::Data* d=new RTree::Data(len, data, mbrs[i].second, mbrs[i].first);
         i++;
         return d;
@@ -171,17 +166,12 @@ public:
 class TrajMbbcStream: public IDataStream{
 public:
     vector<pair<id_type,Mbbc> > mbbcs;
-    vector<pair<id_type,Trajectory> > trajs;
+    vector<pair<id_type,Trajectory> > *trajs;
 
     int i=0;
-    TrajMbbcStream(vector<pair<id_type,Mbbc> > otherbc,vector<pair<id_type,Trajectory> > othert){
-        assert(mbbcs.size()==trajs.size());
-        mbbcs=otherbc;
-        trajs=othert;
-    }
-    TrajMbbcStream(vector<pair<id_type ,Trajectory> > period){
+    TrajMbbcStream(vector<pair<id_type ,Trajectory> > *period){
         mbbcs.clear();
-        for(auto idt:period){
+        for(auto idt:*period){
             Mbbc bc;
             idt.second.getMbbc(bc);
             mbbcs.emplace_back(make_pair(idt.first,bc));
@@ -195,7 +185,7 @@ public:
     virtual IData* getNext() override{
         byte* data;
         uint32_t len;
-        trajs[i].second.storeToByteArray(&data,len);
+        trajs->at(i).second.storeToByteArray(&data,len);
         R2Tree::Data* d=new R2Tree::Data(len, data, mbbcs[i].second, mbbcs[i].first);
         i++;
         return d;
@@ -230,7 +220,7 @@ double naivetime(string l){
         m = stringToNum<int>(l.substr(2,4));
         s = stringToNum<int>(l.substr(5,7));
     }
-    return 10000*h+160*m+1.6*s;
+    return 3600*h+60*m+s;
 }
 int getPeriod(double time){
     int pd= int(floor(time))/PeriodLen;
@@ -403,18 +393,18 @@ int main(){
             RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap,leafcap, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier1);
     ISpatialIndex* r21 = R2Tree::createAndBulkLoadNewR2Tree(
             R2Tree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap,leafcap,2, indexIdentifier2);
-    ISpatialIndex* r22 = R2Tree::createAndBulkLoadNewR2Tree(
-            R2Tree::BulkLoadMethod::BLM_STR2, ds2, *file3, 0.9, indexcap,leafcap,2, indexIdentifier3);
-    ISpatialIndex* r23 = R2Tree::createAndBulkLoadNewR2Tree(
-            R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap,leafcap,2, indexIdentifier4);
+//    ISpatialIndex* r22 = R2Tree::createAndBulkLoadNewR2Tree(
+//            R2Tree::BulkLoadMethod::BLM_STR2, ds2, *file3, 0.9, indexcap,leafcap,2, indexIdentifier3);
+//    ISpatialIndex* r23 = R2Tree::createAndBulkLoadNewR2Tree(
+//            R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap,leafcap,2, indexIdentifier4);
 
     cerr<<"start query!"<<endl<<endl<<endl;
     TreeQuery(r,queries);
     cout<<"\n\n\n\n";
     TreeQuery(r21,queries);
-    cout<<"\n\n\n\n";
-    TreeQuery(r22,queries);
-    cout<<"\n\n\n\n";
-    TreeQuery(r23,queries);
+//    cout<<"\n\n\n\n";
+//    TreeQuery(r22,queries);
+//    cout<<"\n\n\n\n";
+//    TreeQuery(r23,queries);
     return 0;
 }

@@ -29,6 +29,8 @@ namespace SpatialIndex
             // LeafPoolCapacity         VT_LONG   Default is 100
             // RegionPoolCapacity       VT_LONG   Default is 1000
             // PointPoolCapacity        VT_LONG   Default is 500
+            // todo:DataType                 VT_LONG   Can be BoundingBox and Trajectory
+
 
             virtual ~R2Tree();
 
@@ -86,8 +88,9 @@ namespace SpatialIndex
             Statistics m_stats;
 
             bool m_bTightMBRs;
-
-
+        public:
+            DataType m_DataType=BoundingBox;
+        private:
             Tools::PointerPool<Point> m_pointPool;
             Tools::PointerPool<Mbbc> m_MbbcPool;
             Tools::PointerPool<Node> m_indexPool;

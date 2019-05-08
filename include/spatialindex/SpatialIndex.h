@@ -33,7 +33,7 @@
 #define M_PI_2 1.57079632679489661922
 #endif
 
-#define PeriodLen 2500
+#define PeriodLen 900
 
 namespace SpatialIndex
 {

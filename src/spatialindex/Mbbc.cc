@@ -174,6 +174,10 @@ bool Mbbc::intersectsShape(const SpatialIndex::IShape& s) const {
 bool Mbbc::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     if(!m_wmbr.intersectsRegion(in)) return false;
     Region timed;
+    if(in.m_startTime<m_startTime||in.m_startTime>m_endTime)
+        std::cout<<in.m_startTime<<" "
+                <<m_startTime<<" "
+                <<m_endTime<<"\n";
     getMBRAtTime(in.m_startTime,timed);
     return timed.intersectsRegion(in);
 }

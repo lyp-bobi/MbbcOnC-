@@ -51,6 +51,12 @@ namespace SpatialIndex
 			IntersectionQuery = 0x2
 		};
 
+        SIDX_DLL enum DataType
+        {
+            BoundingBox=0x1,
+            Trajectory=0x2
+        };
+
 		class SIDX_DLL Data : public IData, public Tools::ISerializable
 		{
 		public:

@@ -355,6 +355,7 @@ void BulkLoader::bulkLoadUsingSTR(
 
         es->insert(new ExternalSorter::Record(d->m_Mbbc, d->m_id, d->m_dataLength, d->m_pData, 4));
         d->m_pData = 0;
+
         delete d;
     }
     es->sort();

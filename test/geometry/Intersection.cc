@@ -97,5 +97,6 @@ int main(int argc, char** argv) {
     m.storeToByteArray(&d,l);
 
     m.loadFromByteArray(d);
+    cout<<m.toString();
     return 0;
 }

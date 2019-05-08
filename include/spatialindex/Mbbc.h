@@ -66,8 +66,11 @@ namespace SpatialIndex
 
         const std::string toString() const;
 
+
         Region m_smbr;
         Region m_embr;
+        Region m_xmbr;
+        Region m_ymbr;
         Region m_vmbr;
         Region m_wmbr;
         double m_startTime;
