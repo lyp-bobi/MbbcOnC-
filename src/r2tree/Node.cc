@@ -39,7 +39,7 @@ uint32_t Node::getByteArraySize(){
                     m_nodeMbbc.getByteArraySize());
 }
 
-void Node::loadFromByteArray(const byte* ptr){
+void Node::loadFromByteArray(const uint8_t* ptr){
 
     m_nodeMbbc=m_pTree->m_infiniteMbbc;
 
@@ -68,7 +68,7 @@ void Node::loadFromByteArray(const byte* ptr){
         if (m_pDataLength[u32Child] > 0)
         {
             m_totalDataLength += m_pDataLength[u32Child];
-            m_pData[u32Child] = new byte[m_pDataLength[u32Child]];
+            m_pData[u32Child] = new uint8_t[m_pDataLength[u32Child]];
             memcpy(m_pData[u32Child], ptr, m_pDataLength[u32Child]);
             ptr += m_pDataLength[u32Child];
         }
@@ -84,11 +84,11 @@ void Node::loadFromByteArray(const byte* ptr){
 
 }
 
-void Node::storeToByteArray(byte** data, uint32_t& len){
+void Node::storeToByteArray(uint8_t** data, uint32_t& len){
     len = getByteArraySize();
 
-    *data = new byte[len];
-    byte* ptr = *data;
+    *data = new uint8_t[len];
+    uint8_t* ptr = *data;
 
     uint32_t nodeType;
 
@@ -103,7 +103,7 @@ void Node::storeToByteArray(byte** data, uint32_t& len){
 
     memcpy(ptr, &m_children, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
-    byte* tmpb;
+    uint8_t* tmpb;
     uint32_t tmplen;
     for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child)
     {
@@ -168,7 +168,7 @@ void Node::getChildShape(uint32_t index, IShape** out) const
     *out = new Mbbc(*(m_ptrMbbc[index]));
 }
 
-void Node::getChildData(uint32_t index, uint32_t& length, byte** data) const
+void Node::getChildData(uint32_t index, uint32_t& length, uint8_t** data) const
 {
     if (index >= m_children) throw Tools::IndexOutOfBoundsException(index);
     if (m_pData[index] == NULL)
@@ -234,7 +234,7 @@ Node::Node(SpatialIndex::R2Tree::R2Tree* pTree, id_type id, uint32_t level, uint
     try
     {
         m_pDataLength = new uint32_t[m_capacity + 1];
-        m_pData = new byte*[m_capacity + 1];
+        m_pData = new uint8_t*[m_capacity + 1];
         m_ptrMbbc = new MbbcPtr[m_capacity + 1];
         m_pIdentifier = new id_type[m_capacity + 1];
     }
@@ -270,7 +270,7 @@ Node& Node::operator=(const Node&){
 }
 
 
-void Node::insertEntry(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id)
+void Node::insertEntry(uint32_t dataLength, uint8_t* pData, Mbbc& mbbc, id_type id)
 {
     assert(m_children < m_capacity);
 
@@ -290,7 +290,7 @@ void Node::insertEntry(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id)
 /*
 
 
-bool Node::insertData(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id, std::stack<id_type>& pathBuffer, byte* overflowTable)
+bool Node::insertData(uint32_t dataLength, uint8_t* pData, Mbbc& mbbc, id_type id, std::stack<id_type>& pathBuffer, uint8_t* overflowTable)
 {
     if (m_children < m_capacity)
     {

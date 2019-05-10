@@ -118,7 +118,7 @@ namespace SpatialIndex
 	public:
 		virtual uint32_t getChildrenCount() const = 0;
 		virtual id_type getChildIdentifier(uint32_t index) const = 0;
-		virtual void getChildData(uint32_t index, uint32_t& len, byte** data) const = 0;
+		virtual void getChildData(uint32_t index, uint32_t& len, uint8_t** data) const = 0;
 		virtual void getChildShape(uint32_t index, IShape** out) const = 0;
 		virtual uint32_t getLevel() const = 0;
 		virtual bool isIndex() const = 0;
@@ -129,7 +129,7 @@ namespace SpatialIndex
 	class SIDX_DLL IData : public IEntry
 	{
 	public:
-		virtual void getData(uint32_t& len, byte** data) const = 0;
+		virtual void getData(uint32_t& len, uint8_t** data) const = 0;
 		virtual ~IData() {}
 	}; // IData
 
@@ -158,8 +158,8 @@ namespace SpatialIndex
 	class SIDX_DLL IStorageManager
 	{
 	public:
-		virtual void loadByteArray(const id_type id, uint32_t& len, byte** data) = 0;
-		virtual void storeByteArray(id_type& id, const uint32_t len, const byte* const data) = 0;
+		virtual void loadByteArray(const id_type id, uint32_t& len, uint8_t** data) = 0;
+		virtual void storeByteArray(id_type& id, const uint32_t len, const uint8_t* const data) = 0;
 		virtual void deleteByteArray(const id_type id) = 0;
 		virtual void flush() = 0;
 		virtual ~IStorageManager() {}
@@ -191,10 +191,15 @@ namespace SpatialIndex
 		virtual ~IStatistics() {}
 	}; // IStatistics
 
+    SIDX_DLL enum DataType
+    {
+        BoundingBoxType= 0x0,
+        TrajectoryType=0x1
+    };
 	class SIDX_DLL ISpatialIndex
 	{
 	public:
-		virtual void insertData(uint32_t len, const byte* pData, const IShape& shape, id_type shapeIdentifier) = 0;
+		virtual void insertData(uint32_t len, const uint8_t* pData, const IShape& shape, id_type shapeIdentifier) = 0;
 		virtual bool deleteData(const IShape& shape, id_type shapeIdentifier) = 0;
 		virtual void containsWhatQuery(const IShape& query, IVisitor& v)  = 0;
 		virtual void intersectsWithQuery(const IShape& query, IVisitor& v) = 0;
@@ -208,6 +213,8 @@ namespace SpatialIndex
 		virtual bool isIndexValid() = 0;
 		virtual void getStatistics(IStatistics** out) const = 0;
 		virtual ~ISpatialIndex() {}
+
+		DataType m_DataType =BoundingBoxType;
 
 	}; // ISpatialIndex
 

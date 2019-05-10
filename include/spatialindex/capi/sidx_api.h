@@ -351,7 +351,7 @@ SIDX_DLL void* IndexProperty_GetCustomStorageCallbacks(IndexPropertyH iprop);
 SIDX_DLL RTError IndexProperty_SetIndexID(IndexPropertyH iprop, int64_t value);
 SIDX_DLL int64_t IndexProperty_GetIndexID(IndexPropertyH iprop);
 
-SIDX_C_DLL void* SIDX_NewBuffer(size_t bytes);
+SIDX_C_DLL void* SIDX_NewBuffer(size_t uint8_ts);
 SIDX_C_DLL void  SIDX_DeleteBuffer(void* buffer);
 
 SIDX_DLL RTError IndexProperty_SetResultSetLimit(IndexPropertyH iprop, uint64_t value);

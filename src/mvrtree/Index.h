@@ -43,7 +43,7 @@ namespace SpatialIndex
 			virtual NodePtr findLeaf(const TimeRegion& mbr, id_type id, std::stack<id_type>& pathBuffer);
 
 			virtual void split(
-				uint32_t dataLength, byte* pData, TimeRegion& mbr, id_type id, NodePtr& left, NodePtr& right,
+				uint32_t dataLength, uint8_t* pData, TimeRegion& mbr, id_type id, NodePtr& left, NodePtr& right,
 				TimeRegion& mbr2, id_type id2, bool bInsertMbr2 = false);
 
 			uint32_t findLeastEnlargement(const TimeRegion&) const;

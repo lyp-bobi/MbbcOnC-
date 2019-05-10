@@ -51,7 +51,7 @@ ExternalSorter::Record::Record()
 {
 }
 
-ExternalSorter::Record::Record(const Region& r, id_type id, uint32_t len, byte* pData, uint32_t s)
+ExternalSorter::Record::Record(const Region& r, id_type id, uint32_t len, uint8_t* pData, uint32_t s)
 : m_r(r), m_id(id), m_len(len), m_pData(pData), m_s(s)
 {
 }
@@ -348,7 +348,9 @@ void BulkLoader::bulkLoadUsingSTR(
 			throw Tools::IllegalArgumentException(
 				"bulkLoadUsingSTR: RTree bulk load expects SpatialIndex::RTree::Data entries."
 			);
-
+//		Trajectory traj;
+//		traj.loadFromByteArray(d->m_pData);
+//		std::cout<<traj.toString();
 		es->insert(new ExternalSorter::Record(d->m_region, d->m_id, d->m_dataLength, d->m_pData, 0));
 		d->m_pData = 0;
 		delete d;

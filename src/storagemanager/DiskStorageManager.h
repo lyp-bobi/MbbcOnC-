@@ -38,8 +38,8 @@ namespace SpatialIndex
 			virtual ~DiskStorageManager();
 
 			virtual void flush();
-			virtual void loadByteArray(const id_type page, uint32_t& len, byte** data);
-			virtual void storeByteArray(id_type& page, const uint32_t len, const byte* const data);
+			virtual void loadByteArray(const id_type page, uint32_t& len, uint8_t** data);
+			virtual void storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data);
 			virtual void deleteByteArray(const id_type page);
 
 		private:
@@ -58,7 +58,7 @@ namespace SpatialIndex
 			std::set<id_type> m_emptyPages;
 			std::map<id_type, Entry*> m_pageIndex;
 
-			byte* m_buffer;
+			uint8_t* m_buffer;
 		}; // DiskStorageManager
 	}
 }

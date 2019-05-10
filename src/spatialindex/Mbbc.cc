@@ -77,7 +77,7 @@ uint32_t Mbbc::getByteArraySize() {
         m_wmbr.getByteArraySize()+2 * sizeof(double);
 }
 
-void Mbbc::loadFromByteArray(const byte* ptr) {
+void Mbbc::loadFromByteArray(const uint8_t* ptr) {
     m_smbr.loadFromByteArray(ptr);
     ptr+=m_smbr.getByteArraySize();
     m_embr.loadFromByteArray(ptr);
@@ -92,11 +92,11 @@ void Mbbc::loadFromByteArray(const byte* ptr) {
     //ptr += sizeof(double);
 }
 
-void Mbbc::storeToByteArray(byte **data, uint32_t &len) {
+void Mbbc::storeToByteArray(uint8_t **data, uint32_t &len) {
     len = getByteArraySize();
-    *data = new byte[len];
-    byte* ptr = *data;
-    byte* tmpb;
+    *data = new uint8_t[len];
+    uint8_t* ptr = *data;
+    uint8_t* tmpb;
     uint32_t tmplen;
     m_smbr.storeToByteArray(&tmpb,tmplen);
     memcpy(ptr, tmpb, tmplen);
@@ -287,6 +287,6 @@ const std::string Mbbc::toString() const{
             std::to_string(m_wmbr.m_pLow[1])+" "+
             std::to_string(m_wmbr.m_pHigh[1])+"\n"+
             "time:"+ std::to_string(m_startTime)+" "+
-            std::to_string(m_endTime);
+            std::to_string(m_endTime)+"\n";
     return s;
 }

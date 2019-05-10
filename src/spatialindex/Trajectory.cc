@@ -49,7 +49,7 @@ uint32_t Trajectory::getByteArraySize() {
     return sizeof(unsigned long)+points[0].getByteArraySize()*points.size();
 }
 
-void Trajectory::loadFromByteArray(const byte* ptr) {
+void Trajectory::loadFromByteArray(const uint8_t* ptr) {
     unsigned long size;
     memcpy(&size, ptr, sizeof(unsigned long));
     ptr += sizeof(unsigned long);
@@ -60,14 +60,15 @@ void Trajectory::loadFromByteArray(const byte* ptr) {
             ptr+=p[i].getByteArraySize();
         }
     }
-
+    points.clear();
+    points=p;
 }
 
-void Trajectory::storeToByteArray(byte **data, uint32_t &len) {
+void Trajectory::storeToByteArray(uint8_t **data, uint32_t &len) {
     len = getByteArraySize();
-    *data = new byte[len];
-    byte* ptr = *data;
-    byte* tmpb;
+    *data = new uint8_t[len];
+    uint8_t* ptr = *data;
+    uint8_t* tmpb;
     uint32_t tmplen;
     unsigned long size=points.size();
     memcpy(ptr, &size, sizeof(unsigned long));
@@ -108,7 +109,28 @@ bool Trajectory::intersectsShape(const SpatialIndex::IShape& s) const {
 
 }
 
-//todo: check whether the link of points intersects Regions
+TimePoint Trajectory::getPointAtTime(const double time) const {
+    if(time<points.front().m_startTime||time>points.back().m_endTime){
+        throw Tools::IllegalArgumentException(
+                "Trajectory::getPointAtTime: time"+std::to_string(time)+"is illegal."
+                );}
+    if(points.size()==1){
+        return points[0];
+    }
+    auto pre =points.begin(),next=points.begin();
+    next++;
+    while(next->m_startTime<time&&next!=points.end()){
+        pre++;next++;
+    }
+    double h1= (time-pre->m_startTime)/(next->m_startTime-pre->m_startTime);
+    double h2= (next->m_startTime-time)/(next->m_startTime-pre->m_startTime);
+    double *coords= new double(m_dimension);
+    for (int i = 0; i < m_dimension; ++i) {
+        coords[i]=h2*pre->m_pCoords[i]+h1*next->m_pCoords[i];
+    }
+    return TimePoint(coords,time,time,m_dimension);
+}
+
 bool Trajectory::intersectsMbbc(const SpatialIndex::Mbbc &in) const {
     for(int i=0;i<points.size()-1;i++){
         if(in.intersectsTimePoint(points[i])){
@@ -119,12 +141,15 @@ bool Trajectory::intersectsMbbc(const SpatialIndex::Mbbc &in) const {
 }
 
 bool Trajectory::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
-    for(int i=0;i<points.size()-1;i++){
-        if(points[i].intersectsShapeInTime(in)){
-            return true;
+    if(in.m_startTime==in.m_endTime){//time slice
+        if(in.m_startTime<points.front().m_startTime||in.m_startTime>points.back().m_endTime){
+            return false;
         }
+        TimePoint tp=getPointAtTime(in.m_startTime);
+        return tp.intersectsShape(in);
+    }else{
+        throw Tools::NotSupportedException("time interval range not supported");
     }
-    return false;
 }
 bool Trajectory::intersectsRegion(const Region& in) const{
     for(int i=0;i<points.size();i++){
@@ -170,6 +195,7 @@ void Trajectory::getMBR(Region& out) const{
         out.combinePoint(points[i]);
     }
 }
+//todo: should have implement a time divivsion class!
 void Trajectory::getMbbc(Mbbc& out) const{
     out.makeInfinite();
 
@@ -181,15 +207,8 @@ void Trajectory::getMbbc(Mbbc& out) const{
         maxvyN=std::numeric_limits<double>::max();
     double minx=startx,maxx=startx,miny=starty,maxy=starty;
     for(int i=0;i<points.size();i++){
-        if(points[i].m_startTime-startt>10){
+        if(points[i].m_startTime-startt>0){
             double vx=(points[i].m_pCoords[0]-startx)/(points[i].m_startTime-startt);
-//            if(vx>0.0005)
-//                std::cout<<points[i].m_pCoords[0]<<"\n"
-//                        <<points[i].m_pCoords[1]<<"\n"
-//                        <<points[i].m_startTime<<"\n"
-//                        <<startx<<"\n"
-//                        <<starty<<"\n"
-//                        <<startt<<"\n\n\n\n\n";
             if(vx>maxvxP) maxvxP=vx;
             if(vx<maxvxN) maxvxN=vx;
 
@@ -197,7 +216,7 @@ void Trajectory::getMbbc(Mbbc& out) const{
             if(vy>maxvyP) maxvyP=vy;
             if(vy<maxvyN) maxvyN=vy;
         }
-        if(endt-points[i].m_startTime>10){
+        if(endt-points[i].m_startTime>0){
             double vx=(endx-points[i].m_pCoords[0])/(endt-points[i].m_startTime);
             if(vx>maxvxP) maxvxP=vx;
             if(vx<maxvxN) maxvxN=vx;
@@ -211,10 +230,15 @@ void Trajectory::getMbbc(Mbbc& out) const{
         if(points[i].m_pCoords[1]<miny) miny=points[i].m_pCoords[1];
         if(points[i].m_pCoords[1]>maxy) maxy=points[i].m_pCoords[1];
     }
-    double sLow[2]={startx,starty};
-    double sHigh[2]={startx,starty};
-    double eLow[2]={endx,endy};
-    double eHigh[2]={endx,endy};
+    double nstartx,nendx,nstarty,nendy;
+    nstartx=startx-(endx-startx)/(endt-startt)*startt;
+    nstarty=starty-(endy-starty)/(endt-startt)*startt;
+    nendx=endx+(endx-startx)/(endt-startt)*(PeriodLen-endt);
+    nendy=endy+(endy-starty)/(endt-startt)*(PeriodLen-endt);
+    double sLow[2]={nstartx,nstarty};
+    double sHigh[2]={nstartx,nstarty};
+    double eLow[2]={nendx,nendy};
+    double eHigh[2]={nendx,nendy};
     double vLow[2]={maxvxN,maxvyN};
     double vHigh[2]={maxvxP,maxvyP};
     double wLow[2]={minx,miny};
@@ -334,7 +358,13 @@ void Trajectory::getCombinedTrajectory(Trajectory& out, const Trajectory& in) co
     out.combineTrajectory(in);
 }
 const std::string Trajectory::toString() const{
-    throw Tools::NotSupportedException(
-            "Trajectory::getMinimumDistance: Not implemented yet!"
-    );
+    std::string s;
+    s="Trajectory length:"+std::to_string(points.size())+"\n"+
+            "points are"+"\n";
+    for(auto p:points){
+        s+=std::to_string(p.m_pCoords[0])+","+std::to_string(p.m_pCoords[1])+
+                ","+std::to_string(p.m_startTime)+"\t";
+    }
+    s+="\n";
+    return s;
 }

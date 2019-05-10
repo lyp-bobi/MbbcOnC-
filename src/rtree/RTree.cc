@@ -39,12 +39,12 @@
 using namespace SpatialIndex::RTree;
 using namespace SpatialIndex;
 
-SpatialIndex::RTree::Data::Data(uint32_t len, byte* pData, Region& r, id_type id)
+SpatialIndex::RTree::Data::Data(uint32_t len, uint8_t* pData, Region& r, id_type id)
 	: m_id(id), m_region(r), m_pData(0), m_dataLength(len)
 {
 	if (m_dataLength > 0)
 	{
-		m_pData = new byte[m_dataLength];
+		m_pData = new uint8_t[m_dataLength];
 		memcpy(m_pData, pData, m_dataLength);
 	}
 }
@@ -69,14 +69,14 @@ void SpatialIndex::RTree::Data::getShape(IShape** out) const
 	*out = new Region(m_region);
 }
 
-void SpatialIndex::RTree::Data::getData(uint32_t& len, byte** data) const
+void SpatialIndex::RTree::Data::getData(uint32_t& len, uint8_t** data) const
 {
 	len = m_dataLength;
 	*data = 0;
 
 	if (m_dataLength > 0)
 	{
-		*data = new byte[m_dataLength];
+		*data = new uint8_t[m_dataLength];
 		memcpy(*data, m_pData, m_dataLength);
 	}
 }
@@ -90,7 +90,7 @@ uint32_t SpatialIndex::RTree::Data::getByteArraySize()
 		m_region.getByteArraySize();
 }
 
-void SpatialIndex::RTree::Data::loadFromByteArray(const byte* ptr)
+void SpatialIndex::RTree::Data::loadFromByteArray(const uint8_t* ptr)
 {
 	memcpy(&m_id, ptr, sizeof(id_type));
 	ptr += sizeof(id_type);
@@ -103,7 +103,7 @@ void SpatialIndex::RTree::Data::loadFromByteArray(const byte* ptr)
 
 	if (m_dataLength > 0)
 	{
-		m_pData = new byte[m_dataLength];
+		m_pData = new uint8_t[m_dataLength];
 		memcpy(m_pData, ptr, m_dataLength);
 		ptr += m_dataLength;
 	}
@@ -111,17 +111,17 @@ void SpatialIndex::RTree::Data::loadFromByteArray(const byte* ptr)
 	m_region.loadFromByteArray(ptr);
 }
 
-void SpatialIndex::RTree::Data::storeToByteArray(byte** data, uint32_t& len)
+void SpatialIndex::RTree::Data::storeToByteArray(uint8_t** data, uint32_t& len)
 {
 	// it is thread safe this way.
 	uint32_t regionsize;
-	byte* regiondata = 0;
+	uint8_t* regiondata = 0;
 	m_region.storeToByteArray(&regiondata, regionsize);
 
 	len = sizeof(id_type) + sizeof(uint32_t) + m_dataLength + regionsize;
 
-	*data = new byte[len];
-	byte* ptr = *data;
+	*data = new uint8_t[len];
+	uint8_t* ptr = *data;
 
 	memcpy(ptr, &m_id, sizeof(id_type));
 	ptr += sizeof(id_type);
@@ -408,7 +408,7 @@ SpatialIndex::RTree::RTree::~RTree()
 // ISpatialIndex interface
 //
 
-void SpatialIndex::RTree::RTree::insertData(uint32_t len, const byte* pData, const IShape& shape, id_type id)
+void SpatialIndex::RTree::RTree::insertData(uint32_t len, const uint8_t* pData, const IShape& shape, id_type id)
 {
 	if (shape.getDimension() != m_dimension) throw Tools::IllegalArgumentException("insertData: Shape has the wrong number of dimensions.");
 
@@ -420,11 +420,11 @@ void SpatialIndex::RTree::RTree::insertData(uint32_t len, const byte* pData, con
 	RegionPtr mbr = m_regionPool.acquire();
 	shape.getMBR(*mbr);
 
-	byte* buffer = 0;
+	uint8_t* buffer = 0;
 
 	if (len > 0)
 	{
-		buffer = new byte[len];
+		buffer = new uint8_t[len];
 		memcpy(buffer, pData, len);
 	}
 
@@ -1099,8 +1099,8 @@ void SpatialIndex::RTree::RTree::storeHeader()
 		sizeof(uint32_t) +						// m_stats.m_treeHeight
 		m_stats.m_u32TreeHeight * sizeof(uint32_t);	// m_stats.m_nodesInLevel
 
-	byte* header = new byte[headerSize];
-	byte* ptr = header;
+	uint8_t* header = new uint8_t[headerSize];
+	uint8_t* ptr = header;
 
 	memcpy(ptr, &m_rootID, sizeof(id_type));
 	ptr += sizeof(id_type);
@@ -1144,10 +1144,10 @@ void SpatialIndex::RTree::RTree::storeHeader()
 void SpatialIndex::RTree::RTree::loadHeader()
 {
 	uint32_t headerSize;
-	byte* header = 0;
+	uint8_t* header = 0;
 	m_pStorageManager->loadByteArray(m_headerID, headerSize, &header);
 
-	byte* ptr = header;
+	uint8_t* ptr = header;
 
 	memcpy(&m_rootID, ptr, sizeof(id_type));
 	ptr += sizeof(id_type);
@@ -1189,18 +1189,18 @@ void SpatialIndex::RTree::RTree::loadHeader()
 	delete[] header;
 }
 
-void SpatialIndex::RTree::RTree::insertData_impl(uint32_t dataLength, byte* pData, Region& mbr, id_type id)
+void SpatialIndex::RTree::RTree::insertData_impl(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id)
 {
 	assert(mbr.getDimension() == m_dimension);
 
 	std::stack<id_type> pathBuffer;
-	byte* overflowTable = 0;
+	uint8_t* overflowTable = 0;
 
 	try
 	{
 		NodePtr root = readNode(m_rootID);
 
-		overflowTable = new byte[root->m_level];
+		overflowTable = new uint8_t[root->m_level];
 		memset(overflowTable, 0, root->m_level);
 
 		NodePtr l = root->chooseSubtree(mbr, 0, pathBuffer);
@@ -1221,7 +1221,7 @@ void SpatialIndex::RTree::RTree::insertData_impl(uint32_t dataLength, byte* pDat
 	}
 }
 
-void SpatialIndex::RTree::RTree::insertData_impl(uint32_t dataLength, byte* pData, Region& mbr, id_type id, uint32_t level, byte* overflowTable)
+void SpatialIndex::RTree::RTree::insertData_impl(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id, uint32_t level, uint8_t* overflowTable)
 {
 	assert(mbr.getDimension() == m_dimension);
 
@@ -1265,7 +1265,7 @@ bool SpatialIndex::RTree::RTree::deleteData_impl(const Region& mbr, id_type id)
 
 SpatialIndex::id_type SpatialIndex::RTree::RTree::writeNode(Node* n)
 {
-	byte* buffer;
+	uint8_t* buffer;
 	uint32_t dataLength;
 	n->storeToByteArray(&buffer, dataLength);
 
@@ -1317,7 +1317,7 @@ SpatialIndex::id_type SpatialIndex::RTree::RTree::writeNode(Node* n)
 SpatialIndex::RTree::NodePtr SpatialIndex::RTree::RTree::readNode(id_type page)
 {
 	uint32_t dataLength;
-	byte* buffer;
+	uint8_t* buffer;
 
 	try
 	{
@@ -1416,8 +1416,17 @@ void SpatialIndex::RTree::RTree::rangeQuery(RangeQueryType type, const IShape& q
 				if (b)
 				{
 					Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBR[cChild]), n->m_pIdentifier[cChild]);
-					v.visitData(data);
 					++(m_stats.m_u64QueryResults);
+					if(m_DataType==TrajectoryType){
+					    Trajectory traj;
+					    traj.loadFromByteArray(data.m_pData);
+					    if(traj.intersectsShape(query)){
+                            ++(m_stats.m_u64ExactQueryResults);
+                            v.visitData(data);
+					    }
+					}else{
+                        v.visitData(data);
+					}
 				}
 //				else{
 //                    std::cout<<"ack failed\n"<<query.toString()<<"\n"<<n->m_ptrMBR[cChild]->toString()<<"\n";

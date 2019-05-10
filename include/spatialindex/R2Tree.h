@@ -51,29 +51,23 @@ namespace SpatialIndex
 			IntersectionQuery = 0x2
 		};
 
-        SIDX_DLL enum DataType
-        {
-            BoundingBox=0x1,
-            Trajectory=0x2
-        };
-
 		class SIDX_DLL Data : public IData, public Tools::ISerializable
 		{
 		public:
-			Data(uint32_t len, byte* pData, Mbbc& r, id_type id);
+			Data(uint32_t len, uint8_t* pData, Mbbc& r, id_type id);
 			virtual ~Data();
 
 			virtual Data* clone();
 			virtual id_type getIdentifier() const;
 			virtual void getShape(IShape** out) const;
-			virtual void getData(uint32_t& len, byte** data) const;
+			virtual void getData(uint32_t& len, uint8_t** data) const;
 			virtual uint32_t getByteArraySize();
-			virtual void loadFromByteArray(const byte* data);
-			virtual void storeToByteArray(byte** data, uint32_t& len);
+			virtual void loadFromByteArray(const uint8_t* data);
+			virtual void storeToByteArray(uint8_t** data, uint32_t& len);
 
 			id_type m_id;
 			Mbbc m_Mbbc;
-			byte* m_pData;
+			uint8_t* m_pData;
 			uint32_t m_dataLength;
 		}; // Data
 

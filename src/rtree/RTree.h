@@ -69,7 +69,7 @@ namespace SpatialIndex
 			//
 			// ISpatialIndex interface
 			//
-			virtual void insertData(uint32_t len, const byte* pData, const IShape& shape, id_type shapeIdentifier);
+			virtual void insertData(uint32_t len, const uint8_t* pData, const IShape& shape, id_type shapeIdentifier);
 			virtual bool deleteData(const IShape& shape, id_type id);
 			virtual void containsWhatQuery(const IShape& query, IVisitor& v);
 			virtual void intersectsWithQuery(const IShape& query, IVisitor& v);
@@ -89,8 +89,8 @@ namespace SpatialIndex
 			void storeHeader();
 			void loadHeader();
 
-			void insertData_impl(uint32_t dataLength, byte* pData, Region& mbr, id_type id);
-			void insertData_impl(uint32_t dataLength, byte* pData, Region& mbr, id_type id, uint32_t level, byte* overflowTable);
+			void insertData_impl(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id);
+			void insertData_impl(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id, uint32_t level, uint8_t* overflowTable);
 			bool deleteData_impl(const Region& mbr, id_type id);
 
 			id_type writeNode(Node*);
@@ -107,8 +107,6 @@ namespace SpatialIndex
 
 			RTreeVariant m_treeVariant;
 
-        public:
-            DataType m_DataType=BoundingBox;
         private:
 
 			double m_fillFactor;

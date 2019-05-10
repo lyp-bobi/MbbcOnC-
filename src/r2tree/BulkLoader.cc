@@ -29,7 +29,7 @@ ExternalSorter::Record::Record()
 {
 }
 
-ExternalSorter::Record::Record(const Mbbc& r, id_type id, uint32_t len, byte* pData, uint32_t s)
+ExternalSorter::Record::Record(const Mbbc& r, id_type id, uint32_t len, uint8_t* pData, uint32_t s)
         : m_Mbbc(r), m_id(id), m_len(len), m_pData(pData), m_s(s)
 {
 }
@@ -340,7 +340,7 @@ void BulkLoader::bulkLoadUsingSTR(
     pTree->deleteNode(n.get());
 
 #ifndef NDEBUG
-    std::cerr << "RTree::BulkLoader: Sorting data." << std::endl;
+    std::cerr << "R2Tree::BulkLoader: Sorting data." << std::endl;
 #endif
 
     Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
@@ -474,7 +474,7 @@ void BulkLoader::bulkLoadUsingSTR2(
     pTree->deleteNode(n.get());
 
 #ifndef NDEBUG
-    std::cerr << "RTree::BulkLoader: Sorting data." << std::endl;
+    std::cerr << "R2Tree::BulkLoader: Sorting data." << std::endl;
 #endif
 
     Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
@@ -624,7 +624,7 @@ void BulkLoader::bulkLoadUsingSTR3(
     pTree->deleteNode(n.get());
 
 #ifndef NDEBUG
-    std::cerr << "RTree::BulkLoader: Sorting data." << std::endl;
+    std::cerr << "R2Tree::BulkLoader: Sorting data." << std::endl;
 #endif
 
     Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));

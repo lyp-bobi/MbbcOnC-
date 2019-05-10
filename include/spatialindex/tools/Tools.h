@@ -79,7 +79,7 @@
 #include "PointerPool.h"
 #include "PoolPointer.h"
 
-typedef uint8_t byte;
+typedef uint8_t uint8_t;
 
 namespace Tools
 {
@@ -227,11 +227,11 @@ namespace Tools
 		virtual ~ISerializable() {}
 
 		virtual uint32_t getByteArraySize() = 0;
-			// returns the size of the required byte array.
-		virtual void loadFromByteArray(const byte* data) = 0;
-			// load this object using the byte array.
-		virtual void storeToByteArray(byte** data, uint32_t& length) = 0;
-			// store this object in the byte array.
+			// returns the size of the required uint8_t array.
+		virtual void loadFromByteArray(const uint8_t* data) = 0;
+			// load this object using the uint8_t array.
+		virtual void storeToByteArray(uint8_t** data, uint32_t& length) = 0;
+			// store this object in the uint8_t array.
 	};
 
 	class SIDX_DLL IComparable
@@ -287,7 +287,7 @@ namespace Tools
 			int16_t iVal;              // VT_SHORT
 			int32_t lVal;              // VT_LONG
 			int64_t llVal;             // VT_LONGLONG
-			byte bVal;                 // VT_BYTE
+			uint8_t bVal;                 // VT_BYTE
 			float fltVal;              // VT_FLOAT
 			double dblVal;             // VT_DOUBLE
 			char cVal;                 // VT_CHAR
@@ -308,7 +308,7 @@ namespace Tools
 	{
 	public:
 		PropertySet();
-		PropertySet(const byte* data);
+		PropertySet(const uint8_t* data);
 		virtual ~PropertySet();
 
 		Variant getProperty(std::string property) const;
@@ -316,8 +316,8 @@ namespace Tools
 		void removeProperty(std::string property);
 
 		virtual uint32_t getByteArraySize();
-		virtual void loadFromByteArray(const byte* data);
-		virtual void storeToByteArray(byte** data, uint32_t& length);
+		virtual void loadFromByteArray(const uint8_t* data);
+		virtual void storeToByteArray(uint8_t** data, uint32_t& length);
 
 	private:
 		std::map<std::string, Variant> m_propertySet;
@@ -446,7 +446,7 @@ namespace Tools
 		virtual double readDouble();
 		virtual bool readBoolean();
 		virtual std::string readString();
-		virtual void readBytes(uint32_t u32Len, byte** pData);
+		virtual void readBytes(uint32_t u32Len, uint8_t** pData);
 	};
 
 	class SIDX_DLL BufferedFileWriter : public BufferedFile
@@ -468,7 +468,7 @@ namespace Tools
 		virtual void write(double i);
 		virtual void write(bool b);
 		virtual void write(const std::string& s);
-		virtual void write(uint32_t u32Len, byte* pData);
+		virtual void write(uint32_t u32Len, uint8_t* pData);
 	};
 
 	class SIDX_DLL TemporaryFile
@@ -489,7 +489,7 @@ namespace Tools
 		float readFloat();
 		double readDouble();
 		std::string readString();
-		void readBytes(uint32_t u32Len, byte** pData);
+		void readBytes(uint32_t u32Len, uint8_t** pData);
 
 		void write(uint8_t i);
 		void write(uint16_t i);
@@ -498,7 +498,7 @@ namespace Tools
 		void write(float i);
 		void write(double i);
 		void write(const std::string& s);
-		void write(uint32_t u32Len, byte* pData);
+		void write(uint32_t u32Len, uint8_t* pData);
 
 	private:
 		std::string m_sFile;

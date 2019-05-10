@@ -105,7 +105,7 @@ uint32_t Point::getByteArraySize()
 	return (sizeof(uint32_t) + m_dimension * sizeof(double));
 }
 
-void Point::loadFromByteArray(const byte* ptr)
+void Point::loadFromByteArray(const uint8_t* ptr)
 {
 	uint32_t dimension;
 	memcpy(&dimension, ptr, sizeof(uint32_t));
@@ -116,11 +116,11 @@ void Point::loadFromByteArray(const byte* ptr)
 	//ptr += m_dimension * sizeof(double);
 }
 
-void Point::storeToByteArray(byte** data, uint32_t& len)
+void Point::storeToByteArray(uint8_t** data, uint32_t& len)
 {
 	len = getByteArraySize();
-	*data = new byte[len];
-	byte* ptr = *data;
+	*data = new uint8_t[len];
+	uint8_t* ptr = *data;
 
 	memcpy(ptr, &m_dimension, sizeof(uint32_t));
 	ptr += sizeof(uint32_t);

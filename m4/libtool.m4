@@ -1616,7 +1616,7 @@ AC_CACHE_VAL([lt_cv_sys_max_cmd_len], [dnl
   case $build_os in
   msdosdjgpp*)
     # On DJGPP, this test can blow up pretty badly due to problems in libc
-    # (any single argument exceeding 2000 bytes causes a buffer overrun
+    # (any single argument exceeding 2000 byte causes a buffer overrun
     # during glob expansion).  Even if it were fixed, the result of this
     # check would be larger than it should be.
     lt_cv_sys_max_cmd_len=12288;    # 12K is about right

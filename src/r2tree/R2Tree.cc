@@ -17,12 +17,12 @@
 using namespace SpatialIndex::R2Tree;
 using namespace SpatialIndex;
 
-SpatialIndex::R2Tree::Data::Data(uint32_t len, byte* pData, Mbbc& r, id_type id)
+SpatialIndex::R2Tree::Data::Data(uint32_t len, uint8_t* pData, Mbbc& r, id_type id)
         : m_id(id), m_Mbbc(r), m_pData(0), m_dataLength(len)
 {
     if (m_dataLength > 0)
     {
-        m_pData = new byte[m_dataLength];
+        m_pData = new uint8_t[m_dataLength];
         memcpy(m_pData, pData, m_dataLength);
     }
 }
@@ -48,14 +48,14 @@ void SpatialIndex::R2Tree::Data::getShape(IShape** out) const
     *out = new Mbbc(m_Mbbc);
 }
 
-void SpatialIndex::R2Tree::Data::getData(uint32_t& len, byte** data) const
+void SpatialIndex::R2Tree::Data::getData(uint32_t& len, uint8_t** data) const
 {
     len = m_dataLength;
     *data = 0;
 
     if (m_dataLength > 0)
     {
-        *data = new byte[m_dataLength];
+        *data = new uint8_t[m_dataLength];
         memcpy(*data, m_pData, m_dataLength);
     }
 }
@@ -69,7 +69,7 @@ uint32_t SpatialIndex::R2Tree::Data::getByteArraySize()
             m_Mbbc.getByteArraySize();
 }
 
-void SpatialIndex::R2Tree::Data::loadFromByteArray(const byte* ptr)
+void SpatialIndex::R2Tree::Data::loadFromByteArray(const uint8_t* ptr)
 {
     memcpy(&m_id, ptr, sizeof(id_type));
     ptr += sizeof(id_type);
@@ -82,7 +82,7 @@ void SpatialIndex::R2Tree::Data::loadFromByteArray(const byte* ptr)
 
     if (m_dataLength > 0)
     {
-        m_pData = new byte[m_dataLength];
+        m_pData = new uint8_t[m_dataLength];
         memcpy(m_pData, ptr, m_dataLength);
         ptr += m_dataLength;
     }
@@ -90,17 +90,17 @@ void SpatialIndex::R2Tree::Data::loadFromByteArray(const byte* ptr)
     m_Mbbc.loadFromByteArray(ptr);
 }
 
-void SpatialIndex::R2Tree::Data::storeToByteArray(byte** data, uint32_t& len)
+void SpatialIndex::R2Tree::Data::storeToByteArray(uint8_t** data, uint32_t& len)
 {
     // it is thread safe this way.
     uint32_t Mbbcsize;
-    byte* Mbbcdata = 0;
+    uint8_t* Mbbcdata = 0;
     m_Mbbc.storeToByteArray(&Mbbcdata, Mbbcsize);
 
     len = sizeof(id_type) + sizeof(uint32_t) + m_dataLength + Mbbcsize;
 
-    *data = new byte[len];
-    byte* ptr = *data;
+    *data = new uint8_t[len];
+    uint8_t* ptr = *data;
 
     memcpy(ptr, &m_id, sizeof(id_type));
     ptr += sizeof(id_type);
@@ -268,7 +268,7 @@ SpatialIndex::R2Tree::R2Tree::~R2Tree()
 // ISpatialIndex interface
 //
 
-void SpatialIndex::R2Tree::R2Tree::insertData(uint32_t len, const byte* pData, const IShape& shape, id_type id)
+void SpatialIndex::R2Tree::R2Tree::insertData(uint32_t len, const uint8_t* pData, const IShape& shape, id_type id)
 {
     throw Tools::NotSupportedException("insertion on R2Tree is not supported now");
 }
@@ -638,8 +638,8 @@ void SpatialIndex::R2Tree::R2Tree::storeHeader()
             sizeof(uint32_t) +						// m_stats.m_treeHeight
             m_stats.m_u32TreeHeight * sizeof(uint32_t);	// m_stats.m_nodesInLevel
 
-    byte* header = new byte[headerSize];
-    byte* ptr = header;
+    uint8_t* header = new uint8_t[headerSize];
+    uint8_t* ptr = header;
 
     memcpy(ptr, &m_rootID, sizeof(id_type));
     ptr += sizeof(id_type);
@@ -677,10 +677,10 @@ void SpatialIndex::R2Tree::R2Tree::storeHeader()
 void SpatialIndex::R2Tree::R2Tree::loadHeader()
 {
     uint32_t headerSize;
-    byte* header = 0;
+    uint8_t* header = 0;
     m_pStorageManager->loadByteArray(m_headerID, headerSize, &header);
 
-    byte* ptr = header;
+    uint8_t* ptr = header;
 
     memcpy(&m_rootID, ptr, sizeof(id_type));
     ptr += sizeof(id_type);
@@ -718,7 +718,7 @@ void SpatialIndex::R2Tree::R2Tree::loadHeader()
 SpatialIndex::R2Tree::NodePtr SpatialIndex::R2Tree::R2Tree::readNode(id_type page)
 {
     uint32_t dataLength;
-    byte* buffer;
+    uint8_t* buffer;
 
     try
     {
@@ -769,7 +769,7 @@ SpatialIndex::R2Tree::NodePtr SpatialIndex::R2Tree::R2Tree::readNode(id_type pag
 }
 SpatialIndex::id_type SpatialIndex::R2Tree::R2Tree::writeNode(Node* n)
 {
-    byte* buffer;
+    uint8_t* buffer;
     uint32_t dataLength;
     n->storeToByteArray(&buffer, dataLength);
 
@@ -841,18 +841,18 @@ void SpatialIndex::R2Tree::R2Tree::deleteNode(Node* n)
 
 
 /*
-void SpatialIndex::R2Tree::R2Tree::insertData_impl(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id)
+void SpatialIndex::R2Tree::R2Tree::insertData_impl(uint32_t dataLength, uint8_t* pData, Mbbc& mbbc, id_type id)
 {
     assert(mbbc.getDimension() == m_dimension);
 
     std::stack<id_type> pathBuffer;
-    byte* overflowTable = 0;
+    uint8_t* overflowTable = 0;
 
     try
     {
         NodePtr root = readNode(m_rootID);
 
-        overflowTable = new byte[root->m_level];
+        overflowTable = new uint8_t[root->m_level];
         memset(overflowTable, 0, root->m_level);
 
         NodePtr l = root->chooseSubtree(mbbc, 0, pathBuffer);
@@ -930,11 +930,18 @@ void SpatialIndex::R2Tree::R2Tree::rangeQuery(RangeQueryType type, const IShape&
 
                 if (b)
                 {
-//                    std::cout<<"\n LEAF!!\n"<<n->m_nodeMbbc.toString();
                     Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMbbc[cChild]), n->m_pIdentifier[cChild]);
-                    v.visitData(data);
                     ++(m_stats.m_u64QueryResults);
-//                    std::cout<<n->m_ptrMbbc[cChild]->toString();
+                    if(m_DataType==TrajectoryType){
+                        Trajectory traj;
+                        traj.loadFromByteArray(data.m_pData);
+                        if(traj.intersectsShape(query)){
+                            ++(m_stats.m_u64ExactQueryResults);
+                            v.visitData(data);
+                        }
+                    }else{
+                        v.visitData(data);
+                    }
                 }
 //                else{
 //                    std::cout<<"ack failed\n"<<query.toString()<<"\n"<<n->m_ptrMbbc[cChild]->toString()<<"\n";

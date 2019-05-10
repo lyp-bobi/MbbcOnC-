@@ -42,13 +42,13 @@ namespace SpatialIndex
 			virtual NodePtr chooseSubtree(const Region& mbr, uint32_t level, std::stack<id_type>& pathBuffer);
 			virtual NodePtr findLeaf(const Region& mbr, id_type id, std::stack<id_type>& pathBuffer);
 
-			virtual void split(uint32_t dataLength, byte* pData, Region& mbr, id_type id, NodePtr& left, NodePtr& right);
+			virtual void split(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id, NodePtr& left, NodePtr& right);
 
 			uint32_t findLeastEnlargement(const Region&) const;
 			uint32_t findLeastOverlap(const Region&) const;
 
 			void adjustTree(Node*, std::stack<id_type>&);
-			void adjustTree(Node*, Node*, std::stack<id_type>&, byte* overflowTable);
+			void adjustTree(Node*, Node*, std::stack<id_type>&, uint8_t* overflowTable);
 
 			class OverlapEntry
 			{

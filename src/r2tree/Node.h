@@ -24,8 +24,8 @@ namespace SpatialIndex {
             // Tools::ISerializable interface
             //
             virtual uint32_t getByteArraySize();
-            virtual void loadFromByteArray(const byte* data);
-            virtual void storeToByteArray(byte** data, uint32_t& len);
+            virtual void loadFromByteArray(const uint8_t* data);
+            virtual void storeToByteArray(uint8_t** data, uint32_t& len);
 
             //
             // SpatialIndex::IEntry interface
@@ -39,7 +39,7 @@ namespace SpatialIndex {
             virtual uint32_t getChildrenCount() const;
             virtual id_type getChildIdentifier(uint32_t index)  const;
             virtual void getChildShape(uint32_t index, IShape** out)  const;
-            virtual void getChildData(uint32_t index, uint32_t& length, byte** data) const;
+            virtual void getChildData(uint32_t index, uint32_t& length, uint8_t** data) const;
             virtual uint32_t getLevel() const;
             virtual bool isIndex() const;
             virtual bool isLeaf() const;
@@ -51,11 +51,11 @@ namespace SpatialIndex {
             virtual Node& operator=(const Node&);
 
 
-            virtual void insertEntry(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id);
+            virtual void insertEntry(uint32_t dataLength, uint8_t* pData, Mbbc& mbbc, id_type id);
             //virtual void deleteEntry(uint32_t index);
 
-            //virtual bool insertData(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id, std::stack<id_type>& pathBuffer, byte* overflowTable);
-            //virtual void reinsertData(uint32_t dataLength, byte* pData, Mbbc& mbbc, id_type id, std::vector<uint32_t>& reinsert, std::vector<uint32_t>& keep);
+            //virtual bool insertData(uint32_t dataLength, uint8_t* pData, Mbbc& mbbc, id_type id, std::stack<id_type>& pathBuffer, uint8_t* overflowTable);
+            //virtual void reinsertData(uint32_t dataLength, uint8_t* pData, Mbbc& mbbc, id_type id, std::vector<uint32_t>& reinsert, std::vector<uint32_t>& keep);
 
             //virtual NodePtr chooseSubtree(const Mbbc& mbbc, uint32_t level, std::stack<id_type>& pathBuffer) = 0;
             virtual NodePtr findLeaf(const Mbbc& mbbc, id_type id, std::stack<id_type>& pathBuffer) = 0;
@@ -79,7 +79,7 @@ namespace SpatialIndex {
             Mbbc m_nodeMbbc;
             // The minimum bounding region enclosing all data contained in the node.
 
-            byte** m_pData;
+            uint8_t** m_pData;
             // The data stored in the node.
 
             MbbcPtr* m_ptrMbbc;

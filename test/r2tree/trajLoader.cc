@@ -13,9 +13,9 @@
 #include <cmath>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x)+x)
 #include <spatialindex/SpatialIndex.h>
-#define sourceFile "D://geolifedatasimplify.csv"
-//#define sourceFile "D://geolifedata.csv"
-#define testtime 100
+//#define sourceFile "D://geolifedatasimplify.csv"
+#define sourceFile "D://geolifedata.csv"
+#define testtime 100000
 #define dimension 2
 #define indexcap 5
 #define leafcap 5
@@ -30,9 +30,10 @@ class RangeVisitor : public IVisitor
 public:
     size_t m_indexIO;
     size_t m_leafIO;
+    size_t m_resultGet;
 
 public:
-    RangeVisitor() : m_indexIO(0), m_leafIO(0) {}
+    RangeVisitor() : m_indexIO(0), m_leafIO(0),m_resultGet(0) {}
 
     void visitNode(const INode& n)
     {
@@ -43,6 +44,7 @@ public:
 
     void visitData(const IData& d)
     {
+        m_resultGet++;
         IShape* pS;
         d.getShape(&pS);
         // do something.
@@ -50,16 +52,23 @@ public:
 //        cout<<"data"<<endl;
 
         // data should be an array of characters representing a Region as a string.
-        byte* pData = 0;
+        uint8_t* pData = 0;
         uint32_t cLen = 0;
         d.getData(cLen, &pData);
         // do something.
 //        double *s = reinterpret_cast<double*>(pData);
 //        cout << *s << endl;
-        delete[] pData;
+
 
 //        cout << d.getIdentifier() << endl;
         // the ID of this data entry is an answer to the query. I will just print it to stdout.
+//        Trajectory traj;
+//        traj.loadFromByteArray(pData);
+//        cout<<traj.toString()<<endl;
+//        double pLow[2]={39.993017,116.320135};
+//        double pHigh[2]={39.994017,116.321135};
+//        traj.intersectsShape(TimeRegion(pLow,pHigh,855,855,2));
+        delete[] pData;
     }
 
     void visitData(std::vector<const IData*>& v)
@@ -86,7 +95,7 @@ public:
         return i<mbrs.size();
     }
     virtual IData* getNext() override{
-        RTree::Data* d=new RTree::Data(sizeof(double), reinterpret_cast<byte*>(mbrs[i].second.m_pLow), mbrs[i].second, mbrs[i].first);
+        RTree::Data* d=new RTree::Data(sizeof(double), reinterpret_cast<uint8_t*>(mbrs[i].second.m_pLow), mbrs[i].second, mbrs[i].first);
         i++;
         return d;
     }
@@ -116,7 +125,7 @@ public:
         return i<mbbcs.size();
     }
     virtual IData* getNext() override{
-        R2Tree::Data* d=new R2Tree::Data(sizeof(double), reinterpret_cast<byte*>(mbbcs[i].second.m_smbr.m_pLow), mbbcs[i].second, mbbcs[i].first);
+        R2Tree::Data* d=new R2Tree::Data(sizeof(double), reinterpret_cast<uint8_t*>(mbbcs[i].second.m_smbr.m_pLow), mbbcs[i].second, mbbcs[i].first);
         i++;
         return d;
     }
@@ -149,7 +158,7 @@ public:
         return i<mbrs.size();
     }
     virtual IData* getNext() override{
-        byte* data;
+        uint8_t *data;
         uint32_t len;
         trajs->at(i).second.storeToByteArray(&data,len);
         RTree::Data* d=new RTree::Data(len, data, mbrs[i].second, mbrs[i].first);
@@ -185,7 +194,7 @@ public:
         return i<mbbcs.size();
     }
     virtual IData* getNext() override{
-        byte* data;
+        uint8_t* data;
         uint32_t len;
         trajs->at(i).second.storeToByteArray(&data,len);
         R2Tree::Data* d=new R2Tree::Data(len, data, mbbcs[i].second, mbbcs[i].first);
@@ -254,8 +263,8 @@ xyt makemid(xyt p1, xyt p2, double t){
     assert(t<=p2.t);
     double h1= (t-p1.t)/(p2.t-p1.t);
     double h2= (p2.t-t)/(p2.t-p1.t);
-    double x=h1*p1.x+h2*p2.x;
-    double y=h1*p1.y+h2*p2.y;
+    double x=h2*p1.x+h1*p2.x;
+    double y=h2*p1.y+h1*p2.y;
     xyt ret ={x,y,t};
     return ret;
 }
@@ -327,7 +336,9 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
                 for(auto p:segs[j]){
                     double xy[]={p.x,p.y};
                     double faket=p.t-getPeriodStart(p.t);
-                    tps.emplace_back(TimePoint(xy,faket,faket,dimension));
+//                    if(faket>10&&PeriodLen-faket>10) {//avoid ultra speed
+                    tps.emplace_back(TimePoint(xy, faket, faket, dimension));
+//                    }
 //                    tps.emplace_back(TimePoint(xy,p.t,p.t,dimension));
                 }
                 if(!tps.empty()){
@@ -339,7 +350,7 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
     }
     return res;
 }
-void TreeQuery(ISpatialIndex* tree,const vector<IShape*> &queries){
+void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries){
     clock_t start,end;
 
     RangeVisitor vis;
@@ -354,6 +365,18 @@ void TreeQuery(ISpatialIndex* tree,const vector<IShape*> &queries){
     cerr << *tree;
 }
 
+int TreeQuery(ISpatialIndex* tree,const IShape* query){
+    clock_t start,end;
+    RangeVisitor vis;
+    start=clock();
+    tree->intersectsWithQuery(*query,vis);
+    end=clock();
+//    cerr<<"Querying time: "<< end-start<<endl;
+//    cerr<<"VISIT NODE "<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
+//    cerr << *tree;
+    return vis.m_resultGet;
+}
+
 int main(){
     srand((int)time(NULL));
     list<vector<pair<id_type ,Trajectory> > > trajs=loadCsvToTrajs();
@@ -365,8 +388,12 @@ int main(){
 //    for(auto period:trajs){
 //        period.swap(empty);
 //    }
+    double pLow[2]={39.993017,116.320135};
+    double pHigh[2]={39.994017,116.321135};
     vector<IShape*> queries;
+//    queries.push_back(new TimeRegion(pLow,pHigh,855,855,2));
     for (int i = 0; i < testtime; i++){
+//        double pLow[2] = {random(39.992560,39.996714), random(116.319681,116.321562)};
         double pLow[2] = {random(31,40.5), random(110,122)};
         double pHigh[2] = {pLow[0]+random(0.01,0.1), pLow[1]+random(0.01,0.1)};
         Region r(pLow, pHigh, 2);
@@ -399,14 +426,27 @@ int main(){
 //            R2Tree::BulkLoadMethod::BLM_STR2, ds2, *file3, 0.9, indexcap,leafcap,2, indexIdentifier3);
 //    ISpatialIndex* r23 = R2Tree::createAndBulkLoadNewR2Tree(
 //            R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap,leafcap,2, indexIdentifier4);
-
+    r->m_DataType=TrajectoryType;
+    r21->m_DataType=TrajectoryType;
     cerr<<"start query!"<<endl<<endl<<endl;
-    TreeQuery(r,queries);
-    cout<<"\n\n\n\n";
-    TreeQuery(r21,queries);
+    TreeQueryBatch(r,queries);
+    cerr<<"\n\n\n\n";
+    TreeQueryBatch(r21,queries);
+//    for(auto q:queries){
+//        int a,b;
+//        a=TreeQuery(r,q);
+//        b=TreeQuery(r21,q);
+//        if(a!=b){
+//            TimeRegion *tp= dynamic_cast<TimeRegion*>(q);
+//            cerr<<"ERROR! for "<<tp->toString()<<" as "<<a<<" and "<<b<<endl;
+//            system("pause");
+//        }
+//    }
+    cout<<*r<<"\n\n\n\n"<<*r21;
 //    cout<<"\n\n\n\n";
 //    TreeQuery(r22,queries);
 //    cout<<"\n\n\n\n";
 //    TreeQuery(r23,queries);
+
     return 0;
 }

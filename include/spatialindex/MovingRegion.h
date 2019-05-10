@@ -117,8 +117,8 @@ namespace SpatialIndex
 		// ISerializable interface
 		//
 		virtual uint32_t getByteArraySize();
-		virtual void loadFromByteArray(const byte* data);
-		virtual void storeToByteArray(byte** data, uint32_t& len);
+		virtual void loadFromByteArray(const uint8_t* data);
+		virtual void storeToByteArray(uint8_t** data, uint32_t& len);
 
 		//
 		// IEvolvingShape interface

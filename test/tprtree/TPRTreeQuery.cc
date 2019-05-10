@@ -66,7 +66,7 @@ public:
 		delete pS;
 
 		// data should be an array of characters representing a Region as a string.
-		//byte* pData = 0;
+		//uint8_t* pData = 0;
 		//size_t cLen = 0;
 		//d.getData(cLen, &pData);
 			// do something.
@@ -218,10 +218,10 @@ int main(int argc, char** argv)
 					// storing the data externally is highly recommended (clustering has no effect).
 					// A clustered storage manager is NOT provided yet.
 					// Also you will have to take care of converting you data to and from binary format, since only
-					// array of bytes can be inserted in the index (see RTree::Node::load and RTree::Node::store for
+					// array of uint8_ts can be inserted in the index (see RTree::Node::load and RTree::Node::store for
 					// an example of how to do that).
 
-				//tree->insertData(data.size() + 1, reinterpret_cast<const byte*>(data.c_str()), r, id);
+				//tree->insertData(data.size() + 1, reinterpret_cast<const uint8_t*>(data.c_str()), r, id);
 
 				tree->insertData(0, 0, r, id);
 					// example of passing zero size and a null pointer as the associated data.
