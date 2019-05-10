@@ -118,9 +118,10 @@ TimePoint Trajectory::getPointAtTime(const double time) const {
         return points[0];
     }
     auto pre =points.begin(),next=points.begin();
-    next++;
+    while(next->m_startTime-pre->m_startTime<0.01) next++;
     while(next->m_startTime<time&&next!=points.end()){
-        pre++;next++;
+        pre=next;
+        while(next->m_startTime-pre->m_startTime<0.01) next++;
     }
     double h1= (time-pre->m_startTime)/(next->m_startTime-pre->m_startTime);
     double h2= (next->m_startTime-time)/(next->m_startTime-pre->m_startTime);
