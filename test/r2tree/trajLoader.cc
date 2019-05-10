@@ -277,7 +277,7 @@ vector< vector<xyt> > cuttraj(vector<xyt> traj){
         if(newpd-1==oldpd){
             xyt mid1=makemid(traj[i-1],traj[i],getPeriodEnd(traj[i-1].t));
             segments.at(oldpd).emplace_back(mid1);
-            if(traj[i].t-getPeriodStart(traj[i].t!=0)){
+            if(traj[i].t-getPeriodStart(traj[i].t>=0.1)){
                 xyt mid2=makemid(traj[i-1],traj[i],getPeriodStart(traj[i].t));
                 segments.at(newpd).emplace_back(mid2);
             }
@@ -296,11 +296,14 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
     //second level: vector of segments in the time period
     ifstream inFile(sourceFile, ios::in);
     string lineStr;
-
     getline(inFile, lineStr);
+//    int a = 0;
+//    for(int i =0;i<a*100000;i++)
+//        getline(inFile, lineStr);
     set<id_type> ids;
     multimap<id_type,xyt> trajs;
     list<vector<pair<id_type ,Trajectory> > > res(getMaxPeriod());
+
     while (getline(inFile, lineStr)){
         string str;
         stringstream ss(lineStr);
@@ -356,6 +359,7 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries){
     RangeVisitor vis;
     start=clock();
     for(int i=0;i<queries.size();i++){
+        cerr<<"Query is "<<queries.at(i)->toString();
         tree->intersectsWithQuery(*queries[i],vis);
 //        tree->nearestNeighborQuery(5,queries[i],vis);
     }
@@ -388,10 +392,10 @@ int main(){
 //    for(auto period:trajs){
 //        period.swap(empty);
 //    }
-    double pLow[2]={39.993017,116.320135};
-    double pHigh[2]={39.994017,116.321135};
+    double pLow[2]={31.318918,112.532426};
+    double pHigh[2]={31.413626,112.562633};
     vector<IShape*> queries;
-//    queries.push_back(new TimeRegion(pLow,pHigh,855,855,2));
+    queries.push_back(new TimeRegion(pLow,pHigh,602,602,2));
     for (int i = 0; i < testtime; i++){
 //        double pLow[2] = {random(39.992560,39.996714), random(116.319681,116.321562)};
         double pLow[2] = {random(31,40.5), random(110,122)};
