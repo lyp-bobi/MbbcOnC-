@@ -597,9 +597,9 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const Region& r)
 	return os;
 }
 const std::string Region::toString() const {
-    std::string s = "mbr:" + std::to_string(m_pLow[0]) + " " +
-                    std::to_string(m_pHigh[0]) + " " +
-                    std::to_string(m_pLow[1]) + " " +
-                    std::to_string(m_pHigh[1]) + "\n";
+    std::string s = "mbr:" + std::to_string(m_pLow[0]) + "," +
+            std::to_string(m_pLow[1]) + ","
+            +std::to_string(m_pHigh[0]) + "," +
+            std::to_string(m_pHigh[1]) + "\n";
     return s;
 }

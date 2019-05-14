@@ -63,9 +63,10 @@ namespace SpatialIndex
     const std::string toString() const;
     virtual void getMbbc(Mbbc& out) const;
     TimePoint getPointAtTime(double time) const;
+    void loadFromString(std::string s);
 
 
-    std::vector<TimePoint> points;
+    std::vector<TimePoint> m_points;
 
     friend SIDX_DLL std::ostream operator<<(std::ostream os,const MovingRegion &r);
 

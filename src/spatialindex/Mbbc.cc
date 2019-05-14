@@ -135,11 +135,10 @@ void Mbbc::getMBRAtTime(double t, SpatialIndex::Region &out) const {
                          m_embr.m_pLow[1]-(m_endTime-t)*m_vmbr.m_pHigh[1]);
     double yhigh=std::min(m_smbr.m_pHigh[1]+(t-m_startTime)*m_vmbr.m_pHigh[1],
                           m_embr.m_pHigh[1]-(m_endTime-t)*m_vmbr.m_pLow[1]);
-    out.m_pLow[0]=xlow;
-    out.m_pLow[1]=ylow;
-    out.m_pHigh[0]=xhigh;
-    out.m_pHigh[1]=yhigh;
-
+    out.m_pLow[0]=std::max(xlow,m_wmbr.m_pLow[0]);
+    out.m_pLow[1]=std::max(ylow,m_wmbr.m_pLow[1]);
+    out.m_pHigh[0]=std::min(xhigh,m_wmbr.m_pHigh[0]);
+    out.m_pHigh[1]=std::min(yhigh,m_wmbr.m_pHigh[1]);
 }
 
 
@@ -174,10 +173,6 @@ bool Mbbc::intersectsShape(const SpatialIndex::IShape& s) const {
 bool Mbbc::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     if(!m_wmbr.intersectsRegion(in)) return false;
     Region timed;
-    if(in.m_startTime<m_startTime||in.m_startTime>m_endTime)
-        std::cout<<in.m_startTime<<" "
-                <<m_startTime<<" "
-                <<m_endTime<<"\n";
     getMBRAtTime(in.m_startTime,timed);
     return timed.intersectsRegion(in);
 }
@@ -270,23 +265,23 @@ void Mbbc::getCombinedMbbc(Mbbc& out, const Mbbc& in) const
     out.combineMbbc(in);
 }
 const std::string Mbbc::toString() const{
-    std::string s ="smbr:"+ std::to_string(m_smbr.m_pLow[0])+" "+
-            std::to_string(m_smbr.m_pHigh[0])+" "+
-            std::to_string(m_smbr.m_pLow[1])+" "+
+    std::string s ="smbr:"+ std::to_string(m_smbr.m_pLow[0])+","+
+            std::to_string(m_smbr.m_pLow[1])+","+
+            std::to_string(m_smbr.m_pHigh[0])+","+
             std::to_string(m_smbr.m_pHigh[1])+"\n"+
-            "embr:"+ std::to_string(m_embr.m_pLow[0])+" "+
-            std::to_string(m_embr.m_pHigh[0])+" "+
-            std::to_string(m_embr.m_pLow[1])+" "+
+            "embr:"+ std::to_string(m_embr.m_pLow[0])+","+
+            std::to_string(m_embr.m_pLow[1])+","+
+            std::to_string(m_embr.m_pHigh[0])+","+
             std::to_string(m_embr.m_pHigh[1])+"\n"+
-            "vmbr:"+ std::to_string(m_vmbr.m_pLow[0])+" "+
-            std::to_string(m_vmbr.m_pHigh[0])+" "+
-            std::to_string(m_vmbr.m_pLow[1])+" "+
+            "vmbr:"+ std::to_string(m_vmbr.m_pLow[0])+","+
+            std::to_string(m_vmbr.m_pLow[1])+","+
+            std::to_string(m_vmbr.m_pHigh[0])+","+
             std::to_string(m_vmbr.m_pHigh[1])+"\n"+
-            "wmbr:"+ std::to_string(m_wmbr.m_pLow[0])+" "+
-            std::to_string(m_wmbr.m_pHigh[0])+" "+
-            std::to_string(m_wmbr.m_pLow[1])+" "+
+            "wmbr:"+ std::to_string(m_wmbr.m_pLow[0])+","+
+            std::to_string(m_wmbr.m_pLow[1])+","+
+            std::to_string(m_wmbr.m_pHigh[0])+","+
             std::to_string(m_wmbr.m_pHigh[1])+"\n"+
-            "time:"+ std::to_string(m_startTime)+" "+
+            "time:"+ std::to_string(m_startTime)+","+
             std::to_string(m_endTime)+"\n";
     return s;
 }

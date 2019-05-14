@@ -320,7 +320,7 @@ void SpatialIndex::R2Tree::R2Tree::nearestNeighborQuery(uint32_t k, const Spatia
 
         queue.pop();
 
-        if (pFirst->m_pEntry == 0)
+        if (pFirst->m_pEntry == nullptr)
         {
             // n is a leaf or an index.
             NodePtr n = readNode(pFirst->m_id);
@@ -333,7 +333,13 @@ void SpatialIndex::R2Tree::R2Tree::nearestNeighborQuery(uint32_t k, const Spatia
                     Data* e = new Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMbbc[cChild]), n->m_pIdentifier[cChild]);
                     // we need to compare the query with the actual data entry here, so we call the
                     // appropriate getMinimumDistance method of NearestNeighborComparator.
-                    queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query, *e)));
+                    if(m_DataType==TrajectoryType){
+                        Trajectory traj;
+                        traj.loadFromByteArray(e->m_pData);
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query,traj)));
+                    }else{
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query, *e)));
+                    }
                 }
                 else
                 {
@@ -347,9 +353,9 @@ void SpatialIndex::R2Tree::R2Tree::nearestNeighborQuery(uint32_t k, const Spatia
             ++(m_stats.m_u64QueryResults);
             ++count;
             knearest = pFirst->m_minDist;
+//            std::cout<<"knearest is"<<knearest<<std::endl;
             delete pFirst->m_pEntry;
         }
-
         delete pFirst;
     }
 
@@ -359,6 +365,8 @@ void SpatialIndex::R2Tree::R2Tree::nearestNeighborQuery(uint32_t k, const Spatia
         if (e->m_pEntry != 0) delete e->m_pEntry;
         delete e;
     }
+//    std::cout<<"knearest is"<<knearest<<std::endl;
+    m_stats.m_doubleExactQueryResults+=knearest;
 }
 
 void SpatialIndex::R2Tree::R2Tree::selfJoinQuery(const SpatialIndex::IShape &s, SpatialIndex::IVisitor &v) {
@@ -936,7 +944,7 @@ void SpatialIndex::R2Tree::R2Tree::rangeQuery(RangeQueryType type, const IShape&
                         Trajectory traj;
                         traj.loadFromByteArray(data.m_pData);
                         if(traj.intersectsShape(query)){
-                            ++(m_stats.m_u64ExactQueryResults);
+                            m_stats.m_doubleExactQueryResults+=1;
                             v.visitData(data);
                         }
                     }else{

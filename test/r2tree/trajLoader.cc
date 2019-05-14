@@ -15,15 +15,16 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 #define sourceFile "D://geolifedata.csv"
-#define testtime 100000
+#define linesToRead 1e7
+#define testtime 1e3
 #define dimension 2
 #define indexcap 5
 #define leafcap 5
+#define QueryType 2
+//1 for time-slice range, 2 for 5-NN
 
 using namespace std;
 using namespace SpatialIndex;
-
-
 
 class RangeVisitor : public IVisitor
 {
@@ -31,6 +32,8 @@ public:
     size_t m_indexIO;
     size_t m_leafIO;
     size_t m_resultGet;
+    id_type m_lastResult;
+    IShape *m_query;
 
 public:
     RangeVisitor() : m_indexIO(0), m_leafIO(0),m_resultGet(0) {}
@@ -59,11 +62,23 @@ public:
 //        double *s = reinterpret_cast<double*>(pData);
 //        cout << *s << endl;
 
-
+        m_lastResult=d.getIdentifier();
 //        cout << d.getIdentifier() << endl;
-        // the ID of this data entry is an answer to the query. I will just print it to stdout.
+////         the ID of this data entry is an answer to the query. I will just print it to stdout.
 //        Trajectory traj;
 //        traj.loadFromByteArray(pData);
+//        Region br;
+//        Mbbc bc;
+//        traj.getMBR(br);
+//        traj.getMbbc(bc);
+//        double mindist=m_query->getMinimumDistance(traj);
+//        cout<<"traj dist is"<<mindist<<"\t";
+//        cout<<"br loose"<<mindist-m_query->getMinimumDistance(br)<<"\t";
+//        cout<<"bc loose is"<<mindist-m_query->getMinimumDistance(bc)<<"\n";
+//        if(mindist-m_query->getMinimumDistance(bc)<0){
+//            std::cerr<<m_query->toString()<<traj.toString();
+//            system("pause");
+//        }
 //        cout<<traj.toString()<<endl;
 //        double pLow[2]={39.993017,116.320135};
 //        double pHigh[2]={39.994017,116.321135};
@@ -277,7 +292,7 @@ vector< vector<xyt> > cuttraj(vector<xyt> traj){
         if(newpd-1==oldpd){
             xyt mid1=makemid(traj[i-1],traj[i],getPeriodEnd(traj[i-1].t));
             segments.at(oldpd).emplace_back(mid1);
-            if(traj[i].t-getPeriodStart(traj[i].t>=0.1)){
+            if(traj[i].t-getPeriodStart(traj[i].t)>=0.1){
                 xyt mid2=makemid(traj[i-1],traj[i],getPeriodStart(traj[i].t));
                 segments.at(newpd).emplace_back(mid2);
             }
@@ -297,14 +312,11 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
     ifstream inFile(sourceFile, ios::in);
     string lineStr;
     getline(inFile, lineStr);
-//    int a = 0;
-//    for(int i =0;i<a*100000;i++)
-//        getline(inFile, lineStr);
     set<id_type> ids;
     multimap<id_type,xyt> trajs;
     list<vector<pair<id_type ,Trajectory> > > res(getMaxPeriod());
-
-    while (getline(inFile, lineStr)){
+    int curLine=0;
+    while (getline(inFile, lineStr)&&curLine<linesToRead){
         string str;
         stringstream ss(lineStr);
         getline(ss, str, ',');
@@ -319,7 +331,7 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
         xyt p={x,y,t};
         ids.insert(id);
         trajs.insert(make_pair(id,p));
-//        if(id==14718) cout<<x<<" "<<y<<" "<<t<<" "<<endl;
+        curLine++;
     }
     for(auto id:ids){
         multimap<id_type ,xyt>::iterator beg,end,iter;
@@ -359,9 +371,13 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries){
     RangeVisitor vis;
     start=clock();
     for(int i=0;i<queries.size();i++){
-        cerr<<"Query is "<<queries.at(i)->toString();
-        tree->intersectsWithQuery(*queries[i],vis);
-//        tree->nearestNeighborQuery(5,queries[i],vis);
+//        cerr<<"Query is "<<queries.at(i)->toString();
+        if(QueryType==1){
+            tree->intersectsWithQuery(*queries[i],vis);
+        }else if(QueryType==2){
+            tree->nearestNeighborQuery(5,*queries[i],vis);
+        }
+
     }
     end=clock();
     cerr<<"Querying time: "<< end-start<<endl;
@@ -369,21 +385,37 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries){
     cerr << *tree;
 }
 
-int TreeQuery(ISpatialIndex* tree,const IShape* query){
+int TreeQuery(ISpatialIndex* tree,IShape* query){
     clock_t start,end;
     RangeVisitor vis;
+    vis.m_query=query;
     start=clock();
-    tree->intersectsWithQuery(*query,vis);
+    if(QueryType==1){
+        tree->intersectsWithQuery(*query,vis);
+    }else if(QueryType==2){
+        tree->nearestNeighborQuery(5,*query,vis);
+    }
     end=clock();
 //    cerr<<"Querying time: "<< end-start<<endl;
 //    cerr<<"VISIT NODE "<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
 //    cerr << *tree;
-    return vis.m_resultGet;
+//    return vis.m_resultGet;
+    return vis.m_lastResult;
 }
+struct iddist{
+    id_type id;
+    double dist;
+};
+
+//void BruteCheck(vector<pair<id_type ,Trajectory> > *traj,const IShape* query){
+//    std::priority_queue<>
+//}
 
 int main(){
     srand((int)time(NULL));
     list<vector<pair<id_type ,Trajectory> > > trajs=loadCsvToTrajs();
+    Trajectory q=trajs.begin()->at(0).second;
+
     vector<pair<id_type ,Trajectory> >   empty;
     TrajMbrStream ds1;
     TrajMbbcStream ds2;
@@ -395,62 +427,94 @@ int main(){
     double pLow[2]={31.318918,112.532426};
     double pHigh[2]={31.413626,112.562633};
     vector<IShape*> queries;
-    queries.push_back(new TimeRegion(pLow,pHigh,602,602,2));
-    for (int i = 0; i < testtime; i++){
-//        double pLow[2] = {random(39.992560,39.996714), random(116.319681,116.321562)};
-        double pLow[2] = {random(31,40.5), random(110,122)};
-        double pHigh[2] = {pLow[0]+random(0.01,0.1), pLow[1]+random(0.01,0.1)};
-        Region r(pLow, pHigh, 2);
-//        cout<<pLow[0]<<","<<pLow[1]<<endl;
-        int t =int(random(0,PeriodLen));
-        TimeRegion *tr=new TimeRegion(pLow, pHigh, t, t, 2);
-        queries.emplace_back(tr);
-//        queries.emplace_back(&trajs[0][i].second);
+//    queries.push_back(new TimeRegion(pLow,pHigh,602,602,2));
+    for (int i = 1; i < testtime; i++){
+        if(QueryType==1) {
+//          double pLow[2] = {random(39.992560,39.996714), random(116.319681,116.321562)};
+            double pLow[2] = {random(31, 40.5), random(110, 122)};
+            double pHigh[2] = {pLow[0] + random(0.01, 0.1), pLow[1] + random(0.01, 0.1)};
+            Region r(pLow, pHigh, 2);
+//          cout<<pLow[0]<<","<<pLow[1]<<endl;
+            int t = int(random(0, PeriodLen));
+            TimeRegion *tr = new TimeRegion(pLow, pHigh, t, t, 2);
+            queries.emplace_back(tr);
+        }else if(QueryType==2){
+            queries.emplace_back(&trajs.begin()->at((i)%trajs.begin()->size()).second);
+        }
     }
 
 
-    string name1 = "name1",name2 = "name2",name3 = "name3",name4 = "name4";
-    id_type indexIdentifier1,indexIdentifier2,indexIdentifier3,indexIdentifier4;
-    IStorageManager *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
+    string name0="name0", name1 = "name1",name2 = "name2",name3 = "name3",name4 = "name4";
+    id_type indexIdentifier0,indexIdentifier1,indexIdentifier2,indexIdentifier3,indexIdentifier4;
+    IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name1, 4096),
+        *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
         *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096),
         *diskfile3 = StorageManager::createNewDiskStorageManager(name3, 4096),
         *diskfile4 = StorageManager::createNewDiskStorageManager(name4, 4096);
     // Create a new storage manager with the provided base name and a 4K page size.
-    StorageManager::IBuffer *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
+    StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
+        *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
         *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false),
         *file3 = StorageManager::createNewRandomEvictionsBuffer(*diskfile3, 10, false),
         *file4 = StorageManager::createNewRandomEvictionsBuffer(*diskfile4, 10, false);
     // applies a main memory random buffer on top of the persistent storage manager
     // (LRU buffer, etc can be created the same way).
+//    ISpatialIndex* real = R2Tree::createAndBulkLoadNewR2Tree(
+//            R2Tree::BulkLoadMethod::BLM_STR, ds2, *file0, 0.9, indexcap,100000, 2, indexIdentifier0);
+//    ds1.rewind();
     ISpatialIndex* r = RTree::createAndBulkLoadNewRTree(
             RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap,leafcap, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier1);
     ISpatialIndex* r21 = R2Tree::createAndBulkLoadNewR2Tree(
             R2Tree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap,leafcap,2, indexIdentifier2);
-//    ISpatialIndex* r22 = R2Tree::createAndBulkLoadNewR2Tree(
-//            R2Tree::BulkLoadMethod::BLM_STR2, ds2, *file3, 0.9, indexcap,leafcap,2, indexIdentifier3);
-//    ISpatialIndex* r23 = R2Tree::createAndBulkLoadNewR2Tree(
-//            R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap,leafcap,2, indexIdentifier4);
+    ISpatialIndex* r22 = R2Tree::createAndBulkLoadNewR2Tree(
+            R2Tree::BulkLoadMethod::BLM_STR2, ds2, *file3, 0.9, indexcap,leafcap,2, indexIdentifier3);
+    ISpatialIndex* r23 = R2Tree::createAndBulkLoadNewR2Tree(
+            R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap,leafcap,2, indexIdentifier4);
+//    real->m_DataType=TrajectoryType;
     r->m_DataType=TrajectoryType;
     r21->m_DataType=TrajectoryType;
+    r22->m_DataType=TrajectoryType;
+    r23->m_DataType=TrajectoryType;
     cerr<<"start query!"<<endl<<endl<<endl;
     TreeQueryBatch(r,queries);
     cerr<<"\n\n\n\n";
     TreeQueryBatch(r21,queries);
+    cerr<<"\n\n\n\n";
+    TreeQueryBatch(r22,queries);
+    cerr<<"\n\n\n\n";
+    TreeQueryBatch(r23,queries);
 //    for(auto q:queries){
-//        int a,b;
+//        int s,a,b,c,d;
+//        cout<<"real is\n";
+////        s=TreeQuery(real,q);
+////        cout<<"\n\n";
+////        cout<<"r is\n";
 //        a=TreeQuery(r,q);
+//        cout<<"\n\n";
+//        cout<<"r2 is\n";
 //        b=TreeQuery(r21,q);
+//        cout<<"\n\n\n\n";
+////        cout<<"\n\n";
+////        cout<<"r22 is\n";
+////        c=TreeQuery(r21,q);
+////        cout<<"\n\n";
+////        cout<<"r23 is\n";
+////        d=TreeQuery(r23,q);
+////        cout<<"\n\n";
 //        if(a!=b){
-//            TimeRegion *tp= dynamic_cast<TimeRegion*>(q);
-//            cerr<<"ERROR! for "<<tp->toString()<<" as "<<a<<" and "<<b<<endl;
-//            system("pause");
+//            if(QueryType==1){
+//                TimeRegion *tp= dynamic_cast<TimeRegion*>(q);
+//                cerr<<"ERROR! for "<<tp->toString()<<" as "<<a<<" and "<<b<<endl;
+//                system("pause");
+//            }
+//            else if(QueryType==2){
+//                Trajectory *tp=dynamic_cast<Trajectory*>(q);
+//                cerr<<"ERROR! for "<<tp->toString()<<" as "<<a<<" and "<<b<<endl;
+//                system("pause");
+//            }
 //        }
 //    }
-    cout<<*r<<"\n\n\n\n"<<*r21;
-//    cout<<"\n\n\n\n";
-//    TreeQuery(r22,queries);
-//    cout<<"\n\n\n\n";
-//    TreeQuery(r23,queries);
+////    cout<<*r<<"\n\n\n\n"<<*r21;
 
     return 0;
 }

@@ -73,22 +73,22 @@ int main(int argc, char** argv) {
     }
 
     //Mbbc test
-    double sLow[2]={0,0};
-    double sHigh[2]={1,1};
-    double eLow[2]={0,0};
-    double eHigh[2]={1,1};
-    double vLow[2]={1,1};
-    double vHigh[2]={1,1};
-    double pLow[2]={-1,2};
-    double pHigh[2]={-1,2};
-    double oLow[2]={1.3,1.3};
-    double oHigh[2]={4,4};
+    double sLow[2]={39.996512,116.322447};
+    double sHigh[2]={39.996512,116.322447};
+    double eLow[2]={40.006551,116.329964};
+    double eHigh[2]={40.006551,116.329964};
+    double vLow[2]={0.000001,-0.000008};
+    double vHigh[2]={0.000030,0.000017};
+    double pLow[2]={39.996534,116.322148};
+    double pHigh[2]={39.999769,116.324886};
+    double oLow[2]={39.996534,116.322148};
+    double oHigh[2]={39.999769,116.324886};
     //just for test, should use delete to free pointers
     Mbbc m=Mbbc(Region(sLow,sHigh,2),Region(eLow,eHigh,2),
-                     Region(vLow,vHigh,2),Region(pLow,pHigh,2),0.0,1.0),m2;
-    Region r(sLow,sHigh,2);
+                     Region(vLow,vHigh,2),Region(pLow,pHigh,2),0.0,900.0);
+    Region r(pLow,pHigh,2);
     TimeRegion t(oLow,oHigh,0.5,0.5,2);
-    cout<<m.intersectsTimeRegion(t);
+//    cout<<m.intersectsTimeRegion(t);
     uint8_t* d;
     uint32_t l;
 //    r.storeToByteArray(&d,l);
@@ -96,8 +96,8 @@ int main(int argc, char** argv) {
 //    r.loadFromByteArray(d);
     m.storeToByteArray(&d,l);
 
-    m2.loadFromByteArray(d);
-    cout<<m2.toString();
+    m.loadFromByteArray(d);
+//    cout<<m.toString();
     double pc[2];
     vector<TimePoint> points;
     pc[0]=39.990873;pc[1]=116.317939;points.emplace_back(TimePoint(pc,680,680,2));
@@ -144,15 +144,26 @@ int main(int argc, char** argv) {
     pc[0]=39.994705;pc[1]=116.32041;points.emplace_back(TimePoint(pc,885,885,2));
     pc[0]=39.994748;pc[1]=116.320628;points.emplace_back(TimePoint(pc,890,890,2));
     pc[0]=39.994779;pc[1]=116.320831;points.emplace_back(TimePoint(pc,895,895,2));
-    Trajectory traj(points),traj2;
-    traj.storeToByteArray(&d,l);
-    traj2.loadFromByteArray(d);
-    cout<<traj2.toString();
-    traj.getMbbc(m);
-    cout<<m.toString();
+
+    Trajectory traj(points);
+//    cout<<"m and r is"<<m.toString()<<r.toString();
     double qLow[2]={39.993017,116.320135};
     double qHigh[2]={39.994017,116.321135};
     TimeRegion tm=TimeRegion(qLow,qHigh,855,855,2);
-    cout<<m.intersectsShape(tm)<<endl;
+//    cout<<traj.getMinimumDistance(m);
+//    cout<<"end here\n\n\n\n";
+//    cout<<traj.getMinimumDistance(r);
+
+    Trajectory traja,trajb;
+    string s1="40.007635,116.319636,182.000000 40.007813,116.319648,187.000000 40.007682,116.319629,192.000000 40.007517,116.319438,197\n"
+              ".000000 40.007417,116.319315,202.000000 40.007359,116.319263,207.000000 40.007343,116.319251,212.000000 40.007318,116.31\n"
+              "9273,217.000000";
+    string s2="40.007370,116.319546,0.000000 40.007388,116.319502,5.000000";
+    traja.loadFromString(s1);
+    trajb.loadFromString(s2);
+    Mbbc bc;
+    trajb.getMbbc(bc);
+    cout<<"traj dist is"<<trajb.getMinimumDistance(trajb)<<endl;
+//    cout<<"bc dist is"<<traja.getMinimumDistance(bc)<<endl;
     return 0;
 }
