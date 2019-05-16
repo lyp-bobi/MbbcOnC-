@@ -7,7 +7,7 @@
 
 namespace SpatialIndex
 {
-    namespace R2Tree
+    namespace PAARTree
     {
         class ExternalSorter
         {
@@ -16,7 +16,7 @@ namespace SpatialIndex
             {
             public:
                 Record();
-                Record(const Mbbc& r, id_type id, uint32_t len, uint8_t* pData, uint32_t s);
+                Record(const MBRk& r, id_type id, uint32_t len, uint8_t* pData, uint32_t s);
                 ~Record();
 
                 bool operator<(const Record& r) const;
@@ -35,7 +35,7 @@ namespace SpatialIndex
                 };
 
             public:
-                Mbbc m_Mbbc;
+                MBRk m_MBRk;
                 id_type m_id;
                 uint32_t m_len;
                 uint8_t* m_pData;
@@ -84,7 +84,7 @@ namespace SpatialIndex
         {
         public:
             void bulkLoadUsingSTR(
-                    R2Tree* pTree,
+                    PAARTree* pTree,
                     IDataStream& stream,
                     uint32_t bindex,
                     uint32_t bleaf,
@@ -92,7 +92,7 @@ namespace SpatialIndex
                     uint32_t numberOfPages // The total number of pages to use.
             );
             void bulkLoadUsingSTR2(
-                    R2Tree* pTree,
+                    PAARTree* pTree,
                     IDataStream& stream,
                     uint32_t bindex,
                     uint32_t bleaf,
@@ -100,7 +100,7 @@ namespace SpatialIndex
                     uint32_t numberOfPages // The total number of pages to use.
             );
             void bulkLoadUsingSTR3(
-                    R2Tree* pTree,
+                    PAARTree* pTree,
                     IDataStream& stream,
                     uint32_t bindex,
                     uint32_t bleaf,
@@ -110,7 +110,7 @@ namespace SpatialIndex
 
         protected:
             void createLevel(
-                    R2Tree* pTree,
+                    PAARTree* pTree,
                     Tools::SmartPointer<ExternalSorter> es,
                     uint32_t dimension,
                     uint32_t indexSize,
@@ -121,7 +121,7 @@ namespace SpatialIndex
                     uint32_t numberOfPages
             );
             void createLevel2(
-                    R2Tree* pTree,
+                    PAARTree* pTree,
                     Tools::SmartPointer<ExternalSorter> es,
                     uint32_t dimension,
                     uint32_t indexSize,
@@ -133,7 +133,7 @@ namespace SpatialIndex
             );
 
             Node* createNode(
-                    R2Tree* pTree,
+                    PAARTree* pTree,
                     std::vector<ExternalSorter::Record*>& e,
                     uint32_t level
             );

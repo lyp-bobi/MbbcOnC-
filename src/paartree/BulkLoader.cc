@@ -13,13 +13,13 @@
 
 #include <spatialindex/SpatialIndex.h>
 
-#include "R2Tree.h"
+#include "PAARTree.h"
 #include "Leaf.h"
 #include "Index.h"
 #include "BulkLoader.h"
 
 using namespace SpatialIndex;
-using namespace SpatialIndex::R2Tree;
+using namespace SpatialIndex::PAARTree;
 
 //
 // ExternalSorter::Record
@@ -29,8 +29,8 @@ ExternalSorter::Record::Record()
 {
 }
 
-ExternalSorter::Record::Record(const Mbbc& r, id_type id, uint32_t len, uint8_t* pData, uint32_t s)
-        : m_Mbbc(r), m_id(id), m_len(len), m_pData(pData), m_s(s)
+ExternalSorter::Record::Record(const MBRk& r, id_type id, uint32_t len, uint8_t* pData, uint32_t s)
+        : m_MBRk(r), m_id(id), m_len(len), m_pData(pData), m_s(s)
 {
 }
 
@@ -42,50 +42,28 @@ ExternalSorter::Record::~Record()
 
 bool ExternalSorter::Record::operator<(const Record& r) const
 {
-    if (m_s != r.m_s)
-        throw Tools::IllegalStateException("ExternalSorter::Record::operator<: Incompatible sorting dimensions.");
-    if(m_s==0||m_s==2){
-        int d=m_s/2;
-        return (m_Mbbc.m_smbr.m_pHigh[d] + m_Mbbc.m_smbr.m_pLow[d]
-                < r.m_Mbbc.m_smbr.m_pHigh[d] + r.m_Mbbc.m_smbr.m_pLow[d]);
-
-    }
-    else if(m_s==1||m_s==3){
-        int d=(m_s-1)/2;
-        return (m_Mbbc.m_embr.m_pHigh[d] + m_Mbbc.m_embr.m_pLow[d]
-                < r.m_Mbbc.m_embr.m_pHigh[d] + r.m_Mbbc.m_embr.m_pLow[d]);
-    }
-    else if(m_s==4||m_s==5){
-        return (m_Mbbc.m_wmbr.m_pHigh[m_s-4] + m_Mbbc.m_wmbr.m_pLow[m_s-4]
-                < r.m_Mbbc.m_wmbr.m_pHigh[m_s-4] + r.m_Mbbc.m_wmbr.m_pLow[m_s-4]);
-    }
-
-    else{
-        throw Tools::IllegalArgumentException("sort:Dimension Error");
-    }
-
+    int k=r.m_MBRk.m_k;
+    int seg=std::floor(m_s/k);
+    return m_MBRk.m_mbrs[seg].m_pLow[m_s%2];
 }
 
 
 void ExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)
 {
     f.write(static_cast<uint64_t>(m_id));
-    f.write(m_Mbbc.m_dimension);
+    f.write(m_MBRk.m_dimension);
     f.write(m_s);
-
-    for (uint32_t i = 0; i < m_Mbbc.m_dimension; ++i)
-    {
-        f.write(m_Mbbc.m_smbr.m_pLow[i]);
-        f.write(m_Mbbc.m_smbr.m_pHigh[i]);
-        f.write(m_Mbbc.m_embr.m_pLow[i]);
-        f.write(m_Mbbc.m_embr.m_pHigh[i]);
-        f.write(m_Mbbc.m_vmbr.m_pLow[i]);
-        f.write(m_Mbbc.m_vmbr.m_pHigh[i]);
-        f.write(m_Mbbc.m_wmbr.m_pLow[i]);
-        f.write(m_Mbbc.m_wmbr.m_pHigh[i]);
+    f.write(m_MBRk.m_k);
+    for(int i=0;i<m_MBRk.m_k;i++){
+        for (int j= 0; i < m_MBRk.m_dimension; ++i)
+        {
+            f.write(m_MBRk.m_mbrs[i].m_pLow[i]);
+            f.write(m_MBRk.m_mbrs[i].m_pHigh[i]);
+        }
     }
-    f.write(m_Mbbc.m_startTime);
-    f.write(m_Mbbc.m_endTime);
+
+    f.write(m_MBRk.m_startTime);
+    f.write(m_MBRk.m_endTime);
     f.write(m_len);
     if (m_len > 0) f.write(m_len, m_pData);
 }
@@ -96,28 +74,22 @@ void ExternalSorter::Record::loadFromFile(Tools::TemporaryFile& f)
     uint32_t dim = f.readUInt32();
     m_s = f.readUInt32();
 
-    if (dim != m_Mbbc.m_dimension)
+    if (dim != m_MBRk.m_dimension)
     {
-        //m_Mbbc.m_dimension = dim;
-        m_Mbbc.m_smbr.makeDimension(2);
-        m_Mbbc.m_embr.makeDimension(2);
-        m_Mbbc.m_vmbr.makeDimension(2);
-        m_Mbbc.m_wmbr.makeDimension(2);
+        //m_MBRk.m_dimension = dim;
     }
 
-    for (uint32_t i = 0; i < 2; ++i)
-    {
-        m_Mbbc.m_smbr.m_pLow[i] = f.readDouble();
-        m_Mbbc.m_smbr.m_pHigh[i] = f.readDouble();
-        m_Mbbc.m_embr.m_pLow[i] = f.readDouble();
-        m_Mbbc.m_embr.m_pHigh[i] = f.readDouble();
-        m_Mbbc.m_vmbr.m_pLow[i] = f.readDouble();
-        m_Mbbc.m_vmbr.m_pHigh[i] = f.readDouble();
-        m_Mbbc.m_wmbr.m_pLow[i] = f.readDouble();
-        m_Mbbc.m_wmbr.m_pHigh[i] = f.readDouble();
+    m_MBRk.m_k=f.readUInt32();
+    m_MBRk.m_mbrs=std::vector<Region>(m_MBRk.m_k);
+    for(int i=0;i<m_MBRk.m_k;i++){
+        for (int j= 0; i < m_MBRk.m_dimension; ++i)
+        {
+            m_MBRk.m_mbrs[i].m_pLow[i]=f.readDouble();
+            m_MBRk.m_mbrs[i].m_pHigh[i]=f.readDouble();
+        }
     }
-    m_Mbbc.m_startTime = f.readDouble();
-    m_Mbbc.m_endTime = f.readDouble();
+    m_MBRk.m_startTime = f.readDouble();
+    m_MBRk.m_endTime = f.readDouble();
 
     m_len = f.readUInt32();
     delete[] m_pData; m_pData = 0;
@@ -333,7 +305,7 @@ inline uint64_t ExternalSorter::getTotalEntries() const
 //
 
 void BulkLoader::bulkLoadUsingSTR(
-        SpatialIndex::R2Tree::R2Tree* pTree,
+        SpatialIndex::PAARTree::PAARTree* pTree,
         IDataStream& stream,
         uint32_t bindex,
         uint32_t bleaf,
@@ -349,7 +321,7 @@ void BulkLoader::bulkLoadUsingSTR(
     pTree->deleteNode(n.get());
 
 #ifndef NDEBUG
-    std::cerr << "R2Tree::BulkLoader: Sorting data." << std::endl;
+    std::cerr << "PAARTree::BulkLoader: Sorting data." << std::endl;
 #endif
 
     Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
@@ -359,10 +331,10 @@ void BulkLoader::bulkLoadUsingSTR(
         Data* d = reinterpret_cast<Data*>(stream.getNext());
         if (d == 0)
             throw Tools::IllegalArgumentException(
-                    "bulkLoadUsingSTR: R2Tree bulk load expects SpatialIndex::RTree::Data entries."
+                    "bulkLoadUsingSTR: PAARTree bulk load expects SpatialIndex::RTree::Data entries."
             );
 
-        es->insert(new ExternalSorter::Record(d->m_Mbbc, d->m_id, d->m_dataLength, d->m_pData, 4));
+        es->insert(new ExternalSorter::Record(d->m_MBRk, d->m_id, d->m_dataLength, d->m_pData, 4));
         d->m_pData = 0;
 
         delete d;
@@ -377,7 +349,7 @@ void BulkLoader::bulkLoadUsingSTR(
     while (true)
     {
 #ifndef NDEBUG
-        std::cerr << "R2Tree::BulkLoader: Building level " << level << std::endl;
+        std::cerr << "PAARTree::BulkLoader: Building level " << level << std::endl;
 #endif
 
         pTree->m_stats.m_nodesInLevel.emplace_back(0);
@@ -392,11 +364,11 @@ void BulkLoader::bulkLoadUsingSTR(
 
     pTree->m_stats.m_u32TreeHeight = level;
     pTree->storeHeader();
-//    std::cout<<"mbbcpool: "<< pTree->m_MbbcPool.m_pointerCount<<std::endl;
+//    std::cout<<"mbbcpool: "<< pTree->m_MBRkPool.m_pointerCount<<std::endl;
 }
 
 void BulkLoader::createLevel(
-        SpatialIndex::R2Tree::R2Tree* pTree,
+        SpatialIndex::PAARTree::PAARTree* pTree,
         Tools::SmartPointer<ExternalSorter> es,
         uint32_t dimension,
         uint32_t bleaf,
@@ -427,7 +399,7 @@ void BulkLoader::createLevel(
                 Node* n = createNode(pTree, node, level);
                 node.clear();
                 pTree->writeNode(n);
-                es2->insert(new ExternalSorter::Record(n->m_nodeMbbc, n->m_identifier, 0, 0, 4));
+                es2->insert(new ExternalSorter::Record(n->m_nodeMBRk, n->m_identifier, 0, 0, 4));
                 pTree->m_rootID = n->m_identifier;
                 // special case when the root has exactly bindex entries.
                 delete n;
@@ -438,7 +410,7 @@ void BulkLoader::createLevel(
         {
             Node* n = createNode(pTree, node, level);
             pTree->writeNode(n);
-            es2->insert(new ExternalSorter::Record(n->m_nodeMbbc, n->m_identifier, 0, 0, 4));
+            es2->insert(new ExternalSorter::Record(n->m_nodeMBRk, n->m_identifier, 0, 0, 4));
             pTree->m_rootID = n->m_identifier;
             delete n;
         }
@@ -467,7 +439,7 @@ void BulkLoader::createLevel(
 
 
 void BulkLoader::bulkLoadUsingSTR2(
-        SpatialIndex::R2Tree::R2Tree* pTree,
+        SpatialIndex::PAARTree::PAARTree* pTree,
         IDataStream& stream,
         uint32_t bindex,
         uint32_t bleaf,
@@ -476,14 +448,14 @@ void BulkLoader::bulkLoadUsingSTR2(
 ) {
     if (! stream.hasNext())
         throw Tools::IllegalArgumentException(
-                "R2Tree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
+                "PAARTree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
         );
 
     NodePtr n = pTree->readNode(pTree->m_rootID);
     pTree->deleteNode(n.get());
 
 #ifndef NDEBUG
-    std::cerr << "R2Tree::BulkLoader: Sorting data." << std::endl;
+    std::cerr << "PAARTree::BulkLoader: Sorting data." << std::endl;
 #endif
 
     Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
@@ -493,10 +465,10 @@ void BulkLoader::bulkLoadUsingSTR2(
         Data* d = reinterpret_cast<Data*>(stream.getNext());
         if (d == 0)
             throw Tools::IllegalArgumentException(
-                    "bulkLoadUsingSTR: R2Tree bulk load expects SpatialIndex::RTree::Data entries."
+                    "bulkLoadUsingSTR: PAARTree bulk load expects SpatialIndex::RTree::Data entries."
             );
 
-        es->insert(new ExternalSorter::Record(d->m_Mbbc, d->m_id, d->m_dataLength, d->m_pData, 0));
+        es->insert(new ExternalSorter::Record(d->m_MBRk, d->m_id, d->m_dataLength, d->m_pData, 0));
         d->m_pData = 0;
         delete d;
     }
@@ -510,7 +482,7 @@ void BulkLoader::bulkLoadUsingSTR2(
     while (true)
     {
 #ifndef NDEBUG
-        std::cerr << "R2Tree::BulkLoader: Building level " << level << std::endl;
+        std::cerr << "PAARTree::BulkLoader: Building level " << level << std::endl;
 #endif
 
         pTree->m_stats.m_nodesInLevel.emplace_back(0);
@@ -526,11 +498,11 @@ void BulkLoader::bulkLoadUsingSTR2(
 
     pTree->m_stats.m_u32TreeHeight = level;
     pTree->storeHeader();
-//    std::cout<<"mbbcpool: "<< pTree->m_MbbcPool.m_pointerCount<<std::endl;
+//    std::cout<<"mbbcpool: "<< pTree->m_MBRkPool.m_pointerCount<<std::endl;
 }
 
 void BulkLoader::createLevel2(
-        SpatialIndex::R2Tree::R2Tree* pTree,
+        SpatialIndex::PAARTree::PAARTree* pTree,
         Tools::SmartPointer<ExternalSorter> es,
         uint32_t dimension,
         uint32_t bleaf,
@@ -560,7 +532,7 @@ void BulkLoader::createLevel2(
                 Node* n = createNode(pTree, node, level);
                 node.clear();
                 pTree->writeNode(n);
-                es2->insert(new ExternalSorter::Record(n->m_nodeMbbc, n->m_identifier, 0, 0, 0));
+                es2->insert(new ExternalSorter::Record(n->m_nodeMBRk, n->m_identifier, 0, 0, 0));
                 pTree->m_rootID = n->m_identifier;
                 // special case when the root has exactly bindex entries.
                 delete n;
@@ -571,7 +543,7 @@ void BulkLoader::createLevel2(
         {
             Node* n = createNode(pTree, node, level);
             pTree->writeNode(n);
-            es2->insert(new ExternalSorter::Record(n->m_nodeMbbc, n->m_identifier, 0, 0, 0));
+            es2->insert(new ExternalSorter::Record(n->m_nodeMBRk, n->m_identifier, 0, 0, 0));
             pTree->m_rootID = n->m_identifier;
             delete n;
         }
@@ -600,7 +572,7 @@ void BulkLoader::createLevel2(
     }
 }
 
-Node* BulkLoader::createNode(SpatialIndex::R2Tree::R2Tree* pTree, std::vector<ExternalSorter::Record*>& e, uint32_t level)
+Node* BulkLoader::createNode(SpatialIndex::PAARTree::PAARTree* pTree, std::vector<ExternalSorter::Record*>& e, uint32_t level)
 {
     Node* n;
     if (level == 0) n = new Leaf(pTree, -1);
@@ -608,7 +580,7 @@ Node* BulkLoader::createNode(SpatialIndex::R2Tree::R2Tree* pTree, std::vector<Ex
 
     for (size_t cChild = 0; cChild < e.size(); ++cChild)
     {
-       n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData, e[cChild]->m_Mbbc, e[cChild]->m_id);
+       n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData, e[cChild]->m_MBRk, e[cChild]->m_id);
         e[cChild]->m_pData = 0;
         delete e[cChild];
     }
@@ -617,7 +589,7 @@ Node* BulkLoader::createNode(SpatialIndex::R2Tree::R2Tree* pTree, std::vector<Ex
 }
 
 void BulkLoader::bulkLoadUsingSTR3(
-        SpatialIndex::R2Tree::R2Tree* pTree,
+        SpatialIndex::PAARTree::PAARTree* pTree,
         IDataStream& stream,
         uint32_t bindex,
         uint32_t bleaf,
@@ -626,14 +598,14 @@ void BulkLoader::bulkLoadUsingSTR3(
 ) {
     if (! stream.hasNext())
         throw Tools::IllegalArgumentException(
-                "R2Tree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
+                "PAARTree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
         );
 
     NodePtr n = pTree->readNode(pTree->m_rootID);
     pTree->deleteNode(n.get());
 
 #ifndef NDEBUG
-    std::cerr << "R2Tree::BulkLoader: Sorting data." << std::endl;
+    std::cerr << "PAARTree::BulkLoader: Sorting data." << std::endl;
 #endif
 
     Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
@@ -643,10 +615,10 @@ void BulkLoader::bulkLoadUsingSTR3(
         Data* d = reinterpret_cast<Data*>(stream.getNext());
         if (d == 0)
             throw Tools::IllegalArgumentException(
-                    "bulkLoadUsingSTR: R2Tree bulk load expects SpatialIndex::RTree::Data entries."
+                    "bulkLoadUsingSTR: PAARTree bulk load expects SpatialIndex::RTree::Data entries."
             );
 
-        es->insert(new ExternalSorter::Record(d->m_Mbbc, d->m_id, d->m_dataLength, d->m_pData, 0));
+        es->insert(new ExternalSorter::Record(d->m_MBRk, d->m_id, d->m_dataLength, d->m_pData, 0));
         d->m_pData = 0;
         delete d;
     }
@@ -660,7 +632,7 @@ void BulkLoader::bulkLoadUsingSTR3(
     while (true)
     {
 #ifndef NDEBUG
-        std::cerr << "R2Tree::BulkLoader: Building level " << level << std::endl;
+        std::cerr << "PAARTree::BulkLoader: Building level " << level << std::endl;
 #endif
 
         pTree->m_stats.m_nodesInLevel.emplace_back(0);
@@ -680,5 +652,5 @@ void BulkLoader::bulkLoadUsingSTR3(
 
     pTree->m_stats.m_u32TreeHeight = level;
     pTree->storeHeader();
-//    std::cout<<"mbbcpool: "<< pTree->m_MbbcPool.m_pointerCount<<std::endl;
+//    std::cout<<"mbbcpool: "<< pTree->m_MBRkPool.m_pointerCount<<std::endl;
 }

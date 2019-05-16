@@ -28,6 +28,7 @@
 
 #include "../rtree/RTree.h"
 #include "../r2tree/R2Tree.h"
+#include "../paartree/PAARTree.h"
 #include "../mvrtree/MVRTree.h"
 #include "../tprtree/TPRTree.h"
 

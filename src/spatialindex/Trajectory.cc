@@ -99,15 +99,15 @@ bool Trajectory::intersectsShape(const SpatialIndex::IShape& s) const {
     const TimeRegion* ptr = dynamic_cast<const TimeRegion*>(&s);
     if (ptr != 0) return intersectsTimeRegion(*ptr);
 
+    const MBRk* pmbrk= dynamic_cast<const MBRk*>(&s);
+    if(pmbrk!=0) return intersectsMBRk(*pmbrk);
+
     const Region* pr = dynamic_cast<const Region*>(&s);
     if (pr != 0) return intersectsRegion(*pr);
 
-    const LineSegment* pls = dynamic_cast<const LineSegment*>(&s);
-    if (pls != 0) return intersectsLineSegment(*pls);
-
-    const Point* ppt = dynamic_cast<const Point*>(&s);
-    if (ppt != 0) return containsPoint(*ppt);
-
+    throw Tools::IllegalStateException(
+            "Trajectory::intersectsShape: Not implemented yet!"
+    );
 }
 
 TimePoint Trajectory::getPointAtTime(const double time) const {
@@ -142,6 +142,15 @@ bool Trajectory::intersectsMbbc(const SpatialIndex::Mbbc &in) const {
     return false;
 }
 
+bool Trajectory::intersectsMBRk(const SpatialIndex::MBRk &in) const {
+    for(int i=0;i<m_points.size()-1;i++){
+        if(in.intersectsTimePoint(m_points[i])){
+            return true;
+        }
+    }
+    return false;
+}
+
 bool Trajectory::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     if(in.m_startTime==in.m_endTime){//time slice
         if(in.m_startTime<m_points.front().m_startTime||in.m_startTime>m_points.back().m_endTime){
@@ -161,16 +170,7 @@ bool Trajectory::intersectsRegion(const Region& in) const{
     }
     return false;
 }
-bool Trajectory::intersectsLineSegment(const LineSegment& in) const{
-    throw Tools::NotSupportedException(
-            "Trajectory::getMinimumDistance: Not implemented yet!"
-    );
-}
-bool Trajectory::containsPoint(const Point& in) const{
-    throw Tools::NotSupportedException(
-            "Trajectory::getMinimumDistance: Not implemented yet!"
-    );
-}
+
 bool Trajectory::intersectsTrajectory(const Trajectory& in) const{
     throw Tools::NotSupportedException(
             "Trajectory::getMinimumDistance: Not implemented yet!"
@@ -268,6 +268,9 @@ double Trajectory::getMinimumDistance(const IShape& s) const{
     const Mbbc* pbc = dynamic_cast<const Mbbc*>(&s);
     if (pbc != 0) return getMinimumDistance(*pbc);
 
+    const MBRk* pmbrk= dynamic_cast<const MBRk*>(&s);
+    if(pmbrk!=0) return getMinimumDistance(*pmbrk);
+
     const Region* pr = dynamic_cast<const Region*>(&s);
     if (pr != 0) return getMinimumDistance(*pr);
 
@@ -284,6 +287,20 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Region &in) const {
     }
     sum+=m_points[m_points.size()-1].getMinimumDistance(in)*(m_points[m_points.size()-1].m_startTime-m_points[m_points.size()-2].m_startTime);
     sum/=2;
+    return sum;
+}
+
+double Trajectory::getMinimumDistance(const SpatialIndex::MBRk &in) const {
+    double sum=0;
+    double dist=in.getMinimumDistance(m_points[0]);
+    sum+=dist*(m_points[1].m_startTime-m_points[0].m_startTime);
+    for(int i=1;i<m_points.size()-1;i++){
+        dist=in.getMinimumDistance(m_points[i]);
+        sum+=dist*(m_points[i+1].m_startTime-m_points[i-1].m_startTime);
+    }
+    dist=in.getMinimumDistance(m_points[m_points.size()-1]);
+    sum+=dist*(m_points[m_points.size()-1].m_startTime-m_points[m_points.size()-2].m_startTime);
+    sum=sum/2;
     return sum;
 }
 

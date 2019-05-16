@@ -65,7 +65,7 @@ namespace SpatialIndex
         virtual void getCombinedMBRk(MBRk& out, const MBRk& in) const;
 
 
-        int m_k;
+        uint32_t m_k;
         std::vector<Region> m_mbrs;
         double m_startTime;
         double m_endTime;

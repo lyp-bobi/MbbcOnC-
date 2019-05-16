@@ -263,6 +263,7 @@ namespace SpatialIndex
 #include "Trajectory.h"
 #include "RTree.h"
 #include "R2Tree.h"
+#include "PAARTree.h"
 #include "MVRTree.h"
 #include "TPRTree.h"
 #include "Version.h"

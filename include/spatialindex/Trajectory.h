@@ -47,13 +47,13 @@ namespace SpatialIndex
     virtual double getMinimumDistance(const IShape& in) const;
     virtual double getMinimumDistance(const Region& in) const;
     virtual double getMinimumDistance(const Mbbc& in) const;
+    virtual double getMinimumDistance(const MBRk& in) const;
     virtual double getMinimumDistance(const Trajectory& in) const;
 
     virtual bool intersectsTimeRegion(const TimeRegion& in) const;
     virtual bool intersectsRegion(const Region& in) const;
     virtual bool intersectsMbbc(const Mbbc& in) const;
-    virtual bool intersectsLineSegment(const LineSegment& in) const;
-    virtual bool containsPoint(const Point& in) const;
+    virtual bool intersectsMBRk(const MBRk& in) const;
     virtual bool intersectsTrajectory(const Trajectory& in) const;
 
     virtual void combineTrajectory(const Trajectory& in);

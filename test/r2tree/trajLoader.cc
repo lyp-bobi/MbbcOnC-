@@ -20,7 +20,7 @@
 #define dimension 2
 #define indexcap 5
 #define leafcap 5
-#define QueryType 2
+#define QueryType 1
 //1 for time-slice range, 2 for 5-NN
 
 using namespace std;
