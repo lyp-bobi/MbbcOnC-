@@ -78,6 +78,7 @@ set(SIDX_SPATIALINDEX_CPP
   "${SIDX_SRC_DIR}/spatialindex/MovingPoint.cc"
   "${SIDX_SRC_DIR}/spatialindex/MovingRegion.cc"
   "${SIDX_SRC_DIR}/spatialindex/Mbbc.cc"
+  "${SIDX_SRC_DIR}/spatialindex/MBRk.cc"
   "${SIDX_SRC_DIR}/spatialindex/Trajectory.cc"
   "${SIDX_SRC_DIR}/spatialindex/Point.cc"
   "${SIDX_SRC_DIR}/spatialindex/Region.cc"
@@ -156,8 +157,10 @@ endif()
 set(SIDX_TOOLS_CPP
   ${SIDX_RAND48}
   "${SIDX_SRC_DIR}/tools/Tools.cc"
+  "${SIDX_SRC_DIR}/tools/TimeDivision.cc"
 )
 list (APPEND SIDX_CPP ${SIDX_TOOLS_CPP})
+
 
 set(SIDX_TOOLS_CPP
   "${SIDX_SRC_DIR}/tprtree/Index.cc"

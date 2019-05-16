@@ -203,8 +203,8 @@ void Trajectory::getMbbc(Mbbc& out) const{
 
     double startx=m_points.begin()->m_pCoords[0],starty=m_points.begin()->m_pCoords[1],startt=m_points.begin()->m_startTime;
     double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_startTime;
-    startt=int(startt/PeriodLen)*PeriodLen;
-    endt=int(startt/PeriodLen)*PeriodLen+PeriodLen;
+    startt=getPeriodStart(startt);
+    endt=getPeriodEnd(endt);
     double maxvxP=-std::numeric_limits<double>::max(),
         maxvxN=std::numeric_limits<double>::max(),
         maxvyP=-std::numeric_limits<double>::max(),

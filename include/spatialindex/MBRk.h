@@ -1,26 +1,28 @@
 //
-// Created by chuang on 4/1/19.
+// Created by Chuang on 2019/5/15.
 //
+
 
 #pragma once
 
 namespace SpatialIndex
 {
-    class SIDX_DLL Mbbc: public Tools::IObject, public virtual IShape,public IEvolvingShape{
+    class SIDX_DLL MBRk: public Tools::IObject, public virtual IShape,public IEvolvingShape{
 
-    public:
-        Mbbc();
-        Mbbc(const Region &smbr, const Region &embr, const Region &vmbr, const Region &pmbr, double tStart, double tEnd);
-        Mbbc(const Mbbc& in);
-        virtual Mbbc &operator=(const Mbbc &r);
+        public:
+        inline int getPhase(double t) const;
+        MBRk();
+        MBRk(const std::vector<Region> mbrs, double tStart, double tEnd);
+        MBRk(const MBRk& in);
+        virtual MBRk &operator=(const MBRk &r);
 
-        virtual bool operator==(const Mbbc &r) const;
+        virtual bool operator==(const MBRk &r) const;
 
 
         //
         // IObject interface
         //
-        virtual Mbbc *clone();
+        virtual MBRk *clone();
 
         //
         // ISerializable interface
@@ -56,32 +58,25 @@ namespace SpatialIndex
         virtual bool intersectsTimeRegion(const TimeRegion& in) const;
         virtual bool intersectsTimePoint(const TimePoint& in) const;
         virtual bool intersectsRegion(const Region& in) const;
-        virtual bool intersectsLineSegment(const LineSegment& in) const;
-        virtual bool containsPoint(const Point& in) const;
-        virtual bool intersectsMbbc(const Mbbc& in) const;
+        virtual bool intersectsMBRk(const MBRk& in) const;
 
-        virtual void combineMbbc(const Mbbc& in);
-        virtual bool containsMbbc(const Mbbc& in);
-        virtual void getCombinedMbbc(Mbbc& out, const Mbbc& in) const;
-
-        const std::string toString() const;
+        virtual void combineMBRk(const MBRk& in);
+        virtual bool containsMBRk(const MBRk& in);
+        virtual void getCombinedMBRk(MBRk& out, const MBRk& in) const;
 
 
-        Region m_smbr;
-        Region m_embr;
-        Region m_xmbr;
-        Region m_ymbr;
-        Region m_vmbr;
-        Region m_wmbr;
+        int m_k;
+        std::vector<Region> m_mbrs;
         double m_startTime;
         double m_endTime;
 
-        friend SIDX_DLL std::ostream operator<<(std::ostream os,const Mbbc &r);
+        friend SIDX_DLL std::ostream operator<<(std::ostream os,const MBRk &r);
 
         static const uint32_t m_dimension=2;
         virtual void makeInfinite();
-    private:
+        private:
     };
-    typedef Tools::PoolPointer<Mbbc> MbbcPtr;
-    SIDX_DLL std::ostream& operator<<(std::ostream& os, const Mbbc& r);
+    typedef Tools::PoolPointer<MBRk> MBRkPtr;
+    SIDX_DLL std::ostream& operator<<(std::ostream& os, const MBRk& r);
 }
+

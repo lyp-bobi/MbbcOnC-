@@ -28,12 +28,11 @@
 #pragma once
 
 #include "tools/Tools.h"
-
+#include "tools/TimeDivision.h"
 #ifndef M_PI_2
 #define M_PI_2 1.57079632679489661922
 #endif
 
-#define PeriodLen 450
 
 namespace SpatialIndex
 {
@@ -260,6 +259,7 @@ namespace SpatialIndex
 #include "MovingPoint.h"
 #include "MovingRegion.h"
 #include "Mbbc.h"
+#include "MBRk.h"
 #include "Trajectory.h"
 #include "RTree.h"
 #include "R2Tree.h"

@@ -68,7 +68,7 @@ namespace SpatialIndex
 
     std::vector<TimePoint> m_points;
 
-    friend SIDX_DLL std::ostream operator<<(std::ostream os,const MovingRegion &r);
+    friend SIDX_DLL std::ostream operator<<(std::ostream os,const Trajectory &r);
 
     static const uint32_t m_dimension=2;
     virtual void makeInfinite();

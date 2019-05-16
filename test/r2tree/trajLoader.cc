@@ -15,7 +15,7 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 #define sourceFile "D://geolifedata.csv"
-#define linesToRead 1e7
+#define linesToRead 1e8
 #define testtime 1e3
 #define dimension 2
 #define indexcap 5
@@ -224,45 +224,6 @@ public:
     virtual void rewind(){i=0;}
 };
 
-template <class Type>
-Type stringToNum(const string& str)
-{
-    istringstream iss(str);
-    Type num;
-    iss >> num;
-    return num;
-}
-//time division related
-double naivetime(string l){
-    int h;
-    int m;
-    int s;
-    if(l.size()==8){
-        h = stringToNum<int>(l.substr(0,2));
-        m = stringToNum<int>(l.substr(3,5));
-        s = stringToNum<int>(l.substr(6,8));
-    } else{
-        h = stringToNum<int>(l.substr(0,1));
-        m = stringToNum<int>(l.substr(2,4));
-        s = stringToNum<int>(l.substr(5,7));
-    }
-    return 3600*h+60*m+s;
-}
-int getPeriod(double time){
-    int pd= int(floor(time))/PeriodLen;
-    return pd;
-}
-int getMaxPeriod(){
-    return 240000/PeriodLen;
-}
-double getPeriodStart(double time){
-    int pd=getPeriod(time);
-    return pd*PeriodLen;
-}
-double getPeriodEnd(double time){
-    int pd=getPeriod(time);
-    return (pd+1)*PeriodLen-0.00001;
-}
 
 struct xyt{
         double x;
@@ -351,10 +312,7 @@ list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
                 for(auto p:segs[j]){
                     double xy[]={p.x,p.y};
                     double faket=p.t-getPeriodStart(p.t);
-//                    if(faket>10&&PeriodLen-faket>10) {//avoid ultra speed
                     tps.emplace_back(TimePoint(xy, faket, faket, dimension));
-//                    }
-//                    tps.emplace_back(TimePoint(xy,p.t,p.t,dimension));
                 }
                 if(!tps.empty()){
                     iperiod->emplace_back(make_pair(id*1000+j,Trajectory(tps)));
