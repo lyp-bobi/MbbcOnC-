@@ -203,8 +203,6 @@ void Trajectory::getMbbc(Mbbc& out) const{
 
     double startx=m_points.begin()->m_pCoords[0],starty=m_points.begin()->m_pCoords[1],startt=m_points.begin()->m_startTime;
     double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_startTime;
-    startt=getPeriodStart(startt);
-    endt=getPeriodEnd(endt);
     double maxvxP=-std::numeric_limits<double>::max(),
         maxvxN=std::numeric_limits<double>::max(),
         maxvyP=-std::numeric_limits<double>::max(),
@@ -242,20 +240,6 @@ void Trajectory::getMbbc(Mbbc& out) const{
     double vHigh[2]={maxvxP,maxvyP};
     double wLow[2]={minx,miny};
     double wHigh[2]={maxx,maxy};
-//    double nstartx,nendx,nstarty,nendy;
-//    nstartx=startx-(endx-startx)/(endt-startt)*startt;
-//    nstarty=starty-(endy-starty)/(endt-startt)*startt;
-//    nendx=endx+(endx-startx)/(endt-startt)*(PeriodLen-endt);
-//    nendy=endy+(endy-starty)/(endt-startt)*(PeriodLen-endt);
-//    double sLow[2]={nstartx,nstarty};
-//    double sHigh[2]={nstartx,nstarty};
-//    double eLow[2]={nendx,nendy};
-//    double eHigh[2]={nendx,nendy};
-//    double vLow[2]={maxvxN,maxvyN};
-//    double vHigh[2]={maxvxP,maxvyP};
-//    double wLow[2]={minx,miny};
-//    double wHigh[2]={maxx,maxy};
-//    double stime=int(startt/PeriodLen)*PeriodLen;
     out= Mbbc(Region(sLow,sHigh,2),Region(eLow,eHigh,2),
                 Region(vLow,vHigh,2),Region(wLow,wHigh,2),startt,endt);
 
