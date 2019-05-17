@@ -199,7 +199,7 @@ void Trajectory::getMBR(Region& out) const{
 }
 //todo: should have implement a time divivsion class!
 void Trajectory::getMbbc(Mbbc& out) const{
-    out.makeInfinite();
+    out.makeInfinite(m_dimension);
 
     double startx=m_points.begin()->m_pCoords[0],starty=m_points.begin()->m_pCoords[1],startt=m_points.begin()->m_startTime;
     double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_startTime;
@@ -260,6 +260,24 @@ void Trajectory::getMbbc(Mbbc& out) const{
                 Region(vLow,vHigh,2),Region(wLow,wHigh,2),startt,endt);
 
 }
+void Trajectory::getMBRk(int k, SpatialIndex::MBRk &out) const {
+    out.m_k=k;
+    out.makeInfinite(m_dimension,k);
+    int oldPhase=0;
+    for(int i=0;i<m_points.size();i++){
+        int newPhase=out.getPhase(m_points[i].m_startTime);
+        if(i==m_points.size()-1) newPhase=k-1;
+        out.m_mbrs[newPhase].combinePoint(m_points[i]);
+        if(oldPhase!=newPhase){
+            for(int j=oldPhase;j<=newPhase;j++){
+                out.m_mbrs[j].combinePoint(m_points[i]);
+                if(i!=0) out.m_mbrs[j].combinePoint(m_points[i-1]);
+            }
+            oldPhase=newPhase;
+        }
+    }
+}
+
 double Trajectory::getArea() const{ return 0;}
 double Trajectory::getMinimumDistance(const IShape& s) const{
     const Trajectory* pTrajectory = dynamic_cast<const Trajectory*>(&s);
@@ -373,7 +391,7 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
 }
 
 
-void Trajectory::makeInfinite()
+void Trajectory::makeInfinite(uint32_t dimension)
 {
     throw Tools::NotSupportedException(
             "Trajectory::getMinimumDistance: Not implemented yet!"

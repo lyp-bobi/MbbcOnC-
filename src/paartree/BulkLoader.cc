@@ -42,9 +42,20 @@ ExternalSorter::Record::~Record()
 
 bool ExternalSorter::Record::operator<(const Record& r) const
 {
-    int k=r.m_MBRk.m_k;
-    int seg=std::floor(m_s/k);
-    return m_MBRk.m_mbrs[seg].m_pLow[m_s%2];
+    if(this->m_s==4||this->m_s==5){
+        Region br1,br2;
+        m_MBRk.getMBR(br1);
+        r.m_MBRk.getMBR(br2);
+        int dim=m_s-4;
+        return br1.m_pLow[dim]+br1.m_pHigh[dim]<br2.m_pLow[dim]+br2.m_pHigh[dim];
+    }
+    else{
+        int k=r.m_MBRk.m_k;
+        int seg=int(std::floor(r.m_s/k));
+        seg=seg%k;
+        return this->m_MBRk.m_mbrs[seg].m_pLow[m_s%2]+this->m_MBRk.m_mbrs[seg].m_pHigh[m_s%2]
+                    <r.m_MBRk.m_mbrs[seg].m_pLow[m_s%2]+r.m_MBRk.m_mbrs[seg].m_pHigh[m_s%2];
+    }
 }
 
 
@@ -80,7 +91,7 @@ void ExternalSorter::Record::loadFromFile(Tools::TemporaryFile& f)
     }
 
     m_MBRk.m_k=f.readUInt32();
-    m_MBRk.m_mbrs=std::vector<Region>(m_MBRk.m_k);
+    m_MBRk.m_mbrs.resize(m_MBRk.m_k);
     for(int i=0;i<m_MBRk.m_k;i++){
         for (int j= 0; i < m_MBRk.m_dimension; ++i)
         {
@@ -331,7 +342,7 @@ void BulkLoader::bulkLoadUsingSTR(
         Data* d = reinterpret_cast<Data*>(stream.getNext());
         if (d == 0)
             throw Tools::IllegalArgumentException(
-                    "bulkLoadUsingSTR: PAARTree bulk load expects SpatialIndex::RTree::Data entries."
+                    "bulkLoadUsingSTR: PAARTree bulk load expects SpatialIndex::PAARTree::Data entries."
             );
 
         es->insert(new ExternalSorter::Record(d->m_MBRk, d->m_id, d->m_dataLength, d->m_pData, 4));

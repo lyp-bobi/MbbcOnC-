@@ -134,6 +134,7 @@ SpatialIndex::ISpatialIndex* SpatialIndex::PAARTree::createNewPAARTree(
         uint32_t indexCapacity,
         uint32_t leafCapacity,
         uint32_t dimension,
+        int k,
         id_type& indexIdentifier)
 {
     Tools::Variant var;
@@ -155,6 +156,9 @@ SpatialIndex::ISpatialIndex* SpatialIndex::PAARTree::createNewPAARTree(
     var.m_val.ulVal = dimension;
     ps.setProperty("Dimension", var);
 
+    var.m_varType = Tools::VT_ULONG;
+    var.m_val.ulVal = k;
+    ps.setProperty("kForMBRk", var);
 
     ISpatialIndex* ret = returnPAARTree(sm, ps);
 
@@ -173,9 +177,10 @@ SpatialIndex::ISpatialIndex* SpatialIndex::PAARTree::createAndBulkLoadNewPAARTre
         uint32_t indexCapacity,
         uint32_t leafCapacity,
         uint32_t dimension,
+        int k,
         id_type& indexIdentifier)
 {
-    SpatialIndex::ISpatialIndex* tree = createNewPAARTree(sm, fillFactor, indexCapacity, leafCapacity, dimension, indexIdentifier);
+    SpatialIndex::ISpatialIndex* tree = createNewPAARTree(sm, fillFactor, indexCapacity, leafCapacity, dimension,k, indexIdentifier);
 
     uint32_t bindex = static_cast<uint32_t>(std::floor(static_cast<double>(indexCapacity * fillFactor)));
     uint32_t bleaf = static_cast<uint32_t>(std::floor(static_cast<double>(leafCapacity * fillFactor)));
@@ -324,6 +329,7 @@ void SpatialIndex::PAARTree::PAARTree::nearestNeighborQuery(uint32_t k, const Sp
         {
             // n is a leaf or an index.
             NodePtr n = readNode(pFirst->m_id);
+
             v.visitNode(*n);
 
             for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
@@ -398,6 +404,11 @@ void SpatialIndex::PAARTree::PAARTree::getIndexProperties(Tools::PropertySet& ou
     var.m_varType = Tools::VT_ULONG;
     var.m_val.ulVal = m_dimension;
     out.setProperty("Dimension", var);
+
+    //kForMBRk
+    var.m_varType = Tools::VT_ULONG;
+    var.m_val.ulVal = m_k;
+    out.setProperty("kForMBRk", var);
 
     // index capacity
     var.m_varType = Tools::VT_ULONG;
@@ -514,6 +525,16 @@ void SpatialIndex::PAARTree::PAARTree::initNew(Tools::PropertySet& ps)
         m_dimension = var.m_val.ulVal;
     }
 
+    // dimension
+    var = ps.getProperty("kForMBRk");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (var.m_varType != Tools::VT_ULONG)
+            throw Tools::IllegalArgumentException("initNew: Property k must be Tools::VT_ULONG");
+
+        m_k = var.m_val.ulVal;
+    }
+
     // tight MBRs
     var = ps.getProperty("EnsureTightMBRs");
     if (var.m_varType != Tools::VT_EMPTY)
@@ -564,7 +585,7 @@ void SpatialIndex::PAARTree::PAARTree::initNew(Tools::PropertySet& ps)
         m_pointPool.setCapacity(var.m_val.ulVal);
     }
 
-    m_infiniteMBRk.makeInfinite();
+    m_infiniteMBRk.makeInfinite(m_dimension,m_k);
 
     m_stats.m_u32TreeHeight = 1;
     m_stats.m_nodesInLevel.emplace_back(0);
@@ -629,7 +650,7 @@ void SpatialIndex::PAARTree::PAARTree::initOld(Tools::PropertySet& ps)
         m_pointPool.setCapacity(var.m_val.ulVal);
     }
 
-    m_infiniteMBRk.makeInfinite();
+    m_infiniteMBRk.makeInfinite(m_dimension,m_k);
 }
 
 void SpatialIndex::PAARTree::PAARTree::storeHeader()
@@ -961,7 +982,10 @@ void SpatialIndex::PAARTree::PAARTree::rangeQuery(RangeQueryType type, const ISh
             v.visitNode(*n);
 //            if(n->m_level<3) {
                 for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
-                    if (n->m_ptrMBRk[cChild]->intersectsShape(query)) st.push(readNode(n->m_pIdentifier[cChild]));
+                    if (n->m_ptrMBRk[cChild]->intersectsShape(query)) {
+                        st.push(readNode(n->m_pIdentifier[cChild]));
+                    }
+
                 }
 //            }else{
 //                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {

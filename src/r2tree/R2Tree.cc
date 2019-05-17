@@ -564,7 +564,7 @@ void SpatialIndex::R2Tree::R2Tree::initNew(Tools::PropertySet& ps)
         m_pointPool.setCapacity(var.m_val.ulVal);
     }
 
-    m_infiniteMbbc.makeInfinite();
+    m_infiniteMbbc.makeInfinite(m_dimension);
 
     m_stats.m_u32TreeHeight = 1;
     m_stats.m_nodesInLevel.emplace_back(0);
@@ -629,7 +629,7 @@ void SpatialIndex::R2Tree::R2Tree::initOld(Tools::PropertySet& ps)
         m_pointPool.setCapacity(var.m_val.ulVal);
     }
 
-    m_infiniteMbbc.makeInfinite();
+    m_infiniteMbbc.makeInfinite(m_dimension);
 }
 
 void SpatialIndex::R2Tree::R2Tree::storeHeader()

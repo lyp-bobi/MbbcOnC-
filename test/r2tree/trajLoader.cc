@@ -18,9 +18,9 @@
 #define linesToRead 1e8
 #define testtime 1e3
 #define dimension 2
-#define indexcap 5
-#define leafcap 5
-#define QueryType 1
+#define indexcap 18
+#define leafcap 18
+#define QueryType 2
 //1 for time-slice range, 2 for 5-NN
 
 using namespace std;
@@ -42,7 +42,6 @@ public:
     {
         if (n.isLeaf()) m_leafIO++;
         else m_indexIO++;
-
     }
 
     void visitData(const IData& d)
@@ -92,66 +91,6 @@ public:
     }
 };
 
-class MbrStream: public IDataStream{
-public:
-    vector<pair<int,Region>> mbrs;
-    int i=0;
-    void feedTraj(const vector<pair<id_type ,Trajectory> > *period){
-        mbrs.clear();
-        for(auto idt:*period){
-            Region br;
-            idt.second.getMBR(br);
-            mbrs.emplace_back(make_pair(idt.first,br));
-        }
-        rewind();
-    }
-    virtual bool hasNext() override
-    {
-        return i<mbrs.size();
-    }
-    virtual IData* getNext() override{
-        RTree::Data* d=new RTree::Data(sizeof(double), reinterpret_cast<uint8_t*>(mbrs[i].second.m_pLow), mbrs[i].second, mbrs[i].first);
-        i++;
-        return d;
-    }
-    virtual uint32_t size()
-    {
-        return mbrs.size();
-    }
-
-    virtual void rewind(){i=0;}
-};
-
-class MbbcStream: public IDataStream{
-public:
-    vector<pair<int,Mbbc>> mbbcs;
-    int i=0;
-    void feedTraj(const vector<pair<id_type ,Trajectory> > *period){
-        mbbcs.clear();
-        for(auto idt:*period){
-            Mbbc bc;
-            idt.second.getMbbc(bc);
-            mbbcs.emplace_back(make_pair(idt.first,bc));
-        }
-        rewind();
-    }
-    virtual bool hasNext() override
-    {
-        return i<mbbcs.size();
-    }
-    virtual IData* getNext() override{
-        R2Tree::Data* d=new R2Tree::Data(sizeof(double), reinterpret_cast<uint8_t*>(mbbcs[i].second.m_smbr.m_pLow), mbbcs[i].second, mbbcs[i].first);
-        i++;
-        return d;
-    }
-    virtual uint32_t size()
-    {
-        return mbbcs.size();
-    }
-
-    virtual void rewind(){i=0;}
-};
-
 class TrajMbrStream: public IDataStream{
 public:
     vector<pair<id_type,Region> > mbrs;
@@ -159,6 +98,7 @@ public:
 
     int i=0;
     void feedTraj(vector<pair<id_type ,Trajectory> > *period){
+        cerr<<"feeding traj to TrajMbrStream\n";
         mbrs.clear();
         for(auto idt:*period){
             Region mbr;
@@ -195,6 +135,7 @@ public:
 
     int i=0;
     void feedTraj(vector<pair<id_type ,Trajectory> > *period){
+        cerr<<"feeding traj to TrajMbbcStream\n";
         mbbcs.clear();
         for(auto idt:*period){
             Mbbc bc;
@@ -219,6 +160,43 @@ public:
     virtual uint32_t size()
     {
         return mbbcs.size();
+    }
+
+    virtual void rewind(){i=0;}
+};
+
+class TrajMBRkStream: public IDataStream{
+public:
+    vector<pair<id_type,MBRk> > mbrks;
+    vector<pair<id_type,Trajectory> > *trajs;
+
+    int i=0;
+    void feedTraj(vector<pair<id_type ,Trajectory> > *period,int k){
+        cerr<<"feeding traj to TrajMbrkStream\n";
+        mbrks.clear();
+        for(auto idt:*period){
+            MBRk brk;
+            idt.second.getMBRk(k,brk);
+            mbrks.emplace_back(make_pair(idt.first,brk));
+        }
+        trajs=period;
+        rewind();
+    }
+    virtual bool hasNext() override
+    {
+        return i<mbrks.size();
+    }
+    virtual IData* getNext() override{
+        uint8_t* data;
+        uint32_t len;
+        trajs->at(i).second.storeToByteArray(&data,len);
+        PAARTree::Data* d=new PAARTree::Data(len, data, mbrks[i].second, mbrks[i].first);
+        i++;
+        return d;
+    }
+    virtual uint32_t size()
+    {
+        return mbrks.size();
     }
 
     virtual void rewind(){i=0;}
@@ -270,6 +248,7 @@ vector< vector<xyt> > cuttraj(vector<xyt> traj){
 list<vector<pair<id_type ,Trajectory> > > loadCsvToTrajs(){
     //first level: vector of time period
     //second level: vector of segments in the time period
+    cerr<<"loading csv to trajectories"<<endl;
     ifstream inFile(sourceFile, ios::in);
     string lineStr;
     getline(inFile, lineStr);
@@ -335,7 +314,7 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries){
         }else if(QueryType==2){
             tree->nearestNeighborQuery(5,*queries[i],vis);
         }
-
+    if(i%100==0) cout<<"finished "<<i<<"already\n";
     }
     end=clock();
     cerr<<"Querying time: "<< end-start<<endl;
@@ -358,121 +337,128 @@ int TreeQuery(ISpatialIndex* tree,IShape* query){
 //    cerr<<"VISIT NODE "<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
 //    cerr << *tree;
 //    return vis.m_resultGet;
-    return vis.m_lastResult;
+    return vis.m_indexIO;
 }
-struct iddist{
-    id_type id;
-    double dist;
-};
 
-//void BruteCheck(vector<pair<id_type ,Trajectory> > *traj,const IShape* query){
-//    std::priority_queue<>
-//}
 
 int main(){
-    srand((int)time(NULL));
-    list<vector<pair<id_type ,Trajectory> > > trajs=loadCsvToTrajs();
-    Trajectory q=trajs.begin()->at(0).second;
-
-    vector<pair<id_type ,Trajectory> >   empty;
-    TrajMbrStream ds1;
-    TrajMbbcStream ds2;
-    ds1.feedTraj(&trajs.front());
-    ds2.feedTraj(&trajs.front());
-//    for(auto period:trajs){
-//        period.swap(empty);
-//    }
-    double pLow[2]={31.318918,112.532426};
-    double pHigh[2]={31.413626,112.562633};
-    vector<IShape*> queries;
-//    queries.push_back(new TimeRegion(pLow,pHigh,602,602,2));
-    for (int i = 1; i < testtime; i++){
-        if(QueryType==1) {
+    try {
+        srand((int) time(NULL));
+        list<vector<pair<id_type, Trajectory> > > trajs = loadCsvToTrajs();
+        vector<pair<id_type, Trajectory> > empty;
+        TrajMbrStream ds1;
+        TrajMbbcStream ds2;
+        TrajMBRkStream ds3;
+        ds1.feedTraj(&trajs.front());
+        ds2.feedTraj(&trajs.front());
+        ds3.feedTraj(&trajs.front(), 2);
+        vector<IShape *> queries;
+        for (int i = 0; i < testtime; i++) {
+            if (QueryType == 1) {
 //          double pLow[2] = {random(39.992560,39.996714), random(116.319681,116.321562)};
-            double pLow[2] = {random(31, 40.5), random(110, 122)};
-            double pHigh[2] = {pLow[0] + random(0.01, 0.1), pLow[1] + random(0.01, 0.1)};
-            Region r(pLow, pHigh, 2);
+                double pLow[2] = {random(31, 40.5), random(110, 122)};
+                double pHigh[2] = {pLow[0] + random(0.01, 0.1), pLow[1] + random(0.01, 0.1)};
+                Region r(pLow, pHigh, 2);
 //          cout<<pLow[0]<<","<<pLow[1]<<endl;
-            int t = int(random(0, PeriodLen));
-            TimeRegion *tr = new TimeRegion(pLow, pHigh, t, t, 2);
-            queries.emplace_back(tr);
-        }else if(QueryType==2){
-            queries.emplace_back(&trajs.begin()->at((i)%trajs.begin()->size()).second);
+                int t = int(random(0, PeriodLen));
+                TimeRegion *tr = new TimeRegion(pLow, pHigh, t, t, 2);
+                queries.emplace_back(tr);
+            } else if (QueryType == 2) {
+                queries.emplace_back(&trajs.begin()->at((i) % trajs.begin()->size()).second);
+            }
         }
-    }
 
 
-    string name0="name0", name1 = "name1",name2 = "name2",name3 = "name3",name4 = "name4";
-    id_type indexIdentifier0,indexIdentifier1,indexIdentifier2,indexIdentifier3,indexIdentifier4;
-    IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name1, 4096),
-        *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
-        *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096),
-        *diskfile3 = StorageManager::createNewDiskStorageManager(name3, 4096),
-        *diskfile4 = StorageManager::createNewDiskStorageManager(name4, 4096);
-    // Create a new storage manager with the provided base name and a 4K page size.
-    StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
-        *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
-        *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false),
-        *file3 = StorageManager::createNewRandomEvictionsBuffer(*diskfile3, 10, false),
-        *file4 = StorageManager::createNewRandomEvictionsBuffer(*diskfile4, 10, false);
-    // applies a main memory random buffer on top of the persistent storage manager
-    // (LRU buffer, etc can be created the same way).
+        string name0 = "name0", name1 = "name1", name2 = "name2", name3 = "name3", name4 = "name4",
+                name5 = "name5", name6 = "name6", name7 = "name7";
+        id_type indexIdentifier0, indexIdentifier1, indexIdentifier2, indexIdentifier3, indexIdentifier4,
+                indexIdentifier5, indexIdentifier6, indexIdentifier7;
+        IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name1, 4096),
+                *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
+                *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096),
+                *diskfile3 = StorageManager::createNewDiskStorageManager(name3, 4096),
+                *diskfile4 = StorageManager::createNewDiskStorageManager(name4, 4096),
+                *diskfile5 = StorageManager::createNewDiskStorageManager(name5, 4096),
+                *diskfile6 = StorageManager::createNewDiskStorageManager(name6, 4096),
+                *diskfile7 = StorageManager::createNewDiskStorageManager(name7, 4096);
+        // Create a new storage manager with the provided base name and a 4K page size.
+        StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
+                *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
+                *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false),
+                *file3 = StorageManager::createNewRandomEvictionsBuffer(*diskfile3, 10, false),
+                *file4 = StorageManager::createNewRandomEvictionsBuffer(*diskfile4, 10, false),
+                *file5 = StorageManager::createNewRandomEvictionsBuffer(*diskfile5, 10, false),
+                *file6 = StorageManager::createNewRandomEvictionsBuffer(*diskfile6, 10, false),
+                *file7 = StorageManager::createNewRandomEvictionsBuffer(*diskfile7, 10, false);
+        // applies a main memory random buffer on top of the persistent storage manager
+        // (LRU buffer, etc can be created the same way).
 //    ISpatialIndex* real = R2Tree::createAndBulkLoadNewR2Tree(
 //            R2Tree::BulkLoadMethod::BLM_STR, ds2, *file0, 0.9, indexcap,100000, 2, indexIdentifier0);
 //    ds1.rewind();
-    ISpatialIndex* r = RTree::createAndBulkLoadNewRTree(
-            RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap,leafcap, 2, SpatialIndex::RTree::RV_RSTAR, indexIdentifier1);
-    ISpatialIndex* r21 = R2Tree::createAndBulkLoadNewR2Tree(
-            R2Tree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap,leafcap,2, indexIdentifier2);
-    ISpatialIndex* r22 = R2Tree::createAndBulkLoadNewR2Tree(
-            R2Tree::BulkLoadMethod::BLM_STR2, ds2, *file3, 0.9, indexcap,leafcap,2, indexIdentifier3);
-    ISpatialIndex* r23 = R2Tree::createAndBulkLoadNewR2Tree(
-            R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap,leafcap,2, indexIdentifier4);
+        ISpatialIndex *r = RTree::createAndBulkLoadNewRTree(
+                RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap, leafcap, 2, SpatialIndex::RTree::RV_RSTAR,
+                indexIdentifier1);
+//        ISpatialIndex *r21 = R2Tree::createAndBulkLoadNewR2Tree(
+//                R2Tree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap, leafcap, 2, indexIdentifier2);
+        ISpatialIndex *r22 = R2Tree::createAndBulkLoadNewR2Tree(
+                R2Tree::BulkLoadMethod::BLM_STR2, ds2, *file3, 0.9, indexcap, leafcap, 2, indexIdentifier3);
+//        ISpatialIndex *r23 = R2Tree::createAndBulkLoadNewR2Tree(
+//                R2Tree::BulkLoadMethod::BLM_STR3, ds2, *file4, 0.9, indexcap, leafcap, 2, indexIdentifier4);
+//        ISpatialIndex *paar1 = PAARTree::createAndBulkLoadNewPAARTree(
+//                PAARTree::BulkLoadMethod::BLM_STR, ds3, *file5, 0.9, indexcap, leafcap, 2, 2, indexIdentifier5);
+        ISpatialIndex *paar2 = PAARTree::createAndBulkLoadNewPAARTree(
+                PAARTree::BulkLoadMethod::BLM_STR2, ds3, *file6, 0.9, indexcap, leafcap, 2, 2, indexIdentifier6);
+//        ISpatialIndex *paar3 = PAARTree::createAndBulkLoadNewPAARTree(
+//                PAARTree::BulkLoadMethod::BLM_STR3, ds3, *file7, 0.9, indexcap, leafcap, 2, 2, indexIdentifier7);
+
 //    real->m_DataType=TrajectoryType;
-    r->m_DataType=TrajectoryType;
-    r21->m_DataType=TrajectoryType;
-    r22->m_DataType=TrajectoryType;
-    r23->m_DataType=TrajectoryType;
-    cerr<<"start query!"<<endl<<endl<<endl;
-    TreeQueryBatch(r,queries);
-    cerr<<"\n\n\n\n";
-    TreeQueryBatch(r21,queries);
-    cerr<<"\n\n\n\n";
-    TreeQueryBatch(r22,queries);
-    cerr<<"\n\n\n\n";
-    TreeQueryBatch(r23,queries);
+        r->m_DataType = TrajectoryType;
+//        r21->m_DataType = TrajectoryType;
+        r22->m_DataType = TrajectoryType;
+//        r23->m_DataType = TrajectoryType;
+//        paar1->m_DataType = TrajectoryType;
+        paar2->m_DataType = TrajectoryType;
+//        paar3->m_DataType = TrajectoryType;
+        cerr << "start query!" << endl << endl << endl;
+        TreeQueryBatch(r, queries);
+//        cerr << "\n\n\n\n";
+//        TreeQueryBatch(r21, queries);
+        cerr << "\n\n\n\n";
+        TreeQueryBatch(r22, queries);
+//        cerr << "\n\n\n\n";
+//        TreeQueryBatch(r23, queries);
+//        cerr << "\n\n\n\n";
+//        TreeQueryBatch(paar1, queries);
+        cerr << "\n\n\n\n";
+        TreeQueryBatch(paar2, queries);
+//        cerr << "\n\n\n\n";
+//        TreeQueryBatch(paar3, queries);
 //    for(auto q:queries){
 //        int s,a,b,c,d;
-//        cout<<"real is\n";
-////        s=TreeQuery(real,q);
-////        cout<<"\n\n";
-////        cout<<"r is\n";
+//        cout<<"query is"<<q->toString()<<endl;
 //        a=TreeQuery(r,q);
-//        cout<<"\n\n";
-//        cout<<"r2 is\n";
-//        b=TreeQuery(r21,q);
-//        cout<<"\n\n\n\n";
-////        cout<<"\n\n";
-////        cout<<"r22 is\n";
-////        c=TreeQuery(r21,q);
-////        cout<<"\n\n";
-////        cout<<"r23 is\n";
-////        d=TreeQuery(r23,q);
-////        cout<<"\n\n";
-//        if(a!=b){
-//            if(QueryType==1){
-//                TimeRegion *tp= dynamic_cast<TimeRegion*>(q);
-//                cerr<<"ERROR! for "<<tp->toString()<<" as "<<a<<" and "<<b<<endl;
-//                system("pause");
-//            }
-//            else if(QueryType==2){
-//                Trajectory *tp=dynamic_cast<Trajectory*>(q);
-//                cerr<<"ERROR! for "<<tp->toString()<<" as "<<a<<" and "<<b<<endl;
-//                system("pause");
-//            }
-//        }
+//        b=TreeQuery(paar1,q);
+////        if(a!=b){
+////            if(QueryType==1){
+////                TimeRegion *tp= dynamic_cast<TimeRegion*>(q);
+////                cerr<<"ERROR! for "<<tp->toString()<<" as "<<a<<" and "<<b<<endl;
+////                system("pause");
+////            }
+////            else if(QueryType==2){
+////                Trajectory *tp=dynamic_cast<Trajectory*>(q);
+////                cerr<<"ERROR! for "<<tp->toString()<<" as "<<a<<" and "<<b<<endl;
+////                system("pause");
+////            }
+////        }
 //    }
-////    cout<<*r<<"\n\n\n\n"<<*r21;
-
+//    cout<<*r<<"\n\n\n\n"<<*paar1;
+    }
+    catch (Tools::Exception& e)
+    {
+        cerr << "******ERROR******" << endl;
+        std::string s = e.what();
+        cerr << s << endl;
+        return -1;
+    }
     return 0;
 }

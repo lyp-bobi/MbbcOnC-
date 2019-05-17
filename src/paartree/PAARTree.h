@@ -83,6 +83,8 @@ namespace SpatialIndex
 
             uint32_t m_dimension;
 
+            int m_k;
+
             MBRk m_infiniteMBRk;
 
             Statistics m_stats;

@@ -12,6 +12,7 @@ namespace SpatialIndex
         public:
         inline int getPhase(double t) const;
         MBRk();
+        MBRk(int k);
         MBRk(const std::vector<Region> mbrs, double tStart, double tEnd);
         MBRk(const MBRk& in);
         virtual MBRk &operator=(const MBRk &r);
@@ -65,15 +66,17 @@ namespace SpatialIndex
         virtual void getCombinedMBRk(MBRk& out, const MBRk& in) const;
 
 
+
+
         uint32_t m_k;
         std::vector<Region> m_mbrs;
         double m_startTime;
         double m_endTime;
 
-        friend SIDX_DLL std::ostream operator<<(std::ostream os,const MBRk &r);
+        friend SIDX_DLL std::ostream& operator<<(std::ostream& os, const MBRk& r);
 
         static const uint32_t m_dimension=2;
-        virtual void makeInfinite();
+        virtual void makeInfinite(uint32_t dimension,int k);
         private:
     };
     typedef Tools::PoolPointer<MBRk> MBRkPtr;

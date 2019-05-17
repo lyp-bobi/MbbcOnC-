@@ -427,8 +427,8 @@ const std::string TimeRegion::toString() const {
     std::string s ="time:"+std::to_string(m_startTime)
             +","+std::to_string(m_endTime)+"\n"
             "mbr:" + std::to_string(m_pLow[0]) + " " +
-            std::to_string(m_pHigh[0]) + " " +
             std::to_string(m_pLow[1]) + " " +
+            std::to_string(m_pHigh[0]) + " " +
             std::to_string(m_pHigh[1]) + "\n";
     return s;
 }

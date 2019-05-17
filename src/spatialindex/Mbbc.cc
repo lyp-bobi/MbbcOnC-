@@ -121,11 +121,6 @@ void Mbbc::storeToByteArray(uint8_t **data, uint32_t &len) {
 //
 void Mbbc::getVMBR(Region& out) const{out= m_vmbr;}
 void Mbbc::getMBRAtTime(double t, SpatialIndex::Region &out) const {
-    if(t<m_startTime||t>m_endTime){
-        throw Tools::IllegalStateException(
-                "Mbbc::getMBRAtTime: time not in interval!"
-                );
-    }
     out.makeDimension(2);
     double xlow=std::max(m_smbr.m_pLow[0]+(t-m_startTime)*m_vmbr.m_pLow[0],
             m_embr.m_pLow[0]-(m_endTime-t)*m_vmbr.m_pHigh[0]);
@@ -227,12 +222,13 @@ double Mbbc::getMinimumDistance(const SpatialIndex::TimePoint &in) const {
     return tmp.getMinimumDistance(in);
 }
 
-void Mbbc::makeInfinite()
+void Mbbc::makeInfinite(uint32_t dimension)
 {
-    m_smbr.makeInfinite(2);
-    m_embr.makeInfinite(2);
-    m_vmbr.makeInfinite(2);
-    m_wmbr.makeInfinite(2);
+//    m_dimension=dimension;
+    m_smbr.makeInfinite(m_dimension);
+    m_embr.makeInfinite(m_dimension);
+    m_vmbr.makeInfinite(m_dimension);
+    m_wmbr.makeInfinite(m_dimension);
     m_startTime = std::numeric_limits<double>::max();
     m_endTime = -std::numeric_limits<double>::max();
 }

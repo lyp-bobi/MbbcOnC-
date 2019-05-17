@@ -52,6 +52,7 @@ namespace SpatialIndex
 			uint32_t indexCapacity,
 			uint32_t leafCapacity,
 			uint32_t dimension,
+			int k,
 			id_type& indexIdentifier
 		);
 		SIDX_DLL ISpatialIndex* createAndBulkLoadNewPAARTree(
@@ -62,6 +63,7 @@ namespace SpatialIndex
 			uint32_t indexCapacity,
 			uint32_t leafCapacity,
 			uint32_t dimension,
+			int k,
 			id_type& indexIdentifier
 		);
 		SIDX_DLL ISpatialIndex* createAndBulkLoadNewPAARTree(

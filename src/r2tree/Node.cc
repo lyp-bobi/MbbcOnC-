@@ -229,7 +229,7 @@ Node::Node(SpatialIndex::R2Tree::R2Tree* pTree, id_type id, uint32_t level, uint
         m_pDataLength(0),
         m_totalDataLength(0)
 {
-    m_nodeMbbc.makeInfinite();
+    m_nodeMbbc.makeInfinite(m_pTree->m_dimension);
 
     try
     {

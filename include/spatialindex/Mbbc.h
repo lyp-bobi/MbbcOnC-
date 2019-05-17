@@ -76,10 +76,10 @@ namespace SpatialIndex
         double m_startTime;
         double m_endTime;
 
-        friend SIDX_DLL std::ostream operator<<(std::ostream os,const Mbbc &r);
+        friend SIDX_DLL std::ostream& operator<<(std::ostream& os, const Mbbc& r);
 
         static const uint32_t m_dimension=2;
-        virtual void makeInfinite();
+        virtual void makeInfinite(uint32_t dimension);
     private:
     };
     typedef Tools::PoolPointer<Mbbc> MbbcPtr;

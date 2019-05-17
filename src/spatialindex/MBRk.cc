@@ -16,8 +16,14 @@
 using namespace SpatialIndex;
 
 MBRk::MBRk() {
-    m_startTime=std::numeric_limits<double>::max();;
-    m_endTime=-std::numeric_limits<double>::max();;
+    m_k=2;
+    m_startTime=std::numeric_limits<double>::max();
+    m_endTime=-std::numeric_limits<double>::max();
+}
+MBRk::MBRk(int k) {
+    m_k=k;
+    m_startTime=std::numeric_limits<double>::max();
+    m_endTime=-std::numeric_limits<double>::max();
 }
 
 MBRk::MBRk(const std::vector<Region> mbrs, double tStart, double tEnd) {
@@ -72,7 +78,7 @@ uint32_t MBRk::getByteArraySize() {
 void MBRk::loadFromByteArray(const uint8_t* ptr) {
     memcpy(&m_k, ptr, sizeof(int));
     ptr += sizeof(int);
-    m_mbrs=std::vector<Region>(m_k);
+    m_mbrs.resize(m_k);
     for(int i=0;i<m_k;i++){
         m_mbrs[i].loadFromByteArray(ptr);
         ptr+=m_mbrs[i].getByteArraySize();
@@ -141,6 +147,11 @@ bool MBRk::intersectsShape(const SpatialIndex::IShape& s) const {
 
 bool MBRk::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     int p=getPhase(in.m_startTime);
+    Region br;
+    getMBR(br);
+    if(!br.intersectsShape(in)&&m_mbrs[p].intersectsShape(in))
+        system("pause");
+//    std::cout<<"Query is\n"<<in<<"\nIntersect\n"<<*this<<"\nand result is "<<m_mbrs[p].intersectsShape(in)<<"\n\n\n\n\n";
     return m_mbrs[p].intersectsShape(in);
 }
 bool MBRk::intersectsTimePoint(const SpatialIndex::TimePoint &in) const {
@@ -210,8 +221,14 @@ double MBRk::getMinimumDistance(const SpatialIndex::TimePoint &in) const {
     return tmp.getMinimumDistance(in);
 }
 
-void MBRk::makeInfinite()
+void MBRk::makeInfinite(uint32_t dimension,int k)
 {
+//    m_dimension=dimension;
+    m_k=k;
+    m_mbrs.resize(m_k);
+    for(int i=0;i<m_k;i++){
+        m_mbrs[i].makeInfinite(m_dimension);
+    }
     m_startTime = std::numeric_limits<double>::max();
     m_endTime = -std::numeric_limits<double>::max();
 }
@@ -220,7 +237,6 @@ void MBRk::makeInfinite()
 void MBRk::combineMBRk(const MBRk& r)
 {
     assert(m_k==r.m_k);
-
     assert(m_startTime ==r.m_startTime);
     assert(m_endTime ==r.m_endTime);
     for(int i=0;i<m_k;i++){

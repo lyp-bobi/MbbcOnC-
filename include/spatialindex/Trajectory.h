@@ -63,6 +63,8 @@ namespace SpatialIndex
     const std::string toString() const;
     virtual void getMbbc(Mbbc& out) const;
     TimePoint getPointAtTime(double time) const;
+    virtual void getMBRk(int k,MBRk &out) const;
+
     void loadFromString(std::string s);
 
 
@@ -71,7 +73,7 @@ namespace SpatialIndex
     friend SIDX_DLL std::ostream operator<<(std::ostream os,const Trajectory &r);
 
     static const uint32_t m_dimension=2;
-    virtual void makeInfinite();
+    virtual void makeInfinite(uint32_t dimension);
     private:
 };
 typedef Tools::PoolPointer<Trajectory> TrajectoryPtr;

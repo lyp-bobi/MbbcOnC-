@@ -4,7 +4,7 @@
 
 #pragma once
 
-#define PeriodLen 450
+#define PeriodLen 180
 
 #include <string>
 #include <sstream>
