@@ -264,17 +264,27 @@ void Trajectory::getMBRk(int k, SpatialIndex::MBRk &out) const {
     out.m_k=k;
     out.makeInfinite(m_dimension,k);
     int oldPhase=0;
-    for(int i=0;i<m_points.size();i++){
-        int newPhase=out.getPhase(m_points[i].m_startTime);
-        if(i==m_points.size()-1) newPhase=k-1;
+    int newPhase=out.getPhase(m_points[0].m_startTime);
+    for(int j=oldPhase;j<=newPhase;j++){
+        out.m_mbrs[j].combinePoint(m_points[0]);
+    }
+    oldPhase=newPhase;
+    for(int i=1;i<m_points.size()-1;i++){
+        newPhase=out.getPhase(m_points[i].m_startTime);
         out.m_mbrs[newPhase].combinePoint(m_points[i]);
         if(oldPhase!=newPhase){
-            for(int j=oldPhase;j<=newPhase;j++){
-                out.m_mbrs[j].combinePoint(m_points[i]);
-                if(i!=0) out.m_mbrs[j].combinePoint(m_points[i-1]);
+            for(int j=oldPhase;j<newPhase;j++){
+                TimePoint mid=TimePoint::makemid(m_points[i-1],m_points[i],(j+1)*PeriodLen/double(k));
+                out.m_mbrs[j].combinePoint(mid);
+                out.m_mbrs[j+1].combinePoint(mid);
             }
             oldPhase=newPhase;
         }
+    }
+    oldPhase=out.getPhase(m_points[m_points.size()-1].m_startTime);
+    newPhase=k-1;
+    for(int j=oldPhase;j<=newPhase;j++){
+        out.m_mbrs[j].combinePoint(m_points[m_points.size()-1]);
     }
 }
 

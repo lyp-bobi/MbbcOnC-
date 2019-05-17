@@ -1,5 +1,5 @@
 //
-// Created by Chuang on 2019/5/15.
+// Created by Chuang on 2019/5/17.
 //
 
 #include <cstring>
@@ -11,31 +11,31 @@
 
 using namespace SpatialIndex;
 
-MBRk::MBRk() {
+MBBCk::MBBCk() {
     m_k=2;
     m_startTime=std::numeric_limits<double>::max();
     m_endTime=-std::numeric_limits<double>::max();
 }
-MBRk::MBRk(int k) {
+MBBCk::MBBCk(int k) {
     m_k=k;
     m_startTime=std::numeric_limits<double>::max();
     m_endTime=-std::numeric_limits<double>::max();
 }
 
-MBRk::MBRk(const std::vector<Region> mbrs, double tStart, double tEnd) {
+MBBCk::MBBCk(const std::vector<Region> mbrs, double tStart, double tEnd) {
     m_k=mbrs.size();
     m_mbrs=mbrs;
     m_startTime=tStart;
     m_endTime=tEnd;
 }
-MBRk::MBRk(const SpatialIndex::MBRk &in) {
+MBBCk::MBBCk(const SpatialIndex::MBBCk &in) {
     m_k=in.m_k;
     m_mbrs=in.m_mbrs;
     m_startTime=in.m_startTime;
     m_endTime=in.m_endTime;
 }
 
-MBRk& MBRk::operator=(const MBRk& r)
+MBBCk& MBBCk::operator=(const MBBCk& r)
 {
     if(this != &r)
     {
@@ -48,7 +48,7 @@ MBRk& MBRk::operator=(const MBRk& r)
     return *this;
 }
 
-bool MBRk::operator==(const SpatialIndex::MBRk &r) const {
+bool MBBCk::operator==(const SpatialIndex::MBBCk &r) const {
     if (m_startTime < r.m_startTime - std::numeric_limits<double>::epsilon() ||
         m_startTime > r.m_startTime + std::numeric_limits<double>::epsilon() ||
         m_endTime < r.m_endTime - std::numeric_limits<double>::epsilon() ||
@@ -61,17 +61,17 @@ bool MBRk::operator==(const SpatialIndex::MBRk &r) const {
 //
 // IObject interface
 //
-MBRk* MBRk::clone() {
-    return new MBRk(*this);
+MBBCk* MBBCk::clone() {
+    return new MBBCk(*this);
 }
 //
 // ISerializable interface
 //
-uint32_t MBRk::getByteArraySize() {
+uint32_t MBBCk::getByteArraySize() {
     return sizeof(int)+m_mbrs[0].getByteArraySize()*m_k+2 * sizeof(double);
 }
 
-void MBRk::loadFromByteArray(const uint8_t* ptr) {
+void MBBCk::loadFromByteArray(const uint8_t* ptr) {
     memcpy(&m_k, ptr, sizeof(int));
     ptr += sizeof(int);
     m_mbrs.resize(m_k);
@@ -85,7 +85,7 @@ void MBRk::loadFromByteArray(const uint8_t* ptr) {
     //ptr += sizeof(double);
 }
 
-void MBRk::storeToByteArray(uint8_t **data, uint32_t &len) {
+void MBBCk::storeToByteArray(uint8_t **data, uint32_t &len) {
     len = getByteArraySize();
     *data = new uint8_t[len];
     uint8_t* ptr = *data;
@@ -105,7 +105,7 @@ void MBRk::storeToByteArray(uint8_t **data, uint32_t &len) {
     assert(len==(ptr - *data)+sizeof(double));
 }
 
-inline int MBRk::getPhase(double t) const{
+inline int MBBCk::getPhase(double t) const{
     double d=t-getPeriodStart(t);
     int p=floor(d/(PeriodLen/m_k));
     return p;
@@ -113,8 +113,8 @@ inline int MBRk::getPhase(double t) const{
 //
 // IEvolvingShape interface
 //
-void MBRk::getVMBR(Region& out) const{out= Region();}
-void MBRk::getMBRAtTime(double t, SpatialIndex::Region &out) const {
+void MBBCk::getVMBR(Region& out) const{out= Region();}
+void MBBCk::getMBRAtTime(double t, SpatialIndex::Region &out) const {
     out= m_mbrs[getPhase(t)];
 }
 
@@ -124,7 +124,7 @@ void MBRk::getMBRAtTime(double t, SpatialIndex::Region &out) const {
 //
 // IShape interface
 //
-bool MBRk::intersectsShape(const SpatialIndex::IShape& s) const {
+bool MBBCk::intersectsShape(const SpatialIndex::IShape& s) const {
     const TimeRegion* ptr = dynamic_cast<const TimeRegion*>(&s);
     if (ptr != 0) return intersectsTimeRegion(*ptr);
 
@@ -137,11 +137,11 @@ bool MBRk::intersectsShape(const SpatialIndex::IShape& s) const {
     const Trajectory* ptra = dynamic_cast<const Trajectory*>(&s);
     if (ptra != 0) return ptra->intersectsShape(*this);
 
-    const MBRk* pMBRk = dynamic_cast<const MBRk*>(&s);
-    if (pMBRk != 0) return intersectsMBRk(*pMBRk);
+    const MBBCk* pMBBCk = dynamic_cast<const MBBCk*>(&s);
+    if (pMBBCk != 0) return intersectsMBBCk(*pMBBCk);
 }
 
-bool MBRk::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
+bool MBBCk::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     int p=getPhase(in.m_startTime);
     Region br;
     getMBR(br);
@@ -150,23 +150,23 @@ bool MBRk::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
 //    std::cout<<"Query is\n"<<in<<"\nIntersect\n"<<*this<<"\nand result is "<<m_mbrs[p].intersectsShape(in)<<"\n\n\n\n\n";
     return m_mbrs[p].intersectsShape(in);
 }
-bool MBRk::intersectsTimePoint(const SpatialIndex::TimePoint &in) const {
+bool MBBCk::intersectsTimePoint(const SpatialIndex::TimePoint &in) const {
     int p=getPhase(in.m_startTime);
     return m_mbrs[p].intersectsShape(in);
 }
-bool MBRk::intersectsRegion(const SpatialIndex::Region &in) const {
+bool MBBCk::intersectsRegion(const SpatialIndex::Region &in) const {
     for(auto mbr:m_mbrs){
         if(mbr.intersectsRegion(in)) return true;
     }
     return false;
 }
-bool MBRk::intersectsMBRk(const MBRk& in) const{return false;}
+bool MBBCk::intersectsMBBCk(const MBBCk& in) const{return false;}
 
-bool MBRk::containsShape(const SpatialIndex::IShape& in) const{return false;}
-bool MBRk::touchesShape(const SpatialIndex::IShape& in) const{
-    throw Tools::NotSupportedException("MBRk:touchesShape");
+bool MBBCk::containsShape(const SpatialIndex::IShape& in) const{return false;}
+bool MBBCk::touchesShape(const SpatialIndex::IShape& in) const{
+    throw Tools::NotSupportedException("MBBCk:touchesShape");
 }
-void MBRk::getCenter(Point& out) const{
+void MBBCk::getCenter(Point& out) const{
     int size=m_mbrs.size();
     out.makeDimension(m_dimension);
     for(int i=0;i<m_dimension;i++) out.m_pCoords[i]=0;
@@ -176,12 +176,12 @@ void MBRk::getCenter(Point& out) const{
         for(int i=0;i<m_dimension;i++) out.m_pCoords[i]+=center.m_pCoords[i]/size;
     }
 }
-uint32_t MBRk::getDimension() const{return m_dimension;}
-void MBRk::getMBR(Region& out) const{
+uint32_t MBBCk::getDimension() const{return m_dimension;}
+void MBBCk::getMBR(Region& out) const{
     out=m_mbrs[0];
     for(auto mbr:m_mbrs) out.combineRegion(mbr);
 }
-double MBRk::getArea() const{
+double MBBCk::getArea() const{
     double timeSeg=PeriodLen/m_k;
     double sum=0;
     for(auto mbr:m_mbrs){
@@ -190,7 +190,7 @@ double MBRk::getArea() const{
     sum*=timeSeg;
     return sum;
 }
-double MBRk::getMinimumDistance(const IShape& in) const{
+double MBBCk::getMinimumDistance(const IShape& in) const{
     const TimePoint* ptp = dynamic_cast<const TimePoint*>(&in);
     if (ptp != 0) return getMinimumDistance(*ptp);
     const Region* pr = dynamic_cast<const Region*>(&in);
@@ -202,7 +202,7 @@ double MBRk::getMinimumDistance(const IShape& in) const{
     );
 }
 
-double MBRk::getMinimumDistance(const SpatialIndex::Region &in) const {
+double MBBCk::getMinimumDistance(const SpatialIndex::Region &in) const {
     double sum=0;
     double timeSeg=PeriodLen/m_k;
     for(auto mbr:m_mbrs){
@@ -211,13 +211,13 @@ double MBRk::getMinimumDistance(const SpatialIndex::Region &in) const {
     sum*=timeSeg;
     return sum;
 }
-double MBRk::getMinimumDistance(const SpatialIndex::TimePoint &in) const {
+double MBBCk::getMinimumDistance(const SpatialIndex::TimePoint &in) const {
     Region tmp;
     getMBRAtTime(in.m_startTime,tmp);
     return tmp.getMinimumDistance(in);
 }
 
-void MBRk::makeInfinite(uint32_t dimension,int k)
+void MBBCk::makeInfinite(uint32_t dimension,int k)
 {
 //    m_dimension=dimension;
     m_k=k;
@@ -230,7 +230,7 @@ void MBRk::makeInfinite(uint32_t dimension,int k)
 }
 
 
-void MBRk::combineMBRk(const MBRk& r)
+void MBBCk::combineMBBCk(const MBBCk& r)
 {
     assert(m_k==r.m_k);
     assert(m_startTime ==r.m_startTime);
@@ -240,7 +240,7 @@ void MBRk::combineMBRk(const MBRk& r)
     }
 }
 
-bool MBRk::containsMBRk(const SpatialIndex::MBRk &r) {
+bool MBBCk::containsMBBCk(const SpatialIndex::MBBCk &r) {
     if(m_k!=r.m_k||m_startTime !=r.m_startTime||m_endTime ==r.m_endTime)
         return false;
     for(int i=0;i<m_k;i++){
@@ -251,13 +251,13 @@ bool MBRk::containsMBRk(const SpatialIndex::MBRk &r) {
     return true;
 }
 
-void MBRk::getCombinedMBRk(MBRk& out, const MBRk& in) const
+void MBBCk::getCombinedMBBCk(MBBCk& out, const MBBCk& in) const
 {
     out = *this;
-    out.combineMBRk(in);
+    out.combineMBBCk(in);
 }
 
-std::ostream& SpatialIndex::operator<<(std::ostream& os, const MBRk& r)
+std::ostream& SpatialIndex::operator<<(std::ostream& os, const MBBCk& r)
 {
     os<<"MBR-"<<r.m_k<<":\n";
 
