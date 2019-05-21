@@ -61,12 +61,13 @@ namespace SpatialIndex
     virtual void getCombinedTrajectory(Trajectory& out, const Trajectory& in) const;
 
     const std::string toString() const;
-    virtual void getMbbc(Mbbc& out) const;
+    virtual void getMbbc(Mbbc& out,bool tight) const;
     TimePoint getPointAtTime(double time) const;
     virtual void getMBRk(int k,MBRk &out) const;
+    static std::vector<SpatialIndex::TimePoint> simplifyWithRDP(std::vector<SpatialIndex::TimePoint>& Points, double epsilon);
+    virtual void getMBBCk(int k,MBBCk &out,double eps) const;
 
     void loadFromString(std::string s);
-
 
     std::vector<TimePoint> m_points;
 

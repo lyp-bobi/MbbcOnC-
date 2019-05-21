@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
     traja.loadFromString(s1);
     trajb.loadFromString(s2);
     Mbbc bc;
-    trajb.getMbbc(bc);
+    trajb.getMbbc(bc,true);
     cout<<"traj dist is"<<trajb.getMinimumDistance(trajb)<<endl;
 //    cout<<"bc dist is"<<traja.getMinimumDistance(bc)<<endl;
     return 0;

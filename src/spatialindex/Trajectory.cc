@@ -11,6 +11,7 @@
 #include <spatialindex/SpatialIndex.h>
 
 using namespace SpatialIndex;
+using std::vector;
 
 Trajectory::Trajectory() {
 }
@@ -198,9 +199,11 @@ void Trajectory::getMBR(Region& out) const{
     }
 }
 //todo: should have implement a time divivsion class!
-void Trajectory::getMbbc(Mbbc& out) const{
+void Trajectory::getMbbc(Mbbc& out,bool tight) const{
     out.makeInfinite(m_dimension);
-
+    if(m_points.size()<=1){
+        return;
+    }
     double startx=m_points.begin()->m_pCoords[0],starty=m_points.begin()->m_pCoords[1],startt=m_points.begin()->m_startTime;
     double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_startTime;
     double maxvxP=-std::numeric_limits<double>::max(),
@@ -208,25 +211,36 @@ void Trajectory::getMbbc(Mbbc& out) const{
         maxvyP=-std::numeric_limits<double>::max(),
         maxvyN=std::numeric_limits<double>::max();
     double minx=startx,maxx=startx,miny=starty,maxy=starty;
+    double vx,vy;
     for(int i=0;i<m_points.size();i++){
-        if(m_points[i].m_startTime-startt>0){
-            double vx=(m_points[i].m_pCoords[0]-startx)/(m_points[i].m_startTime-startt);
-            if(vx>maxvxP) maxvxP=vx;
-            if(vx<maxvxN) maxvxN=vx;
+        if(tight){
+            if(m_points[i].m_startTime-startt>0){
+                vx=(m_points[i].m_pCoords[0]-startx)/(m_points[i].m_startTime-startt);
+                if(vx>maxvxP) maxvxP=vx;
+                if(vx<maxvxN) maxvxN=vx;
 
-            double vy=(m_points[i].m_pCoords[1]-starty)/(m_points[i].m_startTime-startt);
-            if(vy>maxvyP) maxvyP=vy;
-            if(vy<maxvyN) maxvyN=vy;
+                vy=(m_points[i].m_pCoords[1]-starty)/(m_points[i].m_startTime-startt);
+                if(vy>maxvyP) maxvyP=vy;
+                if(vy<maxvyN) maxvyN=vy;
+            }
+            if(endt-m_points[i].m_startTime>0){
+                vx=(endx-m_points[i].m_pCoords[0])/(endt-m_points[i].m_startTime);
+                if(vx>maxvxP) maxvxP=vx;
+                if(vx<maxvxN) maxvxN=vx;
+                vy=(endy-m_points[i].m_pCoords[1])/(endt-m_points[i].m_startTime);
+                if(vy>maxvyP) maxvyP=vy;
+                if(vy<maxvyN) maxvyN=vy;
+            }
+        }else{
+            if(i>0){
+                vx=(m_points[i].m_pCoords[0]-m_points[i-1].m_pCoords[0])/(m_points[i].m_startTime-m_points[i-1].m_startTime);
+                vy=(m_points[i].m_pCoords[1]-m_points[i-1].m_pCoords[1])/(m_points[i].m_startTime-m_points[i-1].m_startTime);
+                if(vx>maxvxP) maxvxP=vx;
+                if(vx<maxvxN) maxvxN=vx;
+                if(vy>maxvyP) maxvyP=vy;
+                if(vy<maxvyN) maxvyN=vy;
+            }
         }
-        if(endt-m_points[i].m_startTime>0){
-            double vx=(endx-m_points[i].m_pCoords[0])/(endt-m_points[i].m_startTime);
-            if(vx>maxvxP) maxvxP=vx;
-            if(vx<maxvxN) maxvxN=vx;
-            double vy=(endy-m_points[i].m_pCoords[1])/(endt-m_points[i].m_startTime);
-            if(vy>maxvyP) maxvyP=vy;
-            if(vy<maxvyN) maxvyN=vy;
-        }
-
         if(m_points[i].m_pCoords[0]<minx) minx=m_points[i].m_pCoords[0];
         if(m_points[i].m_pCoords[0]>maxx) maxx=m_points[i].m_pCoords[0];
         if(m_points[i].m_pCoords[1]<miny) miny=m_points[i].m_pCoords[1];
@@ -271,6 +285,75 @@ void Trajectory::getMBRk(int k, SpatialIndex::MBRk &out) const {
         out.m_mbrs[j].combinePoint(m_points[m_points.size()-1]);
     }
 }
+
+const std::pair<int, double> findMaximumDistance(const vector<SpatialIndex::TimePoint>& points) {
+    SpatialIndex::TimePoint firstpoint=points[0];
+    SpatialIndex::TimePoint lastpoint=points[points.size()-1];
+    int index=0;  //index to be returned
+    double Mdist=-1; //the Maximum distance to be returned
+
+    //distance calculation
+    for(int i=1;i<points.size()-1;i++){ //traverse through second point to second last point
+        double Dist=SpatialIndex::TimePoint::makemid(firstpoint,lastpoint,points[i].m_startTime).getMinimumDistance(points[i]);
+        if (Dist>Mdist){
+            Mdist=Dist;
+            index=i;
+        }
+    }
+    return std::make_pair(index, Mdist);
+}
+std::vector<SpatialIndex::TimePoint> Trajectory::simplifyWithRDP(std::vector<SpatialIndex::TimePoint> &Points,
+                                                                 double epsilon) {
+    if(Points.size()<3){  //base case 1
+        return Points;
+    }
+    std::pair<int, double> maxDistance=findMaximumDistance(Points);
+    if(maxDistance.second>=epsilon){
+        int index=maxDistance.first;
+        vector<SpatialIndex::TimePoint>::iterator it=Points.begin();
+        vector<SpatialIndex::TimePoint> path1(Points.begin(),it+index+1); //new path l1 from 0 to index
+        vector<SpatialIndex::TimePoint> path2(it+index,Points.end()); // new path l2 from index to last
+
+        vector<SpatialIndex::TimePoint> r1 =simplifyWithRDP(path1,epsilon);
+        vector<SpatialIndex::TimePoint> r2=simplifyWithRDP(path2,epsilon);
+
+        //Concat simplified path1 and path2 together
+        vector<SpatialIndex::TimePoint> rs(r1);
+        rs.pop_back();
+        rs.insert(rs.end(),r2.begin(),r2.end());
+        return rs;
+    }
+    else { //base case 2, all points between are to be removed.
+        vector<SpatialIndex::TimePoint> r(1,Points[0]);
+        r.push_back(Points[Points.size()-1]);
+        return r;
+    }
+}
+
+//void Trajectory::getMBBCkT2(int k, SpatialIndex::MBBCk &out,double eps) const {
+//    out.m_k=k;
+//    out.makeInfinite(m_dimension,k);
+//    auto simp=m_points;
+//    simp= simplifyWithRDP(simp,eps);
+//    out.m_k=k;
+//    out.makeInfinite(m_dimension,k);
+//    int curP=0;
+//    for(int i=0;i<simp.size();i++){
+//        Trajectory tmpTraj;
+//        vector<TimePoint> seg;
+//        while(m_points[curP].m_startTime<m_points[i].m_startTime){
+//            seg.push_back(m_points[curP]);
+//            curP++;
+//        }
+//        out.m_points=simp;
+//        out.m_vmbrs
+//    }
+//}
+
+void Trajectory::getMBBCk(int k, SpatialIndex::MBBCk &out, double eps) const {
+
+}
+
 
 double Trajectory::getArea() const{ return 0;}
 double Trajectory::getMinimumDistance(const IShape& s) const{

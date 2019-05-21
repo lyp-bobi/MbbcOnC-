@@ -80,6 +80,7 @@ set(SIDX_SPATIALINDEX_CPP
   "${SIDX_SRC_DIR}/spatialindex/MovingRegion.cc"
   "${SIDX_SRC_DIR}/spatialindex/Mbbc.cc"
   "${SIDX_SRC_DIR}/spatialindex/MBRk.cc"
+  "${SIDX_SRC_DIR}/spatialindex/MBBCk.cc"
   "${SIDX_SRC_DIR}/spatialindex/Trajectory.cc"
   "${SIDX_SRC_DIR}/spatialindex/Point.cc"
   "${SIDX_SRC_DIR}/spatialindex/Region.cc"

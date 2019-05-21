@@ -270,20 +270,20 @@ Node& Node::operator=(const Node&){
 }
 
 
-void Node::insertEntry(uint32_t dataLength, uint8_t* pData, MBRk& mbbc, id_type id)
+void Node::insertEntry(uint32_t dataLength, uint8_t* pData, MBRk& mbrk, id_type id)
 {
     assert(m_children < m_capacity);
 
     m_pDataLength[m_children] = dataLength;
     m_pData[m_children] = pData;
     m_ptrMBRk[m_children] = m_pTree->m_MBRkPool.acquire();
-    *(m_ptrMBRk[m_children]) = mbbc;
+    *(m_ptrMBRk[m_children]) = mbrk;
     m_pIdentifier[m_children] = id;
 
     m_totalDataLength += dataLength;
     ++m_children;
 
-    m_nodeMBRk.combineMBRk(mbbc);
+    m_nodeMBRk.combineMBRk(mbrk);
 }
 
 

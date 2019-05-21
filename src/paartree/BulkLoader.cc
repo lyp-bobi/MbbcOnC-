@@ -42,17 +42,16 @@ ExternalSorter::Record::~Record()
 
 bool ExternalSorter::Record::operator<(const Record& r) const
 {
-    if(this->m_s==4||this->m_s==5){
+    if(this->m_s==1000||this->m_s==1001){
         Region br1,br2;
         m_MBRk.getMBR(br1);
         r.m_MBRk.getMBR(br2);
-        int dim=m_s-4;
+        int dim=m_s-1000;
         return br1.m_pLow[dim]+br1.m_pHigh[dim]<br2.m_pLow[dim]+br2.m_pHigh[dim];
     }
     else{
         int k=r.m_MBRk.m_k;
-        int seg=int(std::floor(r.m_s/k));
-        seg=seg%k;
+        int seg=m_s/2;
         return this->m_MBRk.m_mbrs[seg].m_pLow[m_s%2]+this->m_MBRk.m_mbrs[seg].m_pHigh[m_s%2]
                     <r.m_MBRk.m_mbrs[seg].m_pLow[m_s%2]+r.m_MBRk.m_mbrs[seg].m_pHigh[m_s%2];
     }
@@ -366,7 +365,7 @@ void BulkLoader::bulkLoadUsingSTR(
         pTree->m_stats.m_nodesInLevel.emplace_back(0);
 
         Tools::SmartPointer<ExternalSorter> es2 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
-        createLevel(pTree, es, 4, bleaf, bindex, level++, es2, pageSize, numberOfPages);
+        createLevel(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);
         es = es2;
 
         if (es->getTotalEntries() == 1) break;
@@ -395,7 +394,7 @@ void BulkLoader::createLevel(
 
 //    std::cerr<<"CRTLVL with"<<b<<" "<<P<<" "<<S<<" "<<level<<" "<<dimension<<std::endl;
 
-    if (S == 1 || dimension == 4+ pTree->m_dimension - 1 || S * b >= es->getTotalEntries())
+    if (S == 1 || dimension == 1000+ pTree->m_dimension - 1 || S * b >= es->getTotalEntries())
     {
         std::vector<ExternalSorter::Record*> node;
         ExternalSorter::Record* r;
@@ -528,7 +527,7 @@ void BulkLoader::createLevel2(
     int remainDim=2*pTree->m_dimension-dimension;
     uint64_t S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P),1.0/remainDim)));
 //    std::cerr<<"CRTLVL with"<<b<<" "<<P<<" "<<S<<" "<<level<<" "<<dimension<<std::endl;
-    if (S == 1 || dimension == 2*pTree->m_dimension - 1 || S * b >= es->getTotalEntries())
+    if (S == 1 || dimension == 2*pTree->m_k - 1 || S * b >= es->getTotalEntries())
     {
         std::vector<ExternalSorter::Record*> node;
         ExternalSorter::Record* r;
@@ -588,7 +587,7 @@ Node* BulkLoader::createNode(SpatialIndex::PAARTree::PAARTree* pTree, std::vecto
     Node* n;
     if (level == 0) n = new Leaf(pTree, -1);
     else n = new Index(pTree, -1, level);
-
+    n->m_nodeMBRk.makeInfinite(e[0]->m_MBRk.m_dimension,e[0]->m_MBRk.m_k);
     for (size_t cChild = 0; cChild < e.size(); ++cChild)
     {
        n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData, e[cChild]->m_MBRk, e[cChild]->m_id);

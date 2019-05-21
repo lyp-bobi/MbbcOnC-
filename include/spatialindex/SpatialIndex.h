@@ -260,6 +260,7 @@ namespace SpatialIndex
 #include "MovingRegion.h"
 #include "Mbbc.h"
 #include "MBRk.h"
+#include "MBBCk.h"
 #include "Trajectory.h"
 #include "RTree.h"
 #include "R2Tree.h"

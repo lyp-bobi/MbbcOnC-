@@ -30,11 +30,11 @@ double naivetime(string l){
     return 3600*h+60*m+s;
 }
 int getPeriod(double time){
-    int pd= int(std::floor(time))/PeriodLen;
+    int pd= int(std::floor(time/PeriodLen));
     return pd;
 }
 int getMaxPeriod(){
-    return 240000/PeriodLen;
+    return 1;
 }
 double getPeriodStart(double time){
     int pd=getPeriod(time);
@@ -44,3 +44,4 @@ double getPeriodEnd(double time){
     int pd=getPeriod(time);
     return (pd+1)*PeriodLen-0.00001;
 }
+

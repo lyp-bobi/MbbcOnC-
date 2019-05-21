@@ -12,12 +12,13 @@
 using namespace SpatialIndex;
 
 MBRk::MBRk() {
-    m_k=2;
+    //m_k=2;
     m_startTime=std::numeric_limits<double>::max();
     m_endTime=-std::numeric_limits<double>::max();
 }
 MBRk::MBRk(int k) {
     m_k=k;
+    makeInfinite(m_dimension,k);
     m_startTime=std::numeric_limits<double>::max();
     m_endTime=-std::numeric_limits<double>::max();
 }
@@ -107,7 +108,7 @@ void MBRk::storeToByteArray(uint8_t **data, uint32_t &len) {
 
 inline int MBRk::getPhase(double t) const{
     double d=t-getPeriodStart(t);
-    int p=floor(d/(PeriodLen/m_k));
+    int p=floor(d/(double(PeriodLen)/m_k));
     return p;
 }
 //
@@ -232,6 +233,8 @@ void MBRk::makeInfinite(uint32_t dimension,int k)
 
 void MBRk::combineMBRk(const MBRk& r)
 {
+    if(m_k!=r.m_k)
+        std::cout<<m_k;
     assert(m_k==r.m_k);
     assert(m_startTime ==r.m_startTime);
     assert(m_endTime ==r.m_endTime);
