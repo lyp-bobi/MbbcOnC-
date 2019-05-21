@@ -12,13 +12,13 @@
 #include "Leaf.h"
 #include "Index.h"
 #include "BulkLoader.h"
-#include "PAARTree.h"
+#include "PAAR2Tree.h"
 
-using namespace SpatialIndex::PAARTree;
+using namespace SpatialIndex::PAAR2Tree;
 using namespace SpatialIndex;
 
-SpatialIndex::PAARTree::Data::Data(uint32_t len, uint8_t* pData, MBRk& r, id_type id)
-        : m_id(id), m_MBRk(r), m_pData(0), m_dataLength(len)
+SpatialIndex::PAAR2Tree::Data::Data(uint32_t len, uint8_t* pData, MBBCk& r, id_type id)
+        : m_id(id), m_MBBCk(r), m_pData(0), m_dataLength(len)
 {
     if (m_dataLength > 0)
     {
@@ -28,27 +28,27 @@ SpatialIndex::PAARTree::Data::Data(uint32_t len, uint8_t* pData, MBRk& r, id_typ
 }
 
 
-SpatialIndex::PAARTree::Data::~Data()
+SpatialIndex::PAAR2Tree::Data::~Data()
 {
     delete[] m_pData;
 }
 
-SpatialIndex::PAARTree::Data* SpatialIndex::PAARTree::Data::clone()
+SpatialIndex::PAAR2Tree::Data* SpatialIndex::PAAR2Tree::Data::clone()
 {
-    return new Data(m_dataLength, m_pData, m_MBRk, m_id);
+    return new Data(m_dataLength, m_pData, m_MBBCk, m_id);
 }
 
-id_type SpatialIndex::PAARTree::Data::getIdentifier() const
+id_type SpatialIndex::PAAR2Tree::Data::getIdentifier() const
 {
     return m_id;
 }
 
-void SpatialIndex::PAARTree::Data::getShape(IShape** out) const
+void SpatialIndex::PAAR2Tree::Data::getShape(IShape** out) const
 {
-    *out = new MBRk(m_MBRk);
+    *out = new MBBCk(m_MBBCk);
 }
 
-void SpatialIndex::PAARTree::Data::getData(uint32_t& len, uint8_t** data) const
+void SpatialIndex::PAAR2Tree::Data::getData(uint32_t& len, uint8_t** data) const
 {
     len = m_dataLength;
     *data = 0;
@@ -60,16 +60,16 @@ void SpatialIndex::PAARTree::Data::getData(uint32_t& len, uint8_t** data) const
     }
 }
 
-uint32_t SpatialIndex::PAARTree::Data::getByteArraySize()
+uint32_t SpatialIndex::PAAR2Tree::Data::getByteArraySize()
 {
     return
             sizeof(id_type) +
             sizeof(uint32_t) +
             m_dataLength +
-            m_MBRk.getByteArraySize();
+            m_MBBCk.getByteArraySize();
 }
 
-void SpatialIndex::PAARTree::Data::loadFromByteArray(const uint8_t* ptr)
+void SpatialIndex::PAAR2Tree::Data::loadFromByteArray(const uint8_t* ptr)
 {
     memcpy(&m_id, ptr, sizeof(id_type));
     ptr += sizeof(id_type);
@@ -87,17 +87,17 @@ void SpatialIndex::PAARTree::Data::loadFromByteArray(const uint8_t* ptr)
         ptr += m_dataLength;
     }
 
-    m_MBRk.loadFromByteArray(ptr);
+    m_MBBCk.loadFromByteArray(ptr);
 }
 
-void SpatialIndex::PAARTree::Data::storeToByteArray(uint8_t** data, uint32_t& len)
+void SpatialIndex::PAAR2Tree::Data::storeToByteArray(uint8_t** data, uint32_t& len)
 {
     // it is thread safe this way.
-    uint32_t MBRksize;
-    uint8_t* MBRkdata = 0;
-    m_MBRk.storeToByteArray(&MBRkdata, MBRksize);
+    uint32_t MBBCksize;
+    uint8_t* MBBCkdata = 0;
+    m_MBBCk.storeToByteArray(&MBBCkdata, MBBCksize);
 
-    len = sizeof(id_type) + sizeof(uint32_t) + m_dataLength + MBRksize;
+    len = sizeof(id_type) + sizeof(uint32_t) + m_dataLength + MBBCksize;
 
     *data = new uint8_t[len];
     uint8_t* ptr = *data;
@@ -113,22 +113,22 @@ void SpatialIndex::PAARTree::Data::storeToByteArray(uint8_t** data, uint32_t& le
         ptr += m_dataLength;
     }
 
-    memcpy(ptr, MBRkdata, MBRksize);
-    delete[] MBRkdata;
-    // ptr += MBRksize;
+    memcpy(ptr, MBBCkdata, MBBCksize);
+    delete[] MBBCkdata;
+    // ptr += MBBCksize;
 }
 
 
 
 
 
-SpatialIndex::ISpatialIndex* SpatialIndex::PAARTree::returnPAARTree(SpatialIndex::IStorageManager& sm, Tools::PropertySet& ps)
+SpatialIndex::ISpatialIndex* SpatialIndex::PAAR2Tree::returnPAAR2Tree(SpatialIndex::IStorageManager& sm, Tools::PropertySet& ps)
 {
-    SpatialIndex::ISpatialIndex* si = new SpatialIndex::PAARTree::PAARTree(sm, ps);
+    SpatialIndex::ISpatialIndex* si = new SpatialIndex::PAAR2Tree::PAAR2Tree(sm, ps);
     return si;
 }
 
-SpatialIndex::ISpatialIndex* SpatialIndex::PAARTree::createNewPAARTree(
+SpatialIndex::ISpatialIndex* SpatialIndex::PAAR2Tree::createNewPAAR2Tree(
         SpatialIndex::IStorageManager& sm,
         double fillFactor,
         uint32_t indexCapacity,
@@ -158,9 +158,9 @@ SpatialIndex::ISpatialIndex* SpatialIndex::PAARTree::createNewPAARTree(
 
     var.m_varType = Tools::VT_ULONG;
     var.m_val.ulVal = k;
-    ps.setProperty("kForMBRk", var);
+    ps.setProperty("kForMBBCk", var);
 
-    ISpatialIndex* ret = returnPAARTree(sm, ps);
+    ISpatialIndex* ret = returnPAAR2Tree(sm, ps);
 
     var.m_varType = Tools::VT_LONGLONG;
     var = ps.getProperty("IndexIdentifier");
@@ -169,7 +169,7 @@ SpatialIndex::ISpatialIndex* SpatialIndex::PAARTree::createNewPAARTree(
     return ret;
 }
 
-SpatialIndex::ISpatialIndex* SpatialIndex::PAARTree::createAndBulkLoadNewPAARTree(
+SpatialIndex::ISpatialIndex* SpatialIndex::PAAR2Tree::createAndBulkLoadNewPAAR2Tree(
         BulkLoadMethod m,
         IDataStream& stream,
         SpatialIndex::IStorageManager& sm,
@@ -180,27 +180,27 @@ SpatialIndex::ISpatialIndex* SpatialIndex::PAARTree::createAndBulkLoadNewPAARTre
         int k,
         id_type& indexIdentifier)
 {
-    SpatialIndex::ISpatialIndex* tree = createNewPAARTree(sm, fillFactor, indexCapacity, leafCapacity, dimension,k, indexIdentifier);
+    SpatialIndex::ISpatialIndex* tree = createNewPAAR2Tree(sm, fillFactor, indexCapacity, leafCapacity, dimension,k, indexIdentifier);
 
     uint32_t bindex = static_cast<uint32_t>(std::floor(static_cast<double>(indexCapacity * fillFactor)));
     uint32_t bleaf = static_cast<uint32_t>(std::floor(static_cast<double>(leafCapacity * fillFactor)));
 
-    SpatialIndex::PAARTree::BulkLoader bl;
+    SpatialIndex::PAAR2Tree::BulkLoader bl;
 
     stream.rewind();//rewind for reading
     switch (m)
     {
         case BLM_STR:
-            bl.bulkLoadUsingSTR(static_cast<PAARTree*>(tree), stream, bindex, bleaf, 10000, 100);
+            bl.bulkLoadUsingSTR(static_cast<PAAR2Tree*>(tree), stream, bindex, bleaf, 10000, 100);
             break;
         case BLM_STR2:
-            bl.bulkLoadUsingSTR2(static_cast<PAARTree*>(tree), stream, bindex, bleaf, 10000, 100);
+            bl.bulkLoadUsingSTR2(static_cast<PAAR2Tree*>(tree), stream, bindex, bleaf, 10000, 100);
             break;
         case BLM_STR3:
-            bl.bulkLoadUsingSTR3(static_cast<PAARTree*>(tree), stream, bindex, bleaf, 10000, 100);
+            bl.bulkLoadUsingSTR3(static_cast<PAAR2Tree*>(tree), stream, bindex, bleaf, 10000, 100);
             break;
         default:
-            throw Tools::IllegalArgumentException("createAndBulkLoadNewPAARTree: Unknown bulk load method.");
+            throw Tools::IllegalArgumentException("createAndBulkLoadNewPAAR2Tree: Unknown bulk load method.");
             break;
     }
 
@@ -209,7 +209,7 @@ SpatialIndex::ISpatialIndex* SpatialIndex::PAARTree::createAndBulkLoadNewPAARTre
 
 
 
-SpatialIndex::ISpatialIndex* SpatialIndex::PAARTree::loadPAARTree(IStorageManager& sm, id_type indexIdentifier)
+SpatialIndex::ISpatialIndex* SpatialIndex::PAAR2Tree::loadPAAR2Tree(IStorageManager& sm, id_type indexIdentifier)
 {
     Tools::Variant var;
     Tools::PropertySet ps;
@@ -218,10 +218,10 @@ SpatialIndex::ISpatialIndex* SpatialIndex::PAARTree::loadPAARTree(IStorageManage
     var.m_val.llVal = indexIdentifier;
     ps.setProperty("IndexIdentifier", var);
 
-    return returnPAARTree(sm, ps);
+    return returnPAAR2Tree(sm, ps);
 }
 
-SpatialIndex::PAARTree::PAARTree::PAARTree(IStorageManager& sm, Tools::PropertySet& ps) :
+SpatialIndex::PAAR2Tree::PAAR2Tree::PAAR2Tree(IStorageManager& sm, Tools::PropertySet& ps) :
         m_pStorageManager(&sm),
         m_rootID(StorageManager::NewPage),
         m_headerID(StorageManager::NewPage),
@@ -231,7 +231,7 @@ SpatialIndex::PAARTree::PAARTree::PAARTree(IStorageManager& sm, Tools::PropertyS
         m_dimension(2),
         m_bTightMBRs(true),
         m_pointPool(500),
-        m_MBRkPool(1000),
+        m_MBBCkPool(1000),
         m_indexPool(100),
         m_leafPool(100)
 {
@@ -245,7 +245,7 @@ SpatialIndex::PAARTree::PAARTree::PAARTree(IStorageManager& sm, Tools::PropertyS
         if (var.m_varType == Tools::VT_LONGLONG) m_headerID = var.m_val.llVal;
         else if (var.m_varType == Tools::VT_LONG) m_headerID = var.m_val.lVal;
             // for backward compatibility only.
-        else throw Tools::IllegalArgumentException("PAARTree: Property IndexIdentifier must be Tools::VT_LONGLONG");
+        else throw Tools::IllegalArgumentException("PAAR2Tree: Property IndexIdentifier must be Tools::VT_LONGLONG");
 
         initOld(ps);
     }
@@ -258,7 +258,7 @@ SpatialIndex::PAARTree::PAARTree::PAARTree(IStorageManager& sm, Tools::PropertyS
     }
 }
 
-SpatialIndex::PAARTree::PAARTree::~PAARTree()
+SpatialIndex::PAAR2Tree::PAAR2Tree::~PAAR2Tree()
 {
 #ifdef HAVE_PTHREAD_H
     pthread_mutex_destroy(&m_lock);
@@ -273,33 +273,33 @@ SpatialIndex::PAARTree::PAARTree::~PAARTree()
 // ISpatialIndex interface
 //
 
-void SpatialIndex::PAARTree::PAARTree::insertData(uint32_t len, const uint8_t* pData, const IShape& shape, id_type id)
+void SpatialIndex::PAAR2Tree::PAAR2Tree::insertData(uint32_t len, const uint8_t* pData, const IShape& shape, id_type id)
 {
-    throw Tools::NotSupportedException("insertion on PAARTree is not supported now");
+    throw Tools::NotSupportedException("insertion on PAAR2Tree is not supported now");
 }
 
-bool SpatialIndex::PAARTree::PAARTree::deleteData(const SpatialIndex::IShape &shape, SpatialIndex::id_type id) {
-    throw Tools::NotSupportedException("deletion on PAARTree is not supported now");
+bool SpatialIndex::PAAR2Tree::PAAR2Tree::deleteData(const SpatialIndex::IShape &shape, SpatialIndex::id_type id) {
+    throw Tools::NotSupportedException("deletion on PAAR2Tree is not supported now");
 }
-void SpatialIndex::PAARTree::PAARTree::containsWhatQuery(const SpatialIndex::IShape &query, SpatialIndex::IVisitor &v) {
+void SpatialIndex::PAAR2Tree::PAAR2Tree::containsWhatQuery(const SpatialIndex::IShape &query, SpatialIndex::IVisitor &v) {
     throw Tools::NotSupportedException("not supported now");
 }
 
-void SpatialIndex::PAARTree::PAARTree::intersectsWithQuery(const SpatialIndex::IShape &query, SpatialIndex::IVisitor &v) {
+void SpatialIndex::PAAR2Tree::PAAR2Tree::intersectsWithQuery(const SpatialIndex::IShape &query, SpatialIndex::IVisitor &v) {
     rangeQuery(IntersectionQuery, query, v);
 }
 
-void SpatialIndex::PAARTree::PAARTree::pointLocationQuery(const SpatialIndex::Point &query, SpatialIndex::IVisitor &v) {
+void SpatialIndex::PAAR2Tree::PAAR2Tree::pointLocationQuery(const SpatialIndex::Point &query, SpatialIndex::IVisitor &v) {
     throw Tools::NotSupportedException("not supported now");
 }
 
-void SpatialIndex::PAARTree::PAARTree::nearestNeighborQuery(uint32_t k, const SpatialIndex::IShape &query,
+void SpatialIndex::PAAR2Tree::PAAR2Tree::nearestNeighborQuery(uint32_t k, const SpatialIndex::IShape &query,
                                                         SpatialIndex::IVisitor &v) {
     if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
     NNComparator nnc;
     nearestNeighborQuery(k, query, v, nnc);
 }
-void SpatialIndex::PAARTree::PAARTree::nearestNeighborQuery(uint32_t k, const SpatialIndex::IShape &query,
+void SpatialIndex::PAAR2Tree::PAAR2Tree::nearestNeighborQuery(uint32_t k, const SpatialIndex::IShape &query,
                                                         SpatialIndex::IVisitor &v,
                                                         SpatialIndex::INearestNeighborComparator &nnc) {
     if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
@@ -336,7 +336,7 @@ void SpatialIndex::PAARTree::PAARTree::nearestNeighborQuery(uint32_t k, const Sp
             {
                 if (n->m_level == 0)
                 {
-                    Data* e = new Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBRk[cChild]), n->m_pIdentifier[cChild]);
+                    Data* e = new Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBBCk[cChild]), n->m_pIdentifier[cChild]);
                     // we need to compare the query with the actual data entry here, so we call the
                     // appropriate getMinimumDistance method of NearestNeighborComparator.
                     if(m_DataType==TrajectoryType){
@@ -349,7 +349,7 @@ void SpatialIndex::PAARTree::PAARTree::nearestNeighborQuery(uint32_t k, const Sp
                 }
                 else
                 {
-                    queue.push(new NNEntry(n->m_pIdentifier[cChild], 0, nnc.getMinimumDistance(query, *(n->m_ptrMBRk[cChild]))));
+                    queue.push(new NNEntry(n->m_pIdentifier[cChild], 0, nnc.getMinimumDistance(query, *(n->m_ptrMBBCk[cChild]))));
                 }
             }
         }
@@ -375,11 +375,11 @@ void SpatialIndex::PAARTree::PAARTree::nearestNeighborQuery(uint32_t k, const Sp
     m_stats.m_doubleExactQueryResults+=knearest;
 }
 
-void SpatialIndex::PAARTree::PAARTree::selfJoinQuery(const SpatialIndex::IShape &s, SpatialIndex::IVisitor &v) {
+void SpatialIndex::PAAR2Tree::PAAR2Tree::selfJoinQuery(const SpatialIndex::IShape &s, SpatialIndex::IVisitor &v) {
     throw Tools::NotSupportedException("not supported now");
 }
 
-void SpatialIndex::PAARTree::PAARTree::queryStrategy(IQueryStrategy& qs)
+void SpatialIndex::PAAR2Tree::PAAR2Tree::queryStrategy(IQueryStrategy& qs)
 {
 #ifdef HAVE_PTHREAD_H
     Tools::LockGuard lock(&m_lock);
@@ -396,7 +396,7 @@ void SpatialIndex::PAARTree::PAARTree::queryStrategy(IQueryStrategy& qs)
 }
 
 
-void SpatialIndex::PAARTree::PAARTree::getIndexProperties(Tools::PropertySet& out) const
+void SpatialIndex::PAAR2Tree::PAAR2Tree::getIndexProperties(Tools::PropertySet& out) const
 {
     Tools::Variant var;
 
@@ -405,10 +405,10 @@ void SpatialIndex::PAARTree::PAARTree::getIndexProperties(Tools::PropertySet& ou
     var.m_val.ulVal = m_dimension;
     out.setProperty("Dimension", var);
 
-    //kForMBRk
+    //kForMBBCk
     var.m_varType = Tools::VT_ULONG;
     var.m_val.ulVal = m_k;
-    out.setProperty("kForMBRk", var);
+    out.setProperty("kForMBBCk", var);
 
     // index capacity
     var.m_varType = Tools::VT_ULONG;
@@ -444,7 +444,7 @@ void SpatialIndex::PAARTree::PAARTree::getIndexProperties(Tools::PropertySet& ou
 
     // region pool capacity
     var.m_varType = Tools::VT_ULONG;
-    var.m_val.ulVal = m_MBRkPool.getCapacity();
+    var.m_val.ulVal = m_MBBCkPool.getCapacity();
     out.setProperty("RegionPoolCapacity", var);
 
     // point pool capacity
@@ -454,22 +454,22 @@ void SpatialIndex::PAARTree::PAARTree::getIndexProperties(Tools::PropertySet& ou
 }
 
 
-void SpatialIndex::PAARTree::PAARTree::addCommand(ICommand* pCommand, CommandType ct)
+void SpatialIndex::PAAR2Tree::PAAR2Tree::addCommand(ICommand* pCommand, CommandType ct)
 {
     throw Tools::NotSupportedException("not supported now");
 }
 
-bool SpatialIndex::PAARTree::PAARTree::isIndexValid() {
+bool SpatialIndex::PAAR2Tree::PAAR2Tree::isIndexValid() {
     return true;
 }
 
-void SpatialIndex::PAARTree::PAARTree::getStatistics(IStatistics** out) const
+void SpatialIndex::PAAR2Tree::PAAR2Tree::getStatistics(IStatistics** out) const
 {
     *out = new Statistics(m_stats);
 }
 
 
-void SpatialIndex::PAARTree::PAARTree::initNew(Tools::PropertySet& ps)
+void SpatialIndex::PAAR2Tree::PAAR2Tree::initNew(Tools::PropertySet& ps)
 {
     Tools::Variant var;
 
@@ -506,7 +506,7 @@ void SpatialIndex::PAARTree::PAARTree::initNew(Tools::PropertySet& ps)
     var = ps.getProperty("LeafCapacity");
     if (var.m_varType != Tools::VT_EMPTY)
     {
-        if (var.m_varType != Tools::VT_ULONG )//|| var.m_val.ulVal < 4)
+        if (var.m_varType != Tools::VT_ULONG)// || var.m_val.ulVal < 4)
             throw Tools::IllegalArgumentException("initNew: Property LeafCapacity must be Tools::VT_ULONG and >= 4");
 
         m_leafCapacity = var.m_val.ulVal;
@@ -525,13 +525,13 @@ void SpatialIndex::PAARTree::PAARTree::initNew(Tools::PropertySet& ps)
         m_dimension = var.m_val.ulVal;
     }
 
-    // k
-    var = ps.getProperty("kForMBRk");
+    // dimension
+    var = ps.getProperty("kForMBBCk");
     if (var.m_varType != Tools::VT_EMPTY)
     {
         if (var.m_varType != Tools::VT_ULONG)
             throw Tools::IllegalArgumentException("initNew: Property k must be Tools::VT_ULONG");
-        std::cout<<"k is"<<var.m_val.ulVal<<std::endl;
+
         m_k = var.m_val.ulVal;
     }
 
@@ -572,7 +572,7 @@ void SpatialIndex::PAARTree::PAARTree::initNew(Tools::PropertySet& ps)
         if (var.m_varType != Tools::VT_ULONG)
             throw Tools::IllegalArgumentException("initNew: Property RegionPoolCapacity must be Tools::VT_ULONG");
 
-        m_MBRkPool.setCapacity(var.m_val.ulVal);
+        m_MBBCkPool.setCapacity(var.m_val.ulVal);
     }
 
     // point pool capacity
@@ -585,7 +585,7 @@ void SpatialIndex::PAARTree::PAARTree::initNew(Tools::PropertySet& ps)
         m_pointPool.setCapacity(var.m_val.ulVal);
     }
 
-    m_infiniteMBRk.makeInfinite(m_dimension,m_k);
+    m_infiniteMBBCk.makeInfinite(m_dimension,m_k);
 
     m_stats.m_u32TreeHeight = 1;
     m_stats.m_nodesInLevel.emplace_back(0);
@@ -596,7 +596,7 @@ void SpatialIndex::PAARTree::PAARTree::initNew(Tools::PropertySet& ps)
     storeHeader();
 }
 
-void SpatialIndex::PAARTree::PAARTree::initOld(Tools::PropertySet& ps)
+void SpatialIndex::PAAR2Tree::PAAR2Tree::initOld(Tools::PropertySet& ps)
 {
     loadHeader();
 
@@ -638,7 +638,7 @@ void SpatialIndex::PAARTree::PAARTree::initOld(Tools::PropertySet& ps)
     {
         if (var.m_varType != Tools::VT_ULONG) throw Tools::IllegalArgumentException("initOld: Property RegionPoolCapacity must be Tools::VT_ULONG");
 
-        m_MBRkPool.setCapacity(var.m_val.ulVal);
+        m_MBBCkPool.setCapacity(var.m_val.ulVal);
     }
 
     // point pool capacity
@@ -650,10 +650,10 @@ void SpatialIndex::PAARTree::PAARTree::initOld(Tools::PropertySet& ps)
         m_pointPool.setCapacity(var.m_val.ulVal);
     }
 
-    m_infiniteMBRk.makeInfinite(m_dimension,m_k);
+    m_infiniteMBBCk.makeInfinite(m_dimension,m_k);
 }
 
-void SpatialIndex::PAARTree::PAARTree::storeHeader()
+void SpatialIndex::PAAR2Tree::PAAR2Tree::storeHeader()
 {
     const uint32_t headerSize =
             sizeof(id_type) +						// m_rootID
@@ -703,7 +703,7 @@ void SpatialIndex::PAARTree::PAARTree::storeHeader()
 
 
 
-void SpatialIndex::PAARTree::PAARTree::loadHeader()
+void SpatialIndex::PAAR2Tree::PAAR2Tree::loadHeader()
 {
     uint32_t headerSize;
     uint8_t* header = 0;
@@ -744,7 +744,7 @@ void SpatialIndex::PAARTree::PAARTree::loadHeader()
 }
 
 
-SpatialIndex::PAARTree::NodePtr SpatialIndex::PAARTree::PAARTree::readNode(id_type page)
+SpatialIndex::PAAR2Tree::NodePtr SpatialIndex::PAAR2Tree::PAAR2Tree::readNode(id_type page)
 {
     uint32_t dataLength;
     uint8_t* buffer;
@@ -796,7 +796,7 @@ SpatialIndex::PAARTree::NodePtr SpatialIndex::PAARTree::PAARTree::readNode(id_ty
         throw;
     }
 }
-SpatialIndex::id_type SpatialIndex::PAARTree::PAARTree::writeNode(Node* n)
+SpatialIndex::id_type SpatialIndex::PAAR2Tree::PAAR2Tree::writeNode(Node* n)
 {
     uint8_t* buffer;
     uint32_t dataLength;
@@ -846,7 +846,7 @@ SpatialIndex::id_type SpatialIndex::PAARTree::PAARTree::writeNode(Node* n)
     */
     return page;
 }
-void SpatialIndex::PAARTree::PAARTree::deleteNode(Node* n)
+void SpatialIndex::PAAR2Tree::PAAR2Tree::deleteNode(Node* n)
 {
     try
     {
@@ -870,7 +870,7 @@ void SpatialIndex::PAARTree::PAARTree::deleteNode(Node* n)
 
 
 /*
-void SpatialIndex::PAARTree::PAARTree::insertData_impl(uint32_t dataLength, uint8_t* pData, MBRk& mbbc, id_type id)
+void SpatialIndex::PAAR2Tree::PAAR2Tree::insertData_impl(uint32_t dataLength, uint8_t* pData, MBBCk& mbbc, id_type id)
 {
     assert(mbbc.getDimension() == m_dimension);
 
@@ -904,7 +904,7 @@ void SpatialIndex::PAARTree::PAARTree::insertData_impl(uint32_t dataLength, uint
  */
 
 
-std::ostream& SpatialIndex::PAARTree::operator<<(std::ostream& os, const PAARTree& t)
+std::ostream& SpatialIndex::PAAR2Tree::operator<<(std::ostream& os, const PAAR2Tree& t)
 {
     os	<< "Dimension: " << t.m_dimension << std::endl
           << "Fill factor: " << t.m_fillFactor << std::endl
@@ -922,8 +922,8 @@ std::ostream& SpatialIndex::PAARTree::operator<<(std::ostream& os, const PAARTre
           << "Leaf pool misses: " << t.m_leafPool.m_misses << std::endl
           << "Index pool hits: " << t.m_indexPool.m_hits << std::endl
           << "Index pool misses: " << t.m_indexPool.m_misses << std::endl
-          << "MBRk pool hits: " << t.m_MBRkPool.m_hits << std::endl
-          << "MBRk pool misses: " << t.m_MBRkPool.m_misses << std::endl
+          << "MBBCk pool hits: " << t.m_MBBCkPool.m_hits << std::endl
+          << "MBBCk pool misses: " << t.m_MBBCkPool.m_misses << std::endl
           << "Point pool hits: " << t.m_pointPool.m_hits << std::endl
           << "Point pool misses: " << t.m_pointPool.m_misses << std::endl;
 #endif
@@ -933,7 +933,7 @@ std::ostream& SpatialIndex::PAARTree::operator<<(std::ostream& os, const PAARTre
 
 
 
-void SpatialIndex::PAARTree::PAARTree::rangeQuery(RangeQueryType type, const IShape& query, IVisitor& v)
+void SpatialIndex::PAAR2Tree::PAAR2Tree::rangeQuery(RangeQueryType type, const IShape& query, IVisitor& v)
 {
 #ifdef HAVE_PTHREAD_H
     Tools::LockGuard lock(&m_lock);
@@ -942,24 +942,24 @@ void SpatialIndex::PAARTree::PAARTree::rangeQuery(RangeQueryType type, const ISh
     std::stack<NodePtr> st;
     NodePtr root = readNode(m_rootID);
 
-    if (root->m_children > 0 && root->m_nodeMBRk.intersectsShape(query)) st.push(root);
+    if (root->m_children > 0 && root->m_nodeMBBCk.intersectsShape(query)) st.push(root);
 
     while (! st.empty())
     {
         NodePtr n = st.top(); st.pop();
-//        std::cout<<"\n level"<<n->m_level<<"\n node\n"<<n->m_nodeMBRk.toString();
+//        std::cout<<"\n level"<<n->m_level<<"\n node\n"<<n->m_nodeMBBCk.toString();
         if (n->m_level == 0)
         {
             v.visitNode(*n);
             for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
             {
                 bool b;
-                if (type == ContainmentQuery) b = n->m_ptrMBRk[cChild]->containsShape(query);
-                else b = n->m_ptrMBRk[cChild]->intersectsShape(query);
+                if (type == ContainmentQuery) b = n->m_ptrMBBCk[cChild]->containsShape(query);
+                else b = n->m_ptrMBBCk[cChild]->intersectsShape(query);
 
                 if (b)
                 {
-                    Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBRk[cChild]), n->m_pIdentifier[cChild]);
+                    Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBBCk[cChild]), n->m_pIdentifier[cChild]);
                     ++(m_stats.m_u64QueryResults);
                     if(m_DataType==TrajectoryType){
                         Trajectory traj;
@@ -973,7 +973,7 @@ void SpatialIndex::PAARTree::PAARTree::rangeQuery(RangeQueryType type, const ISh
                     }
                 }
 //                else{
-//                    std::cout<<"ack failed\n"<<query.toString()<<"\n"<<n->m_ptrMBRk[cChild]->toString()<<"\n";
+//                    std::cout<<"ack failed\n"<<query.toString()<<"\n"<<n->m_ptrMBBCk[cChild]->toString()<<"\n";
 //                }
             }
         }
@@ -982,14 +982,14 @@ void SpatialIndex::PAARTree::PAARTree::rangeQuery(RangeQueryType type, const ISh
             v.visitNode(*n);
 //            if(n->m_level<3) {
                 for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
-                    if (n->m_ptrMBRk[cChild]->intersectsShape(query)) {
+                    if (n->m_ptrMBBCk[cChild]->intersectsShape(query)) {
                         st.push(readNode(n->m_pIdentifier[cChild]));
                     }
 
                 }
 //            }else{
 //                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
-//                    if (n->m_ptrMBRk[cChild]->m_wmbr.intersectsShape(query)) st.push(readNode(n->m_pIdentifier[cChild]));
+//                    if (n->m_ptrMBBCk[cChild]->m_wmbr.intersectsShape(query)) st.push(readNode(n->m_pIdentifier[cChild]));
 //                }
 //            }
         }

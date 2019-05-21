@@ -206,10 +206,10 @@ void Trajectory::getMbbc(Mbbc& out,bool tight) const{
     }
     double startx=m_points.begin()->m_pCoords[0],starty=m_points.begin()->m_pCoords[1],startt=m_points.begin()->m_startTime;
     double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_startTime;
-    double maxvxP=-std::numeric_limits<double>::max(),
-        maxvxN=std::numeric_limits<double>::max(),
-        maxvyP=-std::numeric_limits<double>::max(),
-        maxvyN=std::numeric_limits<double>::max();
+    double maxvxP=(endx-startx)/(endt-startt),
+        maxvxN=maxvxP,
+        maxvyP=(endy-starty)/(endt-startt),
+        maxvyN=maxvyP;
     double minx=startx,maxx=startx,miny=starty,maxy=starty;
     double vx,vy;
     for(int i=0;i<m_points.size();i++){
@@ -286,6 +286,53 @@ void Trajectory::getMBRk(int k, SpatialIndex::MBRk &out) const {
     }
 }
 
+void Trajectory::getMBBCk(int k, SpatialIndex::MBBCk &out, double eps) const {
+    out.m_k=k;
+    out.makeInfinite(m_dimension,k);
+    vector<vector<TimePoint> > seg(k-1);
+    int oldPhase=0;
+    int newPhase=out.getPhase(m_points[0].m_startTime);
+    for(int j=oldPhase;j<=newPhase;j++){
+        seg[j].push_back(m_points[0]);
+    }
+    oldPhase=newPhase;
+    for(int i=1;i<m_points.size()-1;i++){
+        newPhase=out.getPhase(m_points[i].m_startTime);
+        seg[newPhase].push_back(m_points[i]);
+        if(oldPhase!=newPhase){
+            for(int j=oldPhase;j<newPhase;j++){
+                TimePoint mid=TimePoint::makemid(m_points[i-1],m_points[i],(j+1)*PeriodLen/double(k));
+                seg[j].push_back(mid);
+                seg[j+1].push_back(mid);
+            }
+            oldPhase=newPhase;
+        }
+    }
+    oldPhase=out.getPhase(m_points[m_points.size()-1].m_startTime);
+    newPhase=k-2;
+    for(int j=oldPhase;j<=newPhase;j++){
+        seg[j].push_back(m_points[m_points.size()-1]);
+    }
+    Mbbc tmpbc;
+    std::vector<Region> mbrs;
+    std::vector<Region> vmbrs;
+    std::vector<Region> wmbrs;
+    for(int i=0;i<k-1;i++){
+        Trajectory t(seg[i]);
+        Trajectory(seg[i]).getMbbc(tmpbc,true);
+        mbrs.push_back(tmpbc.m_smbr);
+        vmbrs.push_back(tmpbc.m_vmbr);
+        wmbrs.push_back(tmpbc.m_wmbr);
+    }
+    mbrs.push_back(tmpbc.m_embr);
+    out.m_mbrs=mbrs;
+    out.m_vmbrs=vmbrs;
+    out.m_wmbrs=wmbrs;
+    out.m_startTime=m_points[0].m_startTime;
+    out.m_endTime=m_points[m_points.size()-1].m_startTime;
+//    out=MBBCk(mbrs,vmbrs,wmbrs,m_points[0].m_startTime,m_points[m_points.size()-1].m_startTime);
+}
+
 const std::pair<int, double> findMaximumDistance(const vector<SpatialIndex::TimePoint>& points) {
     SpatialIndex::TimePoint firstpoint=points[0];
     SpatialIndex::TimePoint lastpoint=points[points.size()-1];
@@ -329,8 +376,7 @@ std::vector<SpatialIndex::TimePoint> Trajectory::simplifyWithRDP(std::vector<Spa
         return r;
     }
 }
-
-//void Trajectory::getMBBCkT2(int k, SpatialIndex::MBBCk &out,double eps) const {
+//void Trajectory::getMBBCkT2(int k, SpatialIndex::MBBCkT2 &out,double eps) const {
 //    out.m_k=k;
 //    out.makeInfinite(m_dimension,k);
 //    auto simp=m_points;
@@ -350,9 +396,6 @@ std::vector<SpatialIndex::TimePoint> Trajectory::simplifyWithRDP(std::vector<Spa
 //    }
 //}
 
-void Trajectory::getMBBCk(int k, SpatialIndex::MBBCk &out, double eps) const {
-
-}
 
 
 double Trajectory::getArea() const{ return 0;}
@@ -365,6 +408,9 @@ double Trajectory::getMinimumDistance(const IShape& s) const{
 
     const MBRk* pmbrk= dynamic_cast<const MBRk*>(&s);
     if(pmbrk!=0) return getMinimumDistance(*pmbrk);
+
+    const MBBCk* pmbbck= dynamic_cast<const MBBCk*>(&s);
+    if(pmbbck!=0) return getMinimumDistance(*pmbbck);
 
     const Region* pr = dynamic_cast<const Region*>(&s);
     if (pr != 0) return getMinimumDistance(*pr);
@@ -386,6 +432,20 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Region &in) const {
 }
 
 double Trajectory::getMinimumDistance(const SpatialIndex::MBRk &in) const {
+    double sum=0;
+    double dist=in.getMinimumDistance(m_points[0]);
+    sum+=dist*(m_points[1].m_startTime-m_points[0].m_startTime);
+    for(int i=1;i<m_points.size()-1;i++){
+        dist=in.getMinimumDistance(m_points[i]);
+        sum+=dist*(m_points[i+1].m_startTime-m_points[i-1].m_startTime);
+    }
+    dist=in.getMinimumDistance(m_points[m_points.size()-1]);
+    sum+=dist*(m_points[m_points.size()-1].m_startTime-m_points[m_points.size()-2].m_startTime);
+    sum=sum/2;
+    return sum;
+}
+
+double Trajectory::getMinimumDistance(const SpatialIndex::MBBCk &in) const {
     double sum=0;
     double dist=in.getMinimumDistance(m_points[0]);
     sum+=dist*(m_points[1].m_startTime-m_points[0].m_startTime);

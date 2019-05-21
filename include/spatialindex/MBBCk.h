@@ -13,7 +13,7 @@ namespace SpatialIndex
         inline int getPhase(double t) const;
         MBBCk();
         MBBCk(int k);
-        MBBCk(const std::vector<Region> mbrs, double tStart, double tEnd);
+        MBBCk(const std::vector<Region> mbrs,const std::vector<Region> vmbrs,const std::vector<Region> wmbrs, double tStart, double tEnd);
         MBBCk(const MBBCk& in);
         virtual MBBCk &operator=(const MBBCk &r);
 
@@ -71,6 +71,7 @@ namespace SpatialIndex
         uint32_t m_k;
         std::vector<Region> m_mbrs;
         std::vector<Region> m_vmbrs;
+        std::vector<Region> m_wmbrs;
         double m_startTime;
         double m_endTime;
 

@@ -48,6 +48,7 @@ namespace SpatialIndex
     virtual double getMinimumDistance(const Region& in) const;
     virtual double getMinimumDistance(const Mbbc& in) const;
     virtual double getMinimumDistance(const MBRk& in) const;
+    virtual double getMinimumDistance(const MBBCk& in) const;
     virtual double getMinimumDistance(const Trajectory& in) const;
 
     virtual bool intersectsTimeRegion(const TimeRegion& in) const;

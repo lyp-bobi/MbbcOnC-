@@ -280,7 +280,7 @@ SpatialIndex::ISpatialIndex* SpatialIndex::RTree::createAndBulkLoadNewRTree(
 	var = ps.getProperty("LeafCapacity");
 	if (var.m_varType != Tools::VT_EMPTY)
 	{
-		if (var.m_varType != Tools::VT_ULONG || var.m_val.ulVal < 4)
+		if (var.m_varType != Tools::VT_ULONG )// || var.m_val.ulVal < 4)
 			throw Tools::IllegalArgumentException("createAndBulkLoadNewRTree: Property LeafCapacity must be Tools::VT_ULONG and >= 4");
 
 		leafCapacity = var.m_val.ulVal;
@@ -866,7 +866,7 @@ void SpatialIndex::RTree::RTree::initNew(Tools::PropertySet& ps)
 	var = ps.getProperty("LeafCapacity");
 	if (var.m_varType != Tools::VT_EMPTY)
 	{
-		if (var.m_varType != Tools::VT_ULONG || var.m_val.ulVal < 4)
+		if (var.m_varType != Tools::VT_ULONG )//|| var.m_val.ulVal < 4)
 			throw Tools::IllegalArgumentException("initNew: Property LeafCapacity must be Tools::VT_ULONG and >= 4");
 
 		m_leafCapacity = var.m_val.ulVal;

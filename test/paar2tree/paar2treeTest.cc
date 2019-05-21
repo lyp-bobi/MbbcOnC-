@@ -19,11 +19,11 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 //#define sourceFile "D://geolifedata.csv"
-#define sourceFile "D://the99trajs.txt"
+#define sourceFile "D://the49trajs.txt"
 #define linesToRead 1e8
-#define testtime 50
+#define testtime 100
 #define dimension 2
-#define indexcap 5
+#define indexcap 16
 #define leafcap 2
 #define QueryType 2
 //1 for time-slice range, 2 for 5-NN
@@ -172,6 +172,48 @@ public:
 
     virtual void rewind(){i=0;}
 };
+
+
+class TrajMBBCkStream: public IDataStream{
+public:
+    vector<pair<id_type,MBBCk> > mbbcks;
+    vector<pair<id_type,Trajectory> > *trajs;
+
+    int i=0;
+    void feedTraj(vector<pair<id_type ,Trajectory> > *period,int k){
+        cerr<<"feeding traj to TrajMBBC"<<k<<" Stream\n";
+        mbbcks.clear();
+        for(auto idt:*period){
+            MBBCk bck(k);
+//            cout<<idt.first<<endl<<idt.second.toString()<<endl;
+            idt.second.getMBBCk(k,bck,5000);
+
+            mbbcks.emplace_back(make_pair(idt.first,bck));
+        }
+        trajs=period;
+        rewind();
+        cerr<<"feeding traj to TrajMBBC"<<k<<" Stream finished\n";
+    }
+    virtual bool hasNext() override
+    {
+        return i<mbbcks.size();
+    }
+    virtual IData* getNext() override{
+        uint8_t* data;
+        uint32_t len;
+        trajs->at(i).second.storeToByteArray(&data,len);
+        PAAR2Tree::Data* d=new PAAR2Tree::Data(len, data, mbbcks[i].second, mbbcks[i].first);
+        i++;
+        return d;
+    }
+    virtual uint32_t size()
+    {
+        return mbbcks.size();
+    }
+
+    virtual void rewind(){i=0;}
+};
+
 
 
 struct xyt{
@@ -387,10 +429,10 @@ int main(){
         cout<<trajs.front().size()<<endl;
         ds1.feedTraj(&trajs.front());
 //        ds2.feedTraj(&trajs.front());
-        ds3.feedTraj(&trajs.front(), 8);
-        ds34.feedTraj(&trajs.front(), 16);
-        ds38.feedTraj(&trajs.front(), 32);
-        ds316.feedTraj(&trajs.front(), 64);
+        ds3.feedTraj(&trajs.front(), 2);
+        ds34.feedTraj(&trajs.front(), 4);
+        ds38.feedTraj(&trajs.front(), 8);
+        ds316.feedTraj(&trajs.front(), 16);
         vector<IShape *> queries;
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
@@ -403,14 +445,14 @@ int main(){
                 TimeRegion *tr = new TimeRegion(pLow, pHigh, t, t, 2);
                 queries.emplace_back(tr);
             } else if (QueryType == 2) {
-                queries.emplace_back(&trajs.begin()->at((i) % trajs.begin()->size()).second);
+                queries.emplace_back(&trajs.begin()->at((int(random(0,10000))) % trajs.begin()->size()).second);
             }
         }
 
         string name0 = "name0", name1 = "name1", name2 = "name2", name3 = "name3", name4 = "name4",
-                name5 = "name5", name6 = "name6", name7 = "name7";
+                name5 = "name5", name6 = "name6", name7 = "name7",name8 = "name8",name9="name9";
         id_type indexIdentifier0, indexIdentifier1, indexIdentifier2, indexIdentifier3, indexIdentifier4,
-                indexIdentifier5, indexIdentifier6, indexIdentifier7;
+                indexIdentifier5, indexIdentifier6, indexIdentifier7,indexIdentifier8,indexIdentifier9;
         IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name1, 4096),
                 *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
                 *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096),
@@ -418,7 +460,9 @@ int main(){
                 *diskfile4 = StorageManager::createNewDiskStorageManager(name4, 4096),
                 *diskfile5 = StorageManager::createNewDiskStorageManager(name5, 4096),
                 *diskfile6 = StorageManager::createNewDiskStorageManager(name6, 4096),
-                *diskfile7 = StorageManager::createNewDiskStorageManager(name7, 4096);
+                *diskfile7 = StorageManager::createNewDiskStorageManager(name7, 4096),
+                *diskfile8 = StorageManager::createNewDiskStorageManager(name8, 4096),
+                *diskfile9 = StorageManager::createNewDiskStorageManager(name9, 4096);
         // Create a new storage manager with the provided base name and a 4K page size.
         StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
                 *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
@@ -427,7 +471,9 @@ int main(){
                 *file4 = StorageManager::createNewRandomEvictionsBuffer(*diskfile4, 10, false),
                 *file5 = StorageManager::createNewRandomEvictionsBuffer(*diskfile5, 10, false),
                 *file6 = StorageManager::createNewRandomEvictionsBuffer(*diskfile6, 10, false),
-                *file7 = StorageManager::createNewRandomEvictionsBuffer(*diskfile7, 10, false);
+                *file7 = StorageManager::createNewRandomEvictionsBuffer(*diskfile7, 10, false),
+                *file8 = StorageManager::createNewRandomEvictionsBuffer(*diskfile8, 10, false),
+                *file9 = StorageManager::createNewRandomEvictionsBuffer(*diskfile9, 10, false);
         // applies a main memory random buffer on top of the persistent storage manager
         // (LRU buffer, etc can be created the same way).
 //    ISpatialIndex* real = R2Tree::createAndBulkLoadNewR2Tree(
@@ -444,6 +490,14 @@ int main(){
                 PAARTree::BulkLoadMethod::BLM_STR2, ds38, *file4, 0.9, indexcap, leafcap, 2, 8, indexIdentifier4);
         ISpatialIndex *paar4 = PAARTree::createAndBulkLoadNewPAARTree(
                 PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap, leafcap, 2, 16, indexIdentifier5);
+        ISpatialIndex *paar21 = PAARTree::createAndBulkLoadNewPAARTree(
+                PAARTree::BulkLoadMethod::BLM_STR2, ds3, *file2, 0.9, indexcap, leafcap, 2, 2, indexIdentifier6);
+        ISpatialIndex *paar22 = PAARTree::createAndBulkLoadNewPAARTree(
+                PAARTree::BulkLoadMethod::BLM_STR2, ds34, *file3, 0.9, indexcap, leafcap, 2, 4, indexIdentifier7);
+        ISpatialIndex *paar23 = PAARTree::createAndBulkLoadNewPAARTree(
+                PAARTree::BulkLoadMethod::BLM_STR2, ds38, *file4, 0.9, indexcap, leafcap, 2, 8, indexIdentifier8);
+        ISpatialIndex *paar24 = PAARTree::createAndBulkLoadNewPAARTree(
+                PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap, leafcap, 2, 16, indexIdentifier9);
 
 //    real->m_DataType=TrajectoryType;
         r->m_DataType = TrajectoryType;
@@ -451,16 +505,29 @@ int main(){
         paar2->m_DataType = TrajectoryType;
         paar3->m_DataType = TrajectoryType;
         paar4->m_DataType = TrajectoryType;
+        paar21->m_DataType = TrajectoryType;
+        paar22->m_DataType = TrajectoryType;
+        paar23->m_DataType = TrajectoryType;
+        paar24->m_DataType = TrajectoryType;
         cerr << "start query!" << endl << endl << endl;
+        cerr<<"r\n";
         TreeQueryBatch(r, queries);
-        cerr << "\n\n\n\n";
+        cerr << "\n\n\npaar-2\n";
         TreeQueryBatch(paar1, queries);
-        cerr << "\n\n\n\n";
+        cerr << "\n\n\npaar-4\n";
         TreeQueryBatch(paar2, queries);
-        cerr << "\n\n\n\n";
+        cerr << "\n\n\npaar-8\n";
         TreeQueryBatch(paar3, queries);
-        cerr << "\n\n\n\n";
+        cerr << "\n\n\npaar-16\n";
         TreeQueryBatch(paar4, queries);
+        cerr << "\n\n\npaar2-2\n";
+        TreeQueryBatch(paar21, queries);
+        cerr << "\n\n\npaar2-4\n";
+        TreeQueryBatch(paar22, queries);
+        cerr << "\n\n\npaar2-8\n";
+        TreeQueryBatch(paar23, queries);
+        cerr << "\n\n\npaar2-16\n";
+        TreeQueryBatch(paar24, queries);
     }
     catch (Tools::Exception& e)
     {

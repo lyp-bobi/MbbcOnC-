@@ -13,13 +13,13 @@
 
 #include <spatialindex/SpatialIndex.h>
 
-#include "PAARTree.h"
+#include "PAAR2Tree.h"
 #include "Leaf.h"
 #include "Index.h"
 #include "BulkLoader.h"
 
 using namespace SpatialIndex;
-using namespace SpatialIndex::PAARTree;
+using namespace SpatialIndex::PAAR2Tree;
 
 //
 // ExternalSorter::Record
@@ -29,8 +29,8 @@ ExternalSorter::Record::Record()
 {
 }
 
-ExternalSorter::Record::Record(const MBRk& r, id_type id, uint32_t len, uint8_t* pData, uint32_t s)
-        : m_MBRk(r), m_id(id), m_len(len), m_pData(pData), m_s(s)
+ExternalSorter::Record::Record(const MBBCk& r, id_type id, uint32_t len, uint8_t* pData, uint32_t s)
+        : m_MBBCk(r), m_id(id), m_len(len), m_pData(pData), m_s(s)
 {
 }
 
@@ -44,16 +44,16 @@ bool ExternalSorter::Record::operator<(const Record& r) const
 {
     if(this->m_s==1000||this->m_s==1001){
         Region br1,br2;
-        m_MBRk.getMBR(br1);
-        r.m_MBRk.getMBR(br2);
+        m_MBBCk.getMBR(br1);
+        r.m_MBBCk.getMBR(br2);
         int dim=m_s-1000;
         return br1.m_pLow[dim]+br1.m_pHigh[dim]<br2.m_pLow[dim]+br2.m_pHigh[dim];
     }
     else{
-        int k=r.m_MBRk.m_k;
+        int k=r.m_MBBCk.m_k;
         int seg=m_s/2;
-        return this->m_MBRk.m_mbrs[seg].m_pLow[m_s%2]+this->m_MBRk.m_mbrs[seg].m_pHigh[m_s%2]
-                    <r.m_MBRk.m_mbrs[seg].m_pLow[m_s%2]+r.m_MBRk.m_mbrs[seg].m_pHigh[m_s%2];
+        return this->m_MBBCk.m_mbrs[seg].m_pLow[m_s%2]+this->m_MBBCk.m_mbrs[seg].m_pHigh[m_s%2]
+                    <r.m_MBBCk.m_mbrs[seg].m_pLow[m_s%2]+r.m_MBBCk.m_mbrs[seg].m_pHigh[m_s%2];
     }
 }
 
@@ -61,19 +61,19 @@ bool ExternalSorter::Record::operator<(const Record& r) const
 void ExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)
 {
     f.write(static_cast<uint64_t>(m_id));
-    f.write(m_MBRk.m_dimension);
+    f.write(m_MBBCk.m_dimension);
     f.write(m_s);
-    f.write(m_MBRk.m_k);
-    for(int i=0;i<m_MBRk.m_k;i++){
-        for (int j= 0; i < m_MBRk.m_dimension; ++i)
+    f.write(m_MBBCk.m_k);
+    for(int i=0;i<m_MBBCk.m_k;i++){
+        for (int j= 0; i < m_MBBCk.m_dimension; ++i)
         {
-            f.write(m_MBRk.m_mbrs[i].m_pLow[i]);
-            f.write(m_MBRk.m_mbrs[i].m_pHigh[i]);
+            f.write(m_MBBCk.m_mbrs[i].m_pLow[i]);
+            f.write(m_MBBCk.m_mbrs[i].m_pHigh[i]);
         }
     }
 
-    f.write(m_MBRk.m_startTime);
-    f.write(m_MBRk.m_endTime);
+    f.write(m_MBBCk.m_startTime);
+    f.write(m_MBBCk.m_endTime);
     f.write(m_len);
     if (m_len > 0) f.write(m_len, m_pData);
 }
@@ -84,22 +84,22 @@ void ExternalSorter::Record::loadFromFile(Tools::TemporaryFile& f)
     uint32_t dim = f.readUInt32();
     m_s = f.readUInt32();
 
-    if (dim != m_MBRk.m_dimension)
+    if (dim != m_MBBCk.m_dimension)
     {
-        //m_MBRk.m_dimension = dim;
+        //m_MBBCk.m_dimension = dim;
     }
 
-    m_MBRk.m_k=f.readUInt32();
-    m_MBRk.m_mbrs.resize(m_MBRk.m_k);
-    for(int i=0;i<m_MBRk.m_k;i++){
-        for (int j= 0; i < m_MBRk.m_dimension; ++i)
+    m_MBBCk.m_k=f.readUInt32();
+    m_MBBCk.m_mbrs.resize(m_MBBCk.m_k);
+    for(int i=0;i<m_MBBCk.m_k;i++){
+        for (int j= 0; i < m_MBBCk.m_dimension; ++i)
         {
-            m_MBRk.m_mbrs[i].m_pLow[i]=f.readDouble();
-            m_MBRk.m_mbrs[i].m_pHigh[i]=f.readDouble();
+            m_MBBCk.m_mbrs[i].m_pLow[i]=f.readDouble();
+            m_MBBCk.m_mbrs[i].m_pHigh[i]=f.readDouble();
         }
     }
-    m_MBRk.m_startTime = f.readDouble();
-    m_MBRk.m_endTime = f.readDouble();
+    m_MBBCk.m_startTime = f.readDouble();
+    m_MBBCk.m_endTime = f.readDouble();
 
     m_len = f.readUInt32();
     delete[] m_pData; m_pData = 0;
@@ -315,7 +315,7 @@ inline uint64_t ExternalSorter::getTotalEntries() const
 //
 
 void BulkLoader::bulkLoadUsingSTR(
-        SpatialIndex::PAARTree::PAARTree* pTree,
+        SpatialIndex::PAAR2Tree::PAAR2Tree* pTree,
         IDataStream& stream,
         uint32_t bindex,
         uint32_t bleaf,
@@ -331,7 +331,7 @@ void BulkLoader::bulkLoadUsingSTR(
     pTree->deleteNode(n.get());
 
 #ifndef NDEBUG
-    std::cerr << "PAARTree::BulkLoader: Sorting data." << std::endl;
+    std::cerr << "PAAR2Tree::BulkLoader: Sorting data." << std::endl;
 #endif
 
     Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
@@ -341,10 +341,10 @@ void BulkLoader::bulkLoadUsingSTR(
         Data* d = reinterpret_cast<Data*>(stream.getNext());
         if (d == 0)
             throw Tools::IllegalArgumentException(
-                    "bulkLoadUsingSTR: PAARTree bulk load expects SpatialIndex::PAARTree::Data entries."
+                    "bulkLoadUsingSTR: PAAR2Tree bulk load expects SpatialIndex::PAAR2Tree::Data entries."
             );
 
-        es->insert(new ExternalSorter::Record(d->m_MBRk, d->m_id, d->m_dataLength, d->m_pData, 4));
+        es->insert(new ExternalSorter::Record(d->m_MBBCk, d->m_id, d->m_dataLength, d->m_pData, 4));
         d->m_pData = 0;
 
         delete d;
@@ -359,7 +359,7 @@ void BulkLoader::bulkLoadUsingSTR(
     while (true)
     {
 #ifndef NDEBUG
-        std::cerr << "PAARTree::BulkLoader: Building level " << level << std::endl;
+        std::cerr << "PAAR2Tree::BulkLoader: Building level " << level << std::endl;
 #endif
 
         pTree->m_stats.m_nodesInLevel.emplace_back(0);
@@ -374,11 +374,11 @@ void BulkLoader::bulkLoadUsingSTR(
 
     pTree->m_stats.m_u32TreeHeight = level;
     pTree->storeHeader();
-//    std::cout<<"mbbcpool: "<< pTree->m_MBRkPool.m_pointerCount<<std::endl;
+//    std::cout<<"mbbcpool: "<< pTree->m_MBBCkPool.m_pointerCount<<std::endl;
 }
 
 void BulkLoader::createLevel(
-        SpatialIndex::PAARTree::PAARTree* pTree,
+        SpatialIndex::PAAR2Tree::PAAR2Tree* pTree,
         Tools::SmartPointer<ExternalSorter> es,
         uint32_t dimension,
         uint32_t bleaf,
@@ -409,7 +409,7 @@ void BulkLoader::createLevel(
                 Node* n = createNode(pTree, node, level);
                 node.clear();
                 pTree->writeNode(n);
-                es2->insert(new ExternalSorter::Record(n->m_nodeMBRk, n->m_identifier, 0, 0, 4));
+                es2->insert(new ExternalSorter::Record(n->m_nodeMBBCk, n->m_identifier, 0, 0, 4));
                 pTree->m_rootID = n->m_identifier;
                 // special case when the root has exactly bindex entries.
                 delete n;
@@ -420,7 +420,7 @@ void BulkLoader::createLevel(
         {
             Node* n = createNode(pTree, node, level);
             pTree->writeNode(n);
-            es2->insert(new ExternalSorter::Record(n->m_nodeMBRk, n->m_identifier, 0, 0, 4));
+            es2->insert(new ExternalSorter::Record(n->m_nodeMBBCk, n->m_identifier, 0, 0, 4));
             pTree->m_rootID = n->m_identifier;
             delete n;
         }
@@ -449,7 +449,7 @@ void BulkLoader::createLevel(
 
 
 void BulkLoader::bulkLoadUsingSTR2(
-        SpatialIndex::PAARTree::PAARTree* pTree,
+        SpatialIndex::PAAR2Tree::PAAR2Tree* pTree,
         IDataStream& stream,
         uint32_t bindex,
         uint32_t bleaf,
@@ -458,14 +458,14 @@ void BulkLoader::bulkLoadUsingSTR2(
 ) {
     if (! stream.hasNext())
         throw Tools::IllegalArgumentException(
-                "PAARTree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
+                "PAAR2Tree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
         );
 
     NodePtr n = pTree->readNode(pTree->m_rootID);
     pTree->deleteNode(n.get());
 
 #ifndef NDEBUG
-    std::cerr << "PAARTree::BulkLoader: Sorting data." << std::endl;
+    std::cerr << "PAAR2Tree::BulkLoader: Sorting data." << std::endl;
 #endif
 
     Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
@@ -475,10 +475,10 @@ void BulkLoader::bulkLoadUsingSTR2(
         Data* d = reinterpret_cast<Data*>(stream.getNext());
         if (d == 0)
             throw Tools::IllegalArgumentException(
-                    "bulkLoadUsingSTR: PAARTree bulk load expects SpatialIndex::RTree::Data entries."
+                    "bulkLoadUsingSTR: PAAR2Tree bulk load expects SpatialIndex::RTree::Data entries."
             );
 
-        es->insert(new ExternalSorter::Record(d->m_MBRk, d->m_id, d->m_dataLength, d->m_pData, 0));
+        es->insert(new ExternalSorter::Record(d->m_MBBCk, d->m_id, d->m_dataLength, d->m_pData, 0));
         d->m_pData = 0;
         delete d;
     }
@@ -492,7 +492,7 @@ void BulkLoader::bulkLoadUsingSTR2(
     while (true)
     {
 #ifndef NDEBUG
-        std::cerr << "PAARTree::BulkLoader: Building level " << level << std::endl;
+        std::cerr << "PAAR2Tree::BulkLoader: Building level " << level << std::endl;
 #endif
 
         pTree->m_stats.m_nodesInLevel.emplace_back(0);
@@ -508,11 +508,11 @@ void BulkLoader::bulkLoadUsingSTR2(
 
     pTree->m_stats.m_u32TreeHeight = level;
     pTree->storeHeader();
-//    std::cout<<"mbbcpool: "<< pTree->m_MBRkPool.m_pointerCount<<std::endl;
+//    std::cout<<"mbbcpool: "<< pTree->m_MBBCkPool.m_pointerCount<<std::endl;
 }
 
 void BulkLoader::createLevel2(
-        SpatialIndex::PAARTree::PAARTree* pTree,
+        SpatialIndex::PAAR2Tree::PAAR2Tree* pTree,
         Tools::SmartPointer<ExternalSorter> es,
         uint32_t dimension,
         uint32_t bleaf,
@@ -542,7 +542,7 @@ void BulkLoader::createLevel2(
                 Node* n = createNode(pTree, node, level);
                 node.clear();
                 pTree->writeNode(n);
-                es2->insert(new ExternalSorter::Record(n->m_nodeMBRk, n->m_identifier, 0, 0, 0));
+                es2->insert(new ExternalSorter::Record(n->m_nodeMBBCk, n->m_identifier, 0, 0, 0));
                 pTree->m_rootID = n->m_identifier;
                 // special case when the root has exactly bindex entries.
                 delete n;
@@ -553,7 +553,7 @@ void BulkLoader::createLevel2(
         {
             Node* n = createNode(pTree, node, level);
             pTree->writeNode(n);
-            es2->insert(new ExternalSorter::Record(n->m_nodeMBRk, n->m_identifier, 0, 0, 0));
+            es2->insert(new ExternalSorter::Record(n->m_nodeMBBCk, n->m_identifier, 0, 0, 0));
             pTree->m_rootID = n->m_identifier;
             delete n;
         }
@@ -582,15 +582,15 @@ void BulkLoader::createLevel2(
     }
 }
 
-Node* BulkLoader::createNode(SpatialIndex::PAARTree::PAARTree* pTree, std::vector<ExternalSorter::Record*>& e, uint32_t level)
+Node* BulkLoader::createNode(SpatialIndex::PAAR2Tree::PAAR2Tree* pTree, std::vector<ExternalSorter::Record*>& e, uint32_t level)
 {
     Node* n;
     if (level == 0) n = new Leaf(pTree, -1);
     else n = new Index(pTree, -1, level);
-    n->m_nodeMBRk.makeInfinite(e[0]->m_MBRk.m_dimension,e[0]->m_MBRk.m_k);
+    n->m_nodeMBBCk.makeInfinite(e[0]->m_MBBCk.m_dimension,e[0]->m_MBBCk.m_k);
     for (size_t cChild = 0; cChild < e.size(); ++cChild)
     {
-       n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData, e[cChild]->m_MBRk, e[cChild]->m_id);
+       n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData, e[cChild]->m_MBBCk, e[cChild]->m_id);
         e[cChild]->m_pData = 0;
         delete e[cChild];
     }
@@ -599,7 +599,7 @@ Node* BulkLoader::createNode(SpatialIndex::PAARTree::PAARTree* pTree, std::vecto
 }
 
 void BulkLoader::bulkLoadUsingSTR3(
-        SpatialIndex::PAARTree::PAARTree* pTree,
+        SpatialIndex::PAAR2Tree::PAAR2Tree* pTree,
         IDataStream& stream,
         uint32_t bindex,
         uint32_t bleaf,
@@ -608,14 +608,14 @@ void BulkLoader::bulkLoadUsingSTR3(
 ) {
     if (! stream.hasNext())
         throw Tools::IllegalArgumentException(
-                "PAARTree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
+                "PAAR2Tree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
         );
 
     NodePtr n = pTree->readNode(pTree->m_rootID);
     pTree->deleteNode(n.get());
 
 #ifndef NDEBUG
-    std::cerr << "PAARTree::BulkLoader: Sorting data." << std::endl;
+    std::cerr << "PAAR2Tree::BulkLoader: Sorting data." << std::endl;
 #endif
 
     Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
@@ -625,10 +625,10 @@ void BulkLoader::bulkLoadUsingSTR3(
         Data* d = reinterpret_cast<Data*>(stream.getNext());
         if (d == 0)
             throw Tools::IllegalArgumentException(
-                    "bulkLoadUsingSTR: PAARTree bulk load expects SpatialIndex::RTree::Data entries."
+                    "bulkLoadUsingSTR: PAAR2Tree bulk load expects SpatialIndex::RTree::Data entries."
             );
 
-        es->insert(new ExternalSorter::Record(d->m_MBRk, d->m_id, d->m_dataLength, d->m_pData, 0));
+        es->insert(new ExternalSorter::Record(d->m_MBBCk, d->m_id, d->m_dataLength, d->m_pData, 0));
         d->m_pData = 0;
         delete d;
     }
@@ -642,7 +642,7 @@ void BulkLoader::bulkLoadUsingSTR3(
     while (true)
     {
 #ifndef NDEBUG
-        std::cerr << "PAARTree::BulkLoader: Building level " << level << std::endl;
+        std::cerr << "PAAR2Tree::BulkLoader: Building level " << level << std::endl;
 #endif
 
         pTree->m_stats.m_nodesInLevel.emplace_back(0);
@@ -662,5 +662,5 @@ void BulkLoader::bulkLoadUsingSTR3(
 
     pTree->m_stats.m_u32TreeHeight = level;
     pTree->storeHeader();
-//    std::cout<<"mbbcpool: "<< pTree->m_MBRkPool.m_pointerCount<<std::endl;
+//    std::cout<<"mbbcpool: "<< pTree->m_MBBCkPool.m_pointerCount<<std::endl;
 }

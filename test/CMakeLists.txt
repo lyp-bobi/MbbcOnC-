@@ -70,3 +70,13 @@ foreach (test ${SOURCES})
     add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
     target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
 endforeach()
+
+set (DIR paar2tree)
+set (SOURCES
+        paar2treeTest
+        )
+
+foreach (test ${SOURCES})
+    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
+    target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
+endforeach()

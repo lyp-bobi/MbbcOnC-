@@ -495,7 +495,7 @@ void SpatialIndex::R2Tree::R2Tree::initNew(Tools::PropertySet& ps)
     var = ps.getProperty("LeafCapacity");
     if (var.m_varType != Tools::VT_EMPTY)
     {
-        if (var.m_varType != Tools::VT_ULONG || var.m_val.ulVal < 4)
+        if (var.m_varType != Tools::VT_ULONG )//|| var.m_val.ulVal < 4)
             throw Tools::IllegalArgumentException("initNew: Property LeafCapacity must be Tools::VT_ULONG and >= 4");
 
         m_leafCapacity = var.m_val.ulVal;

@@ -22,9 +22,13 @@ MBBCk::MBBCk(int k) {
     m_endTime=-std::numeric_limits<double>::max();
 }
 
-MBBCk::MBBCk(const std::vector<Region> mbrs, double tStart, double tEnd) {
+MBBCk::MBBCk(const std::vector<Region> mbrs,const std::vector<Region> vmbrs,const std::vector<Region> wmbrs, double tStart, double tEnd) {
     m_k=mbrs.size();
     m_mbrs=mbrs;
+    for(auto br:vmbrs) std::cout<<"init v"<<br.toString();
+    m_vmbrs=vmbrs;
+    for(auto br:m_vmbrs) std::cout<<"mem v"<<br.toString();
+    m_wmbrs=wmbrs;
     m_startTime=tStart;
     m_endTime=tEnd;
 }
@@ -107,7 +111,7 @@ void MBBCk::storeToByteArray(uint8_t **data, uint32_t &len) {
 
 inline int MBBCk::getPhase(double t) const{
     double d=t-getPeriodStart(t);
-    int p=floor(d/(double(PeriodLen)/m_k));
+    int p=floor(d/(double(PeriodLen)/(m_k-1)));
     return p;
 }
 //
@@ -115,7 +119,10 @@ inline int MBBCk::getPhase(double t) const{
 //
 void MBBCk::getVMBR(Region& out) const{out= Region();}
 void MBBCk::getMBRAtTime(double t, SpatialIndex::Region &out) const {
-    out= m_mbrs[getPhase(t)];
+    int p=getPhase(t);
+    Mbbc bc=Mbbc(m_mbrs[p],m_mbrs[p+1],m_vmbrs[p],m_wmbrs[p],
+            p*PeriodLen/(m_k-1),(p+1)*PeriodLen/(m_k-1));
+    bc.getMBRAtTime(t,out);
 }
 
 
@@ -205,8 +212,9 @@ double MBBCk::getMinimumDistance(const IShape& in) const{
 double MBBCk::getMinimumDistance(const SpatialIndex::Region &in) const {
     double sum=0;
     double timeSeg=PeriodLen/m_k;
-    for(auto mbr:m_mbrs){
-        sum+=mbr.getMinimumDistance(in);
+    for(int i=0;i<m_mbrs.size()-1;i++){
+        Mbbc bc=Mbbc(m_mbrs[i],m_mbrs[i+1],m_vmbrs[i],m_wmbrs[i],i*timeSeg,(i+1)*timeSeg);
+        sum+=bc.getMinimumDistance(in);
     }
     sum*=timeSeg;
     return sum;
@@ -222,8 +230,14 @@ void MBBCk::makeInfinite(uint32_t dimension,int k)
 //    m_dimension=dimension;
     m_k=k;
     m_mbrs.resize(m_k);
+    m_vmbrs.resize(m_k-1);
+    m_wmbrs.resize(m_k-1);
     for(int i=0;i<m_k;i++){
         m_mbrs[i].makeInfinite(m_dimension);
+    }
+    for(int i=0;i<m_k-1;i++){
+        m_vmbrs[i].makeInfinite(m_dimension);
+        m_wmbrs[i].makeInfinite(m_dimension);
     }
     m_startTime = std::numeric_limits<double>::max();
     m_endTime = -std::numeric_limits<double>::max();
@@ -262,6 +276,16 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const MBBCk& r)
     os<<"MBR-"<<r.m_k<<":\n";
 
     for (auto mbr:r.m_mbrs)
+    {
+        os << mbr.toString()<<"\n";
+    }
+    os<<"vMBR\n";
+    for (auto mbr:r.m_vmbrs)
+    {
+        os << mbr.toString()<<"\n";
+    }
+    os<<"wMBR\n";
+    for (auto mbr:r.m_wmbrs)
     {
         os << mbr.toString()<<"\n";
     }
