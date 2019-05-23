@@ -524,10 +524,10 @@ void BulkLoader::createLevel2(
 ) {
     uint64_t b = (level == 0) ? bleaf : bindex;
     uint64_t P = static_cast<uint64_t>(std::ceil(static_cast<double>(es->getTotalEntries()) / static_cast<double>(b)));
-    int remainDim=2*pTree->m_k-dimension;
+    int remainDim=2*(pTree->m_k+1)-dimension;
     uint64_t S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P),1.0/remainDim)));
 //    std::cerr<<"CRTLVL with"<<b<<" "<<P<<" "<<S<<" "<<level<<" "<<dimension<<std::endl;
-    if (S == 1 || dimension == 2*pTree->m_k - 1 || S * b >= es->getTotalEntries())
+    if (S == 1 || dimension == 2*(pTree->m_k+1) - 1 || S * b >= es->getTotalEntries())
     {
         std::vector<ExternalSorter::Record*> node;
         ExternalSorter::Record* r;

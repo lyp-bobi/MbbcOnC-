@@ -19,12 +19,12 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 //#define sourceFile "D://geolifedata.csv"
-#define sourceFile "D://the99trajs10000.txt"
-#define linesToRead 1e8
+#define sourceFile "D://t200n1k.txt"
+#define linesToRead 1e10
 #define testtime 100
 #define dimension 2
 #define indexcap 5
-#define leafcap 2
+#define leafcap 5
 #define QueryType 2
 //1 for time-slice range, 2 for 5-NN
 
@@ -420,6 +420,7 @@ int main(){
     try {
         srand((int) time(NULL));
         list<vector<pair<id_type, Trajectory> > > trajs = loadGTToTrajs();
+        auto traj1=*trajs.begin();
         TrajMbrStream ds1;
 //        TrajMbbcStream ds2;
         TrajMBRkStream ds3;
@@ -427,12 +428,12 @@ int main(){
         TrajMBRkStream ds38;
         TrajMBRkStream ds316;
         cout<<trajs.front().size()<<endl;
-        ds1.feedTraj(&trajs.front());
+        ds1.feedTraj(&traj1);
 //        ds2.feedTraj(&trajs.front());
-        ds3.feedTraj(&trajs.front(), 2);
-        ds34.feedTraj(&trajs.front(), 4);
-        ds38.feedTraj(&trajs.front(), 8);
-        ds316.feedTraj(&trajs.front(), 16);
+        ds3.feedTraj(&traj1, 2);
+        ds34.feedTraj(&traj1, 4);
+        ds38.feedTraj(&traj1, 8);
+        ds316.feedTraj(&traj1, 16);
         vector<IShape *> queries;
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
@@ -445,7 +446,7 @@ int main(){
                 TimeRegion *tr = new TimeRegion(pLow, pHigh, t, t, 2);
                 queries.emplace_back(tr);
             } else if (QueryType == 2) {
-                queries.emplace_back(&trajs.begin()->at((int(random(0,10000))) % trajs.begin()->size()).second);
+                queries.emplace_back(&traj1[int(random(0,10*traj1.size()))%traj1.size()].second);
             }
         }
 
@@ -514,18 +515,18 @@ int main(){
         TreeQueryBatch(r, queries);
         cerr << "\n\n\npaar-2\n";
         TreeQueryBatch(paar1, queries);
-        cerr << "\n\n\npaar-4\n";
-        TreeQueryBatch(paar2, queries);
-        cerr << "\n\n\npaar-8\n";
-        TreeQueryBatch(paar3, queries);
-        cerr << "\n\n\npaar-16\n";
-        TreeQueryBatch(paar4, queries);
         cerr << "\n\n\npaar2-2\n";
         TreeQueryBatch(paar21, queries);
+        cerr << "\n\n\npaar-4\n";
+        TreeQueryBatch(paar2, queries);
         cerr << "\n\n\npaar2-4\n";
         TreeQueryBatch(paar22, queries);
+        cerr << "\n\n\npaar-8\n";
+        TreeQueryBatch(paar3, queries);
         cerr << "\n\n\npaar2-8\n";
         TreeQueryBatch(paar23, queries);
+        cerr << "\n\n\npaar-16\n";
+        TreeQueryBatch(paar4, queries);
         cerr << "\n\n\npaar2-16\n";
         TreeQueryBatch(paar24, queries);
     }

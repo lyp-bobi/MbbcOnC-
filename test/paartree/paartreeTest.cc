@@ -19,8 +19,8 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 //#define sourceFile "D://geolifedata.csv"
-#define sourceFile "D://the499trajs.txt"
-#define linesToRead 1e8
+#define sourceFile "D://t200n100k.txt"
+#define linesToRead 1e10
 #define testtime 100
 #define dimension 2
 #define indexcap 5
@@ -378,6 +378,7 @@ int main(){
     try {
         srand((int) time(NULL));
         list<vector<pair<id_type, Trajectory> > > trajs = loadGTToTrajs();
+        auto traj1=*trajs.begin();
         TrajMbrStream ds1;
 //        TrajMbbcStream ds2;
         TrajMBRkStream ds3;
@@ -386,13 +387,13 @@ int main(){
         TrajMBRkStream ds316;
         TrajMBRkStream ds332;
         cout<<"total trajectories:"<<trajs.front().size()<<endl;
-        ds1.feedTraj(&trajs.front());
+        ds1.feedTraj(&traj1);
 //        ds2.feedTraj(&trajs.front());
-        ds3.feedTraj(&trajs.front(), 2);
-        ds34.feedTraj(&trajs.front(), 4);
-        ds38.feedTraj(&trajs.front(), 8);
-        ds316.feedTraj(&trajs.front(), 16);
-        ds332.feedTraj(&trajs.front(), 32);
+        ds3.feedTraj(&traj1, 2);
+        ds34.feedTraj(&traj1, 4);
+        ds38.feedTraj(&traj1, 8);
+        ds316.feedTraj(&traj1, 16);
+        ds332.feedTraj(&traj1, 32);
         vector<IShape *> queries;
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
@@ -405,9 +406,10 @@ int main(){
                 TimeRegion *tr = new TimeRegion(pLow, pHigh, t, t, 2);
                 queries.emplace_back(tr);
             } else if (QueryType == 2) {
-                queries.emplace_back(&trajs.begin()->at((i) % trajs.begin()->size()).second);
+                queries.emplace_back(&traj1[int(random(0,10*traj1.size()))%traj1.size()].second);
             }
         }
+        cout<<"here";
 
         string name0 = "name0", name1 = "name1", name2 = "name2", name3 = "name3", name4 = "name4",
                 name5 = "name5", name6 = "name6", name7 = "name7";
