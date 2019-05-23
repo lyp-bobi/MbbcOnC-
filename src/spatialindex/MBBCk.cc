@@ -128,6 +128,7 @@ void MBBCk::storeToByteArray(uint8_t **data, uint32_t &len) {
 inline int MBBCk::getPhase(double t) const{
     double d=t-getPeriodStart(t);
     int p=floor(d/(double(PeriodLen)/(m_k)));
+    if(p>=m_k){p=p-1;}
     return p;
 }
 //

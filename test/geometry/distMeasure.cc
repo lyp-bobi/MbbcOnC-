@@ -114,7 +114,7 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
     //first level: vector of time period
     //second level: vector of segments in the time period
     cerr<<"loading generated trajectories from txt to trajectories"<<endl;
-    ifstream inFile("D://the99trajs10000.txt", ios::in);
+    ifstream inFile("D://t100n1k.txt", ios::in);
     string lineStr;
     set<id_type> ids;
     multimap<id_type,xyt> trajs;
@@ -164,7 +164,7 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
                 }
                 if(!tps.empty()){
                     iperiod->emplace_back(make_pair(id*1000+j,Trajectory(tps)));
-//                    iperiod++;
+                    iperiod++;
                 }
             }
         }
@@ -174,49 +174,11 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
 
 int main(){
     auto trajs=loadGTToTrajs();
-    vector<pair<id_type ,Trajectory> > traj1=trajs.front();
+    vector<pair<id_type ,Trajectory> > traj1=*trajs.begin();
+    cout<<"traj size is"<<traj1.size()<<endl;
     auto q=traj1[0].second;
-//    for(int m=0;m<traj1.size();m++) {
-//        auto tj = traj1[m].second;
-////        cout<<"traj id "<<m<<endl;
-//        MBBCk bbck;
-//        tj.getMBBCk(8, bbck, 5000);
-////        cout << tj.toString() << bbck;
-//        for (int j = 0; j < q.m_points.size(); j++) {
-//            TimePoint pt = q.m_points[j];
-////            cerr <<"query point is"<< pt.toString();
-//            int cursor = 0;
-//            for (int i = 1; i < tj.m_points.size(); i++) {
-//                if (tj.m_points[i].m_startTime >= pt.m_startTime) {
-////                    cerr<<"matching point is"<<tj.m_points[i].toString();
-//                    cursor = i - 1;
-//                    break;
-//                }
-//            }
-////            cerr<<"cursor is "<<cursor<<endl;
-//            TimePoint mid = TimePoint::makemid(
-//                    tj.m_points[cursor], tj.m_points[cursor + 1], pt.m_startTime);
-//            double d1 = pt.getMinimumDistance(mid);
-//            double d2 = bbck.getMinimumDistance(pt);
-//            Region tmbr;
-//            bbck.getMBRAtTime(pt.m_startTime,tmbr);
-//            if (d1 < d2) {
-//                cerr<<"the point is "<<pt<<endl;
-//                cerr<<"traj is"<<tj.toString()<<endl;
-//                cerr<<"mbbck is"<<bbck;
-//                cerr << "matched point is " << mid << "\n\t" << tj.m_points[cursor] << "\n\t" << tj.m_points[cursor + 1]
-//                     << "\n";
-//                cerr << "matched region is " << tmbr << "\n\t" << tj.m_points[cursor] << "\n\t" << tj.m_points[cursor + 1]
-//                     << "\n";
-//                cerr<< m<<" " << d1 << " " << d2 << " at " << pt.m_startTime << endl;
-//                system("pause");
-////                cerr<<tj.toString()<<bbck;
-////                tj.getMBBCk(4, bbck, 5000);
-//            }
-//        }
-//    }
     double rate1=0,rate2=0,rate3=0,rate4=0,rate5=0,rate6=0;
-    for(int i=1;i<traj1.size();i++){
+    for(int i=1;i<1000;i++){
         auto t=traj1[i];
         double real=q.getMinimumDistance(t.second);
         MBRk brk;

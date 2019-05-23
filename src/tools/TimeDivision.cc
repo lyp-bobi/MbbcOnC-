@@ -31,10 +31,12 @@ double naivetime(string l){
 }
 int getPeriod(double time){
     int pd= int(std::floor(time/PeriodLen));
-    if(pd>getMaxPeriod()) pd=getMaxPeriod();
+    if(pd>=getMaxPeriod()) {
+        pd=getMaxPeriod()-1;
+    }
     return pd;
 }
-int getMaxPeriod(){
+int getMaxPeriod(){//number of period, not id
     return 1;
 }
 double getPeriodStart(double time){
