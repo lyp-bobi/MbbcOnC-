@@ -30,6 +30,8 @@ double naivetime(string l){
     return 3600*h+60*m+s;
 }
 int getPeriod(double time){
+    if(time>getMaxPeriod()*PeriodLen)
+        std::cerr<<"WARNING: calling get Period at "<<time<<" which is not supported. Maybe you should change the PeriodLen"<<std::endl;
     int pd= int(std::floor(time/PeriodLen));
     if(pd>=getMaxPeriod()) {
         pd=getMaxPeriod()-1;

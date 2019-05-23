@@ -114,7 +114,7 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
     //first level: vector of time period
     //second level: vector of segments in the time period
     cerr<<"loading generated trajectories from txt to trajectories"<<endl;
-    ifstream inFile("D://t100n1k.txt", ios::in);
+    ifstream inFile("D://t200n1k.txt", ios::in);
     string lineStr;
     set<id_type> ids;
     multimap<id_type,xyt> trajs;
@@ -175,10 +175,10 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
 int main(){
     auto trajs=loadGTToTrajs();
     vector<pair<id_type ,Trajectory> > traj1=*trajs.begin();
-    cout<<"traj size is"<<traj1.size()<<endl;
     auto q=traj1[0].second;
+    cout<<"traj number"<<traj1.size()<<endl;
     double rate1=0,rate2=0,rate3=0,rate4=0,rate5=0,rate6=0;
-    for(int i=1;i<1000;i++){
+    for(int i=1;i<traj1.size();i++){
         auto t=traj1[i];
         double real=q.getMinimumDistance(t.second);
         MBRk brk;
