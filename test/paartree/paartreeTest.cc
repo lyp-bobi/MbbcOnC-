@@ -19,9 +19,9 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 //#define sourceFile "D://geolifedata.csv"
-#define sourceFile "D://the99trajs.txt"
+#define sourceFile "D://the499trajs.txt"
 #define linesToRead 1e8
-#define testtime 50
+#define testtime 100
 #define dimension 2
 #define indexcap 5
 #define leafcap 2
@@ -384,13 +384,15 @@ int main(){
         TrajMBRkStream ds34;
         TrajMBRkStream ds38;
         TrajMBRkStream ds316;
-        cout<<trajs.front().size()<<endl;
+        TrajMBRkStream ds332;
+        cout<<"total trajectories:"<<trajs.front().size()<<endl;
         ds1.feedTraj(&trajs.front());
 //        ds2.feedTraj(&trajs.front());
-        ds3.feedTraj(&trajs.front(), 8);
-        ds34.feedTraj(&trajs.front(), 16);
-        ds38.feedTraj(&trajs.front(), 32);
-        ds316.feedTraj(&trajs.front(), 64);
+        ds3.feedTraj(&trajs.front(), 2);
+        ds34.feedTraj(&trajs.front(), 4);
+        ds38.feedTraj(&trajs.front(), 8);
+        ds316.feedTraj(&trajs.front(), 16);
+        ds332.feedTraj(&trajs.front(), 32);
         vector<IShape *> queries;
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
@@ -444,6 +446,8 @@ int main(){
                 PAARTree::BulkLoadMethod::BLM_STR2, ds38, *file4, 0.9, indexcap, leafcap, 2, 8, indexIdentifier4);
         ISpatialIndex *paar4 = PAARTree::createAndBulkLoadNewPAARTree(
                 PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap, leafcap, 2, 16, indexIdentifier5);
+        ISpatialIndex *paar5 = PAARTree::createAndBulkLoadNewPAARTree(
+                PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap, leafcap, 2, 32, indexIdentifier6);
 
 //    real->m_DataType=TrajectoryType;
         r->m_DataType = TrajectoryType;
@@ -451,16 +455,19 @@ int main(){
         paar2->m_DataType = TrajectoryType;
         paar3->m_DataType = TrajectoryType;
         paar4->m_DataType = TrajectoryType;
+        paar5->m_DataType = TrajectoryType;
         cerr << "start query!" << endl << endl << endl;
         TreeQueryBatch(r, queries);
-        cerr << "\n\n\n\n";
+        cerr << "\n\n\npaa-2\n";
         TreeQueryBatch(paar1, queries);
-        cerr << "\n\n\n\n";
+        cerr << "\n\n\npaa-4\n";
         TreeQueryBatch(paar2, queries);
-        cerr << "\n\n\n\n";
+        cerr << "\n\n\npaa-8\n";
         TreeQueryBatch(paar3, queries);
-        cerr << "\n\n\n\n";
+        cerr << "\n\n\npaa-16\n";
         TreeQueryBatch(paar4, queries);
+        cerr << "\n\n\npaa-32\n";
+        TreeQueryBatch(paar5, queries);
     }
     catch (Tools::Exception& e)
     {

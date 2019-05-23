@@ -114,7 +114,7 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
     //first level: vector of time period
     //second level: vector of segments in the time period
     cerr<<"loading generated trajectories from txt to trajectories"<<endl;
-    ifstream inFile("D://the99trajs.txt", ios::in);
+    ifstream inFile("D://the99trajs10000.txt", ios::in);
     string lineStr;
     set<id_type> ids;
     multimap<id_type,xyt> trajs;
@@ -176,27 +176,72 @@ int main(){
     auto trajs=loadGTToTrajs();
     vector<pair<id_type ,Trajectory> > traj1=trajs.front();
     auto q=traj1[0].second;
-    double rate1=0,rate2=0,rate3=0;
+//    for(int m=0;m<traj1.size();m++) {
+//        auto tj = traj1[m].second;
+////        cout<<"traj id "<<m<<endl;
+//        MBBCk bbck;
+//        tj.getMBBCk(8, bbck, 5000);
+////        cout << tj.toString() << bbck;
+//        for (int j = 0; j < q.m_points.size(); j++) {
+//            TimePoint pt = q.m_points[j];
+////            cerr <<"query point is"<< pt.toString();
+//            int cursor = 0;
+//            for (int i = 1; i < tj.m_points.size(); i++) {
+//                if (tj.m_points[i].m_startTime >= pt.m_startTime) {
+////                    cerr<<"matching point is"<<tj.m_points[i].toString();
+//                    cursor = i - 1;
+//                    break;
+//                }
+//            }
+////            cerr<<"cursor is "<<cursor<<endl;
+//            TimePoint mid = TimePoint::makemid(
+//                    tj.m_points[cursor], tj.m_points[cursor + 1], pt.m_startTime);
+//            double d1 = pt.getMinimumDistance(mid);
+//            double d2 = bbck.getMinimumDistance(pt);
+//            Region tmbr;
+//            bbck.getMBRAtTime(pt.m_startTime,tmbr);
+//            if (d1 < d2) {
+//                cerr<<"the point is "<<pt<<endl;
+//                cerr<<"traj is"<<tj.toString()<<endl;
+//                cerr<<"mbbck is"<<bbck;
+//                cerr << "matched point is " << mid << "\n\t" << tj.m_points[cursor] << "\n\t" << tj.m_points[cursor + 1]
+//                     << "\n";
+//                cerr << "matched region is " << tmbr << "\n\t" << tj.m_points[cursor] << "\n\t" << tj.m_points[cursor + 1]
+//                     << "\n";
+//                cerr<< m<<" " << d1 << " " << d2 << " at " << pt.m_startTime << endl;
+//                system("pause");
+////                cerr<<tj.toString()<<bbck;
+////                tj.getMBBCk(4, bbck, 5000);
+//            }
+//        }
+//    }
+    double rate1=0,rate2=0,rate3=0,rate4=0,rate5=0,rate6=0;
     for(int i=1;i<traj1.size();i++){
         auto t=traj1[i];
         double real=q.getMinimumDistance(t.second);
-//        cout<<"origin "<<real<<endl;
         MBRk brk;
         t.second.getMBRk(4,brk);
         rate1+=q.getMinimumDistance(brk)/real;
-//        cout<<"mbr-4 "<<q.getMinimumDistance(brk)/real<<endl;
         t.second.getMBRk(8,brk);
         rate2+=q.getMinimumDistance(brk)/real;
-//        cout<<"mbr-8 "<<q.getMinimumDistance(brk)/real<<endl;
+        t.second.getMBRk(16,brk);
+        rate3+=q.getMinimumDistance(brk)/real;
         MBBCk bbck;
         t.second.getMBBCk(4,bbck,5000);
-//        cout<<bbck;
-        rate3+=q.getMinimumDistance(bbck)/real;
-//        cout<<"mbbc-4 "<<q.getMinimumDistance(bbck)/real<<endl;
-
+        rate4+=q.getMinimumDistance(bbck)/real;
+        t.second.getMBBCk(8,bbck,5000);
+        rate5+=q.getMinimumDistance(bbck)/real;
+        if(q.getMinimumDistance(bbck)/real>1)
+            cout<<"t is"<<i<<"\n"<<q.toString()<<t.second.toString()<<brk<<bbck<<q.getMinimumDistance(brk)/real<<" "<<q.getMinimumDistance(bbck)/real<<endl;
+        t.second.getMBBCk(16,bbck,5000);
+        rate6+=q.getMinimumDistance(bbck)/real;
+        if(q.getMinimumDistance(bbck)/real>1)cerr<<"error";
     }
     rate1/=traj1.size();
     rate2/=traj1.size();
     rate3/=traj1.size();
-    cout<<rate1<<rate2<<rate3;
+    rate4/=traj1.size();
+    rate5/=traj1.size();
+    rate6/=traj1.size();
+    cout<<rate1<<endl<<rate2<<endl<<rate3<<endl<<rate4<<endl<<rate5<<endl<<rate6;
 }

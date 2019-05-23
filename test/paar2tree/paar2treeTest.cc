@@ -19,11 +19,11 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 //#define sourceFile "D://geolifedata.csv"
-#define sourceFile "D://the49trajs.txt"
+#define sourceFile "D://the99trajs10000.txt"
 #define linesToRead 1e8
 #define testtime 100
 #define dimension 2
-#define indexcap 16
+#define indexcap 5
 #define leafcap 2
 #define QueryType 2
 //1 for time-slice range, 2 for 5-NN

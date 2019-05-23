@@ -63,6 +63,7 @@ namespace SpatialIndex
 
     const std::string toString() const;
     virtual void getMbbc(Mbbc& out,bool tight) const;
+    virtual void getMbbc(Mbbc& out,bool tight,double tstart,double tend) const;
     TimePoint getPointAtTime(double time) const;
     virtual void getMBRk(int k,MBRk &out) const;
     static std::vector<SpatialIndex::TimePoint> simplifyWithRDP(std::vector<SpatialIndex::TimePoint>& Points, double epsilon);

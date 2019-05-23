@@ -207,9 +207,9 @@ void Trajectory::getMbbc(Mbbc& out,bool tight) const{
     double startx=m_points.begin()->m_pCoords[0],starty=m_points.begin()->m_pCoords[1],startt=m_points.begin()->m_startTime;
     double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_startTime;
     double maxvxP=(endx-startx)/(endt-startt),
-        maxvxN=maxvxP,
+        maxvxN=(endx-startx)/(endt-startt),
         maxvyP=(endy-starty)/(endt-startt),
-        maxvyN=maxvyP;
+        maxvyN=(endy-starty)/(endt-startt);
     double minx=startx,maxx=startx,miny=starty,maxy=starty;
     double vx,vy;
     for(int i=0;i<m_points.size();i++){
@@ -254,10 +254,96 @@ void Trajectory::getMbbc(Mbbc& out,bool tight) const{
     double vHigh[2]={maxvxP,maxvyP};
     double wLow[2]={minx,miny};
     double wHigh[2]={maxx,maxy};
+//    double nstartx,nendx,nstarty,nendy;
+//    nstartx=startx-(endx-startx)/(endt-startt)*startt;
+//    nstarty=starty-(endy-starty)/(endt-startt)*startt;
+//    nendx=endx+(endx-startx)/(endt-startt)*(PeriodLen-endt);
+//    nendy=endy+(endy-starty)/(endt-startt)*(PeriodLen-endt);
+//    double sLow[2]={nstartx,nstarty};
+//    double sHigh[2]={nstartx,nstarty};
+//    double eLow[2]={nendx,nendy};
+//    double eHigh[2]={nendx,nendy};
+//    double vLow[2]={maxvxN,maxvyN};
+//    double vHigh[2]={maxvxP,maxvyP};
+//    double wLow[2]={minx,miny};
+//    double wHigh[2]={maxx,maxy};
+//    double stime=int(startt/PeriodLen)*PeriodLen;
+//    double etime=int(startt/PeriodLen)*PeriodLen+PeriodLen;
     out= Mbbc(Region(sLow,sHigh,2),Region(eLow,eHigh,2),
                 Region(vLow,vHigh,2),Region(wLow,wHigh,2),startt,endt);
 
 }
+
+void Trajectory::getMbbc(SpatialIndex::Mbbc &out, bool tight, double tstart, double tend) const {
+    out.makeInfinite(m_dimension);
+    if(m_points.size()<=1){
+        out.m_smbr=Region(m_points[0],m_points[0]);
+        out.m_embr=Region(m_points[0],m_points[0]);
+        double a[2]={0,0};
+        out.m_vmbr=Region(a,a,2);
+        out.m_wmbr=Region(m_points[0],m_points[0]);
+        return;
+    }
+    double startx=m_points.begin()->m_pCoords[0],starty=m_points.begin()->m_pCoords[1],startt=m_points.begin()->m_startTime;
+    double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_startTime;
+    double maxvxP=(endx-startx)/(endt-startt),
+            maxvxN=(endx-startx)/(endt-startt),
+            maxvyP=(endy-starty)/(endt-startt),
+            maxvyN=(endy-starty)/(endt-startt);
+    double minx=startx,maxx=startx,miny=starty,maxy=starty;
+    double vx,vy;
+    for(int i=0;i<m_points.size();i++){
+        if(tight){
+            if(m_points[i].m_startTime-startt>0){
+                vx=(m_points[i].m_pCoords[0]-startx)/(m_points[i].m_startTime-startt);
+                if(vx>maxvxP) maxvxP=vx;
+                if(vx<maxvxN) maxvxN=vx;
+
+                vy=(m_points[i].m_pCoords[1]-starty)/(m_points[i].m_startTime-startt);
+                if(vy>maxvyP) maxvyP=vy;
+                if(vy<maxvyN) maxvyN=vy;
+            }
+            if(endt-m_points[i].m_startTime>0){
+                vx=(endx-m_points[i].m_pCoords[0])/(endt-m_points[i].m_startTime);
+                if(vx>maxvxP) maxvxP=vx;
+                if(vx<maxvxN) maxvxN=vx;
+                vy=(endy-m_points[i].m_pCoords[1])/(endt-m_points[i].m_startTime);
+                if(vy>maxvyP) maxvyP=vy;
+                if(vy<maxvyN) maxvyN=vy;
+            }
+        }else{
+            if(i>0){
+                vx=(m_points[i].m_pCoords[0]-m_points[i-1].m_pCoords[0])/(m_points[i].m_startTime-m_points[i-1].m_startTime);
+                vy=(m_points[i].m_pCoords[1]-m_points[i-1].m_pCoords[1])/(m_points[i].m_startTime-m_points[i-1].m_startTime);
+                if(vx>maxvxP) maxvxP=vx;
+                if(vx<maxvxN) maxvxN=vx;
+                if(vy>maxvyP) maxvyP=vy;
+                if(vy<maxvyN) maxvyN=vy;
+            }
+        }
+        if(m_points[i].m_pCoords[0]<minx) minx=m_points[i].m_pCoords[0];
+        if(m_points[i].m_pCoords[0]>maxx) maxx=m_points[i].m_pCoords[0];
+        if(m_points[i].m_pCoords[1]<miny) miny=m_points[i].m_pCoords[1];
+        if(m_points[i].m_pCoords[1]>maxy) maxy=m_points[i].m_pCoords[1];
+    }
+    double nstartx,nendx,nstarty,nendy;
+    nstartx=startx-(endx-startx)/(endt-startt)*(startt-tstart);
+    nstarty=starty-(endy-starty)/(endt-startt)*(startt-tstart);
+    nendx=endx+(endx-startx)/(endt-startt)*(tend-endt);
+    nendy=endy+(endy-starty)/(endt-startt)*(tend-endt);
+    double sLow[2]={nstartx,nstarty};
+    double sHigh[2]={nstartx,nstarty};
+    double eLow[2]={nendx,nendy};
+    double eHigh[2]={nendx,nendy};
+    double vLow[2]={maxvxN,maxvyN};
+    double vHigh[2]={maxvxP,maxvyP};
+    double wLow[2]={minx,miny};
+    double wHigh[2]={maxx,maxy};
+    out= Mbbc(Region(sLow,sHigh,2),Region(eLow,eHigh,2),
+              Region(vLow,vHigh,2),Region(wLow,wHigh,2),tstart,tend);
+}
+
+
 void Trajectory::getMBRk(int k, SpatialIndex::MBRk &out) const {
     out.m_k=k;
     out.makeInfinite(m_dimension,k);
@@ -289,7 +375,7 @@ void Trajectory::getMBRk(int k, SpatialIndex::MBRk &out) const {
 void Trajectory::getMBBCk(int k, SpatialIndex::MBBCk &out, double eps) const {
     out.m_k=k;
     out.makeInfinite(m_dimension,k);
-    vector<vector<TimePoint> > seg(k-1);
+    vector<vector<TimePoint> > seg(k);
     int oldPhase=0;
     int newPhase=out.getPhase(m_points[0].m_startTime);
     for(int j=oldPhase;j<=newPhase;j++){
@@ -298,7 +384,6 @@ void Trajectory::getMBBCk(int k, SpatialIndex::MBBCk &out, double eps) const {
     oldPhase=newPhase;
     for(int i=1;i<m_points.size()-1;i++){
         newPhase=out.getPhase(m_points[i].m_startTime);
-        seg[newPhase].push_back(m_points[i]);
         if(oldPhase!=newPhase){
             for(int j=oldPhase;j<newPhase;j++){
                 TimePoint mid=TimePoint::makemid(m_points[i-1],m_points[i],(j+1)*PeriodLen/double(k));
@@ -307,9 +392,10 @@ void Trajectory::getMBBCk(int k, SpatialIndex::MBBCk &out, double eps) const {
             }
             oldPhase=newPhase;
         }
+        seg[newPhase].push_back(m_points[i]);
     }
     oldPhase=out.getPhase(m_points[m_points.size()-1].m_startTime);
-    newPhase=k-2;
+    newPhase=k-1;
     for(int j=oldPhase;j<=newPhase;j++){
         seg[j].push_back(m_points[m_points.size()-1]);
     }
@@ -317,9 +403,9 @@ void Trajectory::getMBBCk(int k, SpatialIndex::MBBCk &out, double eps) const {
     std::vector<Region> mbrs;
     std::vector<Region> vmbrs;
     std::vector<Region> wmbrs;
-    for(int i=0;i<k-1;i++){
+    for(int i=0;i<k;i++){
         Trajectory t(seg[i]);
-        Trajectory(seg[i]).getMbbc(tmpbc,true);
+        t.getMbbc(tmpbc,true,i*PeriodLen/(k),(i+1)*PeriodLen/(k));
         mbrs.push_back(tmpbc.m_smbr);
         vmbrs.push_back(tmpbc.m_vmbr);
         wmbrs.push_back(tmpbc.m_wmbr);
@@ -481,7 +567,7 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
     time2=in.m_points[0].m_startTime;
     double dist;
     double sum=0;
-    while(cursor<in.m_points.size()-1&&time1>in.m_points[cursor+1].m_startTime){
+    while(cursor<in.m_points.size()-1&&time1>=in.m_points[cursor+1].m_startTime){
         cursor++;
         time2=in.m_points[cursor].m_startTime;
     }
@@ -498,7 +584,7 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
     sum+=dist*(m_points[1].m_startTime-m_points[0].m_startTime);
     for(int i=1;i<m_points.size()-1;i++){
         time1=m_points[i].m_startTime;
-        while(cursor<in.m_points.size()-1&&time1>in.m_points[cursor+1].m_startTime){
+        while(cursor<in.m_points.size()-1&&time1>=in.m_points[cursor+1].m_startTime){
             cursor++;
             time2=in.m_points[cursor].m_startTime;
         }
@@ -511,7 +597,7 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
         sum+=dist*(m_points[i+1].m_startTime-m_points[i-1].m_startTime);
     }
     time1=m_points[m_points.size()-1].m_startTime;
-    while(cursor<in.m_points.size()-1&&time1>in.m_points[cursor+1].m_startTime){
+    while(cursor<in.m_points.size()-1&&time1>=in.m_points[cursor+1].m_startTime){
         cursor++;
         time2=in.m_points[cursor].m_startTime;
     }

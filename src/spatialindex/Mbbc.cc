@@ -122,11 +122,11 @@ void Mbbc::storeToByteArray(uint8_t **data, uint32_t &len) {
 void Mbbc::getVMBR(Region& out) const{out= m_vmbr;}
 void Mbbc::getMBRAtTime(double t, SpatialIndex::Region &out) const {
     out.makeDimension(2);
-    if(t<m_startTime) {
+    if(t<=m_startTime) {
         out=m_smbr;
         return;
     }
-    if(t>m_endTime){
+    if(t>=m_endTime){
         out=m_embr;
         return;
     }
@@ -142,6 +142,14 @@ void Mbbc::getMBRAtTime(double t, SpatialIndex::Region &out) const {
     out.m_pLow[1]=std::max(ylow,m_wmbr.m_pLow[1]);
     out.m_pHigh[0]=std::min(xhigh,m_wmbr.m_pHigh[0]);
     out.m_pHigh[1]=std::min(yhigh,m_wmbr.m_pHigh[1]);
+    if(xlow>xhigh||ylow>yhigh){
+        std::cerr<<"sth must be error on \n"<<toString()<<"at "<<t
+            <<"which we got\n"<<out.toString();
+        std::cerr<<m_smbr.m_pLow[0]+(t-m_startTime)*m_vmbr.m_pLow[0]<<std::endl<<
+            m_embr.m_pLow[0]-(m_endTime-t)*m_vmbr.m_pHigh[0]<<std::endl<<
+            m_smbr.m_pHigh[0]+(t-m_startTime)*m_vmbr.m_pHigh[0]<<std::endl<<
+            m_embr.m_pHigh[0]-(m_endTime-t)*m_vmbr.m_pLow[0]<<std::endl;
+    }
 }
 
 

@@ -25,9 +25,7 @@ MBBCk::MBBCk(int k) {
 MBBCk::MBBCk(const std::vector<Region> mbrs,const std::vector<Region> vmbrs,const std::vector<Region> wmbrs, double tStart, double tEnd) {
     m_k=mbrs.size();
     m_mbrs=mbrs;
-    for(auto br:vmbrs) std::cout<<"init v"<<br.toString();
     m_vmbrs=vmbrs;
-    for(auto br:m_vmbrs) std::cout<<"mem v"<<br.toString();
     m_wmbrs=wmbrs;
     m_startTime=tStart;
     m_endTime=tEnd;
@@ -72,16 +70,24 @@ MBBCk* MBBCk::clone() {
 // ISerializable interface
 //
 uint32_t MBBCk::getByteArraySize() {
-    return sizeof(int)+m_mbrs[0].getByteArraySize()*m_k+2 * sizeof(double);
+    return sizeof(int)+m_mbrs[0].getByteArraySize()*(3*m_k+1)+2 * sizeof(double);
 }
 
 void MBBCk::loadFromByteArray(const uint8_t* ptr) {
     memcpy(&m_k, ptr, sizeof(int));
     ptr += sizeof(int);
-    m_mbrs.resize(m_k);
-    for(int i=0;i<m_k;i++){
+    m_mbrs.resize(m_k+1);
+    for(int i=0;i<m_k+1;i++){
         m_mbrs[i].loadFromByteArray(ptr);
         ptr+=m_mbrs[i].getByteArraySize();
+    }
+    for(int i=0;i<m_k;i++){
+        m_vmbrs[i].loadFromByteArray(ptr);
+        ptr+=m_vmbrs[i].getByteArraySize();
+    }
+    for(int i=0;i<m_k;i++){
+        m_wmbrs[i].loadFromByteArray(ptr);
+        ptr+=m_wmbrs[i].getByteArraySize();
     }
     memcpy(&m_startTime, ptr, sizeof(double));
     ptr += sizeof(double);
@@ -97,8 +103,18 @@ void MBBCk::storeToByteArray(uint8_t **data, uint32_t &len) {
     uint32_t tmplen;
     memcpy(ptr, &m_k, sizeof(int));
     ptr += sizeof(int);
-    for(int i=0;i<m_k;i++){
+    for(int i=0;i<m_k+1;i++){
         m_mbrs[i].storeToByteArray(&tmpb,tmplen);
+        memcpy(ptr, tmpb, tmplen);
+        ptr += tmplen;
+    }
+    for(int i=0;i<m_k;i++){
+        m_vmbrs[i].storeToByteArray(&tmpb,tmplen);
+        memcpy(ptr, tmpb, tmplen);
+        ptr += tmplen;
+    }
+    for(int i=0;i<m_k;i++){
+        m_wmbrs[i].storeToByteArray(&tmpb,tmplen);
         memcpy(ptr, tmpb, tmplen);
         ptr += tmplen;
     }
@@ -111,7 +127,7 @@ void MBBCk::storeToByteArray(uint8_t **data, uint32_t &len) {
 
 inline int MBBCk::getPhase(double t) const{
     double d=t-getPeriodStart(t);
-    int p=floor(d/(double(PeriodLen)/(m_k-1)));
+    int p=floor(d/(double(PeriodLen)/(m_k)));
     return p;
 }
 //
@@ -121,8 +137,10 @@ void MBBCk::getVMBR(Region& out) const{out= Region();}
 void MBBCk::getMBRAtTime(double t, SpatialIndex::Region &out) const {
     int p=getPhase(t);
     Mbbc bc=Mbbc(m_mbrs[p],m_mbrs[p+1],m_vmbrs[p],m_wmbrs[p],
-            p*PeriodLen/(m_k-1),(p+1)*PeriodLen/(m_k-1));
+            p*PeriodLen/(m_k),(p+1)*PeriodLen/(m_k));
+//    std::cout<<"get MBR bc\n"<<bc.toString();
     bc.getMBRAtTime(t,out);
+//    std::cout<<"out mbr is "<<out.toString();
 }
 
 
@@ -186,12 +204,12 @@ void MBBCk::getCenter(Point& out) const{
 uint32_t MBBCk::getDimension() const{return m_dimension;}
 void MBBCk::getMBR(Region& out) const{
     out=m_mbrs[0];
-    for(auto mbr:m_mbrs) out.combineRegion(mbr);
+    for(auto mbr:m_wmbrs) out.combineRegion(mbr);
 }
 double MBBCk::getArea() const{
     double timeSeg=PeriodLen/m_k;
     double sum=0;
-    for(auto mbr:m_mbrs){
+    for(auto mbr:m_wmbrs){
         sum+=mbr.getArea();
     }
     sum*=timeSeg;
@@ -229,13 +247,13 @@ void MBBCk::makeInfinite(uint32_t dimension,int k)
 {
 //    m_dimension=dimension;
     m_k=k;
-    m_mbrs.resize(m_k);
-    m_vmbrs.resize(m_k-1);
-    m_wmbrs.resize(m_k-1);
-    for(int i=0;i<m_k;i++){
+    m_mbrs.resize(m_k+1);
+    m_vmbrs.resize(m_k);
+    m_wmbrs.resize(m_k);
+    for(int i=0;i<m_k+1;i++){
         m_mbrs[i].makeInfinite(m_dimension);
     }
-    for(int i=0;i<m_k-1;i++){
+    for(int i=0;i<m_k;i++){
         m_vmbrs[i].makeInfinite(m_dimension);
         m_wmbrs[i].makeInfinite(m_dimension);
     }
