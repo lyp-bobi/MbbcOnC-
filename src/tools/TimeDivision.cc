@@ -31,7 +31,7 @@ double naivetime(string l){
 }
 int getPeriod(double time){
     int pd= int(std::floor(time/PeriodLen));
-    if(time-pd*PeriodLen<0.001) return pd-1;
+    if(pd>getMaxPeriod()) pd=getMaxPeriod();
     return pd;
 }
 int getMaxPeriod(){
