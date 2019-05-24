@@ -19,12 +19,12 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 //#define sourceFile "D://geolifedata.csv"
-#define sourceFile "D://t200n1k.txt"
+#define sourceFile "D://t200n100ks.txt"
 #define linesToRead 1e10
-#define testtime 100
+#define testtime 50
 #define dimension 2
 #define indexcap 5
-#define leafcap 5
+#define leafcap 2
 #define QueryType 2
 //1 for time-slice range, 2 for 5-NN
 
@@ -389,7 +389,7 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries){
         }else if(QueryType==2){
             tree->nearestNeighborQuery(5,*queries[i],vis);
         }
-        if(i%100==0)cout<<"finished "<<i<<"already\n";
+//        cout<<"finished "<<i<<"already\n";
     }
     end=clock();
     cerr<<"Querying time: "<< end-start<<endl;
@@ -421,19 +421,25 @@ int main(){
         srand((int) time(NULL));
         list<vector<pair<id_type, Trajectory> > > trajs = loadGTToTrajs();
         auto traj1=*trajs.begin();
-        TrajMbrStream ds1;
-//        TrajMbbcStream ds2;
-        TrajMBRkStream ds3;
-        TrajMBRkStream ds34;
+//        TrajMbrStream ds1;
+//        TrajMBRkStream ds3;
+//        TrajMBRkStream ds34;
         TrajMBRkStream ds38;
         TrajMBRkStream ds316;
+//        TrajMBBCkStream ds3_;
+//        TrajMBBCkStream ds34_;
+        TrajMBBCkStream ds38_;
+        TrajMBBCkStream ds316_;
         cout<<trajs.front().size()<<endl;
-        ds1.feedTraj(&traj1);
-//        ds2.feedTraj(&trajs.front());
-        ds3.feedTraj(&traj1, 2);
-        ds34.feedTraj(&traj1, 4);
+//        ds1.feedTraj(&traj1);
+//        ds3.feedTraj(&traj1, 4);
+//        ds34.feedTraj(&traj1, 8);
         ds38.feedTraj(&traj1, 8);
         ds316.feedTraj(&traj1, 16);
+//        ds3_.feedTraj(&traj1, 2);
+//        ds34_.feedTraj(&traj1, 4);
+        ds38_.feedTraj(&traj1, 4);
+        ds316_.feedTraj(&traj1, 8);
         vector<IShape *> queries;
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
@@ -480,52 +486,52 @@ int main(){
 //    ISpatialIndex* real = R2Tree::createAndBulkLoadNewR2Tree(
 //            R2Tree::BulkLoadMethod::BLM_STR, ds2, *file0, 0.9, indexcap,100000, 2, indexIdentifier0);
 //    ds1.rewind();
-        ISpatialIndex *r = RTree::createAndBulkLoadNewRTree(
-                RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap, leafcap, 2, SpatialIndex::RTree::RV_RSTAR,
-                indexIdentifier1);
-        ISpatialIndex *paar1 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds3, *file2, 0.9, indexcap, leafcap, 2, 2, indexIdentifier2);
-        ISpatialIndex *paar2 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds34, *file3, 0.9, indexcap, leafcap, 2, 4, indexIdentifier3);
+//        ISpatialIndex *r = RTree::createAndBulkLoadNewRTree(
+//                RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap, leafcap, 2, SpatialIndex::RTree::RV_RSTAR,
+//                indexIdentifier1);
+//        ISpatialIndex *paar1 = PAARTree::createAndBulkLoadNewPAARTree(
+//                PAARTree::BulkLoadMethod::BLM_STR2, ds3, *file2, 0.9, indexcap, leafcap, 2, 4, indexIdentifier2);
+//        ISpatialIndex *paar2 = PAARTree::createAndBulkLoadNewPAARTree(
+//                PAARTree::BulkLoadMethod::BLM_STR2, ds34, *file3, 0.9, indexcap, leafcap, 2, 8, indexIdentifier3);
         ISpatialIndex *paar3 = PAARTree::createAndBulkLoadNewPAARTree(
                 PAARTree::BulkLoadMethod::BLM_STR2, ds38, *file4, 0.9, indexcap, leafcap, 2, 8, indexIdentifier4);
         ISpatialIndex *paar4 = PAARTree::createAndBulkLoadNewPAARTree(
                 PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap, leafcap, 2, 16, indexIdentifier5);
-        ISpatialIndex *paar21 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds3, *file2, 0.9, indexcap, leafcap, 2, 2, indexIdentifier6);
-        ISpatialIndex *paar22 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds34, *file3, 0.9, indexcap, leafcap, 2, 4, indexIdentifier7);
-        ISpatialIndex *paar23 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds38, *file4, 0.9, indexcap, leafcap, 2, 8, indexIdentifier8);
-        ISpatialIndex *paar24 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap, leafcap, 2, 16, indexIdentifier9);
+//        ISpatialIndex *paar21 = PAAR2Tree::createAndBulkLoadNewPAAR2Tree(
+//                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds3_, *file2, 0.9, indexcap, leafcap, 2, 2, indexIdentifier6);
+//        ISpatialIndex *paar22 = PAAR2Tree::createAndBulkLoadNewPAAR2Tree(
+//                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds34_, *file3, 0.9, indexcap, leafcap, 2, 4, indexIdentifier7);
+        ISpatialIndex *paar23 = PAAR2Tree::createAndBulkLoadNewPAAR2Tree(
+                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds38_, *file4, 0.9, indexcap, leafcap, 2, 4, indexIdentifier8);
+        ISpatialIndex *paar24 = PAAR2Tree::createAndBulkLoadNewPAAR2Tree(
+                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds316_, *file5, 0.9, indexcap, leafcap, 2, 8, indexIdentifier9);
 
 //    real->m_DataType=TrajectoryType;
-        r->m_DataType = TrajectoryType;
-        paar1->m_DataType = TrajectoryType;
-        paar2->m_DataType = TrajectoryType;
+//        r->m_DataType = TrajectoryType;
+//        paar1->m_DataType = TrajectoryType;
+//        paar2->m_DataType = TrajectoryType;
         paar3->m_DataType = TrajectoryType;
         paar4->m_DataType = TrajectoryType;
-        paar21->m_DataType = TrajectoryType;
-        paar22->m_DataType = TrajectoryType;
+//        paar21->m_DataType = TrajectoryType;
+//        paar22->m_DataType = TrajectoryType;
         paar23->m_DataType = TrajectoryType;
         paar24->m_DataType = TrajectoryType;
         cerr << "start query!" << endl << endl << endl;
-        cerr<<"r\n";
-        TreeQueryBatch(r, queries);
-        cerr << "\n\n\npaar-2\n";
-        TreeQueryBatch(paar1, queries);
-        cerr << "\n\n\npaar2-2\n";
-        TreeQueryBatch(paar21, queries);
-        cerr << "\n\n\npaar-4\n";
-        TreeQueryBatch(paar2, queries);
-        cerr << "\n\n\npaar2-4\n";
-        TreeQueryBatch(paar22, queries);
-        cerr << "\n\n\npaar-8\n";
+//        cerr<<"r\n";
+//        TreeQueryBatch(r, queries);
+//        cerr << "\n\n\npaar-4\n";
+//        TreeQueryBatch(paar1, queries);
+//        cerr << "\n\n\npaar2-2\n";
+//        TreeQueryBatch(paar21, queries);
+//        cerr << "\n\n\npaar-8\n";
+//        TreeQueryBatch(paar2, queries);
+//        cerr << "\n\n\npaar2-4\n";
+//        TreeQueryBatch(paar22, queries);
+        cerr << "\n\n\npaar-16\n";
         TreeQueryBatch(paar3, queries);
         cerr << "\n\n\npaar2-8\n";
         TreeQueryBatch(paar23, queries);
-        cerr << "\n\n\npaar-16\n";
+        cerr << "\n\n\npaar-32\n";
         TreeQueryBatch(paar4, queries);
         cerr << "\n\n\npaar2-16\n";
         TreeQueryBatch(paar24, queries);

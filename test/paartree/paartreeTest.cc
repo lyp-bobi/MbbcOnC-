@@ -19,12 +19,12 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 //#define sourceFile "D://geolifedata.csv"
-#define sourceFile "D://t200n100k.txt"
+#define sourceFile "D://t200n10ks.txt"
 #define linesToRead 1e10
 #define testtime 100
 #define dimension 2
 #define indexcap 5
-#define leafcap 2
+#define leafcap 5
 #define QueryType 2
 //1 for time-slice range, 2 for 5-NN
 
@@ -379,6 +379,7 @@ int main(){
         srand((int) time(NULL));
         list<vector<pair<id_type, Trajectory> > > trajs = loadGTToTrajs();
         auto traj1=*trajs.begin();
+        cout<<traj1[0].second.toString();
         TrajMbrStream ds1;
 //        TrajMbbcStream ds2;
         TrajMBRkStream ds3;
@@ -391,9 +392,9 @@ int main(){
 //        ds2.feedTraj(&trajs.front());
         ds3.feedTraj(&traj1, 2);
         ds34.feedTraj(&traj1, 4);
-        ds38.feedTraj(&traj1, 8);
-        ds316.feedTraj(&traj1, 16);
-        ds332.feedTraj(&traj1, 32);
+        ds38.feedTraj(&traj1, 10);
+        ds316.feedTraj(&traj1, 20);
+        ds332.feedTraj(&traj1, 40);
         vector<IShape *> queries;
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
@@ -437,38 +438,38 @@ int main(){
 //    ISpatialIndex* real = R2Tree::createAndBulkLoadNewR2Tree(
 //            R2Tree::BulkLoadMethod::BLM_STR, ds2, *file0, 0.9, indexcap,100000, 2, indexIdentifier0);
 //    ds1.rewind();
-        ISpatialIndex *r = RTree::createAndBulkLoadNewRTree(
-                RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap, leafcap, 2, SpatialIndex::RTree::RV_RSTAR,
-                indexIdentifier1);
+//        ISpatialIndex *r = RTree::createAndBulkLoadNewRTree(
+//                RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap, leafcap, 2, SpatialIndex::RTree::RV_RSTAR,
+//                indexIdentifier1);
         ISpatialIndex *paar1 = PAARTree::createAndBulkLoadNewPAARTree(
                 PAARTree::BulkLoadMethod::BLM_STR2, ds3, *file2, 0.9, indexcap, leafcap, 2, 2, indexIdentifier2);
         ISpatialIndex *paar2 = PAARTree::createAndBulkLoadNewPAARTree(
                 PAARTree::BulkLoadMethod::BLM_STR2, ds34, *file3, 0.9, indexcap, leafcap, 2, 4, indexIdentifier3);
         ISpatialIndex *paar3 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds38, *file4, 0.9, indexcap, leafcap, 2, 8, indexIdentifier4);
+                PAARTree::BulkLoadMethod::BLM_STR2, ds38, *file4, 0.9, indexcap, leafcap, 2, 10, indexIdentifier4);
         ISpatialIndex *paar4 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap, leafcap, 2, 16, indexIdentifier5);
+                PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap, leafcap, 2, 20, indexIdentifier5);
         ISpatialIndex *paar5 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap, leafcap, 2, 32, indexIdentifier6);
+                PAARTree::BulkLoadMethod::BLM_STR2, ds332, *file5, 0.9, indexcap, leafcap, 2, 40, indexIdentifier6);
 
 //    real->m_DataType=TrajectoryType;
-        r->m_DataType = TrajectoryType;
+//        r->m_DataType = TrajectoryType;
         paar1->m_DataType = TrajectoryType;
         paar2->m_DataType = TrajectoryType;
         paar3->m_DataType = TrajectoryType;
         paar4->m_DataType = TrajectoryType;
         paar5->m_DataType = TrajectoryType;
         cerr << "start query!" << endl << endl << endl;
-        TreeQueryBatch(r, queries);
+//        TreeQueryBatch(r, queries);
         cerr << "\n\n\npaa-2\n";
         TreeQueryBatch(paar1, queries);
         cerr << "\n\n\npaa-4\n";
         TreeQueryBatch(paar2, queries);
-        cerr << "\n\n\npaa-8\n";
+        cerr << "\n\n\npaa-10\n";
         TreeQueryBatch(paar3, queries);
-        cerr << "\n\n\npaa-16\n";
+        cerr << "\n\n\npaa-20\n";
         TreeQueryBatch(paar4, queries);
-        cerr << "\n\n\npaa-32\n";
+        cerr << "\n\n\npaa-40\n";
         TreeQueryBatch(paar5, queries);
     }
     catch (Tools::Exception& e)

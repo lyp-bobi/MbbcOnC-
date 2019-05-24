@@ -489,6 +489,9 @@ double Trajectory::getMinimumDistance(const IShape& s) const{
     const Trajectory* pTrajectory = dynamic_cast<const Trajectory*>(&s);
     if (pTrajectory != 0) return getMinimumDistance(*pTrajectory);
 
+    const TimePoint* ptp = dynamic_cast<const TimePoint*>(&s);
+    if (ptp != 0) return getMinimumDistance(*ptp);
+
     const Mbbc* pbc = dynamic_cast<const Mbbc*>(&s);
     if (pbc != 0) return getMinimumDistance(*pbc);
 
@@ -515,6 +518,12 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Region &in) const {
     sum+=m_points[m_points.size()-1].getMinimumDistance(in)*(m_points[m_points.size()-1].m_startTime-m_points[m_points.size()-2].m_startTime);
     sum/=2;
     return sum;
+}
+
+double Trajectory::getMinimumDistance(const SpatialIndex::TimePoint &in) const {
+    int last;
+    for(last=1;m_points[last].m_startTime<in.m_startTime;last++);
+    return in.getMinimumDistance(TimePoint::makemid(m_points[last-1],m_points[last],in.m_startTime));
 }
 
 double Trajectory::getMinimumDistance(const SpatialIndex::MBRk &in) const {
@@ -561,56 +570,67 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Mbbc &in) const {
 
 double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const {
     //NOTICE: this function is not symmetry!
-    int cursor=0;//cursor for the other trajectory
-    double time1,time2;
-    time1=m_points[0].m_startTime;
-    time2=in.m_points[0].m_startTime;
-    double dist;
     double sum=0;
-    while(cursor<in.m_points.size()-1&&time1>=in.m_points[cursor+1].m_startTime){
-        cursor++;
-        time2=in.m_points[cursor].m_startTime;
-    }
-    if(m_points.size()==1){
-        return m_points[0].getMinimumDistance(in.m_points[cursor]);
-    }
-    TimePoint tmp;
-    if(time1<time2||cursor==in.m_points.size()-1){//if no corresponding data
-        tmp=in.m_points[cursor];
-    }else{
-        tmp=TimePoint::makemid(in.m_points[cursor],in.m_points[cursor+1],time1);
-    }
-    dist=m_points[0].getMinimumDistance(tmp);
+    double dist=in.getMinimumDistance(m_points[0]);
     sum+=dist*(m_points[1].m_startTime-m_points[0].m_startTime);
     for(int i=1;i<m_points.size()-1;i++){
-        time1=m_points[i].m_startTime;
-        while(cursor<in.m_points.size()-1&&time1>=in.m_points[cursor+1].m_startTime){
-            cursor++;
-            time2=in.m_points[cursor].m_startTime;
-        }
-        if(time1<time2||cursor==in.m_points.size()-1){//if no corresponding data
-            tmp=in.m_points[cursor];
-        }else{
-            tmp=TimePoint::makemid(in.m_points[cursor],in.m_points[cursor+1],time1);
-        }
-        dist=m_points[i].getMinimumDistance(tmp);
+        dist=in.getMinimumDistance(m_points[i]);
         sum+=dist*(m_points[i+1].m_startTime-m_points[i-1].m_startTime);
     }
-    time1=m_points[m_points.size()-1].m_startTime;
-    while(cursor<in.m_points.size()-1&&time1>=in.m_points[cursor+1].m_startTime){
-        cursor++;
-        time2=in.m_points[cursor].m_startTime;
-    }
-    if(time1<time2||cursor==in.m_points.size()-1){//if no corresponding data
-        dist=m_points[m_points.size()-1].getMinimumDistance(in.m_points[cursor]);
-    }else{
-        dist=m_points[m_points.size()-1].getMinimumDistance(TimePoint::makemid(in.m_points[cursor],in.m_points[cursor+1],time1));
-    }
+    dist=in.getMinimumDistance(m_points[m_points.size()-1]);
     sum+=dist*(m_points[m_points.size()-1].m_startTime-m_points[m_points.size()-2].m_startTime);
     sum=sum/2;
-    if(_isnan(sum))
-        std::cerr<<"returning nan in MinDist between Trajectories\n"<<this->toString()<<in.toString();
     return sum;
+//    int cursor=0;//cursor for the other trajectory
+//    double time1,time2;
+//    time1=m_points[0].m_startTime;
+//    time2=in.m_points[0].m_startTime;
+//    double dist;
+//    double sum=0;
+//    while(cursor<in.m_points.size()-1&&time1>=in.m_points[cursor+1].m_startTime){
+//        cursor++;
+//        time2=in.m_points[cursor].m_startTime;
+//    }
+//    if(m_points.size()==1){
+//        return m_points[0].getMinimumDistance(in.m_points[cursor]);
+//    }
+//    TimePoint tmp;
+//    if(time1<time2||cursor==in.m_points.size()-1){//if no corresponding data
+//        tmp=in.m_points[cursor];
+//    }else{
+//        tmp=TimePoint::makemid(in.m_points[cursor],in.m_points[cursor+1],time1);
+//    }
+//    dist=m_points[0].getMinimumDistance(tmp);
+//    sum+=dist*(m_points[1].m_startTime-m_points[0].m_startTime);
+//    for(int i=1;i<m_points.size()-1;i++){
+//        time1=m_points[i].m_startTime;
+//        while(cursor<in.m_points.size()-1&&time1>=in.m_points[cursor+1].m_startTime){
+//            cursor++;
+//            time2=in.m_points[cursor].m_startTime;
+//        }
+//        if(time1<time2||cursor==in.m_points.size()-1){//if no corresponding data
+//            tmp=in.m_points[cursor];
+//        }else{
+//            tmp=TimePoint::makemid(in.m_points[cursor],in.m_points[cursor+1],time1);
+//        }
+//        dist=m_points[i].getMinimumDistance(tmp);
+//        sum+=dist*(m_points[i+1].m_startTime-m_points[i-1].m_startTime);
+//    }
+//    time1=m_points[m_points.size()-1].m_startTime;
+//    while(cursor<in.m_points.size()-1&&time1>=in.m_points[cursor+1].m_startTime){
+//        cursor++;
+//        time2=in.m_points[cursor].m_startTime;
+//    }
+//    if(time1<time2||cursor==in.m_points.size()-1){//if no corresponding data
+//        dist=m_points[m_points.size()-1].getMinimumDistance(in.m_points[cursor]);
+//    }else{
+//        dist=m_points[m_points.size()-1].getMinimumDistance(TimePoint::makemid(in.m_points[cursor],in.m_points[cursor+1],time1));
+//    }
+//    sum+=dist*(m_points[m_points.size()-1].m_startTime-m_points[m_points.size()-2].m_startTime);
+//    sum=sum/2;
+//    if(_isnan(sum))
+//        std::cerr<<"returning nan in MinDist between Trajectories\n"<<this->toString()<<in.toString();
+//    return sum;
 }
 
 

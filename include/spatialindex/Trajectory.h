@@ -45,6 +45,7 @@ namespace SpatialIndex
     virtual void getMBR(Region& out) const;
     virtual double getArea() const;
     virtual double getMinimumDistance(const IShape& in) const;
+    virtual double getMinimumDistance(const TimePoint& in) const;
     virtual double getMinimumDistance(const Region& in) const;
     virtual double getMinimumDistance(const Mbbc& in) const;
     virtual double getMinimumDistance(const MBRk& in) const;

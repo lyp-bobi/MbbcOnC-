@@ -114,7 +114,7 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
     //first level: vector of time period
     //second level: vector of segments in the time period
     cerr<<"loading generated trajectories from txt to trajectories"<<endl;
-    ifstream inFile("D://t5kn1k.txt", ios::in);
+    ifstream inFile("D://t200n10ks.txt", ios::in);
     string lineStr;
     set<id_type> ids;
     multimap<id_type,xyt> trajs;
@@ -175,51 +175,56 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
 int main(){
     auto trajs=loadGTToTrajs();
     vector<pair<id_type ,Trajectory> > traj1=*trajs.begin();
-    auto q=traj1[0].second;
     cout<<"traj number"<<traj1.size()<<endl;
     double rate[7]={0,0,0,0,0,0,0},rate2[7]={0,0,0,0,0,0,0};
-    for(int i=1;i<traj1.size();i++){
-        auto t=traj1[i];
-        double real=q.getMinimumDistance(t.second);
-        MBRk brk;
-        t.second.getMBRk(4,brk);
-        rate[1]+=q.getMinimumDistance(brk)/real;
-        t.second.getMBRk(8,brk);
-        rate[2]+=q.getMinimumDistance(brk)/real;
-        t.second.getMBRk(16,brk);
-        rate[3]+=q.getMinimumDistance(brk)/real;
-        t.second.getMBRk(32,brk);
-        rate[4]+=q.getMinimumDistance(brk)/real;
-        t.second.getMBRk(64,brk);
-        rate[5]+=q.getMinimumDistance(brk)/real;
-        t.second.getMBRk(128,brk);
-        rate[6]+=q.getMinimumDistance(brk)/real;
-        MBBCk bbck;
-        t.second.getMBBCk(4,bbck,5000);
-        rate2[1]+=q.getMinimumDistance(bbck)/real;
-        t.second.getMBBCk(8,bbck,5000);
-        rate2[2]+=q.getMinimumDistance(bbck)/real;
-        t.second.getMBBCk(16,bbck,5000);
-        rate2[3]+=q.getMinimumDistance(bbck)/real;
-        t.second.getMBBCk(32,bbck,5000);
-        rate2[4]+=q.getMinimumDistance(bbck)/real;
-        t.second.getMBBCk(64,bbck,5000);
-        rate2[5]+=q.getMinimumDistance(bbck)/real;
-        t.second.getMBBCk(128,bbck,5000);
-        rate2[6]+=q.getMinimumDistance(bbck)/real;
+    for(int s=0;s<traj1.size();s++) {
+        auto q=traj1[s].second;
+        for (int i = s; i < traj1.size(); i++) {
+            auto tj = traj1[i].second;
+            double real = q.getMinimumDistance(tj);
+            MBRk brk;
+            tj.getMBRk(4, brk);
+            rate[1] += q.getMinimumDistance(brk) / real;
+            tj.getMBRk(8, brk);
+            rate[2] += q.getMinimumDistance(brk) / real;
+            tj.getMBRk(16, brk);
+            rate[3] += q.getMinimumDistance(brk) / real;
+            tj.getMBRk(32, brk);
+            rate[4] += q.getMinimumDistance(brk) / real;
+            tj.getMBRk(64, brk);
+            rate[5] += q.getMinimumDistance(brk) / real;
+            tj.getMBRk(128, brk);
+            rate[6] += q.getMinimumDistance(brk) / real;
+            MBBCk bbck;
+            tj.getMBBCk(2, bbck, 5000);
+            rate2[1] += q.getMinimumDistance(bbck) / real;
+            tj.getMBBCk(4, bbck, 5000);
+            rate2[2] += q.getMinimumDistance(bbck) / real;
+            tj.getMBBCk(8, bbck, 5000);
+            rate2[3] += q.getMinimumDistance(bbck) / real;
+            tj.getMBBCk(16, bbck, 5000);
+            rate2[4] += q.getMinimumDistance(bbck) / real;
+            tj.getMBBCk(32, bbck, 5000);
+            rate2[5] += q.getMinimumDistance(bbck) / real;
+            tj.getMBBCk(64, bbck, 5000);
+            rate2[6] += q.getMinimumDistance(bbck) / real;
+
+        }
+        rate[1] /= traj1.size();
+        rate[2] /= traj1.size();
+        rate[3] /= traj1.size();
+        rate[4] /= traj1.size();
+        rate[5] /= traj1.size();
+        rate[6] /= traj1.size();
+        cout << rate[1] << endl << rate[2] << endl << rate[3] << endl << rate[4] << endl << rate[5] << endl << rate[6]
+             << endl;
+        rate2[1] /= traj1.size();
+        rate2[2] /= traj1.size();
+        rate2[3] /= traj1.size();
+        rate2[4] /= traj1.size();
+        rate2[5] /= traj1.size();
+        rate2[6] /= traj1.size();
+        cout << rate2[1] << endl << rate2[2] << endl << rate2[3] << endl << rate2[4] << endl << rate2[5] << endl
+             << rate2[6];
     }
-    rate[1]/=traj1.size();
-    rate[2]/=traj1.size();
-    rate[3]/=traj1.size();
-    rate[4]/=traj1.size();
-    rate[5]/=traj1.size();
-    rate[6]/=traj1.size();
-    cout<<rate[1]<<endl<<rate[2]<<endl<<rate[3]<<endl<<rate[4]<<endl<<rate[5]<<endl<<rate[6];
-    rate2[1]/=traj1.size();
-    rate2[2]/=traj1.size();
-    rate2[3]/=traj1.size();
-    rate2[4]/=traj1.size();
-    rate2[5]/=traj1.size();
-    rate2[6]/=traj1.size();
-    cout<<rate2[1]<<endl<<rate2[2]<<endl<<rate2[3]<<endl<<rate2[4]<<endl<<rate2[5]<<endl<<rate2[6];
 }

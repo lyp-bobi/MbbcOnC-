@@ -138,6 +138,10 @@ void Mbbc::getMBRAtTime(double t, SpatialIndex::Region &out) const {
                          m_embr.m_pLow[1]-(m_endTime-t)*m_vmbr.m_pHigh[1]);
     double yhigh=std::min(m_smbr.m_pHigh[1]+(t-m_startTime)*m_vmbr.m_pHigh[1],
                           m_embr.m_pHigh[1]-(m_endTime-t)*m_vmbr.m_pLow[1]);
+//    out.m_pLow[0]=xlow;
+//    out.m_pLow[1]=ylow;
+//    out.m_pHigh[0]=xhigh;
+//    out.m_pHigh[1]=yhigh;
     out.m_pLow[0]=std::max(xlow,m_wmbr.m_pLow[0]);
     out.m_pLow[1]=std::max(ylow,m_wmbr.m_pLow[1]);
     out.m_pHigh[0]=std::min(xhigh,m_wmbr.m_pHigh[0]);
