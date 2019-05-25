@@ -220,7 +220,7 @@ MovingPoint* MovingPoint::clone()
 //
 // ISerializable interface
 //
-uint32_t MovingPoint::getByteArraySize()
+uint32_t MovingPoint::getByteArraySize() const
 {
 	return (sizeof(uint32_t) + 2 * sizeof(double) + 2 * m_dimension * sizeof(double));
 }

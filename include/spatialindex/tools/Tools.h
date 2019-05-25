@@ -226,7 +226,7 @@ namespace Tools
 	public:
 		virtual ~ISerializable() {}
 
-		virtual  uint32_t getByteArraySize() = 0;
+		virtual  uint32_t getByteArraySize() const = 0;
 			// returns the size of the required uint8_t array.
 		virtual void loadFromByteArray(const uint8_t* data) = 0;
 			// load this object using the uint8_t array.
@@ -315,7 +315,7 @@ namespace Tools
 		void setProperty(std::string property, Variant const& v);
 		void removeProperty(std::string property);
 
-		virtual uint32_t getByteArraySize();
+		virtual uint32_t getByteArraySize() const;
 		virtual void loadFromByteArray(const uint8_t* data);
 		virtual void storeToByteArray(uint8_t** data, uint32_t& length);
 

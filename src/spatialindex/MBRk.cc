@@ -68,7 +68,7 @@ MBRk* MBRk::clone() {
 //
 // ISerializable interface
 //
-uint32_t MBRk::getByteArraySize() {
+uint32_t MBRk::getByteArraySize() const {
     return sizeof(int)+m_mbrs[0].getByteArraySize()*m_k+2 * sizeof(double);
 }
 

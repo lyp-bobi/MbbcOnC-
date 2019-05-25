@@ -49,7 +49,7 @@ public:
 //        else m_indexIO++;
         uint32_t size=n.getByteArraySize();
         if (n.isLeaf()) m_leafIO+=size;
-        else m_indexIO++;
+        else m_indexIO+=size;
     }
 
     void visitData(const IData& d)

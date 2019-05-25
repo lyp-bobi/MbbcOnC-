@@ -29,7 +29,7 @@ Tools::IObject* Node::clone()
 // Tools::ISerializable interface
 //
 
-uint32_t Node::getByteArraySize(){
+uint32_t Node::getByteArraySize() const{
     return
             (sizeof(uint32_t) +
              sizeof(uint32_t) +

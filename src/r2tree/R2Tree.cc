@@ -60,7 +60,7 @@ void SpatialIndex::R2Tree::Data::getData(uint32_t& len, uint8_t** data) const
     }
 }
 
-uint32_t SpatialIndex::R2Tree::Data::getByteArraySize()
+uint32_t SpatialIndex::R2Tree::Data::getByteArraySize() const
 {
     return
             sizeof(id_type) +

@@ -80,7 +80,7 @@ void SpatialIndex::MVRTree::Data::getData(uint32_t& len, uint8_t** data) const
 	}
 }
 
-uint32_t SpatialIndex::MVRTree::Data::getByteArraySize()
+uint32_t SpatialIndex::MVRTree::Data::getByteArraySize() const
 {
 	return
 		sizeof(id_type) +

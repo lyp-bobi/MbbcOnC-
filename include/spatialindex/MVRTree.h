@@ -60,7 +60,7 @@ namespace SpatialIndex
 			virtual id_type getIdentifier() const;
 			virtual void getShape(IShape** out) const;
 			virtual void getData(uint32_t& len, uint8_t** data) const;
-			virtual uint32_t getByteArraySize();
+			virtual uint32_t getByteArraySize() const;
 			virtual void loadFromByteArray(const uint8_t* data);
 			virtual void storeToByteArray(uint8_t** data, uint32_t& len);
 

@@ -206,7 +206,7 @@ TimeRegion* TimeRegion::clone()
 //
 // ISerializable interface
 //
-uint32_t TimeRegion::getByteArraySize()
+uint32_t TimeRegion::getByteArraySize() const
 {
 	return (sizeof(uint32_t) + 2 * sizeof(double) + 2 * m_dimension * sizeof(double));
 }

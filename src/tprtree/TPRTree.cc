@@ -79,7 +79,7 @@ void SpatialIndex::TPRTree::Data::getData(uint32_t& len, uint8_t** data) const
 	}
 }
 
-uint32_t SpatialIndex::TPRTree::Data::getByteArraySize()
+uint32_t SpatialIndex::TPRTree::Data::getByteArraySize() const
 {
 	return
 		sizeof(id_type) +

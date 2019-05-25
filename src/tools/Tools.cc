@@ -214,10 +214,10 @@ void Tools::PropertySet::loadFromByteArray(const uint8_t* ptr)
 	}
 }
 
-uint32_t Tools::PropertySet::getByteArraySize()
+uint32_t Tools::PropertySet::getByteArraySize() const
 {
 	uint32_t size = sizeof(uint32_t);
-	std::map<std::string, Variant>::iterator it;
+	auto it=m_propertySet.begin();
 
 	for (it = m_propertySet.begin(); it != m_propertySet.end(); ++it)
 	{

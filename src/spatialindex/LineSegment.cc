@@ -126,7 +126,7 @@ LineSegment* LineSegment::clone()
 //
 // ISerializable interface
 //
-uint32_t LineSegment::getByteArraySize()
+uint32_t LineSegment::getByteArraySize() const
 {
 	return (sizeof(uint32_t) + m_dimension * sizeof(double) * 2);
 }

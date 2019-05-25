@@ -100,7 +100,7 @@ Point* Point::clone()
 //
 // ISerializable interface
 //
-uint32_t Point::getByteArraySize()
+uint32_t Point::getByteArraySize() const
 {
 	return (sizeof(uint32_t) + m_dimension * sizeof(double));
 }

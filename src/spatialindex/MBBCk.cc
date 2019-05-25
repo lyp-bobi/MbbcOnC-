@@ -83,7 +83,7 @@ MBBCk* MBBCk::clone() {
 //
 // ISerializable interface
 //
-uint32_t MBBCk::getByteArraySize() {
+uint32_t MBBCk::getByteArraySize() const {
 #if (useWMBR==1)
         return sizeof(int)+m_mbrs[0].getByteArraySize()*(3*m_k+1)+2 * sizeof(double);
 #else

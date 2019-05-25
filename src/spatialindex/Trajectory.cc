@@ -47,7 +47,7 @@ Trajectory* Trajectory::clone() {
 //
 // ISerializable interface
 //
-uint32_t Trajectory::getByteArraySize() {
+uint32_t Trajectory::getByteArraySize() const {
     return sizeof(unsigned long)+m_points[0].getByteArraySize()*m_points.size();
 }
 

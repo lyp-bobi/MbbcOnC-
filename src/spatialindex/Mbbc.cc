@@ -72,7 +72,7 @@ Mbbc* Mbbc::clone() {
 //
 // ISerializable interface
 //
-uint32_t Mbbc::getByteArraySize() {
+uint32_t Mbbc::getByteArraySize() const {
     return m_smbr.getByteArraySize()+m_embr.getByteArraySize()+m_vmbr.getByteArraySize()+
         m_wmbr.getByteArraySize()+2 * sizeof(double);
 }

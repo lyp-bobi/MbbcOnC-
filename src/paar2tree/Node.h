@@ -23,7 +23,7 @@ namespace SpatialIndex {
             //
             // Tools::ISerializable interface
             //
-            virtual uint32_t getByteArraySize();
+            virtual uint32_t getByteArraySize() const;
             virtual void loadFromByteArray(const uint8_t* data);
             virtual void storeToByteArray(uint8_t** data, uint32_t& len);
 

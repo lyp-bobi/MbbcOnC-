@@ -67,7 +67,7 @@ MBBCk* MBBCk::clone() {
 //
 // ISerializable interface
 //
-uint32_t MBBCk::getByteArraySize() {
+uint32_t MBBCk::getByteArraySize() const {
     return sizeof(int)+m_points[0].getByteArraySize()*m_k+2 * sizeof(double);
 }
 

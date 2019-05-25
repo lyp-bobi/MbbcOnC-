@@ -81,7 +81,7 @@ void SpatialIndex::RTree::Data::getData(uint32_t& len, uint8_t** data) const
 	}
 }
 
-uint32_t SpatialIndex::RTree::Data::getByteArraySize()
+uint32_t SpatialIndex::RTree::Data::getByteArraySize() const
 {
 	return
 		sizeof(id_type) +
