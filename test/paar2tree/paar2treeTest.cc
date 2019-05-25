@@ -19,9 +19,9 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 //#define sourceFile "D://geolifedata.csv"
-#define sourceFile "D://t200n100ks.txt"
+#define sourceFile "D://t200n10ks.txt"
 #define linesToRead 1e10
-#define testtime 50
+#define testtime 100
 #define dimension 2
 #define indexcap 5
 #define leafcap 2
@@ -45,7 +45,10 @@ public:
 
     void visitNode(const INode& n)
     {
-        if (n.isLeaf()) m_leafIO++;
+//        if (n.isLeaf()) m_leafIO++;
+//        else m_indexIO++;
+        uint32_t size=n.getByteArraySize();
+        if (n.isLeaf()) m_leafIO+=size;
         else m_indexIO++;
     }
 
@@ -434,12 +437,12 @@ int main(){
 //        ds1.feedTraj(&traj1);
 //        ds3.feedTraj(&traj1, 4);
 //        ds34.feedTraj(&traj1, 8);
-        ds38.feedTraj(&traj1, 8);
-        ds316.feedTraj(&traj1, 16);
+        ds38.feedTraj(&traj1, 1);
+        ds316.feedTraj(&traj1, 1);
 //        ds3_.feedTraj(&traj1, 2);
 //        ds34_.feedTraj(&traj1, 4);
-        ds38_.feedTraj(&traj1, 4);
-        ds316_.feedTraj(&traj1, 8);
+        ds38_.feedTraj(&traj1, 1);
+        ds316_.feedTraj(&traj1, 1);
         vector<IShape *> queries;
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
@@ -494,17 +497,17 @@ int main(){
 //        ISpatialIndex *paar2 = PAARTree::createAndBulkLoadNewPAARTree(
 //                PAARTree::BulkLoadMethod::BLM_STR2, ds34, *file3, 0.9, indexcap, leafcap, 2, 8, indexIdentifier3);
         ISpatialIndex *paar3 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds38, *file4, 0.9, indexcap, leafcap, 2, 8, indexIdentifier4);
+                PAARTree::BulkLoadMethod::BLM_STR2, ds38, *file4, 0.9, indexcap, leafcap, 2, 1, indexIdentifier4);
         ISpatialIndex *paar4 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap, leafcap, 2, 16, indexIdentifier5);
+                PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap*3, leafcap, 2, 1, indexIdentifier5);
 //        ISpatialIndex *paar21 = PAAR2Tree::createAndBulkLoadNewPAAR2Tree(
 //                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds3_, *file2, 0.9, indexcap, leafcap, 2, 2, indexIdentifier6);
 //        ISpatialIndex *paar22 = PAAR2Tree::createAndBulkLoadNewPAAR2Tree(
 //                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds34_, *file3, 0.9, indexcap, leafcap, 2, 4, indexIdentifier7);
         ISpatialIndex *paar23 = PAAR2Tree::createAndBulkLoadNewPAAR2Tree(
-                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds38_, *file4, 0.9, indexcap, leafcap, 2, 4, indexIdentifier8);
+                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds38_, *file4, 0.9, indexcap, leafcap, 2, 1, indexIdentifier8);
         ISpatialIndex *paar24 = PAAR2Tree::createAndBulkLoadNewPAAR2Tree(
-                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds316_, *file5, 0.9, indexcap, leafcap, 2, 8, indexIdentifier9);
+                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds316_, *file5, 0.9, indexcap, leafcap, 2, 1, indexIdentifier9);
 
 //    real->m_DataType=TrajectoryType;
 //        r->m_DataType = TrajectoryType;
@@ -533,8 +536,8 @@ int main(){
         TreeQueryBatch(paar23, queries);
         cerr << "\n\n\npaar-32\n";
         TreeQueryBatch(paar4, queries);
-        cerr << "\n\n\npaar2-16\n";
-        TreeQueryBatch(paar24, queries);
+//        cerr << "\n\n\npaar2-16\n";
+//        TreeQueryBatch(paar24, queries);
     }
     catch (Tools::Exception& e)
     {

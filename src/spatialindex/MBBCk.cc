@@ -9,7 +9,7 @@
 
 #include <spatialindex/SpatialIndex.h>
 
-#define useWMBR 0
+#define useWMBR 1
 
 using namespace SpatialIndex;
 
@@ -30,7 +30,9 @@ MBBCk::MBBCk(const std::vector<Region> mbrs,const std::vector<Region> vmbrs,cons
     m_k=mbrs.size();
     m_mbrs=mbrs;
     m_vmbrs=vmbrs;
-    if(useWMBR) m_wmbrs=wmbrs;
+#if (useWMBR==1)
+    m_wmbrs=wmbrs;
+#endif
     m_startTime=tStart;
     m_endTime=tEnd;
 }
@@ -38,7 +40,9 @@ MBBCk::MBBCk(const SpatialIndex::MBBCk &in) {
     m_k=in.m_k;
     m_mbrs=in.m_mbrs;
     m_vmbrs=in.m_vmbrs;
-    if(useWMBR) m_wmbrs=in.m_wmbrs;
+#if (useWMBR==1)
+    m_wmbrs=in.m_wmbrs;
+#endif
     m_startTime=in.m_startTime;
     m_endTime=in.m_endTime;
 }
@@ -50,7 +54,9 @@ MBBCk& MBBCk::operator=(const MBBCk& r)
         m_k=r.m_k;
         m_mbrs=r.m_mbrs;
         m_vmbrs=r.m_vmbrs;
-        if(useWMBR) m_wmbrs=r.m_wmbrs;
+#if (useWMBR==1)
+        m_wmbrs=r.m_wmbrs;
+#endif
         m_startTime=r.m_startTime;
         m_endTime=r.m_endTime;
     }
@@ -78,10 +84,11 @@ MBBCk* MBBCk::clone() {
 // ISerializable interface
 //
 uint32_t MBBCk::getByteArraySize() {
-    if(useWMBR)
+#if (useWMBR==1)
         return sizeof(int)+m_mbrs[0].getByteArraySize()*(3*m_k+1)+2 * sizeof(double);
-    else
+#else
         return sizeof(int)+m_mbrs[0].getByteArraySize()*(2*m_k+1)+2 * sizeof(double);
+#endif
 }
 
 void MBBCk::loadFromByteArray(const uint8_t* ptr) {
@@ -96,12 +103,12 @@ void MBBCk::loadFromByteArray(const uint8_t* ptr) {
         m_vmbrs[i].loadFromByteArray(ptr);
         ptr+=m_vmbrs[i].getByteArraySize();
     }
-    if(useWMBR) {
-        for (int i = 0; i < m_k; i++) {
-            m_wmbrs[i].loadFromByteArray(ptr);
-            ptr += m_wmbrs[i].getByteArraySize();
-        }
+#if (useWMBR==1)
+    for (int i = 0; i < m_k; i++) {
+        m_wmbrs[i].loadFromByteArray(ptr);
+        ptr += m_wmbrs[i].getByteArraySize();
     }
+#endif
     memcpy(&m_startTime, ptr, sizeof(double));
     ptr += sizeof(double);
     memcpy(&m_endTime, ptr, sizeof(double));
@@ -126,13 +133,13 @@ void MBBCk::storeToByteArray(uint8_t **data, uint32_t &len) {
         memcpy(ptr, tmpb, tmplen);
         ptr += tmplen;
     }
-    if(useWMBR) {
-        for (int i = 0; i < m_k; i++) {
-            m_wmbrs[i].storeToByteArray(&tmpb, tmplen);
-            memcpy(ptr, tmpb, tmplen);
-            ptr += tmplen;
-        }
+#if (useWMBR==1)
+    for (int i = 0; i < m_k; i++) {
+        m_wmbrs[i].storeToByteArray(&tmpb, tmplen);
+        memcpy(ptr, tmpb, tmplen);
+        ptr += tmplen;
     }
+#endif
     memcpy(ptr, &m_startTime, sizeof(double));
     ptr += sizeof(double);
     memcpy(ptr, &m_endTime, sizeof(double));
@@ -162,18 +169,17 @@ void MBBCk::getMBRAtTime(double t, SpatialIndex::Region &out) const {
                          m_mbrs[p+1].m_pLow[1]-(te-t)*m_vmbrs[p].m_pHigh[1]);
     double yhigh=std::min(m_mbrs[p].m_pHigh[1]+(t-ts)*m_vmbrs[p].m_pHigh[1],
                           m_mbrs[p+1].m_pHigh[1]-(te-t)*m_vmbrs[p].m_pLow[1]);
-    if(useWMBR) {
-        out.m_pLow[0] = std::max(xlow, m_wmbrs[p].m_pLow[0]);
-        out.m_pLow[1] = std::max(ylow, m_wmbrs[p].m_pLow[1]);
-        out.m_pHigh[0] = std::min(xhigh, m_wmbrs[p].m_pHigh[0]);
-        out.m_pHigh[1] = std::min(yhigh, m_wmbrs[p].m_pHigh[1]);
-    }
-    else{
-        out.m_pLow[0]=xlow;
-        out.m_pLow[1]=ylow;
-        out.m_pHigh[0]=xhigh;
-        out.m_pHigh[1]=yhigh;
-    }
+#if (useWMBR==1)
+    out.m_pLow[0] = std::max(xlow, m_wmbrs[p].m_pLow[0]);
+    out.m_pLow[1] = std::max(ylow, m_wmbrs[p].m_pLow[1]);
+    out.m_pHigh[0] = std::min(xhigh, m_wmbrs[p].m_pHigh[0]);
+    out.m_pHigh[1] = std::min(yhigh, m_wmbrs[p].m_pHigh[1]);
+#else
+    out.m_pLow[0]=xlow;
+    out.m_pLow[1]=ylow;
+    out.m_pHigh[0]=xhigh;
+    out.m_pHigh[1]=yhigh;
+#endif
 
 //    if(xlow>xhigh||ylow>yhigh){
 //        std::cerr<<"sth must be error on \n"<<*this<<"at "<<t
@@ -293,14 +299,17 @@ void MBBCk::makeInfinite(uint32_t dimension,int k)
     m_k=k;
     m_mbrs.resize(m_k+1);
     m_vmbrs.resize(m_k);
-    if(useWMBR)
+#if (useWMBR==1)
         m_wmbrs.resize(m_k);
+#endif
     for(int i=0;i<m_k+1;i++){
         m_mbrs[i].makeInfinite(m_dimension);
     }
     for(int i=0;i<m_k;i++){
         m_vmbrs[i].makeInfinite(m_dimension);
-        if(useWMBR) m_wmbrs[i].makeInfinite(m_dimension);
+#if (useWMBR==1)
+        m_wmbrs[i].makeInfinite(m_dimension);
+#endif
     }
     m_startTime = std::numeric_limits<double>::max();
     m_endTime = -std::numeric_limits<double>::max();

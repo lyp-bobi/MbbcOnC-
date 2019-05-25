@@ -379,7 +379,7 @@ void Trajectory::getMBBCk(int k, SpatialIndex::MBBCk &out, double eps) const {
     int oldPhase=0;
     int newPhase=out.getPhase(m_points[0].m_startTime);
     for(int j=oldPhase;j<=newPhase;j++){
-        seg[j].push_back(m_points[0]);
+        seg[j].emplace_back(m_points[0]);
     }
     oldPhase=newPhase;
     for(int i=1;i<m_points.size()-1;i++){
@@ -387,17 +387,17 @@ void Trajectory::getMBBCk(int k, SpatialIndex::MBBCk &out, double eps) const {
         if(oldPhase!=newPhase){
             for(int j=oldPhase;j<newPhase;j++){
                 TimePoint mid=TimePoint::makemid(m_points[i-1],m_points[i],(j+1)*PeriodLen/double(k));
-                seg[j].push_back(mid);
-                seg[j+1].push_back(mid);
+                seg[j].emplace_back(mid);
+                seg[j+1].emplace_back(mid);
             }
             oldPhase=newPhase;
         }
-        seg[newPhase].push_back(m_points[i]);
+        seg[newPhase].emplace_back(m_points[i]);
     }
     oldPhase=out.getPhase(m_points[m_points.size()-1].m_startTime);
     newPhase=k-1;
     for(int j=oldPhase;j<=newPhase;j++){
-        seg[j].push_back(m_points[m_points.size()-1]);
+        seg[j].emplace_back(m_points[m_points.size()-1]);
     }
     Mbbc tmpbc;
     std::vector<Region> mbrs;
@@ -406,11 +406,11 @@ void Trajectory::getMBBCk(int k, SpatialIndex::MBBCk &out, double eps) const {
     for(int i=0;i<k;i++){
         Trajectory t(seg[i]);
         t.getMbbc(tmpbc,true,i*PeriodLen/(k),(i+1)*PeriodLen/(k));
-        mbrs.push_back(tmpbc.m_smbr);
-        vmbrs.push_back(tmpbc.m_vmbr);
-        wmbrs.push_back(tmpbc.m_wmbr);
+        mbrs.emplace_back(tmpbc.m_smbr);
+        vmbrs.emplace_back(tmpbc.m_vmbr);
+        wmbrs.emplace_back(tmpbc.m_wmbr);
     }
-    mbrs.push_back(tmpbc.m_embr);
+    mbrs.emplace_back(tmpbc.m_embr);
     out.m_mbrs=mbrs;
     out.m_vmbrs=vmbrs;
     out.m_wmbrs=wmbrs;
@@ -458,10 +458,29 @@ std::vector<SpatialIndex::TimePoint> Trajectory::simplifyWithRDP(std::vector<Spa
     }
     else { //base case 2, all points between are to be removed.
         vector<SpatialIndex::TimePoint> r(1,Points[0]);
-        r.push_back(Points[Points.size()-1]);
+        r.emplace_back(Points[Points.size()-1]);
         return r;
     }
 }
+
+std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::TimePoint> mask){
+    vector<TimePoint> seg;
+    vector<Trajectory> res;
+    auto iter1=m_points.begin();
+    auto iter2=mask.begin();
+    assert(m_points[0]==mask[0]);
+    for(;iter2!=mask.end();iter2++){
+        seg.clear();
+        while(iter1!=m_points.end()&&iter1->m_startTime<=iter2->m_startTime){
+            seg.emplace_back(*iter1);
+            iter1++;
+        }
+        res.emplace_back(Trajectory(seg));
+        iter1--;
+    }
+    return res;
+}
+
 //void Trajectory::getMBBCkT2(int k, SpatialIndex::MBBCkT2 &out,double eps) const {
 //    out.m_k=k;
 //    out.makeInfinite(m_dimension,k);
@@ -474,7 +493,7 @@ std::vector<SpatialIndex::TimePoint> Trajectory::simplifyWithRDP(std::vector<Spa
 //        Trajectory tmpTraj;
 //        vector<TimePoint> seg;
 //        while(m_points[curP].m_startTime<m_points[i].m_startTime){
-//            seg.push_back(m_points[curP]);
+//            seg.emplace_back(m_points[curP]);
 //            curP++;
 //        }
 //        out.m_points=simp;
@@ -680,12 +699,12 @@ std::vector<std::string> split(std::string strtem,char a)
     pos1 = 0;
     while (std::string::npos != pos2)
     {
-        strvec.push_back(strtem.substr(pos1, pos2 - pos1));
+        strvec.emplace_back(strtem.substr(pos1, pos2 - pos1));
 
         pos1 = pos2 + 1;
         pos2 = strtem.find(a, pos1);
     }
-    strvec.push_back(strtem.substr(pos1));
+    strvec.emplace_back(strtem.substr(pos1));
     return strvec;
 }
 
@@ -695,7 +714,7 @@ void Trajectory::loadFromString(std::string str) {
         std::vector<std::string> xyt=split(p,',');
         double xy[2];
         xy[0]=std::stod(xyt[0]);xy[1]=std::stod(xyt[1]);
-        m_points.push_back(TimePoint(xy,std::stod(xyt[2]),std::stod(xyt[2]),2));
+        m_points.emplace_back(TimePoint(xy,std::stod(xyt[2]),std::stod(xyt[2]),2));
     }
 }
 

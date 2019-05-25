@@ -426,7 +426,7 @@ double Region::getMinimumDistance(const Point& p) const
 			ret += std::pow(p.getCoordinate(i) - m_pHigh[i], 2.0);
 		}
 	}
-
+    if(std::isnan(ret)) std::cerr<<"Region Point distance producing nan!";
 	return std::sqrt(ret);
 }
 
