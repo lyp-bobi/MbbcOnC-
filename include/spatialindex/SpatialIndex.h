@@ -261,6 +261,7 @@ namespace SpatialIndex
 #include "Mbbc.h"
 #include "MBRk.h"
 #include "MBBCk.h"
+#include "MBC.h"
 #include "Trajectory.h"
 #include "RTree.h"
 #include "R2Tree.h"
