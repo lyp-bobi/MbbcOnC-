@@ -147,9 +147,6 @@ bool MBRk::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     int p=getPhase(in.m_startTime);
     Region br;
     getMBR(br);
-    if(!br.intersectsShape(in)&&m_mbrs[p].intersectsShape(in))
-        system("pause");
-//    std::cout<<"Query is\n"<<in<<"\nIntersect\n"<<*this<<"\nand result is "<<m_mbrs[p].intersectsShape(in)<<"\n\n\n\n\n";
     return m_mbrs[p].intersectsShape(in);
 }
 bool MBRk::intersectsTimePoint(const SpatialIndex::TimePoint &in) const {

@@ -21,11 +21,11 @@
 //#define sourceFile "D://geolifedata.csv"
 #define sourceFile "D://t200n10ks.txt"
 #define linesToRead 1e10
-#define testtime 100
+#define testtime 1000
 #define dimension 2
 #define indexcap 5
 #define leafcap 5
-#define QueryType 2
+#define QueryType 1
 //1 for time-slice range, 2 for 5-NN
 
 using namespace std;
@@ -36,6 +36,8 @@ class RangeVisitor : public IVisitor
 public:
     size_t m_indexIO;
     size_t m_leafIO;
+    size_t m_indexvisited;
+    size_t m_leafvisited;
     size_t m_resultGet;
     id_type m_lastResult;
     IShape *m_query;
@@ -45,8 +47,12 @@ public:
 
     void visitNode(const INode& n)
     {
-        if (n.isLeaf()) m_leafIO++;
-        else m_indexIO++;
+//        if (n.isLeaf()) m_leafIO++;
+//        else m_indexIO++;
+        uint32_t size=n.getByteArraySize();
+
+        if (n.isLeaf()) {m_indexvisited++;m_leafIO+=size;}
+        else {m_leafvisited++;m_indexIO+=size;cout<<}
     }
 
     void visitData(const IData& d)
@@ -277,12 +283,14 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
     //first level: vector of time period
     //second level: vector of segments in the time period
     cerr<<"loading generated trajectories from txt to trajectories"<<endl;
+
     ifstream inFile(sourceFile, ios::in);
     string lineStr;
     set<id_type> ids;
     multimap<id_type,xyt> trajs;
     list<vector<pair<id_type ,Trajectory> > > res(getMaxPeriod());
     int curLine=0;
+    double minx=40000,maxx=0,miny=40000,maxy=0;
     while (getline(inFile, lineStr)&&curLine<linesToRead){
         string str;
         stringstream ss(lineStr);
@@ -300,11 +308,16 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
         getline(ss, str, '\t');
         double speed=stringToNum<double>(str);
         xyt p={x,y,t};
+        if(x>maxx) maxx=x;
+        if(x<minx) minx=x;
+        if(y>maxy) maxy=y;
+        if(y<miny) miny=y;
 //        cout<<id<<","<<x<<","<<y<<","<<t<<endl;
         ids.insert(id);
         trajs.insert(make_pair(id,p));
         curLine++;
     }
+    cout<<minx<<" "<<maxx<<" "<<miny<<" "<<maxy<<endl;
     for(auto id:ids){
         multimap<id_type ,xyt>::iterator beg,end,iter;
         vector<xyt> traj;
@@ -334,7 +347,6 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
     return res;
 }
 
-
 void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries){
     clock_t start,end;
 
@@ -347,11 +359,12 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries){
         }else if(QueryType==2){
             tree->nearestNeighborQuery(5,*queries[i],vis);
         }
-        if(i%100==0)cout<<"finished "<<i<<"already\n";
+//        cout<<"finished "<<i<<"already\n";
     }
     end=clock();
     cerr<<"Querying time: "<< end-start<<endl;
-    cerr<<"VISIT NODE "<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
+    cerr<<"VISIT NODE "<<vis.m_indexvisited<<"\t"<<vis.m_leafvisited<<endl;
+    cerr<<"Byte loaded "<<vis.m_indexIO<<"\t"<<vis.m_leafIO<<endl;
     cerr << *tree;
 }
 
@@ -380,27 +393,28 @@ int main(){
         list<vector<pair<id_type, Trajectory> > > trajs = loadGTToTrajs();
         auto traj1=*trajs.begin();
         cout<<traj1[0].second.toString();
-        TrajMbrStream ds1;
+//        TrajMbrStream ds1;
 //        TrajMbbcStream ds2;
+        int a=8,b=20,c=25,d=50,e=100;
         TrajMBRkStream ds3;
         TrajMBRkStream ds34;
         TrajMBRkStream ds38;
         TrajMBRkStream ds316;
         TrajMBRkStream ds332;
         cout<<"total trajectories:"<<trajs.front().size()<<endl;
-        ds1.feedTraj(&traj1);
+//        ds1.feedTraj(&traj1);
 //        ds2.feedTraj(&trajs.front());
-        ds3.feedTraj(&traj1, 2);
-        ds34.feedTraj(&traj1, 4);
-        ds38.feedTraj(&traj1, 10);
-        ds316.feedTraj(&traj1, 20);
-        ds332.feedTraj(&traj1, 40);
+        ds3.feedTraj(&traj1, a);
+        ds34.feedTraj(&traj1, b);
+        ds38.feedTraj(&traj1, c);
+        ds316.feedTraj(&traj1, d);
+        ds332.feedTraj(&traj1, e);
         vector<IShape *> queries;
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
 //          double pLow[2] = {random(39.992560,39.996714), random(116.319681,116.321562)};
-                double pLow[2] = {random(31, 40.5), random(110, 122)};
-                double pHigh[2] = {pLow[0] + random(0.01, 0.1), pLow[1] + random(0.01, 0.1)};
+                double pLow[2] = {random(0, 25000), random(0, 30000)};
+                double pHigh[2] = {pLow[0] + random(1, 200), pLow[1] + random(1, 200)};
                 Region r(pLow, pHigh, 2);
 //          cout<<pLow[0]<<","<<pLow[1]<<endl;
                 int t = int(random(0, PeriodLen));
@@ -442,15 +456,15 @@ int main(){
 //                RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap, leafcap, 2, SpatialIndex::RTree::RV_RSTAR,
 //                indexIdentifier1);
         ISpatialIndex *paar1 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds3, *file2, 0.9, indexcap, leafcap, 2, 2, indexIdentifier2);
+                PAARTree::BulkLoadMethod::BLM_STR2, ds3, *file2, 0.9, indexcap, leafcap, 2, a, indexIdentifier2);
         ISpatialIndex *paar2 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds34, *file3, 0.9, indexcap, leafcap, 2, 4, indexIdentifier3);
+                PAARTree::BulkLoadMethod::BLM_STR2, ds34, *file3, 0.9, indexcap, leafcap, 2, b, indexIdentifier3);
         ISpatialIndex *paar3 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds38, *file4, 0.9, indexcap, leafcap, 2, 10, indexIdentifier4);
+                PAARTree::BulkLoadMethod::BLM_STR2, ds38, *file4, 0.9, indexcap, leafcap, 2, c, indexIdentifier4);
         ISpatialIndex *paar4 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap, leafcap, 2, 20, indexIdentifier5);
+                PAARTree::BulkLoadMethod::BLM_STR2, ds316, *file5, 0.9, indexcap, leafcap, 2, d, indexIdentifier5);
         ISpatialIndex *paar5 = PAARTree::createAndBulkLoadNewPAARTree(
-                PAARTree::BulkLoadMethod::BLM_STR2, ds332, *file5, 0.9, indexcap, leafcap, 2, 40, indexIdentifier6);
+                PAARTree::BulkLoadMethod::BLM_STR2, ds332, *file5, 0.9, indexcap, leafcap, 2, e, indexIdentifier6);
 
 //    real->m_DataType=TrajectoryType;
 //        r->m_DataType = TrajectoryType;
@@ -461,15 +475,15 @@ int main(){
         paar5->m_DataType = TrajectoryType;
         cerr << "start query!" << endl << endl << endl;
 //        TreeQueryBatch(r, queries);
-        cerr << "\n\n\npaa-2\n";
+        cerr << "\n\n\npaa-"<<a<<"\n";
         TreeQueryBatch(paar1, queries);
-        cerr << "\n\n\npaa-4\n";
+        cerr << "\n\n\npaa-"<<b<<"\n";
         TreeQueryBatch(paar2, queries);
-        cerr << "\n\n\npaa-10\n";
+        cerr << "\n\n\npaa-"<<c<<"\n";
         TreeQueryBatch(paar3, queries);
-        cerr << "\n\n\npaa-20\n";
+        cerr << "\n\n\npaa-"<<d<<"\n";
         TreeQueryBatch(paar4, queries);
-        cerr << "\n\n\npaa-40\n";
+        cerr << "\n\n\npaa-"<<e<<"\n";
         TreeQueryBatch(paar5, queries);
     }
     catch (Tools::Exception& e)

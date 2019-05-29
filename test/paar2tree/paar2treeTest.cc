@@ -19,9 +19,9 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 //#define sourceFile "D://geolifedata.csv"
-#define sourceFile "D://t200n10ks.txt"
+#define sourceFile "D://t200n100ks.txt"
 #define linesToRead 1e10
-#define testtime 100
+#define testtime 200
 #define dimension 2
 #define indexcap 5
 #define leafcap 2
@@ -36,6 +36,8 @@ class RangeVisitor : public IVisitor
 public:
     size_t m_indexIO;
     size_t m_leafIO;
+    size_t m_indexvisited;
+    size_t m_leafvisited;
     size_t m_resultGet;
     id_type m_lastResult;
     IShape *m_query;
@@ -48,8 +50,9 @@ public:
 //        if (n.isLeaf()) m_leafIO++;
 //        else m_indexIO++;
         uint32_t size=n.getByteArraySize();
-        if (n.isLeaf()) m_leafIO+=size;
-        else m_indexIO+=size;
+
+        if (n.isLeaf()) {m_indexvisited++;m_leafIO+=size;}
+        else {m_leafvisited++;m_indexIO+=size;}
     }
 
     void visitData(const IData& d)
@@ -396,7 +399,8 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries){
     }
     end=clock();
     cerr<<"Querying time: "<< end-start<<endl;
-    cerr<<"VISIT NODE "<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
+    cerr<<"VISIT NODE "<<vis.m_indexvisited<<","<<vis.m_leafvisited<<endl;
+    cerr<<"Byte loaded "<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
     cerr << *tree;
 }
 
@@ -424,6 +428,7 @@ int main(){
         srand((int) time(NULL));
         list<vector<pair<id_type, Trajectory> > > trajs = loadGTToTrajs();
         auto traj1=*trajs.begin();
+//        traj1.resize(10000);
 //        TrajMbrStream ds1;
 //        TrajMBRkStream ds3;
 //        TrajMBRkStream ds34;
@@ -455,7 +460,8 @@ int main(){
                 TimeRegion *tr = new TimeRegion(pLow, pHigh, t, t, 2);
                 queries.emplace_back(tr);
             } else if (QueryType == 2) {
-                queries.emplace_back(&traj1[int(random(0,10*traj1.size()))%traj1.size()].second);
+//                queries.emplace_back(&traj1[int(random(0,10*traj1.size()))%traj1.size()].second);
+                queries.emplace_back(&traj1[int(i)%traj1.size()].second);
             }
         }
 
@@ -506,8 +512,8 @@ int main(){
 //                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds34_, *file3, 0.9, indexcap, leafcap, 2, 4, indexIdentifier7);
         ISpatialIndex *paar23 = PAAR2Tree::createAndBulkLoadNewPAAR2Tree(
                 PAAR2Tree::BulkLoadMethod::BLM_STR2, ds38_, *file4, 0.9, indexcap, leafcap, 2, 1, indexIdentifier8);
-        ISpatialIndex *paar24 = PAAR2Tree::createAndBulkLoadNewPAAR2Tree(
-                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds316_, *file5, 0.9, indexcap, leafcap, 2, 1, indexIdentifier9);
+//        ISpatialIndex *paar24 = PAAR2Tree::createAndBulkLoadNewPAAR2Tree(
+//                PAAR2Tree::BulkLoadMethod::BLM_STR2, ds316_, *file5, 0.9, indexcap, leafcap, 2, 1, indexIdentifier9);
 
 //    real->m_DataType=TrajectoryType;
 //        r->m_DataType = TrajectoryType;
@@ -518,7 +524,7 @@ int main(){
 //        paar21->m_DataType = TrajectoryType;
 //        paar22->m_DataType = TrajectoryType;
         paar23->m_DataType = TrajectoryType;
-        paar24->m_DataType = TrajectoryType;
+//        paar24->m_DataType = TrajectoryType;
         cerr << "start query!" << endl << endl << endl;
 //        cerr<<"r\n";
 //        TreeQueryBatch(r, queries);
@@ -530,11 +536,11 @@ int main(){
 //        TreeQueryBatch(paar2, queries);
 //        cerr << "\n\n\npaar2-4\n";
 //        TreeQueryBatch(paar22, queries);
-        cerr << "\n\n\npaar-16\n";
+        cerr << "\n\n\nmbr-1\n";
         TreeQueryBatch(paar3, queries);
-        cerr << "\n\n\npaar2-8\n";
+        cerr << "\n\n\nmbbc\n";
         TreeQueryBatch(paar23, queries);
-        cerr << "\n\n\npaar-32\n";
+        cerr << "\n\n\nmbr-1 fan\n";
         TreeQueryBatch(paar4, queries);
 //        cerr << "\n\n\npaar2-16\n";
 //        TreeQueryBatch(paar24, queries);
