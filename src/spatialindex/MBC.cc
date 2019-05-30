@@ -6,6 +6,7 @@
 #include <cmath>
 #include <limits>
 #include <algorithm>
+#include <cfloat>
 
 #include <spatialindex/SpatialIndex.h>
 
@@ -148,15 +149,22 @@ void MBC::getVMBR(Region& out) const{
     }
 }
 void MBC::getMBRAtTime(double t, SpatialIndex::Region &out) const {
-    TimePoint tp=TimePoint::makemid(TimePoint(m_pLow,m_startTime,m_startTime,m_dimension),
-                       TimePoint(m_pHigh,m_endTime,m_endTime,m_dimension),t);
-    double r=std::min((t-m_startTime)*m_rv,m_rd);
-    Point plow=tp,phigh=tp;
-    for(int i=0;i<m_dimension;i++){
-        plow.m_pCoords[i]=tp.m_pCoords[i]-r;
-        phigh.m_pCoords[i]=tp.m_pCoords[i]+r;
+    TimePoint tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
+                                      TimePoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
+    Point plow = tp, phigh = tp;
+    if(std::isfinite(m_rv)) {
+        double r = std::min((t - m_startTime) * m_rv, m_rd);
+        for (int i = 0; i < m_dimension; i++) {
+            plow.m_pCoords[i] = tp.m_pCoords[i] - r;
+            phigh.m_pCoords[i] = tp.m_pCoords[i] + r;
+        }
+    }else{
+        for (int i = 0; i < m_dimension; i++) {
+            plow.m_pCoords[i] = std::max(tp.m_pCoords[i],std::min(m_pLow[i],m_pHigh[i]));
+            phigh.m_pCoords[i] = std::min(tp.m_pCoords[i] ,std::max(m_pLow[i],m_pHigh[i]));
+        }
     }
-    out=Region(plow,phigh);
+    out = Region(plow, phigh);
 }
 
 
@@ -216,12 +224,14 @@ uint32_t MBC::getDimension() const{return m_dimension;}
 void MBC::getMBR(Region& out) const{
     Region br;
     br.makeInfinite(m_dimension);
-    double ts=m_rd/m_rv;
-    Region tmpbr;
-    getMBRAtTime(m_startTime+ts,tmpbr);
-    br.combineRegion(tmpbr);
-    getMBRAtTime(m_endTime-ts,tmpbr);
-    br.combineRegion(tmpbr);
+    if(std::isfinite(m_rv)) {
+        double ts = m_rd / m_rv;
+        Region tmpbr;
+        getMBRAtTime(m_startTime + ts, tmpbr);
+        br.combineRegion(tmpbr);
+        getMBRAtTime(m_endTime - ts, tmpbr);
+        br.combineRegion(tmpbr);
+    }
     br.combinePoint(Point(m_pLow,m_dimension));
     br.combinePoint(Point(m_pHigh,m_dimension));
     out.makeInfinite(m_dimension+1);
@@ -239,12 +249,15 @@ void MBC::getMBR(Region& out) const{
 }
 
 void MBC::getTimeMBR(SpatialIndex::TimeRegion &out) const {
-    double ts=m_rd/m_rv;
-    Region tmpbr;
-    getMBRAtTime(m_startTime+ts,tmpbr);
-    out.combineRegion(tmpbr);
-    getMBRAtTime(m_endTime-ts,tmpbr);
-    out.combineRegion(tmpbr);
+    out.makeInfinite(m_dimension);
+    if(std::isfinite(m_rv)) {
+        double ts = m_rd / m_rv;
+        Region tmpbr;
+        getMBRAtTime(m_startTime + ts, tmpbr);
+        out.combineRegion(tmpbr);
+        getMBRAtTime(m_endTime - ts, tmpbr);
+        out.combineRegion(tmpbr);
+    }
     out.combinePoint(Point(m_pLow,m_dimension));
     out.combinePoint(Point(m_pHigh,m_dimension));
     out.m_startTime=m_startTime;
@@ -299,10 +312,92 @@ void MBC::makeInfinite(uint32_t dimension)
     m_endTime = -std::numeric_limits<double>::max();
 }
 
+int MBC::getOrient() const {
+    int res=0;
+    for(int i=0;i<m_dimension;i++){
+        if(m_pHigh[i]>m_pLow[i]) res+=int(std::pow(2,i));
+    }
+    return res;
+}
 
 void MBC::combineMBC(const MBC& r)
 {
-    throw Tools::NotSupportedException("DON'T try to combine MBBC!");
+//    throw Tools::NotSupportedException("don't combine MBC here,load MBCs directly to Node Level1");
+    TimeRegion br1, br2;
+    getTimeMBR(br1);
+    r.getTimeMBR(br2);
+    br1.combineRegion(br2);
+    int ori = getOrient();
+    int mod = 2;
+    double *pLow = new double(m_dimension);
+    double *pHigh = new double(m_dimension);
+    for (int i = 0; i < m_dimension; i++) {
+        if (ori % mod == 1) {
+            pLow[i] = br1.m_pLow[i];
+            pHigh[i] = br1.m_pHigh[i];
+        } else {
+            pHigh[i] = br1.m_pLow[i];
+            pLow[i] = br1.m_pHigh[i];
+        }
+        ori /= 2;
+    }
+    double stime = std::min(m_startTime, r.m_startTime),
+            etime = std::min(m_endTime, r.m_endTime);
+    TimePoint p1(pLow, stime, stime, m_dimension);
+    TimePoint p2(pHigh, etime, etime, m_dimension);
+    Point p;
+    Region tmpbr;
+    double d;
+
+    double dt=0;
+    double t1=0,t2=0;
+    if(std::isfinite(m_rv))
+        dt=m_rd/m_rv;
+    else
+        dt=m_rd/(Point(pLow,m_dimension).getMinimumDistance(Point(pHigh,m_dimension))/(m_endTime-m_startTime));
+    t1 = m_startTime + dt, t2 = m_endTime - dt;
+    double newrd = 0;
+    getMBRAtTime(m_startTime, tmpbr);
+    d = tmpbr.getMinimumDistance(TimePoint::makemid(p1, p2, m_startTime));
+    if (d > newrd) newrd = d;
+    getMBRAtTime(t1, tmpbr);
+    tmpbr.getCenter(p);
+    d = p.getMinimumDistance(TimePoint::makemid(p1, p2, t1)) + m_rd;
+    if (d > newrd) newrd = d;
+    getMBRAtTime(t2, tmpbr);
+    tmpbr.getCenter(p);
+    d = p.getMinimumDistance(TimePoint::makemid(p1, p2, t2)) + m_rd;
+    if (d > newrd) newrd = d;
+    getMBRAtTime(m_endTime, tmpbr);
+    d = tmpbr.getMinimumDistance(TimePoint::makemid(p1, p2, m_endTime));
+    if (d > newrd) newrd = d;
+
+    if(std::isfinite(r.m_rv))
+        dt=r.m_rd/r.m_rv;
+    else
+        dt=r.m_rd/(Point(pLow,r.m_dimension).getMinimumDistance(Point(pHigh,r.m_dimension))/(r.m_endTime-r.m_startTime));
+    t1=r.m_startTime+dt;t2=r.m_endTime-dt;
+    r.getMBRAtTime(r.m_startTime,tmpbr);
+    d=tmpbr.getMinimumDistance(TimePoint::makemid(p1,p2,r.m_startTime));
+    if(d>newrd) newrd=d;
+    r.getMBRAtTime(t1,tmpbr);
+    tmpbr.getCenter(p);
+    d=p.getMinimumDistance(TimePoint::makemid(p1,p2,t1))+r.m_rd;
+    if(d>newrd) newrd=d;
+    r.getMBRAtTime(t2,tmpbr);
+    tmpbr.getCenter(p);
+    d=p.getMinimumDistance(TimePoint::makemid(p1,p2,t2))+r.m_rd;
+    if(d>newrd) newrd=d;
+    getMBRAtTime(r.m_endTime,tmpbr);
+    d=tmpbr.getMinimumDistance(TimePoint::makemid(p1,p2,r.m_endTime));
+    if(d>newrd) newrd=d;
+    newrd=std::min(newrd,(Point(pLow,r.m_dimension).getMinimumDistance(Point(pHigh,r.m_dimension)));
+    m_startTime=stime;
+    m_endTime=etime;
+    m_pLow=pLow;
+    m_pHigh=pHigh;
+    m_rv=std::numeric_limits<double>::infinity();
+    m_rd=newrd;
 }
 
 bool MBC::containsMBC(const SpatialIndex::MBC &r) {

@@ -57,17 +57,14 @@ namespace SpatialIndex
         virtual bool intersectsTimeRegion(const TimeRegion& in) const;
         virtual bool intersectsTimePoint(const TimePoint& in) const;
         virtual bool intersectsRegion(const Region& in) const;
-        virtual bool intersectsLineSegment(const LineSegment& in) const;
-        virtual bool containsPoint(const Point& in) const;
         virtual bool intersectsMBC(const MBC& in) const;
 
         virtual void combineMBC(const MBC& in);
         virtual bool containsMBC(const MBC& in);
         virtual void getCombinedMBC(MBC& out, const MBC& in) const;
+        virtual int getOrient() const;
 
         virtual void getTimeMBR(TimeRegion& out) const;
-
-        const std::string toString() const;
 
         double m_startTime,m_endTime;
         double m_rd,m_rv;

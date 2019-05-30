@@ -52,7 +52,7 @@ public:
         uint32_t size=n.getByteArraySize();
 
         if (n.isLeaf()) {m_indexvisited++;m_leafIO+=size;}
-        else {m_leafvisited++;m_indexIO+=size;cout<<}
+        else {m_leafvisited++;m_indexIO+=size;}
     }
 
     void visitData(const IData& d)
@@ -414,7 +414,7 @@ int main(){
             if (QueryType == 1) {
 //          double pLow[2] = {random(39.992560,39.996714), random(116.319681,116.321562)};
                 double pLow[2] = {random(0, 25000), random(0, 30000)};
-                double pHigh[2] = {pLow[0] + random(1, 200), pLow[1] + random(1, 200)};
+                double pHigh[2] = {pLow[0] + random(1, 500), pLow[1] + random(1, 500)};
                 Region r(pLow, pHigh, 2);
 //          cout<<pLow[0]<<","<<pLow[1]<<endl;
                 int t = int(random(0, PeriodLen));

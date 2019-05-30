@@ -413,6 +413,7 @@ void Trajectory::getMBBCk(int k, SpatialIndex::MBBCk &out, double eps) const {
     mbrs.emplace_back(tmpbc.m_embr);
     out.m_mbrs=mbrs;
     out.m_vmbrs=vmbrs;
+    std::cout<<vmbrs[0]<<std::endl;
     out.m_wmbrs=wmbrs;
     out.m_startTime=m_points[0].m_startTime;
     out.m_endTime=m_points[m_points.size()-1].m_startTime;
