@@ -198,6 +198,46 @@ void Trajectory::getMBR(Region& out) const{
         out.combinePoint(m_points[i]);
     }
 }
+
+void Trajectory::getMBC(SpatialIndex::MBC &out) const {
+    out.makeInfinite(m_dimension);
+    if(m_points.size()<=1){
+        return;
+    }
+    double startx=m_points.begin()->m_pCoords[0],starty=m_points.begin()->m_pCoords[1],startt=m_points.begin()->m_startTime;
+    double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_startTime;
+    double avx=(endx-startx)/(endt-startt),avy=(endy-starty)/(endt-startt);
+    TimePoint p1=*m_points.begin(),p2=m_points.back();
+    double rd=0,rv=0;
+    double vx,vy;
+    for(int i=0;i<m_points.size();i++){
+        TimePoint p;
+        double ptime=m_points[i].m_startTime;
+        if(ptime-startt>0){
+            vx=(m_points[i].m_pCoords[0]-startx)/(ptime-startt);
+            vy=(m_points[i].m_pCoords[1]-starty)/(ptime-startt);
+        }
+        if(endt-m_points[i].m_startTime>0) {
+            vx = (endx - m_points[i].m_pCoords[0]) / (endt - ptime);
+            vy = (endy - m_points[i].m_pCoords[1]) / (endt - ptime);
+        }
+        p=TimePoint::makemid(p1,p2,ptime);
+        double prv=std::sqrt((vx-avx)*(vx-avx)+(vy-avy)*(vy-avy));
+        double prd=m_points[i].getMinimumDistance(p);
+        if(prv>rv) rv=prv;
+        if(prd>rd) rd=prd;
+    }
+    out=MBC(p1.m_pCoords,p2.m_pCoords,m_dimension,rd,rv);
+}
+void Trajectory::getTimeMBR(SpatialIndex::TimeRegion &out) const {
+    out.makeInfinite(m_dimension);
+    for(int i=0;i<m_points.size();i++){
+        out.combinePoint(m_points[i]);
+        if(m_points[i].m_startTime<out.m_startTime) out.m_startTime=m_points[i].m_startTime;
+        if(m_points[i].m_startTime>out.m_endTime) out.m_endTime=m_points[i].m_startTime;
+    }
+}
+
 //todo: should have implement a time divivsion class!
 void Trajectory::getMbbc(Mbbc& out,bool tight) const{
     out.makeInfinite(m_dimension);

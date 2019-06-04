@@ -63,6 +63,8 @@ namespace SpatialIndex
     virtual void getCombinedTrajectory(Trajectory& out, const Trajectory& in) const;
 
     const std::string toString() const;
+    virtual void getMBC(MBC& out) const;
+    virtual void getTimeMBR(TimeRegion& out) const;
     virtual void getMbbc(Mbbc& out,bool tight) const;
     virtual void getMbbc(Mbbc& out,bool tight,double tstart,double tend) const;
     TimePoint getPointAtTime(double time) const;

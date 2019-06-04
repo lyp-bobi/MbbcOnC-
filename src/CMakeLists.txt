@@ -33,9 +33,11 @@ set(SIDX_BASE_HPP
   "${SIDX_HEADERS_DIR}/Point.h"
   "${SIDX_HEADERS_DIR}/Region.h"
   "${SIDX_HEADERS_DIR}/RTree.h"
+  "${SIDX_HEADERS_DIR}/RTreeC.h"
   "${SIDX_HEADERS_DIR}/R2Tree.h"
   "${SIDX_HEADERS_DIR}/PAARTree.h"
   "${SIDX_HEADERS_DIR}/PAAR2Tree.h"
+  "${SIDX_HEADERS_DIR}/LERTree.h"
   "${SIDX_HEADERS_DIR}/SpatialIndex.h"
   "${SIDX_HEADERS_DIR}/TimePoint.h"
   "${SIDX_HEADERS_DIR}/TimeRegion.h"
@@ -175,6 +177,24 @@ set(SIDX_PAAR2TREE_CPP
         )
 list (APPEND SIDX_CPP ${SIDX_PAAR2TREE_CPP})
 
+set(SIDX_LERTREE_CPP
+        "${SIDX_SRC_DIR}/lertree/BulkLoader.cc"
+        "${SIDX_SRC_DIR}/lertree/BulkLoader.h"
+        "${SIDX_SRC_DIR}/lertree/Index.cc"
+        "${SIDX_SRC_DIR}/lertree/Index.h"
+        "${SIDX_SRC_DIR}/lertree/Leaf.cc"
+        "${SIDX_SRC_DIR}/lertree/Leaf.h"
+        "${SIDX_SRC_DIR}/lertree/Node.cc"
+        "${SIDX_SRC_DIR}/lertree/Node.h"
+        "${SIDX_SRC_DIR}/lertree/L1Index.cc"
+        "${SIDX_SRC_DIR}/lertree/L1Index.h"
+        "${SIDX_SRC_DIR}/lertree/PointerPoolNode.h"
+        "${SIDX_SRC_DIR}/lertree/LERtree.cc"
+        "${SIDX_SRC_DIR}/lertree/LERtree.h"
+        "${SIDX_SRC_DIR}/lertree/Statistics.cc"
+        "${SIDX_SRC_DIR}/lertree/Statistics.h"
+        )
+list (APPEND SIDX_CPP ${SIDX_LERTREE_CPP})
 
 set(SIDX_STORAGEMANAGER_CPP
   "${SIDX_SRC_DIR}/storagemanager/Buffer.cc"

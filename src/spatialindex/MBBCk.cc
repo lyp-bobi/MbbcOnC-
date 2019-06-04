@@ -85,15 +85,15 @@ MBBCk* MBBCk::clone() {
 //
 uint32_t MBBCk::getByteArraySize() const {
 #if (useWMBR==1)
-        return sizeof(int)+m_mbrs[0].getByteArraySize()*(3*m_k+1)+2 * sizeof(double);
+        return sizeof(id_type)+m_mbrs[0].getByteArraySize()*(3*m_k+1)+2 * sizeof(double);
 #else
         return sizeof(int)+m_mbrs[0].getByteArraySize()*(2*m_k+1)+2 * sizeof(double);
 #endif
 }
 
 void MBBCk::loadFromByteArray(const uint8_t* ptr) {
-    memcpy(&m_k, ptr, sizeof(int));
-    ptr += sizeof(int);
+    memcpy(&m_k, ptr, sizeof(id_type));
+    ptr += sizeof(id_type);
     m_mbrs.resize(m_k+1);
     for(int i=0;i<m_k+1;i++){
         m_mbrs[i].loadFromByteArray(ptr);
@@ -121,8 +121,8 @@ void MBBCk::storeToByteArray(uint8_t **data, uint32_t &len) {
     uint8_t* ptr = *data;
     uint8_t* tmpb;
     uint32_t tmplen;
-    memcpy(ptr, &m_k, sizeof(int));
-    ptr += sizeof(int);
+    memcpy(ptr, &m_k, sizeof(id_type));
+    ptr += sizeof(id_type);
     for(int i=0;i<m_k+1;i++){
         m_mbrs[i].storeToByteArray(&tmpb,tmplen);
         memcpy(ptr, tmpb, tmplen);
@@ -147,7 +147,7 @@ void MBBCk::storeToByteArray(uint8_t **data, uint32_t &len) {
     assert(len==(ptr - *data)+sizeof(double));
 }
 
-inline int MBBCk::getPhase(double t) const{
+int MBBCk::getPhase(double t) const{
     double d=t-getPeriodStart(t);
     int p=floor(d/(double(PeriodLen)/(m_k)));
     if(p>=m_k){p=p-1;}

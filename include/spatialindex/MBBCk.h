@@ -10,7 +10,7 @@ namespace SpatialIndex
     class SIDX_DLL MBBCk: public Tools::IObject, public virtual IShape,public IEvolvingShape{
 
         public:
-        inline int getPhase(double t) const;
+        int getPhase(double t) const;
         MBBCk();
         MBBCk(int k);
         MBBCk(const std::vector<Region> mbrs,const std::vector<Region> vmbrs,const std::vector<Region> wmbrs, double tStart, double tEnd);

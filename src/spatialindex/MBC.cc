@@ -14,7 +14,7 @@ using namespace SpatialIndex;
 
 MBC::MBC() {
     m_dimension=2;
-    makeInfinite(3);
+    makeInfinite(2);
 }
 MBC::MBC(const double *pLow, const double *pHigh, uint32_t dimension, double rd, double rv) {
     try
@@ -105,14 +105,13 @@ uint32_t MBC::getByteArraySize() const {
 }
 
 void MBC::loadFromByteArray(const uint8_t* ptr) {
-    uint32_t dimension;
-    memcpy(&dimension, ptr, sizeof(uint32_t));
+    memcpy(&m_dimension, ptr, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
     memcpy(&m_rd, ptr, sizeof(double));
     ptr += sizeof(double);
     memcpy(&m_rv, ptr, sizeof(double));
     ptr += sizeof(double);
-    makeInfinite(dimension);
+    makeInfinite(m_dimension);
     memcpy(m_pLow, ptr, m_dimension * sizeof(double));
     ptr += m_dimension * sizeof(double);
     memcpy(m_pHigh, ptr, m_dimension * sizeof(double));
@@ -391,7 +390,7 @@ void MBC::combineMBC(const MBC& r)
     getMBRAtTime(r.m_endTime,tmpbr);
     d=tmpbr.getMinimumDistance(TimePoint::makemid(p1,p2,r.m_endTime));
     if(d>newrd) newrd=d;
-    newrd=std::min(newrd,(Point(pLow,r.m_dimension).getMinimumDistance(Point(pHigh,r.m_dimension)));
+    newrd=std::min(newrd,(Point(pLow,r.m_dimension).getMinimumDistance(Point(pHigh,r.m_dimension))));
     m_startTime=stime;
     m_endTime=etime;
     m_pLow=pLow;
@@ -431,4 +430,109 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const MBC& r)
     os<<std::endl;
     os<<"rd: "<<r.m_rd<<",rv "<<r.m_rv<<std::endl;
     return os;
+}
+
+MBCs* MBCs::clone() {
+    throw Tools::NotSupportedException("clone");
+}
+
+MBCs::MBCs(const SpatialIndex::MBCs &in) {
+    m_ids=in.m_ids;
+    m_mbcs=in.m_mbcs;
+}
+uint32_t MBCs::getByteArraySize() const {
+    return sizeof(id_type)+(m_mbcs[0].getByteArraySize()+ sizeof(id_type))*m_mbcs.size();
+}
+
+void MBCs::storeToByteArray(uint8_t **data, uint32_t &len) {
+    len = getByteArraySize();
+    *data = new uint8_t[len];
+    uint8_t* ptr = *data;
+    uint8_t* tmpb;
+    uint32_t tmplen;
+    memcpy(ptr, &m_dimension, sizeof(uint32_t));
+    id_type size=m_mbcs.size();
+    memcpy(ptr, &size, sizeof(id_type));
+    ptr += sizeof(id_type);
+    for(int i=0;i<size;i++){
+        memcpy(ptr, &m_ids[i], sizeof(id_type));
+        m_mbcs[i].storeToByteArray(&tmpb,tmplen);
+        memcpy(ptr, tmpb, tmplen);
+        if(i!=size-1)
+            ptr += tmplen;
+    }
+}
+void MBCs::loadFromByteArray(const uint8_t *ptr) {
+    memcpy(&m_dimension, ptr, sizeof(uint32_t));
+    id_type size;
+    memcpy(&size, ptr, sizeof(id_type));
+    ptr += sizeof(id_type);
+    m_ids.resize(size);
+    m_mbcs.resize(size);
+    for(int i=0;i<size;i++){
+        memcpy(&m_ids[i], ptr, sizeof(id_type));
+        ptr += sizeof(id_type);
+        m_mbcs[i].loadFromByteArray(ptr);
+        if(i!=size-1)
+            ptr+=m_mbcs[i].getByteArraySize();
+    }
+}
+
+//
+// IEvolvingShape interface
+//
+void MBCs::getVMBR(Region& out) const{
+    throw Tools::NotSupportedException("clone");
+}
+void MBCs::getMBRAtTime(double t, Region& out) const{
+    throw Tools::NotSupportedException("clone");
+}
+
+
+//
+// IShape interface
+//
+bool MBCs::intersectsShape(const IShape& in) const{
+    throw Tools::NotSupportedException("clone");
+}
+bool MBCs::containsShape(const IShape& in) const{
+    throw Tools::NotSupportedException("clone");
+}
+bool MBCs::touchesShape(const IShape& in) const{
+    throw Tools::NotSupportedException("clone");
+}
+void MBCs::getCenter(Point& out) const{
+    double* aver=new double[m_dimension];
+    for(int i=0;i<m_dimension;++i) aver[i]=0;
+    Point tmpp;
+    for(auto mbc:m_mbcs){
+        mbc.getCenter(tmpp);
+        for(int i=0;i<m_dimension;++i){
+            aver[i]+=tmpp.m_pCoords[i];
+        }
+    }
+    out.makeInfinite(m_dimension);
+    for(int i=0;i<m_dimension;++i){
+        out.m_pCoords[i]=aver[i]/m_ids.size();
+    }
+}
+uint32_t MBCs::getDimension() const{
+    throw Tools::NotSupportedException("clone");
+}
+void MBCs::getMBR(Region& out) const{
+    throw Tools::NotSupportedException("clone");
+}
+void MBCs::getTimeMBR(SpatialIndex::TimeRegion &out) const {
+    out.makeInfinite(m_dimension);
+    for(auto bc:m_mbcs){
+        TimeRegion tmpbr;
+        bc.getTimeMBR(tmpbr);
+        out.combineRegionInTime(tmpbr);
+    }
+}
+double MBCs::getArea() const{
+    throw Tools::NotSupportedException("clone");
+}
+double MBCs::getMinimumDistance(const IShape& in) const{
+    throw Tools::NotSupportedException("clone");
 }

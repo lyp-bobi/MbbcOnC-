@@ -267,6 +267,7 @@ namespace SpatialIndex
 #include "R2Tree.h"
 #include "PAARTree.h"
 #include "PAAR2Tree.h"
+#include "LERTree.h"
 #include "MVRTree.h"
 #include "TPRTree.h"
 #include "Version.h"

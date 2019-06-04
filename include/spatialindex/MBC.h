@@ -1,7 +1,6 @@
 //
 // Created by chuang on 5/29/19.
 //
-
 #pragma once
 
 namespace SpatialIndex
@@ -13,7 +12,7 @@ namespace SpatialIndex
         ~MBC();
         MBC(const double* pLow, const double* pHigh, uint32_t dimension,double rd,double rv);
         MBC(const MBC& in);
-        virtual MBC &operator=(const MBC &r);
+        MBC &operator=(const MBC &r);
 
         virtual bool operator==(const MBC &r) const;
 
@@ -50,6 +49,7 @@ namespace SpatialIndex
         virtual void getMBR(Region& out) const;
         virtual double getArea() const;
         virtual double getMinimumDistance(const IShape& in) const;
+
         virtual double getMinimumDistance(const Region& in) const;
         virtual double getMinimumDistance(const TimePoint& in) const;
 
@@ -70,13 +70,57 @@ namespace SpatialIndex
         double m_rd,m_rv;
         double* m_pLow;
         double* m_pHigh;
-        uint32_t m_dimension=3;
+        uint32_t m_dimension=2;
 
         friend SIDX_DLL std::ostream& operator<<(std::ostream& os, const MBC& r);
 
         virtual void makeInfinite(uint32_t dimension);
     private:
     };
+    class SIDX_DLL MBCs: public Tools::IObject, public virtual IShape,public IEvolvingShape{
+    public:
+        //
+        // IObject interface
+        //
+        virtual MBCs *clone();
+
+        //
+        // ISerializable interface
+        //
+        virtual uint32_t getByteArraySize() const;
+
+        virtual void loadFromByteArray(const uint8_t *data);
+
+        virtual void storeToByteArray(uint8_t **data, uint32_t &len);
+
+        //
+        // IEvolvingShape interface
+        //
+        virtual void getVMBR(Region& out) const;
+        virtual void getMBRAtTime(double t, Region& out) const;
+
+
+        //
+        // IShape interface
+        //
+        virtual bool intersectsShape(const IShape& in) const;
+        virtual bool containsShape(const IShape& in) const;
+        virtual bool touchesShape(const IShape& in) const;
+        virtual void getCenter(Point& out) const;
+        virtual uint32_t getDimension() const;
+        virtual void getMBR(Region& out) const;
+        virtual double getArea() const;
+        virtual double getMinimumDistance(const IShape& in) const;
+
+        virtual void getTimeMBR(TimeRegion& out) const;
+
+        MBCs()= default;
+        MBCs(const MBCs &in);
+        uint32_t m_dimension=2;
+        std::vector<id_type> m_ids;
+        std::vector<MBC> m_mbcs;
+    };
     typedef Tools::PoolPointer<MBC> MBCPtr;
+    typedef Tools::PoolPointer<MBCs> MBCsPtr;
     SIDX_DLL std::ostream& operator<<(std::ostream& os, const MBC& r);
 }
