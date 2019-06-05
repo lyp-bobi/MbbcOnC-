@@ -143,19 +143,12 @@ public:
 
     int i=0;
     void feedTraj(vector<pair<id_type ,Trajectory> > *period){
-        cerr<<"feeding traj to TrajMbrStream\n";
+        cerr<<"feeding traj to TrajMbcStream\n";
         mbcs.clear();
         MBC mbc;
-        for(int i=0;i<period->size();i++){
-            period->at(i).second.getMBC(mbc);
-            std::cerr<<mbc<<endl;
-            auto pr=make_pair(period->at(i).first,mbc);
-            std::cerr<<pr.second<<endl;
-            mbcs.push_back(make_pair(period->at(i).first,mbc));
-            std::cerr<<mbcs[i].second<<endl;
-            std::cerr<<mbc<<endl;
-            if(mbcs[i].second.m_startTime==2)
-                std::cerr<<2<<"\n";
+        for(auto idt:*period){
+            idt.second.getMBC(mbc);
+            mbcs.emplace_back(make_pair(idt.first,mbc));
         }
         trajs=period;
         rewind();
@@ -169,8 +162,6 @@ public:
         uint32_t len;
         trajs->at(i).second.storeToByteArray(&data,len);
         MBCRTree::Data* d=new MBCRTree::Data(len, data, mbcs[i].second, mbcs[i].first);
-        if(mbcs[i].second.m_startTime==2)
-            std::cerr<<2<<"\n";
         i++;
         return d;
     }
@@ -402,13 +393,13 @@ int main(){
         vector<IShape *> queries;
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
-                cout<<i<<endl;
                 double t = random(0, PeriodLen);
                 double pLow[3] = {random(0, 25000), random(0, 30000),t};
                 double pHigh[3] = {pLow[0] + random(1, 500), pLow[1] + random(1, 500),t};
-                Region rg(pLow, pHigh, 3);
-                cout<<rg<<endl;
-                queries.emplace_back(&rg);
+                Region *rg=new Region(pLow, pHigh, 3);
+                cout<<i<<" 1\n";
+                queries.emplace_back(rg);
+                cout<<i<<" 2\n";
             } else if (QueryType == 2) {
                 queries.emplace_back(&traj1[int(random(0,10*traj1.size()))%traj1.size()].second);
             }
@@ -452,7 +443,7 @@ int main(){
         rc->m_DataType = TrajectoryType;
         cerr << "start query!" << endl << endl << endl;
         TreeQueryBatch(r, queries);
-//        TreeQueryBatch(rc, queries);
+        TreeQueryBatch(rc, queries);
     }
     catch (Tools::Exception& e)
     {

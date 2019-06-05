@@ -12,15 +12,13 @@
 
 using namespace SpatialIndex;
 
-MBC::MBC() {
+MBC::MBC(){
     m_dimension=2;
     m_pLow = new double[m_dimension];
     m_pHigh = new double[m_dimension];
-    makeInfinite(2);
 }
 MBC::MBC(const double *pLow, const double *pHigh,double sTime,double eTime, uint32_t dimension, double rd, double rv){
-    m_startTime=sTime;
-    m_endTime=eTime;
+    m_dimension=dimension;
     try
     {
         m_pLow = new double[m_dimension];
@@ -34,7 +32,8 @@ MBC::MBC(const double *pLow, const double *pHigh,double sTime,double eTime, uint
 
     memcpy(m_pLow, pLow, (m_dimension)* sizeof(double));
     memcpy(m_pHigh, pHigh, (m_dimension)* sizeof(double));
-    m_dimension=dimension;
+    m_startTime=sTime;
+    m_endTime=eTime;
     m_rd=rd;
     m_rv=rv;
 }
@@ -48,7 +47,7 @@ MBC::MBC(const SpatialIndex::MBC &in) {
     m_dimension=in.m_dimension;
     m_rd=in.m_rd;
     m_rv=in.m_rv;
-    m_startTime=in.m_dimension;
+    m_startTime=in.m_startTime;
     m_endTime=in.m_endTime;
     try
     {
@@ -77,6 +76,8 @@ MBC& MBC::operator=(const MBC& r)
     m_endTime=r.m_endTime;
     m_rv=r.m_rv;
     m_rd=r.m_rd;
+    if(m_startTime<-1)
+        std::cout<<m_startTime;
     return *this;
 }
 

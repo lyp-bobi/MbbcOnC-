@@ -119,8 +119,6 @@ void ExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)
             f.write(m_mbc.m_pHigh[i]);
         }
         f.write(m_mbc.m_startTime);
-        if(m_mbc.m_startTime==2)
-            std::cerr<<2<<"\n";
         f.write(m_mbc.m_endTime);
         f.write(m_mbc.m_rd);
         f.write(m_mbc.m_rv);

@@ -338,17 +338,19 @@ void Node::insertEntry(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type
 
 void Node::insertEntry(uint32_t dataLength, uint8_t *pData, SpatialIndex::MBC &mbc, SpatialIndex::id_type id) {
     assert(m_children < m_capacity);
-    std::cerr<<"inserting entry "<<mbc<<std::endl;
     m_pDataLength[m_children] = dataLength;
     m_pData[m_children] = pData;
     m_ptrMBC[m_children] = m_pTree->m_mbcPool.acquire();
     *(m_ptrMBC[m_children]) = mbc;
+    Region tmpbr;
+    mbc.getMBR(tmpbr);
+    m_ptrMBR[m_children] = m_pTree->m_regionPool.acquire();
+    *(m_ptrMBR[m_children]) = tmpbr;
+
     m_pIdentifier[m_children] = id;
 
     m_totalDataLength += dataLength;
     ++m_children;
-    Region tmpbr;
-    mbc.getMBR(tmpbr);
     m_nodeMBR.combineRegion(tmpbr);
 }
 

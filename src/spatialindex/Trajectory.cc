@@ -245,6 +245,12 @@ void Trajectory::getMBC(SpatialIndex::MBC &out) const {
         if(prv>rv) rv=prv;
         if(prd>rd) rd=prd;
     }
+//    out.m_pLow=p1.m_pCoords;
+//    out.m_pHigh=p2.m_pCoords;
+//    out.m_startTime=startt;
+//    out.m_endTime=endt;
+//    out.m_rd=rd;
+//    out.m_rv=rv;
     out=MBC(p1.m_pCoords,p2.m_pCoords,startt,endt,m_dimension,rd,rv);
 }
 
