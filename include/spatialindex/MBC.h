@@ -10,7 +10,7 @@ namespace SpatialIndex
     public:
         MBC();
         ~MBC();
-        MBC(const double* pLow, const double* pHigh, uint32_t dimension,double rd,double rv);
+        MBC(const double* pLow, const double* pHigh,double sTime,double eTime, uint32_t dimension,double rd,double rv);
         MBC(const MBC& in);
         MBC &operator=(const MBC &r);
 
@@ -66,8 +66,10 @@ namespace SpatialIndex
 
         virtual void getTimeMBR(TimeRegion& out) const;
 
-        double m_startTime,m_endTime;
-        double m_rd,m_rv;
+        double m_startTime;
+        double m_endTime;
+        double m_rd;
+        double m_rv;
         double* m_pLow;
         double* m_pHigh;
         uint32_t m_dimension=2;

@@ -80,3 +80,14 @@ foreach (test ${SOURCES})
     add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
     target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
 endforeach()
+
+
+set (DIR mbc)
+set (SOURCES
+        mbcTest
+        )
+
+foreach (test ${SOURCES})
+    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
+    target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
+endforeach()

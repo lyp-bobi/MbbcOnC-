@@ -188,6 +188,8 @@ bool Region::intersectsShape(const IShape& s) const
 	const Point* ppt = dynamic_cast<const Point*>(&s);
 	if (ppt != 0) return containsPoint(*ppt);
 
+	return s.intersectsShape(*this);
+
 	throw Tools::IllegalStateException(
 		"Region::intersectsShape: Not implemented yet!"
 	);

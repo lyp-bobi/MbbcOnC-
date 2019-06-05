@@ -14,9 +14,13 @@ using namespace SpatialIndex;
 
 MBC::MBC() {
     m_dimension=2;
+    m_pLow = new double[m_dimension];
+    m_pHigh = new double[m_dimension];
     makeInfinite(2);
 }
-MBC::MBC(const double *pLow, const double *pHigh, uint32_t dimension, double rd, double rv) {
+MBC::MBC(const double *pLow, const double *pHigh,double sTime,double eTime, uint32_t dimension, double rd, double rv){
+    m_startTime=sTime;
+    m_endTime=eTime;
     try
     {
         m_pLow = new double[m_dimension];
@@ -69,6 +73,8 @@ MBC& MBC::operator=(const MBC& r)
         memcpy(m_pLow, r.m_pLow, (m_dimension) * sizeof(double));
         memcpy(m_pHigh, r.m_pHigh, (m_dimension) * sizeof(double));
     }
+    m_startTime=r.m_startTime;
+    m_endTime=r.m_endTime;
     m_rv=r.m_rv;
     m_rd=r.m_rd;
     return *this;
@@ -101,10 +107,14 @@ MBC* MBC::clone() {
 // ISerializable interface
 //
 uint32_t MBC::getByteArraySize() const {
-    return (sizeof(uint32_t) + 2 * m_dimension * sizeof(double)+2* sizeof(double));
+    return (sizeof(uint32_t) + 2 * (m_dimension+1) * sizeof(double)+2* sizeof(double));
 }
 
 void MBC::loadFromByteArray(const uint8_t* ptr) {
+    memcpy(&m_startTime, ptr, sizeof(double));
+    ptr += sizeof(double);
+    memcpy(&m_endTime, ptr, sizeof(double));
+    ptr += sizeof(double);
     memcpy(&m_dimension, ptr, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
     memcpy(&m_rd, ptr, sizeof(double));
@@ -122,7 +132,10 @@ void MBC::storeToByteArray(uint8_t **data, uint32_t &len) {
     len = getByteArraySize();
     *data = new uint8_t[len];
     uint8_t* ptr = *data;
-
+    memcpy(ptr, &m_startTime, sizeof(double));
+    ptr += sizeof(double);
+    memcpy(ptr, &m_endTime, sizeof(double));
+    ptr += sizeof(double);
     memcpy(ptr, &m_dimension, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
     memcpy(ptr, &m_rd, sizeof(double));
@@ -178,7 +191,7 @@ bool MBC::intersectsShape(const SpatialIndex::IShape& s) const {
     if (ptp != 0) return intersectsTimePoint(*ptp);
 
     const Region* pr = dynamic_cast<const Region*>(&s);
-    if (pr != 0) return pr->intersectsShape(*this);
+    if (pr != 0) return intersectsRegion(*pr);
 
     const Trajectory* ptra = dynamic_cast<const Trajectory*>(&s);
     if (ptra != 0) return ptra->intersectsShape(*this);
@@ -204,7 +217,18 @@ bool MBC::intersectsTimePoint(const SpatialIndex::TimePoint &in) const {
     return p.getMinimumDistance(in)<r;
 }
 bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
-    throw Tools::NotSupportedException("MBC::intersectsRegion");
+    //2 dimensions for space, the third for time
+    if(in.m_pLow[m_dimension]==in.m_pHigh[m_dimension]) {
+        Region br;
+        getMBRAtTime(in.m_pLow[m_dimension], br);
+        Point p;
+        br.getCenter(p);
+        double r = br.m_pHigh[0] - p.m_pCoords[0];
+        br = Region(in.m_pLow, in.m_pHigh, 2);
+        return p.getMinimumDistance(in) < r;
+    }else{
+        throw Tools::NotSupportedException("MBC:intersect 3DMBR");
+    }
 }
 bool MBC::intersectsMBC(const MBC& in) const{return false;}
 
@@ -221,6 +245,7 @@ void MBC::getCenter(Point& out) const{
 }
 uint32_t MBC::getDimension() const{return m_dimension;}
 void MBC::getMBR(Region& out) const{
+    //return a 3d mbr
     Region br;
     br.makeInfinite(m_dimension);
     if(std::isfinite(m_rv)) {
@@ -242,9 +267,9 @@ void MBC::getMBR(Region& out) const{
     }
     pLow[m_dimension]=m_startTime;
     pHigh[m_dimension]=m_endTime;
-    delete[](pLow);
-    delete[](pHigh);
-    out=Region(pLow,pHigh,2);
+    out=Region(pLow,pHigh,3);
+//    delete[](pLow);
+//    delete[](pHigh);
 }
 
 void MBC::getTimeMBR(SpatialIndex::TimeRegion &out) const {

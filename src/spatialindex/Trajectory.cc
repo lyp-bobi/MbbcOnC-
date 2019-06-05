@@ -164,11 +164,28 @@ bool Trajectory::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const 
     }
 }
 bool Trajectory::intersectsRegion(const Region& in) const{
-    for(int i=0;i<m_points.size();i++){
-        if(m_points[i].intersectsShape(in)){
-            return true;
+    double* newp=new double[in.m_dimension];
+    for (int i = 0; i < m_points.size(); i++) {
+        if(m_dimension==in.m_dimension) {
+            if (m_points[i].intersectsShape(in)) {
+                return true;
+            }
+            else if(m_dimension==in.m_dimension-1){
+                for(int j=0;i<m_dimension;i++){
+                    newp[j]=m_points[i].m_pCoords[j];
+                }
+                newp[m_dimension]=m_points[i].m_startTime;
+                Point p3d=Point(newp,in.m_dimension);
+                if (p3d.intersectsShape(in)) {
+                    delete[](newp);
+                    return true;
+                }
+
+            }
+            else throw Tools::NotSupportedException("Traj::intersectRegion:wrong dimension");
         }
     }
+    delete[](newp);
     return false;
 }
 
@@ -199,12 +216,13 @@ void Trajectory::getMBR(Region& out) const{
     }
 }
 
+
 void Trajectory::getMBC(SpatialIndex::MBC &out) const {
     out.makeInfinite(m_dimension);
     if(m_points.size()<=1){
         return;
     }
-    double startx=m_points.begin()->m_pCoords[0],starty=m_points.begin()->m_pCoords[1],startt=m_points.begin()->m_startTime;
+    double startx=m_points[0].m_pCoords[0],starty=m_points[0].m_pCoords[1],startt=m_points[0].m_startTime;
     double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_startTime;
     double avx=(endx-startx)/(endt-startt),avy=(endy-starty)/(endt-startt);
     TimePoint p1=*m_points.begin(),p2=m_points.back();
@@ -227,8 +245,19 @@ void Trajectory::getMBC(SpatialIndex::MBC &out) const {
         if(prv>rv) rv=prv;
         if(prd>rd) rd=prd;
     }
-    out=MBC(p1.m_pCoords,p2.m_pCoords,m_dimension,rd,rv);
+    out=MBC(p1.m_pCoords,p2.m_pCoords,startt,endt,m_dimension,rd,rv);
 }
+
+void Trajectory::getMBRfull(SpatialIndex::Region &out) const {
+    out.makeInfinite(m_dimension+1);
+    double *pc=new double(m_dimension+1);
+    for(int i=0;i<m_points.size();i++){
+        for(int d=0;d<m_dimension;d++) pc[d]=m_points[i].m_pCoords[d];
+        pc[m_dimension]=m_points[i].m_startTime;
+        out.combinePoint(Point(pc,m_dimension+1));
+    }
+}
+
 void Trajectory::getTimeMBR(SpatialIndex::TimeRegion &out) const {
     out.makeInfinite(m_dimension);
     for(int i=0;i<m_points.size();i++){

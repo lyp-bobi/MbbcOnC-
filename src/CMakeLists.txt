@@ -33,7 +33,6 @@ set(SIDX_BASE_HPP
   "${SIDX_HEADERS_DIR}/Point.h"
   "${SIDX_HEADERS_DIR}/Region.h"
   "${SIDX_HEADERS_DIR}/RTree.h"
-  "${SIDX_HEADERS_DIR}/RTreeC.h"
   "${SIDX_HEADERS_DIR}/R2Tree.h"
   "${SIDX_HEADERS_DIR}/PAARTree.h"
   "${SIDX_HEADERS_DIR}/PAAR2Tree.h"
@@ -125,6 +124,23 @@ set(SIDX_RTREE_CPP
   "${SIDX_SRC_DIR}/rtree/Statistics.h"
 )
 list (APPEND SIDX_CPP ${SIDX_RTREE_CPP})
+
+set(SIDX_MBCRTREE_CPP
+        "${SIDX_SRC_DIR}/mbcrtree/BulkLoader.cc"
+        "${SIDX_SRC_DIR}/mbcrtree/BulkLoader.h"
+        "${SIDX_SRC_DIR}/mbcrtree/Index.cc"
+        "${SIDX_SRC_DIR}/mbcrtree/Index.h"
+        "${SIDX_SRC_DIR}/mbcrtree/Leaf.cc"
+        "${SIDX_SRC_DIR}/mbcrtree/Leaf.h"
+        "${SIDX_SRC_DIR}/mbcrtree/Node.cc"
+        "${SIDX_SRC_DIR}/mbcrtree/Node.h"
+        "${SIDX_SRC_DIR}/mbcrtree/PointerPoolNode.h"
+        "${SIDX_SRC_DIR}/mbcrtree/MBCRTree.cc"
+        "${SIDX_SRC_DIR}/mbcrtree/MBCRTree.h"
+        "${SIDX_SRC_DIR}/mbcrtree/Statistics.cc"
+        "${SIDX_SRC_DIR}/mbcrtree/Statistics.h"
+        )
+list (APPEND SIDX_CPP ${SIDX_MBCRTREE_CPP})
 
 set(SIDX_R2TREE_CPP
         "${SIDX_SRC_DIR}/r2tree/BulkLoader.cc"

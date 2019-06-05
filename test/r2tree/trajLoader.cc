@@ -26,7 +26,7 @@
 using namespace std;
 using namespace SpatialIndex;
 
-class RangeVisitor : public IVisitor
+class MyVisitor : public IVisitor
 {
 public:
     size_t m_indexIO;
@@ -36,7 +36,7 @@ public:
     IShape *m_query;
 
 public:
-    RangeVisitor() : m_indexIO(0), m_leafIO(0),m_resultGet(0) {}
+    MyVisitor() : m_indexIO(0), m_leafIO(0),m_resultGet(0) {}
 
     void visitNode(const INode& n)
     {
@@ -369,7 +369,7 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
 void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries){
     clock_t start,end;
 
-    RangeVisitor vis;
+    MyVisitor vis;
     start=clock();
     for(int i=0;i<queries.size();i++){
 //        cerr<<"Query is "<<queries.at(i)->toString();
@@ -388,7 +388,7 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries){
 
 int TreeQuery(ISpatialIndex* tree,IShape* query){
     clock_t start,end;
-    RangeVisitor vis;
+    MyVisitor vis;
     vis.m_query=query;
     start=clock();
     if(QueryType==1){

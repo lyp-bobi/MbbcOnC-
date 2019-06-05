@@ -134,46 +134,25 @@ void Node::storeToByteArray(uint8_t** data, uint32_t& len){
     ptr += sizeof(uint32_t);
     uint8_t* tmpb;
     uint32_t tmplen;
-    if(m_level>1) {
-        for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
-            if(m_level>1)
-                m_ptrMBR[u32Child]->storeToByteArray(&tmpb, tmplen);
-            else if(m_level==0)
-                m_ptrMBC[u32Child]->storeToByteArray(&tmpb, tmplen);
-            else
-                m_ptrMBCs[u32Child]->storeToByteArray(&tmpb, tmplen);
-            memcpy(ptr, tmpb, tmplen);
-            ptr += tmplen;
-
-            memcpy(ptr, &(m_pIdentifier[u32Child]), sizeof(id_type));
-            ptr += sizeof(id_type);
-
-            memcpy(ptr, &(m_pDataLength[u32Child]), sizeof(uint32_t));
-            ptr += sizeof(uint32_t);
-
-            if (m_pDataLength[u32Child] > 0) {
-                memcpy(ptr, m_pData[u32Child], m_pDataLength[u32Child]);
-                ptr += m_pDataLength[u32Child];
-            }
-        }
-    }
-    else if(m_level==0){
-        for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
-
+    for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
+        if(m_level>1)
+            m_ptrMBR[u32Child]->storeToByteArray(&tmpb, tmplen);
+        else if(m_level==0)
             m_ptrMBC[u32Child]->storeToByteArray(&tmpb, tmplen);
-            memcpy(ptr, tmpb, tmplen);
-            ptr += tmplen;
+        else
+            m_ptrMBCs[u32Child]->storeToByteArray(&tmpb, tmplen);
+        memcpy(ptr, tmpb, tmplen);
+        ptr += tmplen;
 
-            memcpy(ptr, &(m_pIdentifier[u32Child]), sizeof(id_type));
-            ptr += sizeof(id_type);
+        memcpy(ptr, &(m_pIdentifier[u32Child]), sizeof(id_type));
+        ptr += sizeof(id_type);
 
-            memcpy(ptr, &(m_pDataLength[u32Child]), sizeof(uint32_t));
-            ptr += sizeof(uint32_t);
+        memcpy(ptr, &(m_pDataLength[u32Child]), sizeof(uint32_t));
+        ptr += sizeof(uint32_t);
 
-            if (m_pDataLength[u32Child] > 0) {
-                memcpy(ptr, m_pData[u32Child], m_pDataLength[u32Child]);
-                ptr += m_pDataLength[u32Child];
-            }
+        if (m_pDataLength[u32Child] > 0) {
+            memcpy(ptr, m_pData[u32Child], m_pDataLength[u32Child]);
+            ptr += m_pDataLength[u32Child];
         }
     }
 
