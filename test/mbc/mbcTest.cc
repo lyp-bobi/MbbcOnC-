@@ -17,7 +17,8 @@
 #include <cmath>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x)+x)
 #include <spatialindex/SpatialIndex.h>
-#define sourceFile "D://t200n100s.txt"
+//#define sourceFile "D://t200n100s.txt"
+#define sourceFile "D://t1000.txt"
 #define linesToRead 1e10
 #define testtime 1000
 #define dimension 2
@@ -41,7 +42,7 @@ public:
     IShape *m_query;
 
 public:
-    MyVisitor() : m_indexIO(0), m_leafIO(0),m_resultGet(0) {}
+    MyVisitor() : m_indexIO(0), m_leafIO(0),m_resultGet(0),m_indexvisited(0),m_leafvisited(0) {}
 
     void visitNode(const INode& n)
     {
@@ -109,7 +110,8 @@ public:
     void feedTraj(vector<pair<id_type ,Trajectory> > *period){
         cerr<<"feeding traj to TrajMbrStream\n";
         mbrs.clear();
-        for(auto idt:*period){
+        for(auto &idt:*period){
+            std::cout<<"handling id "<<idt.first<<" with length"<<idt.second.m_points.size()<<endl;
             Region mbr;
             idt.second.getMBRfull(mbr);
             mbrs.emplace_back(make_pair(idt.first,mbr));
@@ -272,7 +274,7 @@ list<vector<pair<id_type ,Trajectory> > > loadGLToTrajs(){
     }
     return res;
 }
-list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
+vector<pair<id_type ,Trajectory> >  loadGTToTrajs(){
     //first level: vector of time period
     //second level: vector of segments in the time period
     cerr<<"loading generated trajectories from txt to trajectories"<<endl;
@@ -281,7 +283,7 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
     string lineStr;
     set<id_type> ids;
     multimap<id_type,xyt> trajs;
-    list<vector<pair<id_type ,Trajectory> > > res(getMaxPeriod());
+    vector<pair<id_type ,Trajectory> > res;
     int curLine=0;
     double minx=40000,maxx=0,miny=40000,maxy=0;
     while (getline(inFile, lineStr)&&curLine<linesToRead){
@@ -305,7 +307,6 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
         if(x<minx) minx=x;
         if(y>maxy) maxy=y;
         if(y<miny) miny=y;
-//        cout<<id<<","<<x<<","<<y<<","<<t<<endl;
         ids.insert(id);
         trajs.insert(make_pair(id,p));
         curLine++;
@@ -320,20 +321,14 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
             traj.emplace_back(iter->second);
         }
         trajs.erase(id);
-        if(!traj.empty()){
-            vector< vector<xyt> > segs = cuttraj(traj);
-            auto iperiod=res.begin();
-            for(int j =0;j<getMaxPeriod();j++){
-                vector<TimePoint> tps;
-                for(auto p:segs[j]){
-                    double xy[]={p.x,p.y};
-                    double faket=p.t-getPeriodStart(p.t);
-                    tps.emplace_back(TimePoint(xy, faket, faket, dimension));
-                }
-                if(!tps.empty()){
-                    iperiod->emplace_back(make_pair(id*1000+j,Trajectory(tps)));
-//                    iperiod++;
-                }
+        if(traj.size()>=10){
+            vector<TimePoint> tps;
+            for(auto p:traj){
+                double xy[]={p.x,p.y};
+                tps.emplace_back(TimePoint(xy, p.t, p.t, dimension));
+            }
+            if(!tps.empty()){
+                res.emplace_back(make_pair(id,Trajectory(tps)));
             }
         }
     }
@@ -355,10 +350,12 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries){
 //        cout<<"finished "<<i<<"already\n";
     }
     end=clock();
+    cerr<< "=================\n\n";
     cerr<<"Querying time: "<< end-start<<endl;
     cerr<<"VISIT NODE "<<vis.m_indexvisited<<"\t"<<vis.m_leafvisited<<endl;
     cerr<<"Byte loaded "<<vis.m_indexIO<<"\t"<<vis.m_leafIO<<endl;
     cerr << *tree;
+    cerr << "================\n\n";
 }
 
 int TreeQuery(ISpatialIndex* tree,IShape* query){
@@ -383,13 +380,11 @@ int TreeQuery(ISpatialIndex* tree,IShape* query){
 int main(){
     try {
         srand((int) time(NULL));
-        list<vector<pair<id_type, Trajectory> > > trajs = loadGTToTrajs();
-        auto traj1=*trajs.begin();
-//        cout<<traj1[0].second.toString();
+        vector<pair<id_type, Trajectory> >  trajs = loadGTToTrajs();
         TrajMbrStream ds1;
         TrajMbcStream ds2;
-        ds1.feedTraj(&traj1);
-        ds2.feedTraj(&traj1);
+        ds1.feedTraj(&trajs);
+        ds2.feedTraj(&trajs);
         vector<IShape *> queries;
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
@@ -397,11 +392,7 @@ int main(){
                 double pLow[3] = {random(0, 25000), random(0, 30000),t};
                 double pHigh[3] = {pLow[0] + random(1, 500), pLow[1] + random(1, 500),t};
                 Region *rg=new Region(pLow, pHigh, 3);
-                cout<<i<<" 1\n";
                 queries.emplace_back(rg);
-                cout<<i<<" 2\n";
-            } else if (QueryType == 2) {
-                queries.emplace_back(&traj1[int(random(0,10*traj1.size()))%traj1.size()].second);
             }
         }
 

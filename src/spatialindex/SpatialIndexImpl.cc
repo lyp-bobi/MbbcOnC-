@@ -27,6 +27,7 @@
 #include <spatialindex/SpatialIndex.h>
 
 #include "../rtree/RTree.h"
+#include "../mbcrtree/MBCRTree.h"
 #include "../r2tree/R2Tree.h"
 #include "../paartree/PAARTree.h"
 #include "../paar2tree/PAAR2Tree.h"
@@ -48,11 +49,17 @@ std::string SpatialIndex::InvalidPageException::what()
 std::ostream& SpatialIndex::operator<<(std::ostream& os, const ISpatialIndex& i)
 {
 	const SpatialIndex::RTree::RTree* pRTree = dynamic_cast<const SpatialIndex::RTree::RTree*>(&i);
-	if (pRTree != 0)
-	{
-		os << *pRTree;
-		return os;
-	}
+    if (pRTree != 0)
+    {
+        os << *pRTree;
+        return os;
+    }
+    const SpatialIndex::MBCRTree::MBCRTree* pMBCRTree = dynamic_cast<const SpatialIndex::MBCRTree::MBCRTree*>(&i);
+    if (pMBCRTree != 0)
+    {
+        os << *pMBCRTree;
+        return os;
+    }
     const SpatialIndex::R2Tree::R2Tree* pR2Tree = dynamic_cast<const SpatialIndex::R2Tree::R2Tree*>(&i);
     if (pR2Tree != 0)
     {

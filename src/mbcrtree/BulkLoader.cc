@@ -520,6 +520,10 @@ Node* BulkLoader::createNode(SpatialIndex::MBCRTree::MBCRTree* pTree, std::vecto
 	    e[cChild]->m_pData = 0;
 		delete e[cChild];
 	}
-
+//	if(level==0) {
+//        for (size_t cChild = 0; cChild < e.size(); ++cChild) {
+//            std::cout<<*n->m_ptrMBC[cChild]<<std::endl;
+//        }
+//    }
 	return n;
 }

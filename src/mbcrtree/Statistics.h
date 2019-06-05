@@ -29,74 +29,74 @@
 
 namespace SpatialIndex
 {
-	namespace MBCRTree
-	{
-		class MBCRTree;
-		class Node;
-		class Leaf;
-		class Index;
+    namespace MBCRTree
+    {
+        class MBCRTree;
+        class Node;
+        class Leaf;
+        class Index;
 
-		class Statistics : public SpatialIndex::IStatistics
-		{
-		public:
-			Statistics();
-			Statistics(const Statistics&);
-			virtual ~Statistics();
-			Statistics& operator=(const Statistics&);
+        class Statistics : public SpatialIndex::IStatistics
+        {
+        public:
+            Statistics();
+            Statistics(const Statistics&);
+            virtual ~Statistics();
+            Statistics& operator=(const Statistics&);
 
-			//
-			// IStatistics interface
-			//
-			virtual uint64_t getReads() const;
-			virtual uint64_t getWrites() const;
-			virtual uint32_t getNumberOfNodes() const;
-			virtual uint64_t getNumberOfData() const;
+            //
+            // IStatistics interface
+            //
+            virtual uint64_t getReads() const;
+            virtual uint64_t getWrites() const;
+            virtual uint32_t getNumberOfNodes() const;
+            virtual uint64_t getNumberOfData() const;
 
-			virtual uint64_t getSplits() const;
-			virtual uint64_t getHits() const;
-			virtual uint64_t getMisses() const;
-			virtual uint64_t getAdjustments() const;
-			virtual uint64_t getQueryResults() const;
+            virtual uint64_t getSplits() const;
+            virtual uint64_t getHits() const;
+            virtual uint64_t getMisses() const;
+            virtual uint64_t getAdjustments() const;
+            virtual uint64_t getQueryResults() const;
             virtual double getExactQueryResults() const;
-			virtual uint32_t getTreeHeight() const;
-			virtual uint32_t getNumberOfNodesInLevel(uint32_t l) const;
+            virtual uint32_t getTreeHeight() const;
+            virtual uint32_t getNumberOfNodesInLevel(uint32_t l) const;
 
-		private:
-			void reset();
+        private:
+            void reset();
 
-			uint64_t m_u64Reads;
+            uint64_t m_u64Reads;
 
-			uint64_t m_u64Writes;
+            uint64_t m_u64Writes;
 
-			uint64_t m_u64Splits;
+            uint64_t m_u64Splits;
 
-			uint64_t m_u64Hits;
+            uint64_t m_u64Hits;
 
-			uint64_t m_u64Misses;
+            uint64_t m_u64Misses;
 
-			uint32_t m_u32Nodes;
+            uint32_t m_u32Nodes;
 
-			uint64_t m_u64Adjustments;
+            uint64_t m_u64Adjustments;
 
-			uint64_t m_u64QueryResults;
+            uint64_t m_u64QueryResults;
 
             double m_doubleExactQueryResults;
 
-			uint64_t m_u64Data;
+            uint64_t m_u64Data;
 
-			uint32_t m_u32TreeHeight;
+            uint32_t m_u32TreeHeight;
 
-			std::vector<uint32_t> m_nodesInLevel;
+            std::vector<uint32_t> m_nodesInLevel;
 
-			friend class MBCRTree;
-			friend class Node;
-			friend class Index;
-			friend class Leaf;
-			friend class BulkLoader;
+            friend class MBCRTree;
+            friend class Node;
+            friend class Index;
+            friend class Leaf;
+            friend class BulkLoader;
 
-			friend std::ostream& operator<<(std::ostream& os, const Statistics& s);
-		}; // Statistics
+            friend std::ostream& operator<<(std::ostream& os, const Statistics& s);
+        }; // Statistics
 
-		std::ostream& operator<<(std::ostream& os, const Statistics& s);
-	}
+        std::ostream& operator<<(std::ostream& os, const Statistics& s);
+    }
 }

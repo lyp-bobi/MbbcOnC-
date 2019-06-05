@@ -1402,58 +1402,64 @@ void SpatialIndex::MBCRTree::MBCRTree::deleteNode(Node* n)
 void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const IShape& query, IVisitor& v)
 {
 #ifdef HAVE_PTHREAD_H
-	Tools::LockGuard lock(&m_lock);
+    Tools::LockGuard lock(&m_lock);
 #endif
 
-	std::stack<NodePtr> st;
-	NodePtr root = readNode(m_rootID);
+    std::stack<NodePtr> st;
+    NodePtr root = readNode(m_rootID);
 
-	if (root->m_children > 0 && query.intersectsShape(root->m_nodeMBR)) st.push(root);
+    if (root->m_children > 0 && root->m_nodeMBR.intersectsShape(query)) st.push(root);
 
-	while (! st.empty())
-	{
-		NodePtr n = st.top(); st.pop();
-        
-		if (n->m_level == 0)
-		{
-			v.visitNode(*n);
+    while (! st.empty())
+    {
+        NodePtr n = st.top(); st.pop();
+//        std::cout<<"\n level"<<n->m_level<<"\n node\n"<<n->m_nodeMBRk.toString();
+        if (n->m_level == 0)
+        {
+            v.visitNode(*n);
+            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
+            {
+                bool b;
+                if (type == ContainmentQuery) b = n->m_ptrMBC[cChild]->containsShape(query);
+                else b = n->m_ptrMBC[cChild]->intersectsShape(query);
 
-			for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
-			{
-				bool b;
-				if (type == ContainmentQuery) b = query.containsShape(*(n->m_ptrMBC[cChild]));
-				else b = query.intersectsShape(*(n->m_ptrMBC[cChild]));
-
-				if (b)
-				{
-					Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBC[cChild]), n->m_pIdentifier[cChild]);
-					++(m_stats.m_u64QueryResults);
-					if(m_DataType==TrajectoryType){
-					    Trajectory traj;
-					    traj.loadFromByteArray(data.m_pData);
-					    if(traj.intersectsShape(query)){
+                if (b)
+                {
+                    Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBC[cChild]), n->m_pIdentifier[cChild]);
+                    ++(m_stats.m_u64QueryResults);
+                    if(m_DataType==TrajectoryType){
+                        Trajectory traj;
+                        traj.loadFromByteArray(data.m_pData);
+                        if(traj.intersectsShape(query)){
                             m_stats.m_doubleExactQueryResults+=1;
                             v.visitData(data);
-					    }
-					}else{
+                        }
+                    }else{
                         v.visitData(data);
-					}
-				}
-//				else{
-//                    std::cout<<"ack failed\n"<<query.toString()<<"\n"<<n->m_ptrMBR[cChild]->toString()<<"\n";
+                    }
+                }
+//                else{
+//                    std::cout<<"ack failed\n"<<query.toString()<<"\n"<<n->m_ptrMBRk[cChild]->toString()<<"\n";
 //                }
-			}
-		}
-		else
-		{
-			v.visitNode(*n);
+            }
+        }
+        else
+        {
+            v.visitNode(*n);
+//            if(n->m_level<3) {
+            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+                if (n->m_ptrMBR[cChild]->intersectsShape(query)) {
+                    st.push(readNode(n->m_pIdentifier[cChild]));
+                }
 
-			for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
-			{
-				if (query.intersectsShape(*(n->m_ptrMBR[cChild]))) st.push(readNode(n->m_pIdentifier[cChild]));
-			}
-		}
-	}
+            }
+//            }else{
+//                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+//                    if (n->m_ptrMBRk[cChild]->m_wmbr.intersectsShape(query)) st.push(readNode(n->m_pIdentifier[cChild]));
+//                }
+//            }
+        }
+    }
 }
 
 void SpatialIndex::MBCRTree::MBCRTree::selfJoinQuery(id_type id1, id_type id2, const Region& r, IVisitor& vis)

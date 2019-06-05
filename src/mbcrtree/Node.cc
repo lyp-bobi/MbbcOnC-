@@ -165,7 +165,7 @@ void Node::storeToByteArray(uint8_t** data, uint32_t& len)
     m_nodeMBR.storeToByteArray(&tmpb,tmplen);
     memcpy(ptr, tmpb, tmplen);
     //ptr += tmplen;
-//    assert(len == (ptr - *data)+tmplen);
+    assert(len == (ptr - *data)+tmplen);
 }
 
 //

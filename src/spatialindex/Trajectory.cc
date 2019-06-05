@@ -127,7 +127,7 @@ TimePoint Trajectory::getPointAtTime(const double time) const {
     }
     double h1= (time-pre->m_startTime)/(next->m_startTime-pre->m_startTime);
     double h2= (next->m_startTime-time)/(next->m_startTime-pre->m_startTime);
-    double *coords= new double(m_dimension);
+    double *coords= new double[m_dimension];
     for (int i = 0; i < m_dimension; ++i) {
         coords[i]=h2*pre->m_pCoords[i]+h1*next->m_pCoords[i];
     }
@@ -256,12 +256,14 @@ void Trajectory::getMBC(SpatialIndex::MBC &out) const {
 
 void Trajectory::getMBRfull(SpatialIndex::Region &out) const {
     out.makeInfinite(m_dimension+1);
-    double *pc=new double(m_dimension+1);
+    double *pc=new double[m_dimension+1];
     for(int i=0;i<m_points.size();i++){
         for(int d=0;d<m_dimension;d++) pc[d]=m_points[i].m_pCoords[d];
         pc[m_dimension]=m_points[i].m_startTime;
         out.combinePoint(Point(pc,m_dimension+1));
+//        std::cout<<out<<std::endl;
     }
+    delete[](pc);
 }
 
 void Trajectory::getTimeMBR(SpatialIndex::TimeRegion &out) const {

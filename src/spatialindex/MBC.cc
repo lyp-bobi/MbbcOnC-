@@ -76,8 +76,6 @@ MBC& MBC::operator=(const MBC& r)
     m_endTime=r.m_endTime;
     m_rv=r.m_rv;
     m_rd=r.m_rd;
-    if(m_startTime<-1)
-        std::cout<<m_startTime;
     return *this;
 }
 
@@ -112,20 +110,21 @@ uint32_t MBC::getByteArraySize() const {
 }
 
 void MBC::loadFromByteArray(const uint8_t* ptr) {
-    memcpy(&m_startTime, ptr, sizeof(double));
-    ptr += sizeof(double);
-    memcpy(&m_endTime, ptr, sizeof(double));
-    ptr += sizeof(double);
     memcpy(&m_dimension, ptr, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
-    memcpy(&m_rd, ptr, sizeof(double));
-    ptr += sizeof(double);
-    memcpy(&m_rv, ptr, sizeof(double));
-    ptr += sizeof(double);
     makeInfinite(m_dimension);
     memcpy(m_pLow, ptr, m_dimension * sizeof(double));
     ptr += m_dimension * sizeof(double);
     memcpy(m_pHigh, ptr, m_dimension * sizeof(double));
+    ptr += m_dimension * sizeof(double);
+    memcpy(&m_startTime, ptr, sizeof(double));
+    ptr += sizeof(double);
+    memcpy(&m_endTime, ptr, sizeof(double));
+    ptr += sizeof(double);
+    memcpy(&m_rd, ptr, sizeof(double));
+    ptr += sizeof(double);
+    memcpy(&m_rv, ptr, sizeof(double));
+    ptr += sizeof(double);
     //ptr += m_dimension * sizeof(double);
 }
 
@@ -133,19 +132,20 @@ void MBC::storeToByteArray(uint8_t **data, uint32_t &len) {
     len = getByteArraySize();
     *data = new uint8_t[len];
     uint8_t* ptr = *data;
+    memcpy(ptr, &m_dimension, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+    memcpy(ptr, m_pLow, m_dimension * sizeof(double));
+    ptr += m_dimension * sizeof(double);
+    memcpy(ptr, m_pHigh, m_dimension * sizeof(double));
+    ptr += m_dimension * sizeof(double);
     memcpy(ptr, &m_startTime, sizeof(double));
     ptr += sizeof(double);
     memcpy(ptr, &m_endTime, sizeof(double));
     ptr += sizeof(double);
-    memcpy(ptr, &m_dimension, sizeof(uint32_t));
-    ptr += sizeof(uint32_t);
     memcpy(ptr, &m_rd, sizeof(double));
     ptr += sizeof(double);
     memcpy(ptr, &m_rv, sizeof(double));
     ptr += sizeof(double);
-    memcpy(ptr, m_pLow, m_dimension * sizeof(double));
-    ptr += m_dimension * sizeof(double);
-    memcpy(ptr, m_pHigh, m_dimension * sizeof(double));
     //ptr += m_dimension * sizeof(double);
 }
 
@@ -219,6 +219,7 @@ bool MBC::intersectsTimePoint(const SpatialIndex::TimePoint &in) const {
 }
 bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
     //2 dimensions for space, the third for time
+    if(in.m_pLow[m_dimension]>m_endTime||in.m_pHigh[m_dimension]<m_startTime) return false;
     if(in.m_pLow[m_dimension]==in.m_pHigh[m_dimension]) {
         Region br;
         getMBRAtTime(in.m_pLow[m_dimension], br);
@@ -226,7 +227,7 @@ bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
         br.getCenter(p);
         double r = br.m_pHigh[0] - p.m_pCoords[0];
         br = Region(in.m_pLow, in.m_pHigh, 2);
-        return p.getMinimumDistance(in) < r;
+        return p.getMinimumDistance(br) < r;
     }else{
         throw Tools::NotSupportedException("MBC:intersect 3DMBR");
     }
@@ -260,8 +261,8 @@ void MBC::getMBR(Region& out) const{
     br.combinePoint(Point(m_pLow,m_dimension));
     br.combinePoint(Point(m_pHigh,m_dimension));
     out.makeInfinite(m_dimension+1);
-    double *pLow=new double(m_dimension+1);
-    double *pHigh=new double(m_dimension+1);
+    double *pLow=new double[m_dimension+1];
+    double *pHigh=new double[m_dimension+1];
     for(int i=0;i<m_dimension;i++){
         pLow[i]=br.m_pLow[i];
         pHigh[i]=br.m_pHigh[i];
@@ -333,6 +334,8 @@ void MBC::makeInfinite(uint32_t dimension)
         m_pLow[cIndex] = std::numeric_limits<double>::max();
         m_pHigh[cIndex] = -std::numeric_limits<double>::max();
     }
+//    m_startTime=0;
+//    m_endTime=200;
     m_startTime = std::numeric_limits<double>::max();
     m_endTime = -std::numeric_limits<double>::max();
 }
@@ -354,8 +357,8 @@ void MBC::combineMBC(const MBC& r)
     br1.combineRegion(br2);
     int ori = getOrient();
     int mod = 2;
-    double *pLow = new double(m_dimension);
-    double *pHigh = new double(m_dimension);
+    double *pLow = new double[m_dimension];
+    double *pHigh = new double[m_dimension];
     for (int i = 0; i < m_dimension; i++) {
         if (ori % mod == 1) {
             pLow[i] = br1.m_pLow[i];
