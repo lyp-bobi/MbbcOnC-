@@ -60,6 +60,16 @@ uint32_t Node::getByteArraySize() const
 		(2 * m_pTree->m_dimension * sizeof(double)));
 }
 
+uint32_t Node::getIndexByteArraySize() const
+{
+    return
+            (sizeof(uint32_t) +
+             sizeof(uint32_t) +
+             sizeof(uint32_t) +
+             (m_children * (m_pTree->m_dimension * sizeof(double) * 2 + sizeof(id_type) + sizeof(uint32_t))) +
+             (2 * m_pTree->m_dimension * sizeof(double)));
+}
+
 void Node::loadFromByteArray(const uint8_t* ptr)
 {
 	m_nodeMBR = m_pTree->m_infiniteRegion;

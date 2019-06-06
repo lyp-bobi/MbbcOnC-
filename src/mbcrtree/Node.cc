@@ -70,6 +70,25 @@ uint32_t Node::getByteArraySize() const
                  m_nodeMBR.getByteArraySize());
 }
 
+uint32_t Node::getIndexByteArraySize() const
+{
+    //todo: don't store the dimensions of each mbr/mbc
+    if(m_level>0)
+        return
+                (sizeof(uint32_t) +
+                 sizeof(uint32_t) +
+                 sizeof(uint32_t) +
+                 (m_children * (sizeof(uint32_t)+m_pTree->m_dimension * sizeof(double) * 2 + sizeof(id_type) + sizeof(uint32_t))) +
+                 m_nodeMBR.getByteArraySize());
+    else
+        return
+                (sizeof(uint32_t) +
+                 sizeof(uint32_t) +
+                 sizeof(uint32_t) +
+                 (m_children * (sizeof(uint32_t)+m_pTree->m_dimension * sizeof(double) * 2+ sizeof(double)*2 + sizeof(id_type) + sizeof(uint32_t))) +
+                 m_nodeMBR.getByteArraySize());
+}
+
 void Node::loadFromByteArray(const uint8_t* ptr)
 {
     m_nodeMBR=m_pTree->m_infiniteRegion;

@@ -389,6 +389,7 @@ void DiskStorageManager::storeByteArray(id_type& page, const uint32_t len, const
 {
 	if (page == NewPage)
 	{
+//        std::cout<<"page id"<<page<<std::endl;
 		Entry* e = new Entry();
 		e->m_length = len;
 
@@ -433,6 +434,7 @@ void DiskStorageManager::storeByteArray(id_type& page, const uint32_t len, const
 	{
 		// find the entry.
 		std::map<id_type, Entry*>::iterator it = m_pageIndex.find(page);
+//		std::cout<<"page id"<<page<<std::endl;
 
 		// check if it exists.
 		if (it == m_pageIndex.end())

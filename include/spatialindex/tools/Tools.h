@@ -226,6 +226,8 @@ namespace Tools
 	public:
 		virtual ~ISerializable() {}
 
+        virtual uint32_t getIndexByteArraySize() const {return 0;}
+
 		virtual  uint32_t getByteArraySize() const = 0;
 			// returns the size of the required uint8_t array.
 		virtual void loadFromByteArray(const uint8_t* data) = 0;

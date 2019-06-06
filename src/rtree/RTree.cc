@@ -1429,9 +1429,10 @@ void SpatialIndex::RTree::RTree::rangeQuery(RangeQueryType type, const IShape& q
 					if(m_DataType==TrajectoryType){
 					    Trajectory traj;
 					    traj.loadFromByteArray(data.m_pData);
+                        v.visitData(data);
 					    if(traj.intersectsShape(query)){
                             m_stats.m_doubleExactQueryResults+=1;
-                            v.visitData(data);
+//                            v.visitData(data);
 					    }
 					}else{
                         v.visitData(data);

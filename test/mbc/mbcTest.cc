@@ -22,8 +22,8 @@
 #define linesToRead 1e10
 #define testtime 1000
 #define dimension 2
-#define indexcap 18
-#define leafcap 18
+#define indexcap 10
+#define leafcap 3
 #define QueryType 1
 //1 for time-slice range, 2 for 5-NN
 
@@ -48,9 +48,9 @@ public:
     {
 //        if (n.isLeaf()) m_leafIO++;
 //        else m_indexIO++;
-        uint32_t size=n.getByteArraySize();
+        uint32_t size=n.getIndexByteArraySize();
 
-        if (n.isLeaf()) {m_indexvisited++;m_leafIO+=size;}
+        if (n.isLeaf()) {m_indexvisited++;m_indexIO+=size;}
         else {m_leafvisited++;m_indexIO+=size;}
     }
 
@@ -67,6 +67,7 @@ public:
         uint8_t* pData = 0;
         uint32_t cLen = 0;
         d.getData(cLen, &pData);
+        m_leafIO+=cLen;
         // do something.
 //        double *s = reinterpret_cast<double*>(pData);
 //        cout << *s << endl;
@@ -111,7 +112,6 @@ public:
         cerr<<"feeding traj to TrajMbrStream\n";
         mbrs.clear();
         for(auto &idt:*period){
-            std::cout<<"handling id "<<idt.first<<" with length"<<idt.second.m_points.size()<<endl;
             Region mbr;
             idt.second.getMBRfull(mbr);
             mbrs.emplace_back(make_pair(idt.first,mbr));
@@ -426,7 +426,7 @@ int main(){
                 RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap, leafcap, 3, SpatialIndex::RTree::RV_RSTAR,
                 indexIdentifier1);
         ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTree(
-                MBCRTree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap, leafcap-4, 3, SpatialIndex::MBCRTree::RV_RSTAR,
+                MBCRTree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap, int(leafcap*0.9*3/4/0.9), 3, SpatialIndex::MBCRTree::RV_RSTAR,
                 indexIdentifier2);
 
 //    real->m_DataType=TrajectoryType;
