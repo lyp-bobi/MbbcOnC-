@@ -12,6 +12,8 @@
 
 using namespace SpatialIndex;
 using std::vector;
+using std::cout;
+using std::endl;
 
 Trajectory::Trajectory() {
 }
@@ -164,28 +166,21 @@ bool Trajectory::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const 
     }
 }
 bool Trajectory::intersectsRegion(const Region& in) const{
-    double* newp=new double[in.m_dimension];
-    for (int i = 0; i < m_points.size(); i++) {
-        if(m_dimension==in.m_dimension) {
+    if(m_dimension==in.m_dimension-1){
+        Region spatial(in.m_pLow,in.m_pHigh,m_dimension);
+        if(in.m_pHigh[m_dimension]<m_points.front().m_startTime||in.m_pLow[m_dimension]>m_points.back().m_endTime){
+            return false;
+        }
+        TimePoint tp=getPointAtTime(in.m_pLow[m_dimension]);
+        return tp.intersectsShape(spatial);
+    }
+    else if(m_dimension==in.m_dimension) {
+        for (int i = 0; i < m_points.size(); i++) {
             if (m_points[i].intersectsShape(in)) {
                 return true;
             }
-            else if(m_dimension==in.m_dimension-1){
-                for(int j=0;i<m_dimension;i++){
-                    newp[j]=m_points[i].m_pCoords[j];
-                }
-                newp[m_dimension]=m_points[i].m_startTime;
-                Point p3d=Point(newp,in.m_dimension);
-                if (p3d.intersectsShape(in)) {
-                    delete[](newp);
-                    return true;
-                }
-
-            }
-            else throw Tools::NotSupportedException("Traj::intersectRegion:wrong dimension");
         }
     }
-    delete[](newp);
     return false;
 }
 
@@ -218,8 +213,8 @@ void Trajectory::getMBR(Region& out) const{
 
 
 void Trajectory::getMBC(SpatialIndex::MBC &out) const {
-    out.makeInfinite(m_dimension);
     if(m_points.size()<=1){
+        out.makeInfinite(m_dimension+1);
         return;
     }
     double startx=m_points[0].m_pCoords[0],starty=m_points[0].m_pCoords[1],startt=m_points[0].m_startTime;
@@ -242,15 +237,11 @@ void Trajectory::getMBC(SpatialIndex::MBC &out) const {
         p=TimePoint::makemid(p1,p2,ptime);
         double prv=std::sqrt((vx-avx)*(vx-avx)+(vy-avy)*(vy-avy));
         double prd=m_points[i].getMinimumDistance(p);
+//        cout<<p<<endl<<prd<<endl;
+//        std::cout<<"calculated point\n"<<p.toString()<<endl<<"real point\n"<<m_points[i].toString()<<endl<<prd<<endl<<"\n\n\n\n";
         if(prv>rv) rv=prv;
         if(prd>rd) rd=prd;
     }
-//    out.m_pLow=p1.m_pCoords;
-//    out.m_pHigh=p2.m_pCoords;
-//    out.m_startTime=startt;
-//    out.m_endTime=endt;
-//    out.m_rd=rd;
-//    out.m_rv=rv;
     out=MBC(p1.m_pCoords,p2.m_pCoords,startt,endt,m_dimension,rd,rv);
 }
 

@@ -1440,7 +1440,12 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                     }
                 }
 //                else{
-//                    std::cout<<"ack failed\n"<<query.toString()<<"\n"<<n->m_ptrMBRk[cChild]->toString()<<"\n";
+//                    Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBC[cChild]), n->m_pIdentifier[cChild]);
+//                    Trajectory traj;
+//                    traj.loadFromByteArray(data.m_pData);
+//                    if(traj.intersectsShape(query)){
+//                        std::cout<<"traj is"<<traj.toString()<<"mbc is"<<*n->m_ptrMBC[cChild]<<"query is"<<query.toString();
+//                    }
 //                }
             }
         }

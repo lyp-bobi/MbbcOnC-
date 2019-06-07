@@ -23,7 +23,7 @@
 #define testtime 1000
 #define dimension 2
 #define indexcap 10
-#define leafcap 3
+#define leafcap 10000
 #define QueryType 1
 //1 for time-slice range, 2 for 5-NN
 
@@ -369,10 +369,6 @@ int TreeQuery(ISpatialIndex* tree,IShape* query){
         tree->nearestNeighborQuery(5,*query,vis);
     }
     end=clock();
-//    cerr<<"Querying time: "<< end-start<<endl;
-//    cerr<<"VISIT NODE "<<vis.m_indexIO<<","<<vis.m_leafIO<<endl;
-//    cerr << *tree;
-//    return vis.m_resultGet;
     return vis.m_indexIO;
 }
 
@@ -380,18 +376,22 @@ int TreeQuery(ISpatialIndex* tree,IShape* query){
 int main(){
     try {
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> >  trajs = loadGTToTrajs();
+        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
         TrajMbrStream ds1;
         TrajMbcStream ds2;
         ds1.feedTraj(&trajs);
         ds2.feedTraj(&trajs);
         vector<IShape *> queries;
+//        double pLow[3] = {10088.656270, 21508.224738, 269.000000};
+//        double pHigh[3] = {12080.786431, 21674.247322, 269.000000};
+//        Region *rg = new Region(pLow, pHigh, 3);
+//        queries.emplace_back(rg);
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
-                double t = random(0, PeriodLen);
-                double pLow[3] = {random(0, 25000), random(0, 30000),t};
-                double pHigh[3] = {pLow[0] + random(1, 500), pLow[1] + random(1, 500),t};
-                Region *rg=new Region(pLow, pHigh, 3);
+                double t = int(random(0, PeriodLen));
+                double pLow[3] = {random(0, 25000), random(0, 30000), t};
+                double pHigh[3] = {pLow[0] + random(1, 2000), pLow[1] + random(1, 2000), t};
+                Region *rg = new Region(pLow, pHigh, 3);
                 queries.emplace_back(rg);
             }
         }
@@ -426,7 +426,8 @@ int main(){
                 RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap, leafcap, 3, SpatialIndex::RTree::RV_RSTAR,
                 indexIdentifier1);
         ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTree(
-                MBCRTree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap, int(leafcap*0.9*3/4/0.9), 3, SpatialIndex::MBCRTree::RV_RSTAR,
+                MBCRTree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap, int(leafcap * 0.9 * 3 / 4 / 0.9), 3,
+                SpatialIndex::MBCRTree::RV_RSTAR,
                 indexIdentifier2);
 
 //    real->m_DataType=TrajectoryType;
@@ -435,6 +436,25 @@ int main(){
         cerr << "start query!" << endl << endl << endl;
         TreeQueryBatch(r, queries);
         TreeQueryBatch(rc, queries);
+//        for (auto q:queries) {
+//            int s, a, b, c, d;
+//            cout << "query is" << q->toString() << endl;
+//            a = TreeQuery(r, q);
+//            b = TreeQuery(rc, q);
+//            if (a != b) {
+//                if (QueryType == 1) {
+//                    Region *tp = dynamic_cast<Region *>(q);
+////                    cerr << "ERROR! for " << tp->toString() << " as " << a << " and " << b << endl;
+////                    system("pause");
+//                } else if (QueryType == 2) {
+//                    Trajectory *tp = dynamic_cast<Trajectory *>(q);
+//                    cerr << "ERROR! for " << tp->toString() << " as " << a << " and " << b << endl;
+//                    system("pause");
+//                }
+//                cout<<*r<<*rc<<"\n\n\n\n\n\n\n\n\n";
+//
+//            }
+//        }
     }
     catch (Tools::Exception& e)
     {

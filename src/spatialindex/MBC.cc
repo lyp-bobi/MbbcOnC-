@@ -227,7 +227,7 @@ bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
         br.getCenter(p);
         double r = br.m_pHigh[0] - p.m_pCoords[0];
         br = Region(in.m_pLow, in.m_pHigh, 2);
-        return p.getMinimumDistance(br) < r;
+        return p.getMinimumDistance(br) <= r;
     }else{
         throw Tools::NotSupportedException("MBC:intersect 3DMBR");
     }
