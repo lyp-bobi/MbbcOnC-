@@ -223,6 +223,7 @@ bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
     if(in.m_pLow[m_dimension]==in.m_pHigh[m_dimension]) {
         Region br;
         getMBRAtTime(in.m_pLow[m_dimension], br);
+//        std::cout<<"mbr at time"<<br<<"\n";
         Point p;
         br.getCenter(p);
         double r = br.m_pHigh[0] - p.m_pCoords[0];

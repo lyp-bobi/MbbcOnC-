@@ -382,8 +382,8 @@ int main(){
         ds1.feedTraj(&trajs);
         ds2.feedTraj(&trajs);
         vector<IShape *> queries;
-//        double pLow[3] = {10088.656270, 21508.224738, 269.000000};
-//        double pHigh[3] = {12080.786431, 21674.247322, 269.000000};
+//        double pLow[]={19476.912748,26935.636464,913.000000};
+//        double pHigh[]={20982.272042,27436.950774,913.000000};
 //        Region *rg = new Region(pLow, pHigh, 3);
 //        queries.emplace_back(rg);
         for (int i = 0; i < testtime; i++) {
@@ -436,25 +436,6 @@ int main(){
         cerr << "start query!" << endl << endl << endl;
         TreeQueryBatch(r, queries);
         TreeQueryBatch(rc, queries);
-//        for (auto q:queries) {
-//            int s, a, b, c, d;
-//            cout << "query is" << q->toString() << endl;
-//            a = TreeQuery(r, q);
-//            b = TreeQuery(rc, q);
-//            if (a != b) {
-//                if (QueryType == 1) {
-//                    Region *tp = dynamic_cast<Region *>(q);
-////                    cerr << "ERROR! for " << tp->toString() << " as " << a << " and " << b << endl;
-////                    system("pause");
-//                } else if (QueryType == 2) {
-//                    Trajectory *tp = dynamic_cast<Trajectory *>(q);
-//                    cerr << "ERROR! for " << tp->toString() << " as " << a << " and " << b << endl;
-//                    system("pause");
-//                }
-//                cout<<*r<<*rc<<"\n\n\n\n\n\n\n\n\n";
-//
-//            }
-//        }
     }
     catch (Tools::Exception& e)
     {

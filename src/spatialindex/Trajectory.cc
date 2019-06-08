@@ -226,20 +226,23 @@ void Trajectory::getMBC(SpatialIndex::MBC &out) const {
     for(int i=0;i<m_points.size();i++){
         TimePoint p;
         double ptime=m_points[i].m_startTime;
+        double prd,prv;
         if(ptime-startt>0){
             vx=(m_points[i].m_pCoords[0]-startx)/(ptime-startt);
             vy=(m_points[i].m_pCoords[1]-starty)/(ptime-startt);
+            prv=std::sqrt((vx-avx)*(vx-avx)+(vy-avy)*(vy-avy));
+            if(prv>rv) rv=prv;
         }
         if(endt-m_points[i].m_startTime>0) {
             vx = (endx - m_points[i].m_pCoords[0]) / (endt - ptime);
             vy = (endy - m_points[i].m_pCoords[1]) / (endt - ptime);
+            prv=std::sqrt((vx-avx)*(vx-avx)+(vy-avy)*(vy-avy));
+            if(prv>rv) rv=prv;
         }
         p=TimePoint::makemid(p1,p2,ptime);
-        double prv=std::sqrt((vx-avx)*(vx-avx)+(vy-avy)*(vy-avy));
-        double prd=m_points[i].getMinimumDistance(p);
+        prd=m_points[i].getMinimumDistance(p);
 //        cout<<p<<endl<<prd<<endl;
 //        std::cout<<"calculated point\n"<<p.toString()<<endl<<"real point\n"<<m_points[i].toString()<<endl<<prd<<endl<<"\n\n\n\n";
-        if(prv>rv) rv=prv;
         if(prd>rd) rd=prd;
     }
     out=MBC(p1.m_pCoords,p2.m_pCoords,startt,endt,m_dimension,rd,rv);

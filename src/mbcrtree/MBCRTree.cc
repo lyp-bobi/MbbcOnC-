@@ -1414,6 +1414,7 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
     {
         NodePtr n = st.top(); st.pop();
 //        std::cout<<"\n level"<<n->m_level<<"\n node\n"<<n->m_nodeMBRk.toString();
+
         if (n->m_level == 0)
         {
             v.visitNode(*n);
@@ -1422,7 +1423,6 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                 bool b;
                 if (type == ContainmentQuery) b = n->m_ptrMBC[cChild]->containsShape(query);
                 else b = n->m_ptrMBC[cChild]->intersectsShape(query);
-
                 if (b)
                 {
                     Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBC[cChild]), n->m_pIdentifier[cChild]);
@@ -1444,7 +1444,12 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
 //                    Trajectory traj;
 //                    traj.loadFromByteArray(data.m_pData);
 //                    if(traj.intersectsShape(query)){
+//                        MBC tmpmbc;
+//                        traj.getMBC(tmpmbc);
+//                        std::cout<<"ptr mbc is"<<*n->m_ptrMBC[cChild]<<"\n"<<"tmp mbc is "<<tmpmbc<<"\n";
 //                        std::cout<<"traj is"<<traj.toString()<<"mbc is"<<*n->m_ptrMBC[cChild]<<"query is"<<query.toString();
+//                        std::cout<<"result is"<<n->m_ptrMBC[cChild]->intersectsShape(query)<<std::endl;
+//                        std::cout<<"result is"<<query.intersectsShape(tmpmbc)<<"\n";
 //                    }
 //                }
             }
