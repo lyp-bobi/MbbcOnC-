@@ -50,6 +50,7 @@ Trajectory* Trajectory::clone() {
 // ISerializable interface
 //
 uint32_t Trajectory::getByteArraySize() const {
+    if(m_points.size()<=0) throw Tools::IllegalStateException("traj with length 0!");
     return sizeof(unsigned long)+m_points[0].getByteArraySize()*m_points.size();
 }
 
@@ -214,6 +215,7 @@ void Trajectory::getMBR(Region& out) const{
 
 void Trajectory::getMBC(SpatialIndex::MBC &out) const {
     if(m_points.size()<=1){
+        std::cerr<<"WARNING: getting MBC at a Trajectory with 0 or 1 points\n";
         out.makeInfinite(m_dimension+1);
         return;
     }
@@ -541,6 +543,7 @@ std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::TimePoint>
     auto iter1=m_points.begin();
     auto iter2=mask.begin();
     assert(m_points[0]==mask[0]);
+    iter2++;
     for(;iter2!=mask.end();iter2++){
         seg.clear();
         while(iter1!=m_points.end()&&iter1->m_startTime<=iter2->m_startTime){
@@ -553,27 +556,10 @@ std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::TimePoint>
     return res;
 }
 
-//void Trajectory::getMBBCkT2(int k, SpatialIndex::MBBCkT2 &out,double eps) const {
-//    out.m_k=k;
-//    out.makeInfinite(m_dimension,k);
-//    auto simp=m_points;
-//    simp= simplifyWithRDP(simp,eps);
-//    out.m_k=k;
-//    out.makeInfinite(m_dimension,k);
-//    int curP=0;
-//    for(int i=0;i<simp.size();i++){
-//        Trajectory tmpTraj;
-//        vector<TimePoint> seg;
-//        while(m_points[curP].m_startTime<m_points[i].m_startTime){
-//            seg.emplace_back(m_points[curP]);
-//            curP++;
-//        }
-//        out.m_points=simp;
-//        out.m_vmbrs
-//    }
-//}
-
-
+std::vector<Trajectory> Trajectory::getSegments(double threshold) {
+    auto mask=simplifyWithRDP(m_points,threshold);
+    return cuttraj(mask);
+}
 
 double Trajectory::getArea() const{ return 0;}
 double Trajectory::getMinimumDistance(const IShape& s) const{
@@ -790,3 +776,14 @@ void Trajectory::loadFromString(std::string str) {
     }
 }
 
+void Trajectory::linkTrajectory(SpatialIndex::Trajectory other) {
+    if(m_points.back().m_startTime==other.m_points.front().m_startTime){
+        m_points.insert(m_points.end(),++other.m_points.begin(),other.m_points.end());
+    }
+    else if (other.m_points.back().m_startTime==m_points.front().m_startTime){
+        m_points.insert(m_points.begin(),++other.m_points.begin(),other.m_points.end());
+    }
+    else{
+        throw Tools::IllegalStateException("Trajectory::linkTrajectory: the two trajectories to be linked should have a common point.");
+    }
+}

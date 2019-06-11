@@ -15,7 +15,7 @@
 #include <spatialindex/SpatialIndex.h>
 //#define sourceFile "D://geolifedatasimplify.csv"
 #define sourceFile "D://geolifedata.csv"
-#define linesToRead 1e8
+#define maxLinesToRead 1e8
 #define testtime 1e2
 #define dimension 2
 #define indexcap 18
@@ -257,7 +257,7 @@ list<vector<pair<id_type ,Trajectory> > > loadGLToTrajs(){
     multimap<id_type,xyt> trajs;
     list<vector<pair<id_type ,Trajectory> > > res(getMaxPeriod());
     int curLine=0;
-    while (getline(inFile, lineStr)&&curLine<linesToRead){
+    while (getline(inFile, lineStr)&&curLine<maxLinesToRead){
         string str;
         stringstream ss(lineStr);
         getline(ss, str, ',');
@@ -313,7 +313,7 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
     multimap<id_type,xyt> trajs;
     list<vector<pair<id_type ,Trajectory> > > res(getMaxPeriod());
     int curLine=0;
-    while (getline(inFile, lineStr)&&curLine<linesToRead){
+    while (getline(inFile, lineStr)&&curLine<maxLinesToRead){
         string str;
         stringstream ss(lineStr);
         getline(ss, str, '\t');
@@ -443,7 +443,7 @@ int main(){
                 name5 = "name5", name6 = "name6", name7 = "name7";
         id_type indexIdentifier0, indexIdentifier1, indexIdentifier2, indexIdentifier3, indexIdentifier4,
                 indexIdentifier5, indexIdentifier6, indexIdentifier7;
-        IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name1, 4096),
+        IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
                 *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
                 *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096),
                 *diskfile3 = StorageManager::createNewDiskStorageManager(name3, 4096),

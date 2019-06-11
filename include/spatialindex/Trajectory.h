@@ -70,9 +70,11 @@ namespace SpatialIndex
     virtual void getMbbc(Mbbc& out,bool tight,double tstart,double tend) const;
     TimePoint getPointAtTime(double time) const;
     virtual void getMBRk(int k,MBRk &out) const;
-    static std::vector<SpatialIndex::TimePoint> simplifyWithRDP(std::vector<SpatialIndex::TimePoint>& Points, double epsilon);
+    static std::vector<SpatialIndex::TimePoint> simplifyWithRDP(std::vector<SpatialIndex::TimePoint>& Points, double threshold);
     virtual void getMBBCk(int k,MBBCk &out,double eps) const;
     std::vector<Trajectory> cuttraj(std::vector<SpatialIndex::TimePoint>);
+    std::vector<Trajectory> getSegments(double threshold);
+    void linkTrajectory(Trajectory other);
 
     void loadFromString(std::string s);
 

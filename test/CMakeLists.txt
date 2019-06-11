@@ -85,6 +85,7 @@ endforeach()
 set (DIR mbc)
 set (SOURCES
         mbcTest
+        TrajStoreTest
         )
 
 foreach (test ${SOURCES})

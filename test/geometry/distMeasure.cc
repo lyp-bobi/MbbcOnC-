@@ -14,7 +14,7 @@
 #include "spatialindex/SpatialIndex.h"
 
 
-#define linesToRead 1e10
+#define maxLinesToRead 1e10
 #define dimension 2
 
 
@@ -120,7 +120,7 @@ list<vector<pair<id_type ,Trajectory> > > loadGTToTrajs(){
     multimap<id_type,xyt> trajs;
     list<vector<pair<id_type ,Trajectory> > > res(getMaxPeriod());
     int curLine=0;
-    while (getline(inFile, lineStr)&&curLine<linesToRead){
+    while (getline(inFile, lineStr)&&curLine<maxLinesToRead){
         string str;
         stringstream ss(lineStr);
         getline(ss, str, '\t');
