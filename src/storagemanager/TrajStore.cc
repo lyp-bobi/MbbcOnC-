@@ -2,10 +2,10 @@
 // Created by Chuang on 2019/6/10.
 //
 
-#include "TrajStore.h"
+#include "spatialindex/TrajStore.h"
 #include <cmath>
 //
-// ExternalSorter::Record
+// tsExternalSorter::Record
 //
 XZ3Enocder* XZ3Enocder::singleton=nullptr;
 XZ3Enocder* XZ3Enocder::instance() {
@@ -71,12 +71,12 @@ long XZ3Enocder::encode(double x, double y, double z) {
     }
     return cs;
 }
-ExternalSorter::Record::Record()
+tsExternalSorter::Record::Record()
         : m_pData(0)
 {
 }
 
-ExternalSorter::Record::Record(const IShape& r, id_type id,id_type pvId,id_type ntId, uint32_t len, uint8_t* pData, uint32_t s,uint32_t level)
+tsExternalSorter::Record::Record(const IShape& r, id_type id,id_type pvId,id_type ntId, uint32_t len, uint8_t* pData, uint32_t s,uint32_t level)
         :  m_id(id),m_pvId(pvId),m_ntId(ntId), m_len(len), m_pData(pData), m_s(s),m_level(level)
 {
     const Region* pr = dynamic_cast<const Region*>(&r);
@@ -88,12 +88,12 @@ ExternalSorter::Record::Record(const IShape& r, id_type id,id_type pvId,id_type 
     }
 }
 
-ExternalSorter::Record::~Record()
+tsExternalSorter::Record::~Record()
 {
     delete[] m_pData;
 }
 
-bool ExternalSorter::Record::operator<(const Record& r) const
+bool tsExternalSorter::Record::operator<(const Record& r) const
 {
     Point c1,c2;
     m_mbc.getCenter(c1);
@@ -103,7 +103,7 @@ bool ExternalSorter::Record::operator<(const Record& r) const
         <encoder->encode(c2.m_pCoords[0],c2.m_pCoords[1],c2.m_pCoords[2])*4+m_mbc.getOrient();
 }
 
-void ExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)
+void tsExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)
 {
     f.write(static_cast<uint64_t>(m_id));
     f.write(static_cast<uint64_t>(m_pvId));
@@ -131,7 +131,7 @@ void ExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)
     if (m_len > 0) f.write(m_len, m_pData);
 }
 
-void ExternalSorter::Record::loadFromFile(Tools::TemporaryFile& f)
+void tsExternalSorter::Record::loadFromFile(Tools::TemporaryFile& f)
 {
     m_id = static_cast<id_type>(f.readUInt64());
     m_pvId = static_cast<id_type>(f.readUInt64());
@@ -171,23 +171,23 @@ void ExternalSorter::Record::loadFromFile(Tools::TemporaryFile& f)
 }
 
 //
-// ExternalSorter
+// tsExternalSorter
 //
-ExternalSorter::ExternalSorter(uint32_t u32PageSize, uint32_t u32BufferPages)
+tsExternalSorter::tsExternalSorter(uint32_t u32PageSize, uint32_t u32BufferPages)
         : m_bInsertionPhase(true), m_u32PageSize(u32PageSize),
           m_u32BufferPages(u32BufferPages), m_u64TotalEntries(0), m_stI(0)
 {
 }
 
-ExternalSorter::~ExternalSorter()
+tsExternalSorter::~tsExternalSorter()
 {
     for (m_stI = 0; m_stI < m_buffer.size(); ++m_stI) delete m_buffer[m_stI];
 }
 
-void ExternalSorter::insert(Record* r)
+void tsExternalSorter::insert(Record* r)
 {
     if (m_bInsertionPhase == false)
-        throw Tools::IllegalStateException("ExternalSorter::insert: Input has already been sorted.");
+        throw Tools::IllegalStateException("tsExternalSorter::insert: Input has already been sorted.");
 
     m_buffer.emplace_back(r);
     ++m_u64TotalEntries;
@@ -209,10 +209,10 @@ void ExternalSorter::insert(Record* r)
     }
 }
 
-void ExternalSorter::sort()
+void tsExternalSorter::sort()
 {
     if (m_bInsertionPhase == false)
-        throw Tools::IllegalStateException("ExternalSorter::sort: Input has already been sorted.");
+        throw Tools::IllegalStateException("tsExternalSorter::sort: Input has already been sorted.");
 
     if (m_runs.empty())
     {
@@ -340,10 +340,10 @@ void ExternalSorter::sort()
     m_bInsertionPhase = false;
 }
 
-ExternalSorter::Record* ExternalSorter::getNextRecord()
+tsExternalSorter::Record* tsExternalSorter::getNextRecord()
 {
     if (m_bInsertionPhase == true)
-        throw Tools::IllegalStateException("ExternalSorter::getNextRecord: Input has not been sorted yet.");
+        throw Tools::IllegalStateException("tsExternalSorter::getNextRecord: Input has not been sorted yet.");
 
     Record* ret;
 
@@ -367,7 +367,7 @@ ExternalSorter::Record* ExternalSorter::getNextRecord()
     return ret;
 }
 
-inline uint64_t ExternalSorter::getTotalEntries() const
+inline uint64_t tsExternalSorter::getTotalEntries() const
 {
     return m_u64TotalEntries;
 }
@@ -381,7 +381,7 @@ TrajStore::TrajStore(IStorageManager *store,uint32_t pageSize)
 
 void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs){
 
-    Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(m_pageSize, 200));
+    Tools::SmartPointer<tsExternalSorter> es = Tools::SmartPointer<tsExternalSorter>(new tsExternalSorter(m_pageSize, 200));
     //load segments to sorter's record
     std::cerr<<"TrajStore:loading segments\n";
     for(auto &traj:trajs){
@@ -395,7 +395,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
             id_type segid=getSegId(traj.first,j),
                     pvId=(j==0)?-1:segid-1,
                     ntId=(j==traj.second.size()-1)?-1:segid+1;
-            es->insert(new ExternalSorter::Record(thebc,segid,pvId,ntId , len, data, 0,0));
+            es->insert(new tsExternalSorter::Record(thebc,segid,pvId,ntId , len, data, 0,0));
             m_entryMbcs[segid]=thebc;
         }
     }
@@ -409,7 +409,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     uint32_t spaceRem=m_pageSize,currentLen=0;//this two add to m_pagesize
     uint8_t *pageData=new uint8_t[m_pageSize];
     while (true) {
-        ExternalSorter::Record *r;
+        tsExternalSorter::Record *r;
         try { r = es->getNextRecord(); } catch (Tools::EndOfStreamException) {
             if(currentLen>0) {
 //                m_pStorageManager->storeByteArray(thisPageId, currentLen, pageData);

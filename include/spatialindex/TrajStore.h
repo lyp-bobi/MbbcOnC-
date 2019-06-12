@@ -23,7 +23,7 @@ namespace SpatialIndex
             uint32_t m_length;
             static XZ3Enocder* instance();
         };
-        class ExternalSorter
+        class tsExternalSorter
         {
         public:
             class Record
@@ -58,8 +58,8 @@ namespace SpatialIndex
             };
 
         public:
-            ExternalSorter(uint32_t u32PageSize, uint32_t u32BufferPages);
-            virtual ~ExternalSorter();
+            tsExternalSorter(uint32_t u32PageSize, uint32_t u32BufferPages);
+            virtual ~tsExternalSorter();
 
             void insert(Record* r);
             void sort();
@@ -94,7 +94,7 @@ namespace SpatialIndex
             std::vector<Record*> m_buffer;
             uint64_t m_u64TotalEntries;
             uint32_t m_stI;
-        };//ExternalSorter
+        };//tsExternalSorter
 
         class TrajStore:IStorageManager{
         public:

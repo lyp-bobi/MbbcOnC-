@@ -12,7 +12,6 @@
 #include<time.h>
 #include <cmath>
 #include <spatialindex/SpatialIndex.h>
-#include "../../src/storagemanager/TrajStore.h"
 
 using namespace std;
 using namespace SpatialIndex;

@@ -220,7 +220,6 @@ set(SIDX_STORAGEMANAGER_CPP
   "${SIDX_SRC_DIR}/storagemanager/MemoryStorageManager.h"
   "${SIDX_SRC_DIR}/storagemanager/RandomEvictionsBuffer.cc"
   "${SIDX_SRC_DIR}/storagemanager/RandomEvictionsBuffer.h"
-  "${SIDX_SRC_DIR}/storagemanager/TrajStore.h"
   "${SIDX_SRC_DIR}/storagemanager/TrajStore.cc"
 )
 list (APPEND SIDX_CPP ${SIDX_STORAGEMANAGER_CPP})
