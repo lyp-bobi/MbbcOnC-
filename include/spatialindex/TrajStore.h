@@ -12,17 +12,17 @@ using std::vector;
 
 namespace SpatialIndex
 {
+    class XZ3Enocder{
+    private:
+        XZ3Enocder();
+        static XZ3Enocder* singleton;
+    public:
+        long encode(double x,double y,double z);
+        double m_xmin,m_xmax,m_ymin,m_ymax,m_zmin,m_zmax;
+        uint32_t m_length;
+        static XZ3Enocder* instance();
+    };
     namespace StorageManager {
-        class XZ3Enocder{
-        private:
-            XZ3Enocder();
-            static XZ3Enocder* singleton;
-        public:
-            long encode(double x,double y,double z);
-            double m_xmin,m_xmax,m_ymin,m_ymax,m_zmin,m_zmax;
-            uint32_t m_length;
-            static XZ3Enocder* instance();
-        };
         class tsExternalSorter
         {
         public:
@@ -125,9 +125,35 @@ namespace SpatialIndex
             MBCs getMBCsByTime(id_type &id,double tstart,double tend);
             std::map<id_type, Entry*> m_entries;//map from seg id to entry
             std::map<id_type, MBC> m_entryMbcs;
+            std::map<id_type, Region> m_entryMbrs;
             IStorageManager* m_pStorageManager;
             uint32_t m_pageSize;
             uint32_t m_maxTrajSegs=100;
         };
-    }
+    }//namespace StorageManager
+    class baseSegmentStream:IDataStream{
+        std::map<id_type, MBC>::iterator iter;
+        std::map<id_type, Region> *m_brs;
+        std::map<id_type, MBC> *m_bcs;
+        baseSegmentStream(TrajStore *ts)
+            :m_brs(&ts->m_entryMbrs),m_bcs(&ts->m_entryMbcs),iter(ts->m_entryMbcs.begin()){}
+        virtual bool hasNext() override
+        {
+            return iter!=m_bcs->end();
+        }
+        virtual IData* constructData(id_type id,Region mbr,MBC mbc)=0;
+        virtual IData* getNext() override{
+            uint8_t *data;
+            uint32_t len;
+            auto d=constructData(iter->first,(*m_brs)[iter->first],iter->second);
+            iter++;
+            return d;
+        }
+        virtual uint32_t size()
+        {
+            return m_bcs->size();
+        }
+
+        virtual void rewind(){iter=m_bcs->begin();}
+    };
 }
