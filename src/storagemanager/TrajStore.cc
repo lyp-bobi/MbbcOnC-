@@ -396,6 +396,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
                     pvId=(j==0)?-1:segid-1,
                     ntId=(j==traj.second.size()-1)?-1:segid+1;
             es->insert(new ExternalSorter::Record(thebc,segid,pvId,ntId , len, data, 0,0));
+            m_entryMbcs[segid]=thebc;
         }
     }
     //sort the data
@@ -481,6 +482,32 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     }
     delete[] pageData;
 }
+MBCs TrajStore::getMBCsByTime(id_type &id, double tstart, double tend) {
+    auto it=m_entries.find(id);
+    auto bc=(*m_entryMbcs.find(id)).second;
+    assert(it!=m_entries.end());
+    Entry e=*(it->second);
+    MBCs bcs;
+    bcs.m_ids.push_back(id);
+    bcs.m_mbcs.push_back(bc);
+    while(e.m_pvId>=0 && bc.m_startTime>tstart){
+        id_type newid=e.m_pvId;
+        it=m_entries.find(newid);
+        bc=(*m_entryMbcs.find(newid)).second;
+        e=*(it->second);
+        bcs.m_ids.insert(bcs.m_ids.begin(),newid);
+        bcs.m_mbcs.insert(bcs.m_mbcs.begin(),bc);
+    }
+    while(e.m_ntId>=0 && bc.m_endTime<tend){
+        id_type  newid=e.m_ntId;
+        it=m_entries.find(newid);
+        bc=(*m_entryMbcs.find(newid)).second;
+        e=*(it->second);
+        bcs.m_ids.push_back(newid);
+        bcs.m_mbcs.push_back(bc);
+    }
+    return bcs;
+}
 Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double tend) {
     auto it=m_entries.find(id);
     assert(it!=m_entries.end());
@@ -496,9 +523,9 @@ Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double tend) {
         e=*(it->second);
         len=e.m_start+e.m_len;
         uint8_t *load1 = new uint8_t[len];
-        m_pStorageManager->loadByteArray(e.m_page,len,&load);
-        uint8_t *data1 = load+e.m_start;
-        tmptraj.loadFromByteArray(data);
+        m_pStorageManager->loadByteArray(e.m_page,len,&load1);
+        uint8_t *data1 = load1+e.m_start;
+        tmptraj.loadFromByteArray(data1);
         traj.linkTrajectory(tmptraj);
         delete[](load1);
     }

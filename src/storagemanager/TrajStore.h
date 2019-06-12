@@ -122,7 +122,9 @@ namespace SpatialIndex
             id_type getSegId(id_type id,uint32_t segnum){return id*m_maxTrajSegs+segnum;}
             void loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs);
             Trajectory getTrajByTime(id_type &id,double tstart,double tend);
+            MBCs getMBCsByTime(id_type &id,double tstart,double tend);
             std::map<id_type, Entry*> m_entries;//map from seg id to entry
+            std::map<id_type, MBC> m_entryMbcs;
             IStorageManager* m_pStorageManager;
             uint32_t m_pageSize;
             uint32_t m_maxTrajSegs=100;
