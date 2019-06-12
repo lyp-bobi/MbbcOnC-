@@ -384,6 +384,8 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     Tools::SmartPointer<tsExternalSorter> es = Tools::SmartPointer<tsExternalSorter>(new tsExternalSorter(m_pageSize, 200));
     //load segments to sorter's record
     std::cerr<<"TrajStore:loading segments\n";
+    Region maxbr;
+    maxbr.makeInfinite(3);
     for(auto &traj:trajs){
         for(int j=0;j<traj.second.size();j++){//segment
             Trajectory seg=traj.second[j];
@@ -392,6 +394,9 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
             seg.storeToByteArray(&data,len);
             MBC thebc;
             seg.getMBC(thebc);
+            Region thebr;
+            seg.getMBRfull(thebr);
+            maxbr.combineRegion(thebr);
             id_type segid=getSegId(traj.first,j),
                     pvId=(j==0)?-1:segid-1,
                     ntId=(j==traj.second.size()-1)?-1:segid+1;
@@ -399,6 +404,15 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
             m_entryMbcs[segid]=thebc;
         }
     }
+    //adjust the encoder
+    auto encoder=XZ3Enocder::instance();
+    encoder->m_xmin=maxbr.m_pLow[0];
+    encoder->m_xmax=maxbr.m_pHigh[0];
+    encoder->m_ymin=maxbr.m_pLow[1];
+    encoder->m_ymax=maxbr.m_pHigh[1];
+    encoder->m_zmin=maxbr.m_pLow[2];
+    encoder->m_zmax=maxbr.m_pHigh[2];
+
     //sort the data
     std::cerr<<"TrajStore:sorting using XZ3 curve\n";
     es->sort();
