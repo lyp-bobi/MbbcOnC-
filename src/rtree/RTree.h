@@ -30,6 +30,7 @@
 #include "Statistics.h"
 #include "Node.h"
 #include "PointerPoolNode.h"
+#include "storagemanager/TrajStore.h"
 
 namespace SpatialIndex
 {
@@ -100,12 +101,18 @@ namespace SpatialIndex
 			void rangeQuery(RangeQueryType type, const IShape& query, IVisitor& v);
 			void selfJoinQuery(id_type id1, id_type id2, const Region& r, IVisitor& vis);
             void visitSubTree(NodePtr subTree, IVisitor& v);
-            
+        public:
+            bool m_bUsingTrajStore=false;
+
+            TrajStore *m_ts=nullptr;
+
+        private:
 			IStorageManager* m_pStorageManager;
 
 			id_type m_rootID, m_headerID;
 
 			RTreeVariant m_treeVariant;
+
 
         private:
 

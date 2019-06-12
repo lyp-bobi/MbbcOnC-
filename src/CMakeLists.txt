@@ -42,6 +42,7 @@ set(SIDX_BASE_HPP
   "${SIDX_HEADERS_DIR}/TimeRegion.h"
   "${SIDX_HEADERS_DIR}/TPRTree.h"
   "${SIDX_HEADERS_DIR}/Version.h"
+  "${SIDX_HEADERS_DIR}/TrajStore.h"
 )
 list (APPEND SIDX_HPP ${SIDX_BASE_HPP} )
 
@@ -122,6 +123,7 @@ set(SIDX_RTREE_CPP
   "${SIDX_SRC_DIR}/rtree/RTree.h"
   "${SIDX_SRC_DIR}/rtree/Statistics.cc"
   "${SIDX_SRC_DIR}/rtree/Statistics.h"
+  "${SIDX_SRC_DIR}/rtree/TrajStoreRelated.cc"
 )
 list (APPEND SIDX_CPP ${SIDX_RTREE_CPP})
 
@@ -139,6 +141,7 @@ set(SIDX_MBCRTREE_CPP
         "${SIDX_SRC_DIR}/mbcrtree/MBCRTree.h"
         "${SIDX_SRC_DIR}/mbcrtree/Statistics.cc"
         "${SIDX_SRC_DIR}/mbcrtree/Statistics.h"
+        "${SIDX_SRC_DIR}/mbcrtree/TrajStoreRelated.cc"
         )
 list (APPEND SIDX_CPP ${SIDX_MBCRTREE_CPP})
 

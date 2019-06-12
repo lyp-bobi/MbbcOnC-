@@ -104,5 +104,11 @@ namespace SpatialIndex
 			id_type& indexIdentifier
 		);
 		SIDX_DLL ISpatialIndex* loadMBCRTree(IStorageManager& in, id_type indexIdentifier);
+        SIDX_DLL ISpatialIndex* createAndBulkLoadNewMBCRTreeWithTrajStore(
+                IStorageManager *tsm,
+                uint32_t indexCapacity,
+                uint32_t dimension,
+                id_type& indexIdentifier
+        );
 	}
 }

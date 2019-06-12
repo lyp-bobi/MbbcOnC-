@@ -103,6 +103,12 @@ namespace SpatialIndex
 			Tools::PropertySet& ps,
 			id_type& indexIdentifier
 		);
-		SIDX_DLL ISpatialIndex* loadRTree(IStorageManager& in, id_type indexIdentifier);
-	}
+        SIDX_DLL ISpatialIndex* loadRTree(IStorageManager& in, id_type indexIdentifier);
+        SIDX_DLL ISpatialIndex* createAndBulkLoadNewRTreeWithTrajStore(
+                IStorageManager *tsm,
+                uint32_t indexCapacity,
+                uint32_t dimension,
+                id_type& indexIdentifier
+                );
+    }
 }

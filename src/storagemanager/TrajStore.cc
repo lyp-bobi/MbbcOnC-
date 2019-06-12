@@ -2,7 +2,7 @@
 // Created by Chuang on 2019/6/10.
 //
 
-#include "spatialindex/TrajStore.h"
+#include "storagemanager/TrajStore.h"
 #include <cmath>
 //
 // tsExternalSorter::Record

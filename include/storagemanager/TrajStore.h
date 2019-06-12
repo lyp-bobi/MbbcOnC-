@@ -96,7 +96,7 @@ namespace SpatialIndex
             uint32_t m_stI;
         };//tsExternalSorter
 
-        class TrajStore:IStorageManager{
+        class TrajStore:public IStorageManager{
         public:
             TrajStore(IStorageManager *store,uint32_t pageSize);
             void flush(){m_pStorageManager->flush();}
@@ -131,7 +131,8 @@ namespace SpatialIndex
             uint32_t m_maxTrajSegs=100;
         };
     }//namespace StorageManager
-    class baseSegmentStream:IDataStream{
+    class baseSegmentStream:public IDataStream{
+    public:
         std::map<id_type, MBC>::iterator iter;
         std::map<id_type, Region> *m_brs;
         std::map<id_type, MBC> *m_bcs;

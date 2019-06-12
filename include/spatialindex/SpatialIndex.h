@@ -272,7 +272,6 @@ namespace SpatialIndex
 #include "MVRTree.h"
 #include "TPRTree.h"
 #include "Version.h"
-#include "TrajStore.h"
 
 
 // typedef SpatialIndex::Tools::PoolPointer<Region> RegionPtr;
