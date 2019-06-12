@@ -17,6 +17,7 @@
 #include <cmath>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x)+x)
 #include <spatialindex/SpatialIndex.h>
+#include "storagemanager/TrajStore.h"
 //#define sourceFile "D://t200n100s.txt"
 #define sourceFile "D://t1000.txt"
 #define maxLinesToRead 1e10
@@ -377,10 +378,17 @@ int main(){
     try {
         srand((int) time(NULL));
         vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
-        TrajMbrStream ds1;
-        TrajMbcStream ds2;
-        ds1.feedTraj(&trajs);
-        ds2.feedTraj(&trajs);
+//        TrajMbrStream ds1;
+//        TrajMbcStream ds2;
+//        ds1.feedTraj(&trajs);
+//        ds2.feedTraj(&trajs);
+
+        vector<pair<id_type, vector<Trajectory>>> segs;
+        vector<pair<id_type, Trajectory> > empty1;
+        for(auto traj:trajs){
+            segs.push_back(make_pair(traj.first,traj.second.getSegments(2000)));
+        }
+        trajs.swap(empty1);
         vector<IShape *> queries;
 //        double pLow[]={19476.912748,26935.636464,913.000000};
 //        double pHigh[]={20982.272042,27436.950774,913.000000};
@@ -422,17 +430,24 @@ int main(){
 //    ISpatialIndex* real = R2Tree::createAndBulkLoadNewR2Tree(
 //            R2Tree::BulkLoadMethod::BLM_STR, ds2, *file0, 0.9, indexcap,100000, 2, indexIdentifier0);
 //    ds1.rewind();
-        ISpatialIndex *r = RTree::createAndBulkLoadNewRTree(
-                RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap, leafcap, 3, SpatialIndex::RTree::RV_RSTAR,
-                indexIdentifier1);
-        ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTree(
-                MBCRTree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap, int(leafcap * 0.9 * 3 / 4 / 0.9), 3,
-                SpatialIndex::MBCRTree::RV_RSTAR,
-                indexIdentifier2);
+//        ISpatialIndex *r = RTree::createAndBulkLoadNewRTree(
+//                RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap, leafcap, 3, SpatialIndex::RTree::RV_RSTAR,
+//                indexIdentifier1);
+//        ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTree(
+//                MBCRTree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap, int(leafcap * 0.9 * 3 / 4 / 0.9), 3,
+//                SpatialIndex::MBCRTree::RV_RSTAR,
+//                indexIdentifier2);
+        TrajStore ts1(file1,4096);
+        ts1.loadSegments(segs);
+        TrajStore ts2(file2,4096);
+        ts2.loadSegments(segs);
+        ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,5,3,indexIdentifier1);
+        ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,5,3,indexIdentifier2);
 
-//    real->m_DataType=TrajectoryType;
-        r->m_DataType = TrajectoryType;
-        rc->m_DataType = TrajectoryType;
+
+//        real->m_DataType=TrajectoryType;
+//        r->m_DataType = TrajectoryType;
+//        rc->m_DataType = TrajectoryType;
         cerr << "start query!" << endl << endl << endl;
         TreeQueryBatch(r, queries);
         TreeQueryBatch(rc, queries);

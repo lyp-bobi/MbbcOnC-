@@ -22,7 +22,7 @@ ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore
     TrajStore *ts= dynamic_cast<TrajStore*>(tsm);
     assert(ts!= nullptr);
     auto dataStream=new mbcrtreeSegmentStream(ts);
-    ISpatialIndex* tree= createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR,*dataStream,*ts,0.5,indexCapacity,2,dimension,SpatialIndex::MBCRTree::RV_RSTAR,indexIdentifier);
+    ISpatialIndex* tree= createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,indexCapacity,dimension,SpatialIndex::MBCRTree::RV_RSTAR,indexIdentifier);
     MBCRTree* r= dynamic_cast<MBCRTree*>(tree);
     r->m_DataType=TrajectoryType;
     r->m_bUsingTrajStore=true;

@@ -402,6 +402,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
                     ntId=(j==traj.second.size()-1)?-1:segid+1;
             es->insert(new tsExternalSorter::Record(thebc,segid,pvId,ntId , len, data, 0,0));
             m_entryMbcs[segid]=thebc;
+            m_entryMbrs[segid]=thebr;
         }
     }
     //adjust the encoder
@@ -496,32 +497,20 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     }
     delete[] pageData;
 }
-MBCs TrajStore::getMBCsByTime(id_type &id, double tstart, double tend) {
+
+Trajectory TrajStore::getTraj(id_type &id) {
     auto it=m_entries.find(id);
-    auto bc=(*m_entryMbcs.find(id)).second;
     assert(it!=m_entries.end());
     Entry e=*(it->second);
-    MBCs bcs;
-    bcs.m_ids.push_back(id);
-    bcs.m_mbcs.push_back(bc);
-    while(e.m_pvId>=0 && bc.m_startTime>tstart){
-        id_type newid=e.m_pvId;
-        it=m_entries.find(newid);
-        bc=(*m_entryMbcs.find(newid)).second;
-        e=*(it->second);
-        bcs.m_ids.insert(bcs.m_ids.begin(),newid);
-        bcs.m_mbcs.insert(bcs.m_mbcs.begin(),bc);
-    }
-    while(e.m_ntId>=0 && bc.m_endTime<tend){
-        id_type  newid=e.m_ntId;
-        it=m_entries.find(newid);
-        bc=(*m_entryMbcs.find(newid)).second;
-        e=*(it->second);
-        bcs.m_ids.push_back(newid);
-        bcs.m_mbcs.push_back(bc);
-    }
-    return bcs;
+    uint32_t len=e.m_start+e.m_len;
+    uint8_t *load = new uint8_t[len];
+    m_pStorageManager->loadByteArray(e.m_page,len,&load);
+    uint8_t *data = load+e.m_start;
+    Trajectory traj,tmptraj;
+    traj.loadFromByteArray(data);
+    return traj;
 }
+
 Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double tend) {
     auto it=m_entries.find(id);
     assert(it!=m_entries.end());
@@ -556,4 +545,31 @@ Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double tend) {
     }
     delete[](load);
     return traj;
+}
+
+MBCs TrajStore::getMBCsByTime(id_type &id, double tstart, double tend) {
+    auto it=m_entries.find(id);
+    auto bc=(*m_entryMbcs.find(id)).second;
+    assert(it!=m_entries.end());
+    Entry e=*(it->second);
+    MBCs bcs;
+    bcs.m_ids.push_back(id);
+    bcs.m_mbcs.push_back(bc);
+    while(e.m_pvId>=0 && bc.m_startTime>tstart){
+        id_type newid=e.m_pvId;
+        it=m_entries.find(newid);
+        bc=(*m_entryMbcs.find(newid)).second;
+        e=*(it->second);
+        bcs.m_ids.insert(bcs.m_ids.begin(),newid);
+        bcs.m_mbcs.insert(bcs.m_mbcs.begin(),bc);
+    }
+    while(e.m_ntId>=0 && bc.m_endTime<tend){
+        id_type  newid=e.m_ntId;
+        it=m_entries.find(newid);
+        bc=(*m_entryMbcs.find(newid)).second;
+        e=*(it->second);
+        bcs.m_ids.push_back(newid);
+        bcs.m_mbcs.push_back(bc);
+    }
+    return bcs;
 }

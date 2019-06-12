@@ -22,7 +22,7 @@ ISpatialIndex* SpatialIndex::RTree::createAndBulkLoadNewRTreeWithTrajStore(IStor
     TrajStore *ts= dynamic_cast<TrajStore*>(tsm);
     assert(ts!= nullptr);
     auto dataStream=new rtreeSegmentStream(ts);
-    ISpatialIndex* tree= createAndBulkLoadNewRTree(SpatialIndex::RTree::BLM_STR,*dataStream,*ts,0.5,indexCapacity,2,dimension,SpatialIndex::RTree::RV_RSTAR,indexIdentifier);
+    ISpatialIndex* tree= createAndBulkLoadNewRTree(SpatialIndex::RTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,indexCapacity,dimension,SpatialIndex::RTree::RV_RSTAR,indexIdentifier);
     RTree* r= dynamic_cast<RTree*>(tree);
     r->m_DataType=TrajectoryType;
     r->m_bUsingTrajStore=true;

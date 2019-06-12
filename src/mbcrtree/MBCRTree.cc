@@ -1428,12 +1428,21 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                     Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBC[cChild]), n->m_pIdentifier[cChild]);
                     ++(m_stats.m_u64QueryResults);
                     if(m_DataType==TrajectoryType){
-                        Trajectory traj;
-                        traj.loadFromByteArray(data.m_pData);
-                        v.visitData(data);
-                        if(traj.intersectsShape(query)){
-                            m_stats.m_doubleExactQueryResults+=1;
+                        if(m_bUsingTrajStore==true){
+                            Trajectory segtraj=m_ts->getTraj(n->m_pIdentifier[cChild]);
+                            if(query.intersectsShape(segtraj)){
+                                m_stats.m_doubleExactQueryResults += 1;
+                                v.visitData(data);
+                            }
+                        }
+                        else {
+                            Trajectory traj;
+                            traj.loadFromByteArray(data.m_pData);
 //                            v.visitData(data);
+                            if (traj.intersectsShape(query)) {
+                                m_stats.m_doubleExactQueryResults += 1;
+                                v.visitData(data);
+                            }
                         }
                     }else{
                         v.visitData(data);
