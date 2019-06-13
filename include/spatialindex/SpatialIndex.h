@@ -33,6 +33,8 @@
 #define M_PI_2 1.57079632679489661922
 #endif
 
+#define sq(x) x*x
+
 
 namespace SpatialIndex
 {
@@ -77,7 +79,6 @@ namespace SpatialIndex
 		virtual double getArea() const = 0;
 		virtual double getMinimumDistance(const IShape& in) const = 0;
 		virtual ~IShape() {}
-		virtual const std::string toString() const{std::string s="shape";return s;}
 	}; // IShape
 
 	class SIDX_DLL ITimeShape : public Tools::IInterval
@@ -258,17 +259,11 @@ namespace SpatialIndex
 #include "TimeRegion.h"
 #include "MovingPoint.h"
 #include "MovingRegion.h"
-#include "Mbbc.h"
-#include "MBRk.h"
-#include "MBBCk.h"
 #include "MBC.h"
 #include "Trajectory.h"
+#include "ShapeList.h"
 #include "RTree.h"
 #include "MBCRTree.h"
-#include "R2Tree.h"
-#include "PAARTree.h"
-#include "PAAR2Tree.h"
-#include "LERTree.h"
 #include "MVRTree.h"
 #include "TPRTree.h"
 #include "Version.h"

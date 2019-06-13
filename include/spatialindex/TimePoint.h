@@ -88,7 +88,6 @@ namespace SpatialIndex
 		double m_startTime;
 		double m_endTime;
         static TimePoint makemid(TimePoint tp1,TimePoint tp2,double t);
-        const std::string toString() const;
 		friend SIDX_DLL std::ostream& operator<<(std::ostream& os, const TimePoint& pt);
 	}; // TimePoint
 

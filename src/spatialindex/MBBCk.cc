@@ -345,25 +345,3 @@ void MBBCk::getCombinedMBBCk(MBBCk& out, const MBBCk& in) const
     out = *this;
     out.combineMBBCk(in);
 }
-
-std::ostream& SpatialIndex::operator<<(std::ostream& os, const MBBCk& r)
-{
-    os<<"MBR-"<<r.m_k<<":\n";
-
-    for (auto mbr:r.m_mbrs)
-    {
-        os << mbr.toString()<<"\n";
-    }
-    os<<"vMBR\n";
-    for (auto mbr:r.m_vmbrs)
-    {
-        os << mbr.toString()<<"\n";
-    }
-    if(useWMBR) {
-        os << "wMBR\n";
-        for (auto mbr:r.m_wmbrs) {
-            os << mbr.toString() << "\n";
-        }
-    }
-    return os;
-}

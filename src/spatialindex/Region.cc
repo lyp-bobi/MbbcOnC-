@@ -598,21 +598,3 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const Region& r)
 
 	return os;
 }
-const std::string Region::toString() const {
-    std::string s;
-    if(m_dimension==2){
-        s = "mbr:" + std::to_string(m_pLow[0]) + "," +
-                        std::to_string(m_pLow[1]) + ","+
-                        std::to_string(m_pHigh[0]) + "," +
-                        std::to_string(m_pHigh[1]) + "\n";
-    }
-    if(m_dimension==3){
-        s = "mbr:" + std::to_string(m_pLow[0]) + "," +
-                std::to_string(m_pLow[1]) + ","+
-                std::to_string(m_pLow[2]) + ","+
-                std::to_string(m_pHigh[0]) + "," +
-                std::to_string(m_pHigh[1]) +","+
-                std::to_string(m_pHigh[2]) + "\n";
-    }
-    return s;
-}

@@ -28,9 +28,7 @@
 
 #include "../rtree/RTree.h"
 #include "../mbcrtree/MBCRTree.h"
-#include "../r2tree/R2Tree.h"
-#include "../paartree/PAARTree.h"
-#include "../paar2tree/PAAR2Tree.h"
+
 #include "../mvrtree/MVRTree.h"
 #include "../tprtree/TPRTree.h"
 
@@ -58,24 +56,6 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const ISpatialIndex& i)
     if (pMBCRTree != 0)
     {
         os << *pMBCRTree;
-        return os;
-    }
-    const SpatialIndex::R2Tree::R2Tree* pR2Tree = dynamic_cast<const SpatialIndex::R2Tree::R2Tree*>(&i);
-    if (pR2Tree != 0)
-    {
-        os << *pR2Tree;
-        return os;
-    }
-    const SpatialIndex::PAARTree::PAARTree* pPAARTree = dynamic_cast<const SpatialIndex::PAARTree::PAARTree*>(&i);
-    if (pPAARTree != 0)
-    {
-        os << *pPAARTree;
-        return os;
-    }
-    const SpatialIndex::PAAR2Tree::PAAR2Tree* pPAAR2Tree = dynamic_cast<const SpatialIndex::PAAR2Tree::PAAR2Tree*>(&i);
-    if (pPAAR2Tree != 0)
-    {
-        os << *pPAAR2Tree;
         return os;
     }
 
@@ -106,12 +86,6 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const IStatistics& s)
 		return os;
 	}
 
-    const SpatialIndex::R2Tree::Statistics* pR2TreeStats = dynamic_cast<const SpatialIndex::R2Tree::Statistics*>(&s);
-    if (pR2TreeStats != 0)
-    {
-        os << *pR2TreeStats;
-        return os;
-    }
 	const SpatialIndex::MVRTree::Statistics* pMVRTreeStats = dynamic_cast<const SpatialIndex::MVRTree::Statistics*>(&s);
 	if (pMVRTreeStats != 0)
 	{

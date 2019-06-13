@@ -386,7 +386,7 @@ int main(){
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, Trajectory> > empty1;
         for(auto traj:trajs){
-            segs.push_back(make_pair(traj.first,traj.second.getSegments(2000)));
+            segs.push_back(make_pair(traj.first,traj.second.getSegments(20000)));
         }
         trajs.swap(empty1);
         vector<IShape *> queries;
@@ -443,7 +443,6 @@ int main(){
         ts2.loadSegments(segs);
         ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,5,3,indexIdentifier1);
         ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,5,3,indexIdentifier2);
-
 
 //        real->m_DataType=TrajectoryType;
 //        r->m_DataType = TrajectoryType;

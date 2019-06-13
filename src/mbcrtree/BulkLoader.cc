@@ -400,7 +400,7 @@ void BulkLoader::bulkLoadUsingSTR(
 			);
 //		Trajectory traj;
 //		traj.loadFromByteArray(d->m_pData);
-//		std::cout<<traj.toString();
+//		std::cout<<traj;
 		es->insert(new ExternalSorter::Record(d->m_mbc, d->m_id, d->m_dataLength, d->m_pData, 0,0));
 		d->m_pData = 0;
 		delete d;

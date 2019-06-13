@@ -264,7 +264,7 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const MBRk& r)
 
     for (auto mbr:r.m_mbrs)
     {
-        os << mbr.toString()<<"\n";
+        os << mbr<<"\n";
     }
 
     return os;

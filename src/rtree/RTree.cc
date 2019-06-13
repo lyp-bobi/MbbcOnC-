@@ -555,10 +555,10 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 					Data* e = new Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBR[cChild]), n->m_pIdentifier[cChild]);
 					// we need to compare the query with the actual data entry here, so we call the
 					// appropriate getMinimumDistance method of NearestNeighborComparator.
-					if(m_DataType==TrajectoryType){
+					if(m_DataType==TrajectoryType&&m_bUsingTrajStore== false){
                         Trajectory traj;
                         traj.loadFromByteArray(e->m_pData);
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query,traj)));
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query, traj)));
 					}else{
                         queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query, *e)));
 					}
@@ -566,12 +566,14 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 				}
 				else
 				{
-					queue.push(new NNEntry(n->m_pIdentifier[cChild], 0, nnc.getMinimumDistance(query, *(n->m_ptrMBR[cChild]))));
+					queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, nnc.getMinimumDistance(query, *(n->m_ptrMBR[cChild]))));
 				}
 			}
 		}
 		else
 		{
+		    Data *e=static_cast<Data*>(pFirst->m_pEntry);
+		    if(e->m_dataLength==0)
 			v.visitData(*(static_cast<IData*>(pFirst->m_pEntry)));
 			++(m_stats.m_u64QueryResults);
 			++count;

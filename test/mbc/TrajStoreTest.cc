@@ -116,7 +116,7 @@ int main(){
 //            tmp[0]=traj.second;
 //            segs.push_back(make_pair(traj.first,tmp));
         }
-        cout<<trajs[15].second.toString()<<endl;
+        cout<<trajs[15].second<<endl;
 //        trajs.swap(empty1);
         string name0 = "name0";
         IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096);
@@ -130,8 +130,8 @@ int main(){
         id_type id=1500;
         Trajectory tj;
         tj=ts.getTrajByTime(id,0,1000);
-        cout<<trajs[15].second.toString()<<endl;
-        cout<<tj.toString();
+        cout<<trajs[15].second<<endl;
+        cout<<tj;
     }
     catch (Tools::Exception& e)
     {

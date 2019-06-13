@@ -33,16 +33,18 @@ set(SIDX_BASE_HPP
   "${SIDX_HEADERS_DIR}/Point.h"
   "${SIDX_HEADERS_DIR}/Region.h"
   "${SIDX_HEADERS_DIR}/RTree.h"
-  "${SIDX_HEADERS_DIR}/R2Tree.h"
-  "${SIDX_HEADERS_DIR}/PAARTree.h"
-  "${SIDX_HEADERS_DIR}/PAAR2Tree.h"
-  "${SIDX_HEADERS_DIR}/LERTree.h"
+  "${SIDX_HEADERS_DIR}/MBCRTree.h"
+#  "${SIDX_HEADERS_DIR}/R2Tree.h"
+#  "${SIDX_HEADERS_DIR}/PAARTree.h"
+#  "${SIDX_HEADERS_DIR}/PAAR2Tree.h"
+#  "${SIDX_HEADERS_DIR}/LERTree.h"
   "${SIDX_HEADERS_DIR}/SpatialIndex.h"
   "${SIDX_HEADERS_DIR}/TimePoint.h"
   "${SIDX_HEADERS_DIR}/TimeRegion.h"
   "${SIDX_HEADERS_DIR}/TPRTree.h"
   "${SIDX_HEADERS_DIR}/Version.h"
-  "${SIDX_HEADERS_DIR}/TrajStore.h"
+  "${SIDX_HEADERS_DIR}/../storagemanager/TrajStore.h"
+  "${SIDX_HEADERS_DIR}/ShapeList.h"
 )
 list (APPEND SIDX_HPP ${SIDX_BASE_HPP} )
 
@@ -81,9 +83,9 @@ set(SIDX_SPATIALINDEX_CPP
   "${SIDX_SRC_DIR}/spatialindex/LineSegment.cc"
   "${SIDX_SRC_DIR}/spatialindex/MovingPoint.cc"
   "${SIDX_SRC_DIR}/spatialindex/MovingRegion.cc"
-  "${SIDX_SRC_DIR}/spatialindex/Mbbc.cc"
-  "${SIDX_SRC_DIR}/spatialindex/MBRk.cc"
-  "${SIDX_SRC_DIR}/spatialindex/MBBCk.cc"
+#  "${SIDX_SRC_DIR}/spatialindex/Mbbc.cc"
+#  "${SIDX_SRC_DIR}/spatialindex/MBRk.cc"
+#  "${SIDX_SRC_DIR}/spatialindex/MBBCk.cc"
   "${SIDX_SRC_DIR}/spatialindex/MBC.cc"
   "${SIDX_SRC_DIR}/spatialindex/Trajectory.cc"
   "${SIDX_SRC_DIR}/spatialindex/Point.cc"
@@ -91,6 +93,7 @@ set(SIDX_SPATIALINDEX_CPP
   "${SIDX_SRC_DIR}/spatialindex/SpatialIndexImpl.cc"
   "${SIDX_SRC_DIR}/spatialindex/TimePoint.cc"
   "${SIDX_SRC_DIR}/spatialindex/TimeRegion.cc"
+  "${SIDX_SRC_DIR}/spatialindex/ShapeList.cc"
 )
 list (APPEND SIDX_CPP ${SIDX_SPATIALINDEX_CPP} )
 
@@ -145,75 +148,75 @@ set(SIDX_MBCRTREE_CPP
         )
 list (APPEND SIDX_CPP ${SIDX_MBCRTREE_CPP})
 
-set(SIDX_R2TREE_CPP
-        "${SIDX_SRC_DIR}/r2tree/BulkLoader.cc"
-        "${SIDX_SRC_DIR}/r2tree/BulkLoader.h"
-        "${SIDX_SRC_DIR}/r2tree/Index.cc"
-        "${SIDX_SRC_DIR}/r2tree/Index.h"
-        "${SIDX_SRC_DIR}/r2tree/Leaf.cc"
-        "${SIDX_SRC_DIR}/r2tree/Leaf.h"
-        "${SIDX_SRC_DIR}/r2tree/Node.cc"
-        "${SIDX_SRC_DIR}/r2tree/Node.h"
-        "${SIDX_SRC_DIR}/r2tree/PointerPoolNode.h"
-        "${SIDX_SRC_DIR}/r2tree/R2Tree.cc"
-        "${SIDX_SRC_DIR}/r2tree/R2Tree.h"
-        "${SIDX_SRC_DIR}/r2tree/Statistics.cc"
-        "${SIDX_SRC_DIR}/r2tree/Statistics.h"
-        )
-list (APPEND SIDX_CPP ${SIDX_R2TREE_CPP})
-
-set(SIDX_PAARTREE_CPP
-        "${SIDX_SRC_DIR}/paartree/BulkLoader.cc"
-        "${SIDX_SRC_DIR}/paartree/BulkLoader.h"
-        "${SIDX_SRC_DIR}/paartree/Index.cc"
-        "${SIDX_SRC_DIR}/paartree/Index.h"
-        "${SIDX_SRC_DIR}/paartree/Leaf.cc"
-        "${SIDX_SRC_DIR}/paartree/Leaf.h"
-        "${SIDX_SRC_DIR}/paartree/Node.cc"
-        "${SIDX_SRC_DIR}/paartree/Node.h"
-        "${SIDX_SRC_DIR}/paartree/PointerPoolNode.h"
-        "${SIDX_SRC_DIR}/paartree/PAARtree.cc"
-        "${SIDX_SRC_DIR}/paartree/PAARtree.h"
-        "${SIDX_SRC_DIR}/paartree/Statistics.cc"
-        "${SIDX_SRC_DIR}/paartree/Statistics.h"
-        )
-list (APPEND SIDX_CPP ${SIDX_PAARTREE_CPP})
-
-set(SIDX_PAAR2TREE_CPP
-        "${SIDX_SRC_DIR}/paar2tree/BulkLoader.cc"
-        "${SIDX_SRC_DIR}/paar2tree/BulkLoader.h"
-        "${SIDX_SRC_DIR}/paar2tree/Index.cc"
-        "${SIDX_SRC_DIR}/paar2tree/Index.h"
-        "${SIDX_SRC_DIR}/paar2tree/Leaf.cc"
-        "${SIDX_SRC_DIR}/paar2tree/Leaf.h"
-        "${SIDX_SRC_DIR}/paar2tree/Node.cc"
-        "${SIDX_SRC_DIR}/paar2tree/Node.h"
-        "${SIDX_SRC_DIR}/paar2tree/PointerPoolNode.h"
-        "${SIDX_SRC_DIR}/paar2tree/PAAR2tree.cc"
-        "${SIDX_SRC_DIR}/paar2tree/PAAR2tree.h"
-        "${SIDX_SRC_DIR}/paar2tree/Statistics.cc"
-        "${SIDX_SRC_DIR}/paar2tree/Statistics.h"
-        )
-list (APPEND SIDX_CPP ${SIDX_PAAR2TREE_CPP})
-
-set(SIDX_LERTREE_CPP
-        "${SIDX_SRC_DIR}/lertree/BulkLoader.cc"
-        "${SIDX_SRC_DIR}/lertree/BulkLoader.h"
-        "${SIDX_SRC_DIR}/lertree/Index.cc"
-        "${SIDX_SRC_DIR}/lertree/Index.h"
-        "${SIDX_SRC_DIR}/lertree/Leaf.cc"
-        "${SIDX_SRC_DIR}/lertree/Leaf.h"
-        "${SIDX_SRC_DIR}/lertree/Node.cc"
-        "${SIDX_SRC_DIR}/lertree/Node.h"
-        "${SIDX_SRC_DIR}/lertree/L1Index.cc"
-        "${SIDX_SRC_DIR}/lertree/L1Index.h"
-        "${SIDX_SRC_DIR}/lertree/PointerPoolNode.h"
-        "${SIDX_SRC_DIR}/lertree/LERtree.cc"
-        "${SIDX_SRC_DIR}/lertree/LERtree.h"
-        "${SIDX_SRC_DIR}/lertree/Statistics.cc"
-        "${SIDX_SRC_DIR}/lertree/Statistics.h"
-        )
-list (APPEND SIDX_CPP ${SIDX_LERTREE_CPP})
+#set(SIDX_R2TREE_CPP
+#        "${SIDX_SRC_DIR}/r2tree/BulkLoader.cc"
+#        "${SIDX_SRC_DIR}/r2tree/BulkLoader.h"
+#        "${SIDX_SRC_DIR}/r2tree/Index.cc"
+#        "${SIDX_SRC_DIR}/r2tree/Index.h"
+#        "${SIDX_SRC_DIR}/r2tree/Leaf.cc"
+#        "${SIDX_SRC_DIR}/r2tree/Leaf.h"
+#        "${SIDX_SRC_DIR}/r2tree/Node.cc"
+#        "${SIDX_SRC_DIR}/r2tree/Node.h"
+#        "${SIDX_SRC_DIR}/r2tree/PointerPoolNode.h"
+#        "${SIDX_SRC_DIR}/r2tree/R2Tree.cc"
+#        "${SIDX_SRC_DIR}/r2tree/R2Tree.h"
+#        "${SIDX_SRC_DIR}/r2tree/Statistics.cc"
+#        "${SIDX_SRC_DIR}/r2tree/Statistics.h"
+#        )
+#list (APPEND SIDX_CPP ${SIDX_R2TREE_CPP})
+#
+#set(SIDX_PAARTREE_CPP
+#        "${SIDX_SRC_DIR}/paartree/BulkLoader.cc"
+#        "${SIDX_SRC_DIR}/paartree/BulkLoader.h"
+#        "${SIDX_SRC_DIR}/paartree/Index.cc"
+#        "${SIDX_SRC_DIR}/paartree/Index.h"
+#        "${SIDX_SRC_DIR}/paartree/Leaf.cc"
+#        "${SIDX_SRC_DIR}/paartree/Leaf.h"
+#        "${SIDX_SRC_DIR}/paartree/Node.cc"
+#        "${SIDX_SRC_DIR}/paartree/Node.h"
+#        "${SIDX_SRC_DIR}/paartree/PointerPoolNode.h"
+#        "${SIDX_SRC_DIR}/paartree/PAARtree.cc"
+#        "${SIDX_SRC_DIR}/paartree/PAARtree.h"
+#        "${SIDX_SRC_DIR}/paartree/Statistics.cc"
+#        "${SIDX_SRC_DIR}/paartree/Statistics.h"
+#        )
+#list (APPEND SIDX_CPP ${SIDX_PAARTREE_CPP})
+#
+#set(SIDX_PAAR2TREE_CPP
+#        "${SIDX_SRC_DIR}/paar2tree/BulkLoader.cc"
+#        "${SIDX_SRC_DIR}/paar2tree/BulkLoader.h"
+#        "${SIDX_SRC_DIR}/paar2tree/Index.cc"
+#        "${SIDX_SRC_DIR}/paar2tree/Index.h"
+#        "${SIDX_SRC_DIR}/paar2tree/Leaf.cc"
+#        "${SIDX_SRC_DIR}/paar2tree/Leaf.h"
+#        "${SIDX_SRC_DIR}/paar2tree/Node.cc"
+#        "${SIDX_SRC_DIR}/paar2tree/Node.h"
+#        "${SIDX_SRC_DIR}/paar2tree/PointerPoolNode.h"
+#        "${SIDX_SRC_DIR}/paar2tree/PAAR2tree.cc"
+#        "${SIDX_SRC_DIR}/paar2tree/PAAR2tree.h"
+#        "${SIDX_SRC_DIR}/paar2tree/Statistics.cc"
+#        "${SIDX_SRC_DIR}/paar2tree/Statistics.h"
+#        )
+#list (APPEND SIDX_CPP ${SIDX_PAAR2TREE_CPP})
+#
+#set(SIDX_LERTREE_CPP
+#        "${SIDX_SRC_DIR}/lertree/BulkLoader.cc"
+#        "${SIDX_SRC_DIR}/lertree/BulkLoader.h"
+#        "${SIDX_SRC_DIR}/lertree/Index.cc"
+#        "${SIDX_SRC_DIR}/lertree/Index.h"
+#        "${SIDX_SRC_DIR}/lertree/Leaf.cc"
+#        "${SIDX_SRC_DIR}/lertree/Leaf.h"
+#        "${SIDX_SRC_DIR}/lertree/Node.cc"
+#        "${SIDX_SRC_DIR}/lertree/Node.h"
+#        "${SIDX_SRC_DIR}/lertree/L1Index.cc"
+#        "${SIDX_SRC_DIR}/lertree/L1Index.h"
+#        "${SIDX_SRC_DIR}/lertree/PointerPoolNode.h"
+#        "${SIDX_SRC_DIR}/lertree/LERtree.cc"
+#        "${SIDX_SRC_DIR}/lertree/LERtree.h"
+#        "${SIDX_SRC_DIR}/lertree/Statistics.cc"
+#        "${SIDX_SRC_DIR}/lertree/Statistics.h"
+#        )
+#list (APPEND SIDX_CPP ${SIDX_LERTREE_CPP})
 
 set(SIDX_STORAGEMANAGER_CPP
   "${SIDX_SRC_DIR}/storagemanager/Buffer.cc"

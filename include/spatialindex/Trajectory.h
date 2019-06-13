@@ -47,34 +47,30 @@ namespace SpatialIndex
     virtual double getMinimumDistance(const IShape& in) const;
     virtual double getMinimumDistance(const TimePoint& in) const;
     virtual double getMinimumDistance(const Region& in) const;
-    virtual double getMinimumDistance(const Mbbc& in) const;
-    virtual double getMinimumDistance(const MBRk& in) const;
-    virtual double getMinimumDistance(const MBBCk& in) const;
+    virtual double getMinimumDistance(const MBC& in) const;
     virtual double getMinimumDistance(const Trajectory& in) const;
 
     virtual bool intersectsTimeRegion(const TimeRegion& in) const;
     virtual bool intersectsRegion(const Region& in) const;
-    virtual bool intersectsMbbc(const Mbbc& in) const;
-    virtual bool intersectsMBRk(const MBRk& in) const;
     virtual bool intersectsTrajectory(const Trajectory& in) const;
 
     virtual void combineTrajectory(const Trajectory& in);
     virtual bool containsTrajectory(const Trajectory& in);
     virtual void getCombinedTrajectory(Trajectory& out, const Trajectory& in) const;
 
-    const std::string toString() const;
     virtual void getMBC(MBC& out) const;
     virtual void getMBRfull(Region& out) const;
     virtual void getTimeMBR(TimeRegion& out) const;
-    virtual void getMbbc(Mbbc& out,bool tight) const;
-    virtual void getMbbc(Mbbc& out,bool tight,double tstart,double tend) const;
+//    virtual void getMbbc(Mbbc& out,bool tight) const;
+//    virtual void getMbbc(Mbbc& out,bool tight,double tstart,double tend) const;
     TimePoint getPointAtTime(double time) const;
-    virtual void getMBRk(int k,MBRk &out) const;
+//    virtual void getMBRk(int k,MBRk &out) const;
+//    virtual void getMBBCk(int k,MBBCk &out,double eps) const;
     static std::vector<SpatialIndex::TimePoint> simplifyWithRDP(std::vector<SpatialIndex::TimePoint>& Points, double threshold);
-    virtual void getMBBCk(int k,MBBCk &out,double eps) const;
     std::vector<Trajectory> cuttraj(std::vector<SpatialIndex::TimePoint>);
     std::vector<Trajectory> getSegments(double threshold);
     void linkTrajectory(Trajectory other);
+    virtual void getPartialTrajectory(double tstart,double tend,Trajectory &out) const;
 
     void loadFromString(std::string s);
 

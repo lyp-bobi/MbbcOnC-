@@ -280,24 +280,3 @@ void Mbbc::getCombinedMbbc(Mbbc& out, const Mbbc& in) const
     out = *this;
     out.combineMbbc(in);
 }
-const std::string Mbbc::toString() const{
-    std::string s ="smbr:"+ std::to_string(m_smbr.m_pLow[0])+","+
-            std::to_string(m_smbr.m_pLow[1])+","+
-            std::to_string(m_smbr.m_pHigh[0])+","+
-            std::to_string(m_smbr.m_pHigh[1])+"\n"+
-            "embr:"+ std::to_string(m_embr.m_pLow[0])+","+
-            std::to_string(m_embr.m_pLow[1])+","+
-            std::to_string(m_embr.m_pHigh[0])+","+
-            std::to_string(m_embr.m_pHigh[1])+"\n"+
-            "vmbr:"+ std::to_string(m_vmbr.m_pLow[0])+","+
-            std::to_string(m_vmbr.m_pLow[1])+","+
-            std::to_string(m_vmbr.m_pHigh[0])+","+
-            std::to_string(m_vmbr.m_pHigh[1])+"\n"+
-            "wmbr:"+ std::to_string(m_wmbr.m_pLow[0])+","+
-            std::to_string(m_wmbr.m_pLow[1])+","+
-            std::to_string(m_wmbr.m_pHigh[0])+","+
-            std::to_string(m_wmbr.m_pHigh[1])+"\n"+
-            "time:"+ std::to_string(m_startTime)+","+
-            std::to_string(m_endTime)+"\n";
-    return s;
-}
