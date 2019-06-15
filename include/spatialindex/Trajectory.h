@@ -74,6 +74,9 @@ namespace SpatialIndex
 
     void loadFromString(std::string s);
 
+    static double line2lineDistance(const TimePoint &p1s,const TimePoint &p1e,const TimePoint &p2s,const TimePoint &p2e);
+    static double line2MBRDistance(const TimePoint &ps,const TimePoint &pe,const Region &r);
+    static double line2MBCDistance(const TimePoint &ps,const TimePoint &pe,const MBC &r);
     std::vector<TimePoint> m_points;
 
     friend SIDX_DLL std::ostream operator<<(std::ostream os,const Trajectory &r);

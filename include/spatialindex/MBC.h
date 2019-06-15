@@ -38,6 +38,9 @@ namespace SpatialIndex
         virtual void getMBRAtTime(double t, Region& out) const;
 
 
+        virtual std::pair<TimePoint,double> getCenterRdAtTime(double t) const;
+
+
         //
         // IShape interface
         //

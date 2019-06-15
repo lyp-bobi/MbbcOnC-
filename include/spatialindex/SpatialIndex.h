@@ -34,6 +34,7 @@
 #endif
 
 #define sq(x) x*x
+#define cube(x) x*x*x
 
 
 namespace SpatialIndex

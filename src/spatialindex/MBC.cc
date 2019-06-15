@@ -181,6 +181,19 @@ void MBC::getMBRAtTime(double t, SpatialIndex::Region &out) const {
 }
 
 
+std::pair<TimePoint,double> MBC::getCenterRdAtTime(double t) const {
+    TimePoint tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
+                                      TimePoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
+    Point plow = tp, phigh = tp;
+    double r;
+    if(std::isfinite(m_rv)) {
+        r = std::min((t - m_startTime) * m_rv, m_rd);
+    }else{
+        r=m_rd;
+    }
+    return std::make_pair(tp,r);
+}
+
 //
 // IShape interface
 //
@@ -202,33 +215,21 @@ bool MBC::intersectsShape(const SpatialIndex::IShape& s) const {
 }
 
 bool MBC::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
-    Region br;
-    getMBRAtTime(in.m_startTime,br);
-    Point p;
-    br.getCenter(p);
-    double r=br.m_pHigh[0]-p.m_pCoords[0];
-    return p.getMinimumDistance(in)<r;
+    auto timed=getCenterRdAtTime(in.m_startTime);
+    return timed.first.getMinimumDistance(in)<timed.second;
 }
 bool MBC::intersectsTimePoint(const SpatialIndex::TimePoint &in) const {
-    Region br;
-    getMBRAtTime(in.m_startTime,br);
-    Point p;
-    br.getCenter(p);
-    double r=br.m_pHigh[0]-p.m_pCoords[0];
-    return p.getMinimumDistance(in)<r;
+    auto timed=getCenterRdAtTime(in.m_startTime);
+    return timed.first.getMinimumDistance(in)<timed.second;
 }
 bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
     //2 dimensions for space, the third for time
     if(in.m_pLow[m_dimension]>m_endTime||in.m_pHigh[m_dimension]<m_startTime) return false;
     if(in.m_pLow[m_dimension]==in.m_pHigh[m_dimension]) {
-        Region br;
-        getMBRAtTime(in.m_pLow[m_dimension], br);
-//        std::cout<<"mbr at time"<<br<<"\n";
-        Point p;
-        br.getCenter(p);
-        double r = br.m_pHigh[0] - p.m_pCoords[0];
-        br = Region(in.m_pLow, in.m_pHigh, 2);
-        return p.getMinimumDistance(br) <= r;
+        auto timed=getCenterRdAtTime(in.m_pLow[m_dimension]);
+        return timed.first.getMinimumDistance(in)<timed.second;
+        Region br = Region(in.m_pLow, in.m_pHigh, 2);
+        return timed.first.getMinimumDistance(br) <= timed.second;
     }else{
         throw Tools::NotSupportedException("MBC:intersect 3DMBR");
     }
@@ -310,9 +311,10 @@ double MBC::getMinimumDistance(const SpatialIndex::Region &in) const {
     throw Tools::NotSupportedException("");
 }
 double MBC::getMinimumDistance(const SpatialIndex::TimePoint &in) const {
-    Region tmp;
-    getMBRAtTime(in.m_startTime,tmp);
-    return tmp.getMinimumDistance(in);
+    auto timed=getCenterRdAtTime(in.m_startTime);
+    double d=in.getMinimumDistance(timed.first);
+    if(d<timed.second) return 0;
+    else return d-timed.second;
 }
 
 void MBC::makeInfinite(uint32_t dimension)
@@ -348,7 +350,7 @@ int MBC::getOrient() const {
     }
     return res;
 }
-
+[[deprecated]]
 void MBC::combineMBC(const MBC& r)
 {
 //    throw Tools::NotSupportedException("don't combine MBC here,load MBCs directly to Node Level1");

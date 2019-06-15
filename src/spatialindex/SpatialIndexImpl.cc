@@ -86,6 +86,13 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const IStatistics& s)
 		return os;
 	}
 
+    const SpatialIndex::MBCRTree::Statistics* pMBCRTreeStats = dynamic_cast<const SpatialIndex::MBCRTree::Statistics*>(&s);
+    if (pMBCRTreeStats != 0)
+    {
+        os << *pMBCRTreeStats;
+        return os;
+    }
+
 	const SpatialIndex::MVRTree::Statistics* pMVRTreeStats = dynamic_cast<const SpatialIndex::MVRTree::Statistics*>(&s);
 	if (pMVRTreeStats != 0)
 	{
