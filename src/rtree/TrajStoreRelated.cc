@@ -19,11 +19,11 @@ public:
 ISpatialIndex* SpatialIndex::RTree::createAndBulkLoadNewRTreeWithTrajStore(IStorageManager *tsm,
                                                                            uint32_t indexCapacity, uint32_t dimension,
                                                                            id_type &indexIdentifier) {
-    TrajStore *ts= dynamic_cast<TrajStore*>(tsm);
+    TrajStore *ts= static_cast<TrajStore*>(tsm);
     assert(ts!= nullptr);
     auto dataStream=new rtreeSegmentStream(ts);
     ISpatialIndex* tree= createAndBulkLoadNewRTree(SpatialIndex::RTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,indexCapacity,dimension,SpatialIndex::RTree::RV_RSTAR,indexIdentifier);
-    RTree* r= dynamic_cast<RTree*>(tree);
+    RTree* r= static_cast<RTree*>(tree);
     r->m_DataType=TrajectoryType;
     r->m_bUsingTrajStore=true;
     r->m_ts=ts;

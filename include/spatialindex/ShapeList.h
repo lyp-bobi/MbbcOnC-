@@ -5,6 +5,11 @@
 #pragma once
 
 namespace SpatialIndex {
+    SIDX_DLL enum LeafBoundingType
+    {
+        LeafBoundByMBR = 0x1,
+        LeafBoundByMBC = 0x2
+    };
     class SIDX_DLL ShapeList: public Tools::IObject, public virtual IShape,public IEvolvingShape {
     public:
 
@@ -55,7 +60,16 @@ namespace SpatialIndex {
 
         ShapeList(const ShapeList &in);
 
+        void insert(MBC* shape);
+        void insert(Region* shape);
+
+        void insert(IShape* shape);
+
         uint32_t m_dimension = 3;
-        std::vector <IShape*> m_ShapeList;
+
+        uint32_t m_datatype=01;
+
+        std::vector <MBC*> m_MBCList;
+        std::vector <Region*> m_MBRList;
     };
 }

@@ -827,6 +827,9 @@ double Trajectory::getMinimumDistance(const IShape& s) const{
     const Region* pr = dynamic_cast<const Region*>(&s);
     if (pr != 0) return getMinimumDistance(*pr);
 
+    const ShapeList *psl = dynamic_cast<const ShapeList*>(&s);
+    if (psl != 0) return getMinimumDistance(*psl);
+
     throw Tools::NotSupportedException(
             "Trajectory::...: Not implemented yet!"
     );
@@ -897,6 +900,25 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
     return sum;
 }
 
+
+double Trajectory::getMinimumDistance(const ShapeList &in) const {
+    double sum=0;
+    Trajectory tmptraj;
+    if(in.m_datatype==SpatialIndex::LeafBoundByMBR) {
+        for(auto &br:in.m_MBRList){
+            double ts=br->m_pLow[m_dimension],te=br->m_pHigh[m_dimension];
+            getPartialTrajectory(ts,te,tmptraj);
+            sum+=tmptraj.getMinimumDistance(*br);
+        }
+    }else if(in.m_datatype==SpatialIndex::LeafBoundByMBC){
+        for(auto &bc:in.m_MBCList){
+            double ts=bc->m_startTime,te=bc->m_endTime;
+            getPartialTrajectory(ts,te,tmptraj);
+            sum+=tmptraj.getMinimumDistance(*bc);
+        }
+    }
+    return sum;
+}
 
 void Trajectory::makeInfinite(uint32_t dimension)
 {

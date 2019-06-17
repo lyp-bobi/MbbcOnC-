@@ -3,7 +3,6 @@ include_directories(../include)
 set (DIR geometry)
 set (SOURCES 
         Intersection
-        distMeasure
         )
 
 foreach (test ${SOURCES})
@@ -49,35 +48,6 @@ set (SOURCES
 
 foreach (test ${SOURCES})
     add_executable(test-${DIR}-${test} ${DIR}/${test}.cc ${DIR}/RandomGenerator.cc)
-    target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
-endforeach()
-
-set (DIR r2tree)
-set (SOURCES
-        trajLoader
-        )
-foreach (test ${SOURCES})
-    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
-    target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
-endforeach()
-
-set (DIR paartree)
-set (SOURCES
-        paartreeTest
-        )
-
-foreach (test ${SOURCES})
-    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
-    target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
-endforeach()
-
-set (DIR paar2tree)
-set (SOURCES
-        paar2treeTest
-        )
-
-foreach (test ${SOURCES})
-    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
     target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
 endforeach()
 

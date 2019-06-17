@@ -195,86 +195,7 @@ xyt makemid(xyt p1, xyt p2, double t){
     xyt ret ={x,y,t};
     return ret;
 }
-vector< vector<xyt> > cuttraj(vector<xyt> traj){
-    vector< vector<xyt> > segments(getMaxPeriod());
-    int oldpd=getPeriod(traj.at(0).t);
-    for(int i=0;i<traj.size();i++){
-        if(i>1&&traj[i].t<traj[i-1].t) break;//stop reading when coming to a new day
-        int newpd=getPeriod(traj[i].t);
-        if(newpd-1==oldpd){
-            xyt mid1=makemid(traj[i-1],traj[i],getPeriodEnd(traj[i-1].t));
-            segments.at(oldpd).emplace_back(mid1);
-            if(traj[i].t-getPeriodStart(traj[i].t)>=0.1){
-                xyt mid2=makemid(traj[i-1],traj[i],getPeriodStart(traj[i].t));
-                segments.at(newpd).emplace_back(mid2);
-            }
-            oldpd=newpd;
-        }
-        segments.at(newpd).emplace_back(traj[i]);
-//        cout<<traj[i].t<<"\n";
-    }
-    return segments;
-}
 
-
-
-list<vector<pair<id_type ,Trajectory> > > loadGLToTrajs(){
-    //first level: vector of time period
-    //second level: vector of segments in the time period
-    cerr<<"loading csv to trajectories"<<endl;
-    ifstream inFile(sourceFile, ios::in);
-    string lineStr;
-    getline(inFile, lineStr);
-    set<id_type> ids;
-    multimap<id_type,xyt> trajs;
-    list<vector<pair<id_type ,Trajectory> > > res(getMaxPeriod());
-    int curLine=0;
-    while (getline(inFile, lineStr)&&curLine<maxLinesToRead){
-        string str;
-        stringstream ss(lineStr);
-        getline(ss, str, ',');
-        int id= stringToNum<int>(str);
-        getline(ss, str, ',');
-        double x= stringToNum<double>(str);
-        getline(ss, str, ',');
-        double y= stringToNum<double>(str);
-        getline(ss, str, ',');
-        getline(ss, str, ',');
-        double t=naivetime(str);
-        xyt p={x,y,t};
-        ids.insert(id);
-        trajs.insert(make_pair(id,p));
-        curLine++;
-    }
-    for(auto id:ids){
-        multimap<id_type ,xyt>::iterator beg,end,iter;
-        vector<xyt> traj;
-        beg = trajs.lower_bound(id);
-        end = trajs.upper_bound(id);
-        for(iter=beg;iter!=end;iter++){
-            traj.emplace_back(iter->second);
-        }
-        trajs.erase(id);
-        if(!traj.empty()){
-//            cout<<id<<endl;
-            vector< vector<xyt> > segs = cuttraj(traj);
-            auto iperiod=res.begin();
-            for(int j =0;j<getMaxPeriod();j++){
-                vector<TimePoint> tps;
-                for(auto p:segs[j]){
-                    double xy[]={p.x,p.y};
-                    double faket=p.t-getPeriodStart(p.t);
-                    tps.emplace_back(TimePoint(xy, faket, faket, dimension));
-                }
-                if(!tps.empty()){
-                    iperiod->emplace_back(make_pair(id*1000+j,Trajectory(tps)));
-//                    iperiod++;
-                }
-            }
-        }
-    }
-    return res;
-}
 vector<pair<id_type ,Trajectory> >  loadGTToTrajs(){
     //first level: vector of time period
     //second level: vector of segments in the time period
@@ -386,7 +307,7 @@ int main(){
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, Trajectory> > empty1;
         for(auto traj:trajs){
-            segs.push_back(make_pair(traj.first,traj.second.getSegments(20000)));
+            segs.push_back(make_pair(traj.first,traj.second.getSegments(3000)));
         }
         trajs.swap(empty1);
         vector<IShape *> queries;
@@ -425,18 +346,6 @@ int main(){
                 *file5 = StorageManager::createNewRandomEvictionsBuffer(*diskfile5, 10, false),
                 *file6 = StorageManager::createNewRandomEvictionsBuffer(*diskfile6, 10, false),
                 *file7 = StorageManager::createNewRandomEvictionsBuffer(*diskfile7, 10, false);
-        // applies a main memory random buffer on top of the persistent storage manager
-        // (LRU buffer, etc can be created the same way).
-//    ISpatialIndex* real = R2Tree::createAndBulkLoadNewR2Tree(
-//            R2Tree::BulkLoadMethod::BLM_STR, ds2, *file0, 0.9, indexcap,100000, 2, indexIdentifier0);
-//    ds1.rewind();
-//        ISpatialIndex *r = RTree::createAndBulkLoadNewRTree(
-//                RTree::BulkLoadMethod::BLM_STR, ds1, *file1, 0.9, indexcap, leafcap, 3, SpatialIndex::RTree::RV_RSTAR,
-//                indexIdentifier1);
-//        ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTree(
-//                MBCRTree::BulkLoadMethod::BLM_STR, ds2, *file2, 0.9, indexcap, int(leafcap * 0.9 * 3 / 4 / 0.9), 3,
-//                SpatialIndex::MBCRTree::RV_RSTAR,
-//                indexIdentifier2);
         TrajStore ts1(file1,4096);
         ts1.loadSegments(segs);
         TrajStore ts2(file2,4096);
@@ -444,9 +353,6 @@ int main(){
         ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,5,3,indexIdentifier1);
         ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,5,3,indexIdentifier2);
 
-//        real->m_DataType=TrajectoryType;
-//        r->m_DataType = TrajectoryType;
-//        rc->m_DataType = TrajectoryType;
         cerr << "start query!" << endl << endl << endl;
         TreeQueryBatch(r, queries);
         TreeQueryBatch(rc, queries);

@@ -123,7 +123,8 @@ namespace SpatialIndex
             void loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs);
             Trajectory getTraj(id_type &id);
             Trajectory getTrajByTime(id_type &id,double tstart,double tend);
-            MBCs getMBCsByTime(id_type &id,double tstart,double tend);
+            ShapeList getMBRsByTime(id_type &id,double tstart,double tend);
+            ShapeList getMBCsByTime(id_type &id,double tstart,double tend);
             std::map<id_type, Entry*> m_entries;//map from seg id to entry
             std::map<id_type, MBC> m_entryMbcs;
             std::map<id_type, Region> m_entryMbrs;

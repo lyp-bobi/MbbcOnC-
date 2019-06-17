@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "ShapeList.h"
+
 namespace SpatialIndex
 {
     class SIDX_DLL Trajectory: public Tools::IObject, public virtual IShape{
@@ -49,6 +51,7 @@ namespace SpatialIndex
     virtual double getMinimumDistance(const Region& in) const;
     virtual double getMinimumDistance(const MBC& in) const;
     virtual double getMinimumDistance(const Trajectory& in) const;
+    virtual double getMinimumDistance(const ShapeList& in) const;
 
     virtual bool intersectsTimeRegion(const TimeRegion& in) const;
     virtual bool intersectsRegion(const Region& in) const;
@@ -61,11 +64,7 @@ namespace SpatialIndex
     virtual void getMBC(MBC& out) const;
     virtual void getMBRfull(Region& out) const;
     virtual void getTimeMBR(TimeRegion& out) const;
-//    virtual void getMbbc(Mbbc& out,bool tight) const;
-//    virtual void getMbbc(Mbbc& out,bool tight,double tstart,double tend) const;
     TimePoint getPointAtTime(double time) const;
-//    virtual void getMBRk(int k,MBRk &out) const;
-//    virtual void getMBBCk(int k,MBBCk &out,double eps) const;
     static std::vector<SpatialIndex::TimePoint> simplifyWithRDP(std::vector<SpatialIndex::TimePoint>& Points, double threshold);
     std::vector<Trajectory> cuttraj(std::vector<SpatialIndex::TimePoint>);
     std::vector<Trajectory> getSegments(double threshold);
@@ -77,6 +76,7 @@ namespace SpatialIndex
     static double line2lineDistance(const TimePoint &p1s,const TimePoint &p1e,const TimePoint &p2s,const TimePoint &p2e);
     static double line2MBRDistance(const TimePoint &ps,const TimePoint &pe,const Region &r);
     static double line2MBCDistance(const TimePoint &ps,const TimePoint &pe,const MBC &r);
+
     std::vector<TimePoint> m_points;
 
     friend SIDX_DLL std::ostream operator<<(std::ostream os,const Trajectory &r);

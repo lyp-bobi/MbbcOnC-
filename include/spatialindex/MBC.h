@@ -82,50 +82,6 @@ namespace SpatialIndex
         virtual void makeInfinite(uint32_t dimension);
     private:
     };
-    class SIDX_DLL MBCs: public Tools::IObject, public virtual IShape,public IEvolvingShape{
-    public:
-        //
-        // IObject interface
-        //
-        virtual MBCs *clone();
-
-        //
-        // ISerializable interface
-        //
-        virtual uint32_t getByteArraySize() const;
-
-        virtual void loadFromByteArray(const uint8_t *data);
-
-        virtual void storeToByteArray(uint8_t **data, uint32_t &len);
-
-        //
-        // IEvolvingShape interface
-        //
-        virtual void getVMBR(Region& out) const;
-        virtual void getMBRAtTime(double t, Region& out) const;
-
-
-        //
-        // IShape interface
-        //
-        virtual bool intersectsShape(const IShape& in) const;
-        virtual bool containsShape(const IShape& in) const;
-        virtual bool touchesShape(const IShape& in) const;
-        virtual void getCenter(Point& out) const;
-        virtual uint32_t getDimension() const;
-        virtual void getMBR(Region& out) const;
-        virtual double getArea() const;
-        virtual double getMinimumDistance(const IShape& in) const;
-
-        virtual void getTimeMBR(TimeRegion& out) const;
-
-        MBCs()= default;
-        MBCs(const MBCs &in);
-        uint32_t m_dimension=2;
-        std::vector<id_type> m_ids;
-        std::vector<MBC> m_mbcs;
-    };
     typedef Tools::PoolPointer<MBC> MBCPtr;
-    typedef Tools::PoolPointer<MBCs> MBCsPtr;
     SIDX_DLL std::ostream& operator<<(std::ostream& os, const MBC& r);
 }

@@ -386,6 +386,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     std::cerr<<"TrajStore:loading segments\n";
     Region maxbr;
     maxbr.makeInfinite(3);
+    double vol1=0,vol2=0;
     for(auto &traj:trajs){
         for(int j=0;j<traj.second.size();j++){//segment
             Trajectory seg=traj.second[j];
@@ -403,8 +404,11 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
             es->insert(new tsExternalSorter::Record(thebc,segid,pvId,ntId , len, data, 0,0));
             m_entryMbcs[segid]=thebc;
             m_entryMbrs[segid]=thebr;
+            vol1+=thebr.getArea();
+            vol2+=thebc.getArea();
         }
     }
+    std::cout<<"expression effectiveness "<<vol1<<" versus "<<vol2<<"\n"<<vol2/vol1<<"\n";
     //adjust the encoder
     auto encoder=XZ3Enocder::instance();
     encoder->m_xmin=maxbr.m_pLow[0];
@@ -547,29 +551,50 @@ Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double tend) {
     return traj;
 }
 
-MBCs TrajStore::getMBCsByTime(id_type &id, double tstart, double tend) {
+ShapeList TrajStore::getMBCsByTime(id_type &id, double tstart, double tend) {
     auto it=m_entries.find(id);
     auto bc=(*m_entryMbcs.find(id)).second;
     assert(it!=m_entries.end());
     Entry e=*(it->second);
-    MBCs bcs;
-    bcs.m_ids.push_back(id);
-    bcs.m_mbcs.push_back(bc);
+    ShapeList bcs;
+    bcs.insert(&bc);
     while(e.m_pvId>=0 && bc.m_startTime>tstart){
         id_type newid=e.m_pvId;
         it=m_entries.find(newid);
         bc=(*m_entryMbcs.find(newid)).second;
         e=*(it->second);
-        bcs.m_ids.insert(bcs.m_ids.begin(),newid);
-        bcs.m_mbcs.insert(bcs.m_mbcs.begin(),bc);
+        bcs.insert(&bc);
     }
     while(e.m_ntId>=0 && bc.m_endTime<tend){
         id_type  newid=e.m_ntId;
         it=m_entries.find(newid);
         bc=(*m_entryMbcs.find(newid)).second;
         e=*(it->second);
-        bcs.m_ids.push_back(newid);
-        bcs.m_mbcs.push_back(bc);
+        bcs.insert(&bc);
     }
     return bcs;
+}
+
+ShapeList TrajStore::getMBRsByTime(id_type &id, double tstart, double tend) {
+    auto it=m_entries.find(id);
+    auto br=(*m_entryMbrs.find(id)).second;
+    assert(it!=m_entries.end());
+    Entry e=*(it->second);
+    ShapeList brs;
+    brs.insert(&br);
+    while(e.m_pvId>=0 && br.m_pLow[br.m_dimension-1]>tstart){
+        id_type newid=e.m_pvId;
+        it=m_entries.find(newid);
+        br=(*m_entryMbrs.find(newid)).second;
+        e=*(it->second);
+        brs.insert(&br);
+    }
+    while(e.m_ntId>=0 && br.m_pHigh[br.m_dimension-1]<tend){
+        id_type  newid=e.m_ntId;
+        it=m_entries.find(newid);
+        br=(*m_entryMbrs.find(newid)).second;
+        e=*(it->second);
+        brs.insert(&br);
+    }
+    return brs;
 }

@@ -227,7 +227,7 @@ bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
     if(in.m_pLow[m_dimension]>m_endTime||in.m_pHigh[m_dimension]<m_startTime) return false;
     if(in.m_pLow[m_dimension]==in.m_pHigh[m_dimension]) {
         auto timed=getCenterRdAtTime(in.m_pLow[m_dimension]);
-        return timed.first.getMinimumDistance(in)<timed.second;
+        return timed.first.getMinimumDistance(Region(in.m_pLow,in.m_pHigh,m_dimension))<timed.second;
         Region br = Region(in.m_pLow, in.m_pHigh, 2);
         return timed.first.getMinimumDistance(br) <= timed.second;
     }else{
@@ -293,7 +293,9 @@ void MBC::getTimeMBR(SpatialIndex::TimeRegion &out) const {
 }
 
 double MBC::getArea() const{
-    throw Tools::NotSupportedException("");
+    double dt=m_rd/m_rv;
+    double res=M_PI*sq(m_rd)*(m_endTime-m_startTime-2*dt)+2.0/3*M_PI*sq(m_rd);
+    return res;
 }
 double MBC::getMinimumDistance(const IShape& in) const{
     const TimePoint* ptp = dynamic_cast<const TimePoint*>(&in);
@@ -462,109 +464,4 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const MBC& r)
     os<<std::endl;
     os<<"rd: "<<r.m_rd<<",rv "<<r.m_rv<<std::endl;
     return os;
-}
-
-MBCs* MBCs::clone() {
-    throw Tools::NotSupportedException("clone");
-}
-
-MBCs::MBCs(const SpatialIndex::MBCs &in) {
-    m_ids=in.m_ids;
-    m_mbcs=in.m_mbcs;
-}
-uint32_t MBCs::getByteArraySize() const {
-    return sizeof(id_type)+(m_mbcs[0].getByteArraySize()+ sizeof(id_type))*m_mbcs.size();
-}
-
-void MBCs::storeToByteArray(uint8_t **data, uint32_t &len) {
-    len = getByteArraySize();
-    *data = new uint8_t[len];
-    uint8_t* ptr = *data;
-    uint8_t* tmpb;
-    uint32_t tmplen;
-    memcpy(ptr, &m_dimension, sizeof(uint32_t));
-    id_type size=m_mbcs.size();
-    memcpy(ptr, &size, sizeof(id_type));
-    ptr += sizeof(id_type);
-    for(int i=0;i<size;i++){
-        memcpy(ptr, &m_ids[i], sizeof(id_type));
-        m_mbcs[i].storeToByteArray(&tmpb,tmplen);
-        memcpy(ptr, tmpb, tmplen);
-        if(i!=size-1)
-            ptr += tmplen;
-    }
-}
-void MBCs::loadFromByteArray(const uint8_t *ptr) {
-    memcpy(&m_dimension, ptr, sizeof(uint32_t));
-    id_type size;
-    memcpy(&size, ptr, sizeof(id_type));
-    ptr += sizeof(id_type);
-    m_ids.resize(size);
-    m_mbcs.resize(size);
-    for(int i=0;i<size;i++){
-        memcpy(&m_ids[i], ptr, sizeof(id_type));
-        ptr += sizeof(id_type);
-        m_mbcs[i].loadFromByteArray(ptr);
-        if(i!=size-1)
-            ptr+=m_mbcs[i].getByteArraySize();
-    }
-}
-
-//
-// IEvolvingShape interface
-//
-void MBCs::getVMBR(Region& out) const{
-    throw Tools::NotSupportedException("clone");
-}
-void MBCs::getMBRAtTime(double t, Region& out) const{
-    throw Tools::NotSupportedException("clone");
-}
-
-
-//
-// IShape interface
-//
-bool MBCs::intersectsShape(const IShape& in) const{
-    throw Tools::NotSupportedException("clone");
-}
-bool MBCs::containsShape(const IShape& in) const{
-    throw Tools::NotSupportedException("clone");
-}
-bool MBCs::touchesShape(const IShape& in) const{
-    throw Tools::NotSupportedException("clone");
-}
-void MBCs::getCenter(Point& out) const{
-    double* aver=new double[m_dimension];
-    for(int i=0;i<m_dimension;++i) aver[i]=0;
-    Point tmpp;
-    for(auto mbc:m_mbcs){
-        mbc.getCenter(tmpp);
-        for(int i=0;i<m_dimension;++i){
-            aver[i]+=tmpp.m_pCoords[i];
-        }
-    }
-    out.makeInfinite(m_dimension);
-    for(int i=0;i<m_dimension;++i){
-        out.m_pCoords[i]=aver[i]/m_ids.size();
-    }
-}
-uint32_t MBCs::getDimension() const{
-    throw Tools::NotSupportedException("clone");
-}
-void MBCs::getMBR(Region& out) const{
-    throw Tools::NotSupportedException("clone");
-}
-void MBCs::getTimeMBR(SpatialIndex::TimeRegion &out) const {
-    out.makeInfinite(m_dimension);
-    for(auto bc:m_mbcs){
-        TimeRegion tmpbr;
-        bc.getTimeMBR(tmpbr);
-        out.combineRegionInTime(tmpbr);
-    }
-}
-double MBCs::getArea() const{
-    throw Tools::NotSupportedException("clone");
-}
-double MBCs::getMinimumDistance(const IShape& in) const{
-    throw Tools::NotSupportedException("clone");
 }
