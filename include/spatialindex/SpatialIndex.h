@@ -33,7 +33,7 @@
 #define M_PI_2 1.57079632679489661922
 #endif
 
-#define sq(x) x*x
+#define sq(x) (x)*(x)
 #define cube(x) x*x*x
 
 

@@ -561,6 +561,7 @@ std::vector<Trajectory> Trajectory::getSegments(double threshold) {
 double Trajectory::getArea() const{ return 0;}
 
 double F(double c1,double c2,double c3,double c4,double t){
+    //the c4 should be the length of that time period
     return 1/sq(c4)*(2*c1*t+c2)/4/c1*std::sqrt(c1*t*t+c2*t+c3)
         -(c2*c2-4*c1*c3)/8/c1/std::sqrt(c1)*std::asinh((2*c1*t+c2)/std::sqrt(4*c1*c3-c2*c2));
 }
@@ -569,7 +570,7 @@ double Trajectory::line2lineDistance(const SpatialIndex::TimePoint &p1s, const S
                                 const SpatialIndex::TimePoint &p2s, const SpatialIndex::TimePoint &p2e) {
     assert(p1s.m_startTime==p2s.m_startTime);
     assert(p1e.m_startTime==p2e.m_startTime);
-    double ts = p1s.m_startTime, te = p1s.m_endTime;
+    double ts = p1s.m_startTime, te = p1e.m_endTime;
 //    if(TrajDist==ISE) {
 //        double integral=0;
 //        double v1,v2;
@@ -593,8 +594,8 @@ double Trajectory::line2lineDistance(const SpatialIndex::TimePoint &p1s, const S
         return std::sqrt(sq(dxs)+sq(dys));
     }else{
         if(c2*c2-4*c1*c3==0){
-            return 1/sq(c4)*( (2*c1*te+c2)/4/c1*std::sqrt(c1*te*te+c2*te*c3)
-                -(2*c1*ts+c2)/4/c1*std::sqrt(c1*ts*ts+c2*ts*c3) );
+            return 1/sq(c4)*( (2*c1*te+c2)/4/c1*std::sqrt(c1*te*te+c2*te+c3)
+                -(2*c1*ts+c2)/4/c1*std::sqrt(c1*ts*ts+c2*ts+c3) );
         }
         else{
             return (F(c1,c2,c3,c4,te)-F(c1,c2,c3,c4,ts));
@@ -609,26 +610,27 @@ int getRealm(const SpatialIndex::Region &r,const Point &p1,const Point &p2){
     if(p1.m_dimension!=2) throw Tools::NotSupportedException("Trajectory::getRealm:only for dimension 2");
     double xd1=r.m_pLow[0],xd2=r.m_pHigh[1],yd1=r.m_pLow[0],yd2=r.m_pHigh[1];
     int res=0;
-    if(p1.m_pCoords[0]<=xd1&&p2.m_pCoords[0]<=xd1)
+    if(p1.m_pCoords[0]<=xd2&&p2.m_pCoords[0]<=xd2&&p1.m_pCoords[0]>=xd1&&p2.m_pCoords[0]>=xd1)
+        res+=2;
+    else if(p1.m_pCoords[0]<=xd1&&p2.m_pCoords[0]<=xd1)
         res+=1;
     else if(p1.m_pCoords[0]>=xd2&&p2.m_pCoords[0]>=xd2)
         res+=3;
-    else if(p1.m_pCoords[0]<=xd2&&p2.m_pCoords[0]<=xd2&&p1.m_pCoords[0]>=xd1&&p2.m_pCoords[0]>=xd1)
-        res+=2;
     else return -1;
-    if(p1.m_pCoords[1]<=yd1&&p2.m_pCoords[1]<=yd1)
+    if(p1.m_pCoords[1]<=yd2&&p2.m_pCoords[1]<=yd2&&p1.m_pCoords[1]>=yd1&&p2.m_pCoords[1]>=yd1)
+        res+=3;
+    else if(p1.m_pCoords[1]<=yd1&&p2.m_pCoords[1]<=yd1)
         res+=0;
     else if(p1.m_pCoords[1]>=yd2&&p2.m_pCoords[1]>=yd2)
         res+=6;
-    else if(p1.m_pCoords[1]<=yd2&&p2.m_pCoords[1]<=yd2&&p1.m_pCoords[1]>=yd1&&p2.m_pCoords[1]>=yd1)
-        res+=3;
     else return -1;
     return res;
 }
 
 TimePoint* cutByLine(const SpatialIndex::TimePoint &ps, const SpatialIndex::TimePoint &pe,double value,int axis){
     int otheraxis=1-axis;
-    if((ps.m_pCoords[axis]<value)==(pe.m_pCoords[axis]<value)) //need no cut
+    double axisv1=ps.m_pCoords[axis],axisv2=pe.m_pCoords[axis];
+    if((axisv1<value)==(axisv2<value)||axisv1==value||axisv2==value) //need no cut
         return nullptr;
     else {
         double d = std::abs(ps.m_pCoords[axis] - pe.m_pCoords[axis]);
@@ -660,6 +662,9 @@ std::vector<std::pair<TimePoint,TimePoint>> cutByRealm(const SpatialIndex::TimeP
             tmp.emplace_back(std::make_pair(line.first,*tp));
             tmp.emplace_back(std::make_pair(*tp,line.second));
         }
+        else{
+            tmp.push_back(line);
+        }
     }
     res=tmp;tmp.clear();
     for(auto line:res){
@@ -668,13 +673,8 @@ std::vector<std::pair<TimePoint,TimePoint>> cutByRealm(const SpatialIndex::TimeP
             tmp.emplace_back(std::make_pair(line.first,*tp));
             tmp.emplace_back(std::make_pair(*tp,line.second));
         }
-    }
-    res=tmp;tmp.clear();
-    for(auto line:res){
-        TimePoint *tp=cutByLine(line.first,line.second,yd1,1);
-        if(tp!= nullptr){
-            tmp.emplace_back(std::make_pair(line.first,*tp));
-            tmp.emplace_back(std::make_pair(*tp,line.second));
+        else{
+            tmp.push_back(line);
         }
     }
     res=tmp;tmp.clear();
@@ -684,15 +684,35 @@ std::vector<std::pair<TimePoint,TimePoint>> cutByRealm(const SpatialIndex::TimeP
             tmp.emplace_back(std::make_pair(line.first,*tp));
             tmp.emplace_back(std::make_pair(*tp,line.second));
         }
+        else{
+            tmp.push_back(line);
+        }
     }
     res=tmp;tmp.clear();
+    for(auto line:res){
+        TimePoint *tp=cutByLine(line.first,line.second,yd2,1);
+        if(tp!= nullptr){
+            tmp.emplace_back(std::make_pair(line.first,*tp));
+            tmp.emplace_back(std::make_pair(*tp,line.second));
+        }
+        else{
+            tmp.push_back(line);
+        }
+    }
+    res=tmp;tmp.clear();
+//    for(auto seg:res){
+//        cout<<seg.first<<"\n"<<seg.second<<"\n";
+//    }
     return res;
 }
 double line2MBRDistance_impl(const SpatialIndex::TimePoint &ps, const SpatialIndex::TimePoint &pe,
                                     const SpatialIndex::Region &r,int sr) {
-    double ts = r.m_pLow[ps.m_dimension], te = r.m_pHigh[ps.m_dimension];
+    double ts = ps.m_startTime, te = pe.m_startTime;
+    Region r_2d=Region(r.m_pLow,r.m_pHigh,2);
+    double res;
     if (sr == 5) return 0;
-    else if (sr % 2 == 0) return 0.5 * (ps.getMinimumDistance(r) + pe.getMinimumDistance(r)) * (te - ts);
+    else if (sr % 2 == 0)
+        return 0.5 * (ps.getMinimumDistance(r_2d) + pe.getMinimumDistance(r_2d)) * (te - ts);
     else {
         double px, py;
         if (sr == 1 || sr == 7) px = r.m_pLow[0];
@@ -706,8 +726,9 @@ double line2MBRDistance_impl(const SpatialIndex::TimePoint &ps, const SpatialInd
 
 double Trajectory::line2MBRDistance(const SpatialIndex::TimePoint &ps, const SpatialIndex::TimePoint &pe,
                                     const SpatialIndex::Region &r) {
-    assert(r.m_pLow[m_dimension]<ps.m_startTime);
-    assert(r.m_pHigh[m_dimension]>pe.m_startTime);
+    //the line's time period should be in the MBR's time period
+    assert(r.m_pLow[m_dimension]<=ps.m_startTime);
+    assert(r.m_pHigh[m_dimension]>=pe.m_startTime);
     //check if need cutting
     int sr=getRealm(r,ps,pe);
     if(sr>0){
@@ -715,20 +736,68 @@ double Trajectory::line2MBRDistance(const SpatialIndex::TimePoint &ps, const Spa
     }else{
         double sum =0;
         auto part=cutByRealm(ps,pe,r);
-        for(const auto &p:part) sum+=line2MBRDistance_impl(p.first,p.second,r,getRealm(r,p.first,p.second));
+        for(const auto &p:part) {
+            int tmpsr=getRealm(r,p.first,p.second);
+            double tmpres=line2MBRDistance_impl(p.first,p.second,r,tmpsr);
+//            cout<<tmpsr<<" "<<tmpres<<"\n";
+            sum+=tmpres;
+        }
         return sum;
     }
+}
+
+double line2MBCDistance_impl1(double c1,double c2,double c3,
+                              const SpatialIndex::MBC &r,double ts,double te){
+    double root1=(-c2-std::sqrt(c2*c2-4*c1*(c3-sq(r.m_rd))))/2/c1;
+    double t1=r.m_startTime+r.m_rd/r.m_rv;
+    double inter1=(root1<=t1)?((-c2-std::sqrt(c2*c2-4*(c1-sq(r.m_rv))*c3))/2/c1):t1;
+    double tlow=ts;
+    double thigh=std::min(inter1,te);
+    double c4=thigh-tlow;
+    double r1=r.getCenterRdAtTime(tlow).second,r2=r.getCenterRdAtTime(thigh).second;
+    return F(c1,c2,c3,c4,thigh)-F(c1,c2,c3,c4,tlow)-0.5*(r1+r2)*(thigh-tlow);
+}
+double line2MBCDistance_impl2(double c1,double c2,double c3,
+                              const SpatialIndex::MBC &r,double ts,double te){
+    double root1=(-c2-std::sqrt(c2*c2-4*c1*(c3-sq(r.m_rd))))/2/c1;
+    double t1=r.m_startTime+r.m_rd/r.m_rv;
+    double root2=(-c2+std::sqrt(c2*c2-4*c1*(c3-sq(r.m_rd))))/2/c1;
+    double t2=r.m_endTime+r.m_rd/r.m_rv;
+    double sum=0;
+    if(root1>=ts){
+        double tlow=ts;
+        double thigh=std::min(te,root1);
+        double c4=thigh-tlow;
+        sum+=F(c1,c2,c3,c4,thigh)-F(c1,c2,c3,c4,tlow)-c4*r.m_rd;
+    }
+    if(root2<te){
+        double tlow=std::max(ts,root2);
+        double thigh=te;
+        double c4=thigh-tlow;
+        sum+=F(c1,c2,c3,c4,thigh)-F(c1,c2,c3,c4,tlow)-c4*r.m_rd;
+    }
+    return sum;
+}
+double line2MBCDistance_impl3(double c1,double c2,double c3,
+                              const SpatialIndex::MBC &r,double ts,double te){
+    double root2=(-c2+std::sqrt(c2*c2-4*c1*(c3-sq(r.m_rd))))/2/c1;
+    double t2=r.m_endTime+r.m_rd/r.m_rv;
+    double inter2=(root2<=t2)?((-c2+std::sqrt(c2*c2-4*(c1-sq(r.m_rv))*c3))/2/c1):t2;
+    double tlow=std::max(inter2,ts);
+    double thigh=te;
+    double r1=r.getCenterRdAtTime(tlow).second,r2=r.getCenterRdAtTime(thigh).second;
+    double c4=thigh-tlow;
+    return F(c1,c2,c3,c4,thigh)-F(c1,c2,c3,c4,tlow)-0.5*(r1+r2)*(thigh-tlow);
 }
 
 double Trajectory::line2MBCDistance(const SpatialIndex::TimePoint &ps, const SpatialIndex::TimePoint &pe,
                                     const SpatialIndex::MBC &r) {
     assert(std::isfinite(r.m_rv));
-    //we suppose here that
+
     double t0=r.m_startTime,t1=t0+r.m_rd/r.m_rv,t3=r.m_endTime,t2=t3-r.m_rd/r.m_rv;
-    double ts=ps.m_startTime,te=ps.m_startTime;
+    double ts=ps.m_startTime,te=pe.m_startTime;
     TimePoint p1s=ps,p1e=pe,p2s=r.getCenterRdAtTime(ts).first,
             p2e=r.getCenterRdAtTime(te).first;
-    double r1=r.getCenterRdAtTime(ts).second,r2=r.getCenterRdAtTime(te).second;
     double dxs=p1s.m_pCoords[0]-p2s.m_pCoords[0];
     double dys=p1s.m_pCoords[1]-p2s.m_pCoords[1];
     double dxe=p1e.m_pCoords[0]-p2e.m_pCoords[0];
@@ -737,15 +806,11 @@ double Trajectory::line2MBCDistance(const SpatialIndex::TimePoint &ps, const Spa
             c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
             c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
             c4=te-ts;
-    if(c2*c2-4*c1*(c3-sq(r.m_rd))<0||(ts>t1&&te<t2)){//no intersaction or not related
-        return line2lineDistance(p1s,p1e,p2s,p2e)-0.5*(r1+r2)*(te-ts);
-    }else{//have intersaction
-        double root1=(-c2-std::sqrt(c2*c2-4*c1*(c3-sq(r.m_rd))))/2/c1,
-            root2=(-c2+std::sqrt(c2*c2-4*c1*(c3-sq(r.m_rd))))/2/c1;
-        double inter1=(-c2-std::sqrt(c2*c2-4*(c1-sq(r.m_rv))*c3))/2/c1,
-            inter2=(-c2+std::sqrt(c2*c2-4*(c1-sq(r.m_rv))*c3))/2/c1;
-    }
-
+    double sum=0;
+    if(ts<t1) sum+=line2MBCDistance_impl1(c1,c2,c3,r,ts,std::min(te,t1));
+    if(ts<t2&&te>t1) sum+=line2MBCDistance_impl2(c1,c2,c3,r,std::max(t1,ts),std::min(t2,te));
+    if(te>t2) sum+=line2MBCDistance_impl3(c1,c2,c3,r,std::max(ts,t2),te);
+    return sum;
 }
 
 double Trajectory::getMinimumDistance(const IShape& s) const{
