@@ -51,15 +51,11 @@ ExternalSorter::Record::Record()
 {
 }
 
-ExternalSorter::Record::Record(const IShape& r, id_type id, uint32_t len, uint8_t* pData, uint32_t s,uint32_t level)
-        :  m_id(id), m_len(len), m_pData(pData), m_s(s),m_level(level)
+ExternalSorter::Record::Record(const Region& r, id_type id, uint32_t len, uint8_t* pData, uint32_t s,uint32_t level,MBC *mbc)
+        :  m_id(id), m_len(len), m_pData(pData), m_s(s),m_level(level),m_r(r)
 {
-    const Region* pr = dynamic_cast<const Region*>(&r);
-    if (pr != 0) m_r=*pr;
-    const MBC* pbc = dynamic_cast<const MBC*>(&r);
-    if (pbc != 0) {
-        m_mbc=*pbc;
-        pbc->getMBR(m_r);
+    if(mbc!= nullptr){
+        m_mbc=*mbc;
     }
 }
 
@@ -70,35 +66,13 @@ ExternalSorter::Record::~Record()
 
 bool ExternalSorter::Record::operator<(const Record& r) const
 {
-    if(m_level>0) {
-        if (m_s != r.m_s)
-            throw Tools::IllegalStateException("ExternalSorter::Record::operator<: Incompatible sorting dimensions.");
+    if (m_s != r.m_s)
+        throw Tools::IllegalStateException("ExternalSorter::Record::operator<: Incompatible sorting dimensions.");
 
-        if (m_r.m_pHigh[m_s] + m_r.m_pLow[m_s] < r.m_r.m_pHigh[m_s] + r.m_r.m_pLow[m_s])
-            return true;
-        else
-            return false;
-    }else{
-        if(m_s<m_mbc.m_dimension-1){
-            if (m_mbc.m_pLow[m_s] < r.m_mbc.m_pLow[m_s])
-                return true;
-            else
-                return false;
-        }
-        else if(m_s<2*m_mbc.m_dimension-2){
-            if (m_mbc.m_pHigh[m_s] < r.m_mbc.m_pHigh[m_s])
-                return true;
-            else
-                return false;
-        }
-        else{
-            if (m_mbc.m_startTime + m_mbc.m_endTime < r.m_mbc.m_startTime + r.m_mbc.m_endTime)
-                return true;
-            else
-                return false;
-        }
-    }
-
+    if (m_r.m_pHigh[m_s] + m_r.m_pLow[m_s] < r.m_r.m_pHigh[m_s] + r.m_r.m_pLow[m_s])
+        return true;
+    else
+        return false;
 }
 
 void ExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)
@@ -398,10 +372,8 @@ void BulkLoader::bulkLoadUsingSTR(
 			throw Tools::IllegalArgumentException(
 				"bulkLoadUsingSTR: MBCRTree bulk load expects SpatialIndex::MBCRTree::Data entries."
 			);
-//		Trajectory traj;
-//		traj.loadFromByteArray(d->m_pData);
-//		std::cout<<traj;
-		es->insert(new ExternalSorter::Record(d->m_mbc, d->m_id, d->m_dataLength, d->m_pData, 0,0));
+
+		es->insert(new ExternalSorter::Record(d->m_mbr, d->m_id, d->m_dataLength, d->m_pData, 0,0,&d->m_mbc));
 		d->m_pData = 0;
 		delete d;
 	}
@@ -446,12 +418,7 @@ void BulkLoader::createLevel(
 	uint64_t b = (level == 0) ? bleaf : bindex;
     uint64_t P = static_cast<uint64_t>(std::ceil(static_cast<double>(es->getTotalEntries()) / static_cast<double>(b)));
     int remainDim;
-    if(level==0){
-        remainDim=2*pTree->m_dimension-1-dimension;
-    }
-    else{
-        remainDim=pTree->m_dimension-dimension;
-    }
+    remainDim=pTree->m_dimension-dimension;
     uint64_t S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P),1.0/remainDim)));
 
 	if (S == 1 || remainDim==1 || S * b == es->getTotalEntries())
@@ -494,7 +461,8 @@ void BulkLoader::createLevel(
 			ExternalSorter::Record* pR;
 			Tools::SmartPointer<ExternalSorter> es3 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
 
-			for (uint64_t i = 0; i < i < b*ceil(1.0*P/S); ++i)
+			for (uint64_t i = 0; i < b*floor(1.0*P/S); ++i)
+//            for (uint64_t i = 0; i < S*b; ++i)
 			{
 				try { pR = es->getNextRecord(); }
 				catch (Tools::EndOfStreamException) { bMore = false; break; }
@@ -515,15 +483,11 @@ Node* BulkLoader::createNode(SpatialIndex::MBCRTree::MBCRTree* pTree, std::vecto
 
 	for (size_t cChild = 0; cChild < e.size(); ++cChild)
 	{
-        if (level == 0) n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData, e[cChild]->m_mbc, e[cChild]->m_id);
+        if (level == 0) n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData,e[cChild]->m_r, e[cChild]->m_mbc, e[cChild]->m_id);
         else n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData, e[cChild]->m_r, e[cChild]->m_id);
 	    e[cChild]->m_pData = 0;
 		delete e[cChild];
 	}
-//	if(level==0) {
-//        for (size_t cChild = 0; cChild < e.size(); ++cChild) {
-//            std::cout<<*n->m_ptrMBC[cChild]<<std::endl;
-//        }
-//    }
+
 	return n;
 }

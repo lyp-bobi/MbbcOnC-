@@ -161,11 +161,13 @@ namespace SpatialIndex
 			class NNEntry
 			{
 			public:
+                uint32_t m_type=0;
 				id_type m_id;
 				IEntry* m_pEntry;
 				double m_minDist;
 
-				NNEntry(id_type id, IEntry* e, double f) : m_id(id), m_pEntry(e), m_minDist(f) {}
+				NNEntry(id_type id, IEntry* e, double f, uint32_t type=0)
+				    : m_id(id), m_pEntry(e), m_minDist(f),m_type(type) {}
 				~NNEntry() {}
 
 				struct ascending : public std::binary_function<NNEntry*, NNEntry*, bool>

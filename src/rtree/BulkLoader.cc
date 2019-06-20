@@ -348,9 +348,7 @@ void BulkLoader::bulkLoadUsingSTR(
 			throw Tools::IllegalArgumentException(
 				"bulkLoadUsingSTR: RTree bulk load expects SpatialIndex::RTree::Data entries."
 			);
-//		Trajectory traj;
-//		traj.loadFromByteArray(d->m_pData);
-//		std::cout<<traj.toString();
+
 		es->insert(new ExternalSorter::Record(d->m_region, d->m_id, d->m_dataLength, d->m_pData, 0));
 		d->m_pData = 0;
 		delete d;
@@ -395,7 +393,10 @@ void BulkLoader::createLevel(
 ) {
 	uint64_t b = (level == 0) ? bleaf : bindex;
 	uint64_t P = static_cast<uint64_t>(std::ceil(static_cast<double>(es->getTotalEntries()) / static_cast<double>(b)));
-	uint64_t S = static_cast<uint64_t>(std::ceil(std::sqrt(static_cast<double>(P))));
+//	uint64_t S = static_cast<uint64_t>(std::ceil(std::sqrt(static_cast<double>(P))));
+    int remainDim;
+    remainDim=pTree->m_dimension-dimension;
+    uint64_t S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P),1.0/remainDim)));
 
 	if (S == 1 || dimension == pTree->m_dimension - 1 || S * b == es->getTotalEntries())
 	{
@@ -437,7 +438,8 @@ void BulkLoader::createLevel(
 			ExternalSorter::Record* pR;
 			Tools::SmartPointer<ExternalSorter> es3 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
 
-			for (uint64_t i = 0; i < S * b; ++i)
+//			for (uint64_t i = 0; i < S * b; ++i)
+            for (uint64_t i = 0; i < b*floor(1.0*P/S); ++i)
 			{
 				try { pR = es->getNextRecord(); }
 				catch (Tools::EndOfStreamException) { bMore = false; break; }

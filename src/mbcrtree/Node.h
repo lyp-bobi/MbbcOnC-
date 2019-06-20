@@ -79,9 +79,9 @@ namespace SpatialIndex
 
 			virtual Node& operator=(const Node&);
 
-            virtual void insertEntry(uint32_t dataLength, uint8_t* pData, IShape& shape, id_type id);
+//            virtual void insertEntry(uint32_t dataLength, uint8_t* pData, IShape& shape, id_type id);
 			virtual void insertEntry(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id);
-            virtual void insertEntry(uint32_t dataLength, uint8_t* pData, MBC& mbc, id_type id);
+            virtual void insertEntry(uint32_t dataLength, uint8_t* pData,Region& mbr, MBC& mbc, id_type id);
 			virtual void deleteEntry(uint32_t index);
 
 			virtual bool insertData(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id, std::stack<id_type>& pathBuffer, uint8_t* overflowTable);

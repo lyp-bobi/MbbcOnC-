@@ -27,18 +27,18 @@ void ShapeList::storeToByteArray(uint8_t **data, uint32_t &len) {
     uint8_t* tmpb;
     uint32_t tmplen;
     memcpy(ptr, &m_dimension, sizeof(uint32_t));
-    memcpy(ptr, &m_datatype, sizeof(uint32_t));
-    id_type size=(m_datatype==SpatialIndex::LeafBoundByMBR)?m_MBRList.size():m_MBCList.size();
+    memcpy(ptr, &m_shapeType, sizeof(uint32_t));
+    id_type size=(m_shapeType==SpatialIndex::LeafBoundByMBR)?m_MBRList.size():m_MBCList.size();
     memcpy(ptr, &size, sizeof(id_type));
     ptr += sizeof(id_type);
-    if(m_datatype==LeafBoundByMBR) {
+    if(m_shapeType==LeafBoundByMBR) {
         for (int i = 0; i < size; i++) {
             m_MBRList[i]->storeToByteArray(&tmpb, tmplen);
             memcpy(ptr, tmpb, tmplen);
             if (i != size - 1)
                 ptr += tmplen;
         }
-    }else if(m_datatype==LeafBoundByMBC){
+    }else if(m_shapeType==LeafBoundByMBC){
         for (int i = 0; i < size; i++) {
             m_MBCList[i]->storeToByteArray(&tmpb, tmplen);
             memcpy(ptr, tmpb, tmplen);
@@ -50,12 +50,12 @@ void ShapeList::storeToByteArray(uint8_t **data, uint32_t &len) {
 void ShapeList::loadFromByteArray(const uint8_t *ptr) {
     memcpy(&m_dimension, ptr, sizeof(uint32_t));
     ptr+= sizeof(uint32_t);
-    memcpy(&m_datatype, ptr, sizeof(uint32_t));
+    memcpy(&m_shapeType, ptr, sizeof(uint32_t));
     ptr+= sizeof(uint32_t);
     id_type size;
     memcpy(&size, ptr, sizeof(id_type));
     ptr += sizeof(id_type);
-    if(m_datatype==LeafBoundByMBR){
+    if(m_shapeType==LeafBoundByMBR){
         m_MBRList.resize(size);
         uint32_t tmplen;
         for(int i=0;i<size;i++){
@@ -63,7 +63,7 @@ void ShapeList::loadFromByteArray(const uint8_t *ptr) {
             if(i!=size-1)
                 ptr+=m_MBRList[i]->getByteArraySize();
         }
-    }else if(m_datatype==LeafBoundByMBC){
+    }else if(m_shapeType==LeafBoundByMBC){
         m_MBCList.resize(size);
         uint32_t tmplen;
         for(int i=0;i<size;i++){
@@ -117,30 +117,50 @@ double ShapeList::getMinimumDistance(const IShape& in) const{
 }
 
 void ShapeList::insert(SpatialIndex::IShape *shape) {
-    if(m_datatype==-1) {
+    if(m_shapeType==-1) {
         Region *pmbr = dynamic_cast< Region *>(shape);
         if (pmbr != nullptr) {
-            m_datatype = SpatialIndex::LeafBoundByMBR;
+            m_shapeType = SpatialIndex::LeafBoundByMBR;
         }
         MBC *pmbc = dynamic_cast<MBC *>(shape);
         if (pmbc != nullptr) {
-            m_datatype = SpatialIndex::LeafBoundByMBC;
+            m_shapeType = SpatialIndex::LeafBoundByMBC;
         }
     }
-    else if(m_datatype==SpatialIndex::LeafBoundByMBR){
+    else if(m_shapeType==SpatialIndex::LeafBoundByMBR){
         Region *pmbr = dynamic_cast< Region *>(shape);
-        m_MBRList.push_back(pmbr);
+        m_MBRList.emplace_back(pmbr);
     }
-    else if(m_datatype==SpatialIndex::LeafBoundByMBC){
+    else if(m_shapeType==SpatialIndex::LeafBoundByMBC){
         MBC *pmbc = dynamic_cast<MBC *>(shape);
-        m_MBCList.push_back(pmbc);
+        m_MBCList.emplace_back(pmbc);
     }
 }
 
 void ShapeList::insert(SpatialIndex::Region *shape) {
-    m_MBRList.push_back(shape);
+    m_MBRList.emplace_back(shape);
+    m_shapeType=1;
 }
 
 void ShapeList::insert(SpatialIndex::MBC *shape) {
-    m_MBCList.push_back(shape);
+    m_MBCList.emplace_back(shape);
+    m_shapeType=2;
+}
+
+std::ostream& SpatialIndex::operator<<(std::ostream& os, const ShapeList& r)
+{
+    if(r.m_shapeType==LeafBoundByMBR){
+        os<<"Shape List have "<<r.m_MBRList.size()<<" MBRs.\n";
+        for(auto br:r.m_MBRList){
+            os<<*br;
+        }
+    }
+    else if(r.m_shapeType==LeafBoundByMBC){
+        os<<"Shape List have "<<r.m_MBCList.size()<<" MBCs.\n";
+        for(auto bc:r.m_MBCList){
+            os<<*bc;
+        }
+    }
+    os<<"\n";
+	return os;
 }

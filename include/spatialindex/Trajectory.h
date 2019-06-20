@@ -71,6 +71,9 @@ namespace SpatialIndex
     void linkTrajectory(Trajectory other);
     virtual void getPartialTrajectory(double tstart,double tend,Trajectory &out) const;
 
+    double m_startTime() const{return m_points.front().m_startTime;}
+    double m_endTime() const { return m_points.back().m_startTime;}
+
     void loadFromString(std::string s);
 
     static double line2lineDistance(const TimePoint &p1s,const TimePoint &p1e,const TimePoint &p2s,const TimePoint &p2e);
@@ -79,7 +82,7 @@ namespace SpatialIndex
 
     std::vector<TimePoint> m_points;
 
-    friend SIDX_DLL std::ostream operator<<(std::ostream os,const Trajectory &r);
+    friend SIDX_DLL std::ostream& operator<<(std::ostream& os,const Trajectory &r);
 
     static const uint32_t m_dimension=2;
     virtual void makeInfinite(uint32_t dimension);

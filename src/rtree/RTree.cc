@@ -519,7 +519,10 @@ void SpatialIndex::RTree::RTree::pointLocationQuery(const Point& query, IVisitor
 
 void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v, INearestNeighborComparator& nnc)
 {
-	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
+    const Trajectory *queryTraj;
+    if(m_DataType==TrajectoryType)
+        queryTraj= dynamic_cast<const Trajectory*>(&query);
+//	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
 
 #ifdef HAVE_PTHREAD_H
 	Tools::LockGuard lock(&m_lock);
@@ -531,9 +534,11 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 
 	uint32_t count = 0;
 	double knearest = 0.0;
-
+    int iternum=0;
+    std::map<id_type ,int> insertedTrajId;
 	while (! queue.empty())
 	{
+	    iternum++;
 		NNEntry* pFirst = queue.top();
 
 		// report all nearest neighbors with equal greatest distances.
@@ -572,14 +577,32 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 		}
 		else
 		{
-		    Data *e=static_cast<Data*>(pFirst->m_pEntry);
-		    if(e->m_dataLength==0)
-			v.visitData(*(static_cast<IData*>(pFirst->m_pEntry)));
-			++(m_stats.m_u64QueryResults);
-			++count;
-			knearest = pFirst->m_minDist;
+		    if(m_bUsingTrajStore&&pFirst->m_type==0){
+		        //load ShapeList<MBR>, aka retrieve MBRs
+                id_type trajId=m_ts->getTrajId(pFirst->m_id);
+                if(insertedTrajId[trajId]==1){}
+                else {
+                    ShapeList brs = m_ts->getMBRsByTime(pFirst->m_id, queryTraj->m_points.front().m_startTime,
+                                                        queryTraj->m_points.back().m_startTime);
+                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(query, brs), 1));
+                    insertedTrajId[trajId]=1;
+                }
+//                std::cerr<<nnc.getMinimumDistance(query, brs)<<"\n";
+		    }
+		    else if(m_bUsingTrajStore&&pFirst->m_type==1){
+		        //load Trajectory
+                Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_startTime,queryTraj->m_points.back().m_startTime);
+                queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(query, traj),2));
+		    }
+		    else {
+                Data *e=static_cast<Data*>(pFirst->m_pEntry);
+                v.visitData(*(static_cast<IData *>(pFirst->m_pEntry)));
+                ++(m_stats.m_u64QueryResults);
+                ++count;
+                knearest = pFirst->m_minDist;
 //            std::cout<<"knearest is"<<knearest<<std::endl;
-			delete pFirst->m_pEntry;
+                delete pFirst->m_pEntry;
+            }
 		}
 		delete pFirst;
 	}
@@ -590,13 +613,14 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 		if (e->m_pEntry != 0) delete e->m_pEntry;
 		delete e;
 	}
+    std::cerr<<"iternum is "<<iternum<<"\n";
 //    std::cout<<"knearest is"<<knearest<<std::endl;
     m_stats.m_doubleExactQueryResults+=knearest;
 }
 
 void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v)
 {
-	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
+//	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
 	NNComparator nnc;
 	nearestNeighborQuery(k, query, v, nnc);
 }
@@ -1413,7 +1437,8 @@ void SpatialIndex::RTree::RTree::rangeQuery(RangeQueryType type, const IShape& q
 	while (! st.empty())
 	{
 		NodePtr n = st.top(); st.pop();
-        
+
+
 		if (n->m_level == 0)
 		{
 			v.visitNode(*n);
@@ -1429,20 +1454,28 @@ void SpatialIndex::RTree::RTree::rangeQuery(RangeQueryType type, const IShape& q
 					Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBR[cChild]), n->m_pIdentifier[cChild]);
 					++(m_stats.m_u64QueryResults);
 					if(m_DataType==TrajectoryType){
-					    if(m_bUsingTrajStore==true){
-                            Trajectory segtraj=m_ts->getTraj(n->m_pIdentifier[cChild]);
-                            if(query.intersectsShape(segtraj)){
-                                m_stats.m_doubleExactQueryResults += 1;
-                                v.visitData(data);
-                            }
-					    }
-					    else {
-                            Trajectory traj;
-                            traj.loadFromByteArray(data.m_pData);
+                        //check if the timed slice is included in query
+                        const Region *querybr= dynamic_cast<const Region*>(&query);
+                        Region spatialbr(querybr->m_pLow,querybr->m_pHigh,2);
+                        Region brbr(data.m_region.m_pLow,data.m_region.m_pHigh,2);
+                        if(spatialbr.containsRegion(brbr)){
+                            m_stats.m_doubleExactQueryResults += 1;
+                            v.visitData(data);
+                        }else {
+                            if (m_bUsingTrajStore == true) {
+                                Trajectory segtraj = m_ts->getTraj(n->m_pIdentifier[cChild]);
+                                if (query.intersectsShape(segtraj)) {
+                                    m_stats.m_doubleExactQueryResults += 1;
+                                    v.visitData(data);
+                                }
+                            } else {
+                                Trajectory traj;
+                                traj.loadFromByteArray(data.m_pData);
 //                            v.visitData(data);
-                            if (traj.intersectsShape(query)) {
-                                m_stats.m_doubleExactQueryResults += 1;
-                                v.visitData(data);
+                                if (traj.intersectsShape(query)) {
+                                    m_stats.m_doubleExactQueryResults += 1;
+                                    v.visitData(data);
+                                }
                             }
                         }
 					}else{

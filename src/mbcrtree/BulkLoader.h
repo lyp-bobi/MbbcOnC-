@@ -38,7 +38,7 @@ namespace SpatialIndex
 			{
 			public:
 				Record();
-				Record(const IShape& shape, id_type id, uint32_t len, uint8_t* pData, uint32_t s,uint32_t level);
+				Record(const Region& shape, id_type id, uint32_t len, uint8_t* pData, uint32_t s,uint32_t level,MBC* mbc= nullptr);
 				~Record();
 
 				bool operator<(const Record& r) const;

@@ -289,9 +289,10 @@ Node::Node(SpatialIndex::MBCRTree::MBCRTree* pTree, id_type id, uint32_t level, 
 	{
 		m_pDataLength = new uint32_t[m_capacity + 1];
 		m_pData = new uint8_t*[m_capacity + 1];
-        m_ptrMBR = new RegionPtr[m_capacity + 1];
 		if(m_level==0)
             m_ptrMBC = new MBCPtr[m_capacity + 1];
+		else
+            m_ptrMBR = new RegionPtr[m_capacity + 1];
 		m_pIdentifier = new id_type[m_capacity + 1];
 	}
 	catch (...)
@@ -326,18 +327,18 @@ Node& Node::operator=(const Node&)
 	throw Tools::IllegalStateException("operator =: This should never be called.");
 }
 
-void Node::insertEntry(uint32_t dataLength, uint8_t *pData, SpatialIndex::IShape &shape, SpatialIndex::id_type id) {
-    const Region *pr= dynamic_cast<Region*>(&shape);
-    if(pr!= nullptr) {
-        Region newr(*pr);
-        insertEntry(dataLength,pData,newr,id);
-    }
-    const MBC *pbc= dynamic_cast<MBC*>(&shape);
-    if(pbc!= nullptr) {
-        MBC newbc(*pbc);
-        insertEntry(dataLength,pData,newbc,id);
-    }
-}
+//void Node::insertEntry(uint32_t dataLength, uint8_t *pData, SpatialIndex::IShape &shape, SpatialIndex::id_type id) {
+//    const Region *pr= dynamic_cast<Region*>(&shape);
+//    if(pr!= nullptr) {
+//        Region newr(*pr);
+//        insertEntry(dataLength,pData,newr,id);
+//    }
+//    const MBC *pbc= dynamic_cast<MBC*>(&shape);
+//    if(pbc!= nullptr) {
+//        MBC newbc(*pbc);
+//        insertEntry(dataLength,pData,newbc,id);
+//    }
+//}
 
 void Node::insertEntry(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id)
 {
@@ -355,22 +356,19 @@ void Node::insertEntry(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type
 	m_nodeMBR.combineRegion(mbr);
 }
 
-void Node::insertEntry(uint32_t dataLength, uint8_t *pData, SpatialIndex::MBC &mbc, SpatialIndex::id_type id) {
+void Node::insertEntry(uint32_t dataLength, uint8_t *pData,Region& mbr, MBC &mbc, SpatialIndex::id_type id) {
     assert(m_children < m_capacity);
     m_pDataLength[m_children] = dataLength;
     m_pData[m_children] = pData;
     m_ptrMBC[m_children] = m_pTree->m_mbcPool.acquire();
     *(m_ptrMBC[m_children]) = mbc;
-    Region tmpbr;
-    mbc.getMBR(tmpbr);
-    m_ptrMBR[m_children] = m_pTree->m_regionPool.acquire();
-    *(m_ptrMBR[m_children]) = tmpbr;
 
     m_pIdentifier[m_children] = id;
 
     m_totalDataLength += dataLength;
     ++m_children;
-    m_nodeMBR.combineRegion(tmpbr);
+
+    m_nodeMBR.combineRegion(mbr);
 }
 
 void Node::deleteEntry(uint32_t index)

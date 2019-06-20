@@ -39,14 +39,25 @@
 using namespace SpatialIndex::MBCRTree;
 using namespace SpatialIndex;
 
-SpatialIndex::MBCRTree::Data::Data(uint32_t len, uint8_t* pData, MBC& r, id_type id)
-	: m_id(id), m_mbc(r), m_pData(0), m_dataLength(len)
+SpatialIndex::MBCRTree::Data::Data(uint32_t len, uint8_t* pData, MBC& r, Region &rg, id_type id)
+	: m_id(id), m_mbc(r),m_mbr(rg), m_pData(0), m_dataLength(len)
 {
 	if (m_dataLength > 0)
 	{
 		m_pData = new uint8_t[m_dataLength];
 		memcpy(m_pData, pData, m_dataLength);
 	}
+}
+
+SpatialIndex::MBCRTree::Data::Data(uint32_t len, uint8_t* pData, MBC& r, id_type id)
+        : m_id(id), m_mbc(r), m_pData(0), m_dataLength(len)
+{
+    m_mbr.makeInfinite(2);
+    if (m_dataLength > 0)
+    {
+        m_pData = new uint8_t[m_dataLength];
+        memcpy(m_pData, pData, m_dataLength);
+    }
 }
 
 SpatialIndex::MBCRTree::Data::~Data()
@@ -56,7 +67,7 @@ SpatialIndex::MBCRTree::Data::~Data()
 
 SpatialIndex::MBCRTree::Data* SpatialIndex::MBCRTree::Data::clone()
 {
-	return new Data(m_dataLength, m_pData, m_mbc, m_id);
+	return new Data(m_dataLength, m_pData, m_mbc,m_mbr, m_id);
 }
 
 id_type SpatialIndex::MBCRTree::Data::getIdentifier() const
@@ -87,6 +98,7 @@ uint32_t SpatialIndex::MBCRTree::Data::getByteArraySize() const
 		sizeof(id_type) +
 		sizeof(uint32_t) +
 		m_dataLength +
+		m_mbr.getByteArraySize()+
 		m_mbc.getByteArraySize();
 }
 
@@ -107,16 +119,18 @@ void SpatialIndex::MBCRTree::Data::loadFromByteArray(const uint8_t* ptr)
 		memcpy(m_pData, ptr, m_dataLength);
 		ptr += m_dataLength;
 	}
-
+    m_mbr.loadFromByteArray(ptr);
+	ptr+=m_mbr.getByteArraySize();
 	m_mbc.loadFromByteArray(ptr);
 }
 
 void SpatialIndex::MBCRTree::Data::storeToByteArray(uint8_t** data, uint32_t& len)
 {
 	// it is thread safe this way.
-	uint32_t regionsize;
-	uint8_t* regiondata = 0;
-	m_mbc.storeToByteArray(&regiondata, regionsize);
+	uint32_t regionsize,regionsize2;
+	uint8_t* regiondata = 0,*regiondata2=0;
+    m_mbr.storeToByteArray(&regiondata, regionsize);
+	m_mbc.storeToByteArray(&regiondata2, regionsize2);
 
 	len = sizeof(id_type) + sizeof(uint32_t) + m_dataLength + regionsize;
 
@@ -135,7 +149,10 @@ void SpatialIndex::MBCRTree::Data::storeToByteArray(uint8_t** data, uint32_t& le
 	}
 
 	memcpy(ptr, regiondata, regionsize);
+    ptr += regionsize;
+    memcpy(ptr, regiondata2, regionsize2);
 	delete[] regiondata;
+	delete[] regiondata2;
 	// ptr += regionsize;
 }
 
@@ -521,8 +538,10 @@ void SpatialIndex::MBCRTree::MBCRTree::pointLocationQuery(const Point& query, IV
 
 void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v, INearestNeighborComparator& nnc)
 {
-	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
-
+//	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
+    const Trajectory *queryTraj;
+    if(m_DataType==TrajectoryType)
+        queryTraj= dynamic_cast<const Trajectory*>(&query);
 #ifdef HAVE_PTHREAD_H
 	Tools::LockGuard lock(&m_lock);
 #endif
@@ -533,54 +552,76 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
 
 	uint32_t count = 0;
 	double knearest = 0.0;
+    int iternum=0;
+    std::map<id_type ,int> insertedTrajId;
+    while (! queue.empty())
+    {
+        iternum++;
+        NNEntry* pFirst = queue.top();
 
-	while (! queue.empty())
-	{
-		NNEntry* pFirst = queue.top();
+        // report all nearest neighbors with equal greatest distances.
+        // (neighbors can be more than k, if many happen to have the same greatest distance).
+        if (count >= k && pFirst->m_minDist > knearest)	break;
 
-		// report all nearest neighbors with equal greatest distances.
-		// (neighbors can be more than k, if many happen to have the same greatest distance).
-		if (count >= k && pFirst->m_minDist > knearest)	break;
+        queue.pop();
 
-		queue.pop();
+        if (pFirst->m_pEntry == nullptr)
+        {
+            // n is a leaf or an index.
+            NodePtr n = readNode(pFirst->m_id);
+            v.visitNode(*n);
 
-		if (pFirst->m_pEntry == nullptr)
-		{
-			// n is a leaf or an index.
-			NodePtr n = readNode(pFirst->m_id);
-			v.visitNode(*n);
-
-			for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
-			{
-				if (n->m_level == 0)
-				{
-					Data* e = new Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBC[cChild]), n->m_pIdentifier[cChild]);
-					// we need to compare the query with the actual data entry here, so we call the
-					// appropriate getMinimumDistance method of NearestNeighborComparator.
-					if(m_DataType==TrajectoryType){
+            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
+            {
+                if (n->m_level == 0)
+                {
+                    Data* e = new Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBC[cChild]), n->m_pIdentifier[cChild]);
+                    // we need to compare the query with the actual data entry here, so we call the
+                    // appropriate getMinimumDistance method of NearestNeighborComparator.
+                    if(m_DataType==TrajectoryType&&m_bUsingTrajStore== false){
                         Trajectory traj;
                         traj.loadFromByteArray(e->m_pData);
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query,traj)));
-					}else{
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query, traj)));
+                    }else{
                         queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query, *e)));
-					}
+                    }
 
-				}
-				else
-				{
-					queue.push(new NNEntry(n->m_pIdentifier[cChild], 0, nnc.getMinimumDistance(query, *(n->m_ptrMBR[cChild]))));
-				}
-			}
-		}
-		else
-		{
-			v.visitData(*(static_cast<IData*>(pFirst->m_pEntry)));
-			++(m_stats.m_u64QueryResults);
-			++count;
-			knearest = pFirst->m_minDist;
+                }
+                else
+                {
+                    queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, nnc.getMinimumDistance(query, *(n->m_ptrMBR[cChild]))));
+                }
+            }
+        }
+        else
+        {
+            if(m_bUsingTrajStore&&pFirst->m_type==0){
+                //load ShapeList<MBC>, aka retrieve MBCs
+                id_type trajId=m_ts->getTrajId(pFirst->m_id);
+                if(insertedTrajId[trajId]==1){}
+                else {
+                    ShapeList bcs = m_ts->getMBCsByTime(pFirst->m_id, queryTraj->m_points.front().m_startTime,
+                                                        queryTraj->m_points.back().m_startTime);
+                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(query, bcs), 1));
+                    insertedTrajId[trajId]=1;
+                }
+//                std::cerr<<nnc.getMinimumDistance(query, bcs)<<"\n";
+            }
+            else if(m_bUsingTrajStore&&pFirst->m_type==1){
+                //load Trajectory
+                Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_startTime,queryTraj->m_points.back().m_startTime);
+                queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(query, traj),2));
+            }
+            else {
+                Data *e=static_cast<Data*>(pFirst->m_pEntry);
+                v.visitData(*(static_cast<IData *>(pFirst->m_pEntry)));
+                ++(m_stats.m_u64QueryResults);
+                ++count;
+                knearest = pFirst->m_minDist;
 //            std::cout<<"knearest is"<<knearest<<std::endl;
-			delete pFirst->m_pEntry;
-		}
+                delete pFirst->m_pEntry;
+            }
+        }
 		delete pFirst;
 	}
 
@@ -591,12 +632,13 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
 		delete e;
 	}
 //    std::cout<<"knearest is"<<knearest<<std::endl;
+    std::cerr<<"iternum is "<<iternum<<"\n";
     m_stats.m_doubleExactQueryResults+=knearest;
 }
 
 void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v)
 {
-	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
+//	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
 	NNComparator nnc;
 	nearestNeighborQuery(k, query, v, nnc);
 }
@@ -1412,8 +1454,8 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
 
     while (! st.empty())
     {
+
         NodePtr n = st.top(); st.pop();
-//        std::cout<<"\n level"<<n->m_level<<"\n node\n"<<n->m_nodeMBRk.toString();
 
         if (n->m_level == 0)
         {
@@ -1428,20 +1470,29 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                     Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBC[cChild]), n->m_pIdentifier[cChild]);
                     ++(m_stats.m_u64QueryResults);
                     if(m_DataType==TrajectoryType){
-                        if(m_bUsingTrajStore==true){
-                            Trajectory segtraj=m_ts->getTraj(n->m_pIdentifier[cChild]);
-                            if(query.intersectsShape(segtraj)){
-                                m_stats.m_doubleExactQueryResults += 1;
-                                v.visitData(data);
-                            }
-                        }
-                        else {
-                            Trajectory traj;
-                            traj.loadFromByteArray(data.m_pData);
+                        //check if the timed slice is included in query
+                        const Region *querybr= dynamic_cast<const Region*>(&query);
+                        Region spatialbr(querybr->m_pLow,querybr->m_pHigh,2);
+                        Region bcbr;
+                        data.m_mbc.getMBRAtTime(querybr->m_pLow[2],bcbr);
+                        if(spatialbr.containsRegion(bcbr)){
+                            m_stats.m_doubleExactQueryResults += 1;
+                            v.visitData(data);
+                        }else {
+                            if (m_bUsingTrajStore == true) {
+                                Trajectory segtraj = m_ts->getTraj(n->m_pIdentifier[cChild]);
+                                if (query.intersectsShape(segtraj)) {
+                                    m_stats.m_doubleExactQueryResults += 1;
+                                    v.visitData(data);
+                                }
+                            } else {
+                                Trajectory traj;
+                                traj.loadFromByteArray(data.m_pData);
 //                            v.visitData(data);
-                            if (traj.intersectsShape(query)) {
-                                m_stats.m_doubleExactQueryResults += 1;
-                                v.visitData(data);
+                                if (traj.intersectsShape(query)) {
+                                    m_stats.m_doubleExactQueryResults += 1;
+                                    v.visitData(data);
+                                }
                             }
                         }
                     }else{

@@ -58,7 +58,8 @@ namespace SpatialIndex
 		class SIDX_DLL Data : public IData, public Tools::ISerializable
 		{
 		public:
-			Data(uint32_t len, uint8_t* pData, MBC& r, id_type id);
+            Data(uint32_t len, uint8_t* pData, MBC& r, id_type id);
+			Data(uint32_t len, uint8_t* pData, MBC& r,Region &rg, id_type id);
 			virtual ~Data();
 
 			virtual Data* clone();
@@ -71,6 +72,7 @@ namespace SpatialIndex
 
 			id_type m_id;
 			MBC m_mbc;
+			Region m_mbr;
 			uint8_t* m_pData;
 			uint32_t m_dataLength;
 		}; // Data

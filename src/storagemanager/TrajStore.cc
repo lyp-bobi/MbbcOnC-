@@ -76,17 +76,15 @@ tsExternalSorter::Record::Record()
 {
 }
 
-tsExternalSorter::Record::Record(const IShape& r, id_type id,id_type pvId,id_type ntId, uint32_t len, uint8_t* pData, uint32_t s,uint32_t level)
+tsExternalSorter::Record::Record(const Region& r, id_type id,id_type pvId,id_type ntId, uint32_t len, uint8_t* pData, uint32_t s,uint32_t level,MBC *mbc)
         :  m_id(id),m_pvId(pvId),m_ntId(ntId), m_len(len), m_pData(pData), m_s(s),m_level(level)
 {
-    const Region* pr = dynamic_cast<const Region*>(&r);
-    if (pr != 0) m_r=*pr;
-    const MBC* pbc = dynamic_cast<const MBC*>(&r);
-    if (pbc != 0) {
-        m_mbc=*pbc;
-        pbc->getMBR(m_r);
+    m_r=r;
+    if(mbc!= nullptr){
+        m_mbc=*mbc;
     }
 }
+
 
 tsExternalSorter::Record::~Record()
 {
@@ -401,7 +399,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
             id_type segid=getSegId(traj.first,j),
                     pvId=(j==0)?-1:segid-1,
                     ntId=(j==traj.second.size()-1)?-1:segid+1;
-            es->insert(new tsExternalSorter::Record(thebc,segid,pvId,ntId , len, data, 0,0));
+            es->insert(new tsExternalSorter::Record(thebr,segid,pvId,ntId , len, data, 0,0,&thebc));
             m_entryMbcs[segid]=thebc;
             m_entryMbrs[segid]=thebr;
             vol1+=thebr.getArea();
@@ -502,99 +500,97 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     delete[] pageData;
 }
 
-Trajectory TrajStore::getTraj(id_type &id) {
+const Trajectory TrajStore::getTraj(id_type &id) {
     auto it=m_entries.find(id);
     assert(it!=m_entries.end());
     Entry e=*(it->second);
     uint32_t len=e.m_start+e.m_len;
     uint8_t *load = new uint8_t[len];
     m_pStorageManager->loadByteArray(e.m_page,len,&load);
+    m_IO+=std::ceil(len/4096.0);
+//    std::cerr<<"get Traj "<<id<<" with length"<<len<<"\n";
     uint8_t *data = load+e.m_start;
-    Trajectory traj,tmptraj;
+    Trajectory traj;
     traj.loadFromByteArray(data);
-    return traj;
-}
-
-Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double tend) {
-    auto it=m_entries.find(id);
-    assert(it!=m_entries.end());
-    Entry e=*(it->second);
-    uint32_t len=e.m_start+e.m_len;
-    uint8_t *load = new uint8_t[len];
-    m_pStorageManager->loadByteArray(e.m_page,len,&load);
-    uint8_t *data = load+e.m_start;
-    Trajectory traj,tmptraj;
-    traj.loadFromByteArray(data);
-    while(e.m_pvId>=0 && traj.m_points.front().m_startTime>tstart){
-        it=m_entries.find(e.m_pvId);
-        e=*(it->second);
-        len=e.m_start+e.m_len;
-        uint8_t *load1 = new uint8_t[len];
-        m_pStorageManager->loadByteArray(e.m_page,len,&load1);
-        uint8_t *data1 = load1+e.m_start;
-        tmptraj.loadFromByteArray(data1);
-        traj.linkTrajectory(tmptraj);
-        delete[](load1);
-    }
-    while(e.m_ntId>=0 && traj.m_points.back().m_startTime<tend){
-        it=m_entries.find(e.m_ntId);
-        e=*(it->second);
-        len=e.m_start+e.m_len;
-        uint8_t *load1 = new uint8_t[len];
-        m_pStorageManager->loadByteArray(e.m_page,len,&load1);
-        uint8_t *data1 = load1+e.m_start;
-        tmptraj.loadFromByteArray(data1);
-        traj.linkTrajectory(tmptraj);
-        delete[](load1);
-    }
+//    std::cerr<<traj;
     delete[](load);
     return traj;
 }
 
-ShapeList TrajStore::getMBCsByTime(id_type &id, double tstart, double tend) {
+const Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double tend) {
     auto it=m_entries.find(id);
-    auto bc=(*m_entryMbcs.find(id)).second;
+    assert(it!=m_entries.end());
+    Entry e=*(it->second);
+//    uint32_t len=e.m_start+e.m_len;
+//    uint8_t *load = new uint8_t[len];
+//    m_pStorageManager->loadByteArray(e.m_page,len,&load);
+//    uint8_t *data = load+e.m_start;
+    Trajectory traj,tmptraj;
+    traj=getTraj(id);
+//    traj.loadFromByteArray(data);
+    Entry tmpe=e;
+    while(tmpe.m_pvId>=0 && traj.m_points.front().m_startTime>=tstart){
+        tmptraj=getTraj(tmpe.m_pvId);
+        it=m_entries.find(tmpe.m_pvId);
+        tmpe=*(it->second);
+        traj.linkTrajectory(tmptraj);
+    }
+    tmpe=e;
+    while(tmpe.m_ntId>=0 && traj.m_points.back().m_startTime<=tend){
+        tmptraj=getTraj(tmpe.m_ntId);
+        it=m_entries.find(tmpe.m_ntId);
+        tmpe=*(it->second);
+        traj.linkTrajectory(tmptraj);
+    }
+    return traj;
+}
+
+const ShapeList TrajStore::getMBCsByTime(id_type &id, double tstart, double tend) {
+    auto it=m_entries.find(id);
+    MBC *bc=&((*m_entryMbcs.find(id)).second);
     assert(it!=m_entries.end());
     Entry e=*(it->second);
     ShapeList bcs;
-    bcs.insert(&bc);
-    while(e.m_pvId>=0 && bc.m_startTime>tstart){
+    bcs.insert(bc);
+    while(e.m_pvId>=0 && bc->m_startTime>tstart){
         id_type newid=e.m_pvId;
         it=m_entries.find(newid);
-        bc=(*m_entryMbcs.find(newid)).second;
+        bc=&((*m_entryMbcs.find(newid)).second);
         e=*(it->second);
-        bcs.insert(&bc);
+        bcs.insert(bc);
     }
-    while(e.m_ntId>=0 && bc.m_endTime<tend){
+    while(e.m_ntId>=0 && bc->m_endTime<tend){
         id_type  newid=e.m_ntId;
         it=m_entries.find(newid);
-        bc=(*m_entryMbcs.find(newid)).second;
+        bc=&((*m_entryMbcs.find(newid)).second);
         e=*(it->second);
-        bcs.insert(&bc);
+        bcs.insert(bc);
     }
     return bcs;
 }
 
-ShapeList TrajStore::getMBRsByTime(id_type &id, double tstart, double tend) {
+const ShapeList TrajStore::getMBRsByTime(id_type &id, double tstart, double tend) {
     auto it=m_entries.find(id);
-    auto br=(*m_entryMbrs.find(id)).second;
+    auto br=&((*m_entryMbrs.find(id)).second);
     assert(it!=m_entries.end());
     Entry e=*(it->second);
     ShapeList brs;
-    brs.insert(&br);
-    while(e.m_pvId>=0 && br.m_pLow[br.m_dimension-1]>tstart){
+    brs.insert(br);
+    while(e.m_pvId>=0 && br->m_pLow[br->m_dimension-1]>tstart){
         id_type newid=e.m_pvId;
         it=m_entries.find(newid);
-        br=(*m_entryMbrs.find(newid)).second;
+        br=&((*m_entryMbrs.find(newid)).second);
         e=*(it->second);
-        brs.insert(&br);
+        brs.insert(br);
     }
-    while(e.m_ntId>=0 && br.m_pHigh[br.m_dimension-1]<tend){
+    while(e.m_ntId>=0 && br->m_pHigh[br->m_dimension-1]<tend){
         id_type  newid=e.m_ntId;
         it=m_entries.find(newid);
-        br=(*m_entryMbrs.find(newid)).second;
+        br=&((*m_entryMbrs.find(newid)).second);
         e=*(it->second);
-        brs.insert(&br);
+        brs.insert(br);
     }
+//    std::cerr<<"Store return brs";
+//    for(auto br:brs.m_MBRList) std::cerr<<*br;
     return brs;
 }

@@ -4,6 +4,9 @@
 
 #pragma once
 
+
+//todo: this class should be a template, but now it's implemented simply
+
 namespace SpatialIndex {
     SIDX_DLL enum LeafBoundingType
     {
@@ -67,9 +70,11 @@ namespace SpatialIndex {
 
         uint32_t m_dimension = 3;
 
-        uint32_t m_datatype=01;
+        uint32_t m_shapeType=0;
 
-        std::vector <MBC*> m_MBCList;
+        std::vector <MBC *> m_MBCList;
         std::vector <Region*> m_MBRList;
+        friend SIDX_DLL std::ostream& operator<<(std::ostream& os, const ShapeList& r);
     };
+    SIDX_DLL std::ostream& operator<<(std::ostream& os, const ShapeList& r);
 }

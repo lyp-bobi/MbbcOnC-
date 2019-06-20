@@ -307,7 +307,10 @@ void swap(double &x,double &y){
     z=x;x=y;y=z;
 }
 TimePoint TimePoint::makemid(TimePoint p1, TimePoint p2, double t){
-    assert(p1.m_dimension=p2.m_dimension);
+    if(p1.m_dimension!=p2.m_dimension){
+        t=1;
+    }
+    assert(p1.m_dimension==p2.m_dimension);
     if(p1.m_startTime==p2.m_startTime)
         return p1;
     int dim=p1.m_dimension;

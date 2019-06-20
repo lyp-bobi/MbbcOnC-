@@ -10,7 +10,10 @@
 
 #include <spatialindex/SpatialIndex.h>
 
+#define M_PI 3.141592654
+
 using namespace SpatialIndex;
+//todo: solve the problem of 2 and 3 dimensions
 
 MBC::MBC(){
     m_dimension=2;
@@ -166,7 +169,7 @@ void MBC::getMBRAtTime(double t, SpatialIndex::Region &out) const {
                                       TimePoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
     Point plow = tp, phigh = tp;
     if(std::isfinite(m_rv)) {
-        double r = std::min((t - m_startTime) * m_rv, m_rd);
+        double r = std::min(std::min((t - m_startTime) * m_rv, m_rd),(m_endTime-t) * m_rv);
         for (int i = 0; i < m_dimension; i++) {
             plow.m_pCoords[i] = tp.m_pCoords[i] - r;
             phigh.m_pCoords[i] = tp.m_pCoords[i] + r;
@@ -187,7 +190,7 @@ std::pair<TimePoint,double> MBC::getCenterRdAtTime(double t) const {
     Point plow = tp, phigh = tp;
     double r;
     if(std::isfinite(m_rv)) {
-        r = std::min((t - m_startTime) * m_rv, m_rd);
+        r = std::min(std::min((t - m_startTime) * m_rv, m_rd),(m_endTime-t) * m_rv);
     }else{
         r=m_rd;
     }

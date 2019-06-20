@@ -10,7 +10,7 @@ class mbcrtreeSegmentStream:public baseSegmentStream{
 public:
     mbcrtreeSegmentStream(TrajStore *ts): baseSegmentStream(ts){}
     IData* constructData(id_type id,Region mbr,MBC mbc) override {
-        MBCRTree::Data* d=new MBCRTree::Data(0, nullptr, mbc, id);
+        MBCRTree::Data* d=new MBCRTree::Data(0, nullptr, mbc,mbr, id);
         return d;
     }
 };

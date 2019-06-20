@@ -30,7 +30,8 @@ namespace SpatialIndex
             {
             public:
                 Record();
-                Record(const IShape& shape, id_type id,id_type pvId,id_type ntId, uint32_t len, uint8_t* pData, uint32_t s,uint32_t level);
+                Record(const Region& shape, id_type id,id_type pvId,id_type ntId, uint32_t len,
+                        uint8_t* pData, uint32_t s,uint32_t level,MBC* mbc= nullptr);
                 ~Record();
 
                 bool operator<(const Record& r) const;
@@ -102,6 +103,7 @@ namespace SpatialIndex
             void flush(){m_pStorageManager->flush();}
             void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
                 m_pStorageManager->loadByteArray(page,len,data);
+                m_IO+=1;
             }//for inner nodes
             void storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data){
                 m_pStorageManager->storeByteArray(page,len,data);
@@ -121,16 +123,17 @@ namespace SpatialIndex
             id_type getTrajId(id_type id){return id/m_maxTrajSegs;}
             id_type getSegId(id_type id,uint32_t segnum){return id*m_maxTrajSegs+segnum;}
             void loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs);
-            Trajectory getTraj(id_type &id);
-            Trajectory getTrajByTime(id_type &id,double tstart,double tend);
-            ShapeList getMBRsByTime(id_type &id,double tstart,double tend);
-            ShapeList getMBCsByTime(id_type &id,double tstart,double tend);
+            const Trajectory getTraj(id_type &id);
+            const Trajectory getTrajByTime(id_type &id,double tstart,double tend);
+            const ShapeList getMBRsByTime(id_type &id,double tstart,double tend);
+            const ShapeList getMBCsByTime(id_type &id,double tstart,double tend);
             std::map<id_type, Entry*> m_entries;//map from seg id to entry
             std::map<id_type, MBC> m_entryMbcs;
             std::map<id_type, Region> m_entryMbrs;
             IStorageManager* m_pStorageManager;
             uint32_t m_pageSize;
             uint32_t m_maxTrajSegs=100;
+            uint32_t m_IO=0;
         };
     }//namespace StorageManager
     class baseSegmentStream:public IDataStream{
