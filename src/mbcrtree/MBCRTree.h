@@ -31,6 +31,7 @@
 #include "Node.h"
 #include "PointerPoolNode.h"
 #include "storagemanager/TrajStore.h"
+#include <cmath>
 
 namespace SpatialIndex
 {
@@ -172,7 +173,11 @@ namespace SpatialIndex
 
 				struct ascending : public std::binary_function<NNEntry*, NNEntry*, bool>
 				{
-					bool operator()(const NNEntry* __x, const NNEntry* __y) const { return __x->m_minDist > __y->m_minDist; }
+					bool operator()(const NNEntry* __x, const NNEntry* __y) const {
+                        if(std::isinf(__x->m_minDist)||std::isnan(__x->m_minDist)) return true;
+                        if(std::isinf(__y->m_minDist)||std::isnan(__y->m_minDist)) return true;
+					    return __x->m_minDist > __y->m_minDist;
+					}
 				};
 			}; // NNEntry
 

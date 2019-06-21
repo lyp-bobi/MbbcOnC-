@@ -134,6 +134,7 @@ namespace SpatialIndex
             uint32_t m_pageSize;
             uint32_t m_maxTrajSegs=100;
             uint32_t m_IO=0;
+            uint32_t m_boundingVisited=0;
         };
     }//namespace StorageManager
     class baseSegmentStream:public IDataStream{

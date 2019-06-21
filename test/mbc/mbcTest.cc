@@ -21,7 +21,7 @@
 //#define sourceFile "D://t200n100s.txt"
 #define sourceFile "D://t1000.txt"
 #define maxLinesToRead 1e10
-#define testtime 1
+#define testtime 100
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
@@ -75,18 +75,19 @@ public:
 //        cout << *s << endl;
 
         m_lastResult=d.getIdentifier();
-        cerr << d.getIdentifier() << endl;
-////         the ID of this data entry is an answer to the query. I will just print it to stdout.
-        Trajectory traj;
-        if(ts== nullptr) {
-            traj.loadFromByteArray(pData);
-        }
-        else{
-            id_type tid=d.getIdentifier();
-            traj=ts->getTrajByTime(tid,0,1000);
-        }
-        double mindist=m_query->getMinimumDistance(traj);
-        cerr<<"traj dist is"<<mindist<<"\n";
+//        //id of the data
+//        cerr << d.getIdentifier() << endl;
+//        //the traj
+//        Trajectory traj;
+//        if(ts== nullptr) {
+//            traj.loadFromByteArray(pData);
+//        }
+//        else{
+//            id_type tid=d.getIdentifier();
+//            traj=ts->getTrajByTime(tid,0,1000);
+//        }
+//        double mindist=m_query->getMinimumDistance(traj);
+//        cerr<<"traj dist is"<<mindist<<"\n";
 //        Region br;
 //        Mbbc bc;
 //        traj.getMBR(br);
@@ -248,7 +249,7 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore
             tree->intersectsWithQuery(*queries[i],vis);
         }else if(QueryType==2){
             vis.m_query=queries[i];
-            tree->nearestNeighborQuery(5,*queries[i],vis);
+            tree->nearestNeighborQuery(20,*queries[i],vis);
             cerr<<"finished "<<i<<"already\n";
         }
     }
@@ -272,7 +273,7 @@ int TreeQuery(ISpatialIndex* tree,IShape* query){
         tree->nearestNeighborQuery(5,*query,vis);
     }
     end=clock();
-    return vis.m_indexIO;
+    return vis.m_lastResult;
 }
 
 
@@ -280,8 +281,6 @@ int main(){
     try {
         srand((int) time(NULL));
         vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
-        TrajMbrStream ds1;
-        ds1.feedTraj(&trajs);
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, Trajectory> > empty1;
         for(auto traj:trajs){
@@ -297,7 +296,7 @@ int main(){
                 queries.emplace_back(rg);
             }
             else if(QueryType==2){
-                queries.emplace_back(&trajs[10+i%trajs.size()].second);
+                queries.emplace_back(&trajs[103+i%trajs.size()].second);
             }
         }
 //        trajs.swap(empty1);
@@ -310,22 +309,64 @@ int main(){
         StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
                 *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                 *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
-        ds1.rewind();
-        ISpatialIndex* real = RTree::createAndBulkLoadNewRTree(
-                RTree::BulkLoadMethod::BLM_STR, ds1, *file0, 0.9, 10000,100000, 3,RTree::RV_RSTAR, indexIdentifier0);
-        real->m_DataType=TrajectoryType;
+
 
         TrajStore ts1(file1,4096);
         ts1.loadSegments(segs);
+
+
+//        for(int i=11;i<12;i++) {
+//            id_type that = i*100;
+//            auto brs = ts1.getTraj(that);
+//            auto bcs = ts1.getTraj(that);
+////        cout<<trajs[10].second;
+////            cout << trajs[71].second << endl;
+////            cout << brs << endl;
+////            cout << bcs << endl;
+//            cout<< i<<endl;
+//            double a,b,c;
+//            a=queries[0]->getMinimumDistance(trajs[i].second);
+//            b=queries[0]->getMinimumDistance(brs);
+//            c=queries[0]->getMinimumDistance(bcs);
+//            cout<<a<<" "<<b<<" "<<c<<endl;
+//            if((b>a||c>a||std::isnan(b)||std::isnan(c))&&a!=std::numeric_limits<double>::max()) {
+//                cout << queries[0]->getMinimumDistance(trajs[i].second) << endl;
+//                cout << queries[0]->getMinimumDistance(brs) << endl;
+//                cout << queries[0]->getMinimumDistance(bcs) << endl;
+//            }
+//        }
+
+
         TrajStore ts2(file2,4096);
         ts2.loadSegments(segs);
+        TrajMbrStream ds1;
+//        ds1.feedTraj(&trajs);
+//        ds1.rewind();
+//        ISpatialIndex* real = RTree::createAndBulkLoadNewRTree(
+//                RTree::BulkLoadMethod::BLM_STR, ds1, *file0, 0.9, 10000,100000, 3,RTree::RV_RSTAR, indexIdentifier0);
+//        real->m_DataType=TrajectoryType;
         ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,16,3,indexIdentifier1);
         ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,16,3,indexIdentifier2);
         cerr << "start query!" << endl << endl << endl;
-        TreeQueryBatch(real,queries);
+
+//        TreeQueryBatch(real,queries);
         TreeQueryBatch(r, queries,&ts1);
         TreeQueryBatch(rc, queries,&ts2);
+
+//        double a,b;
+//        for(int j=0;j<queries.size();j++){
+//            auto q=queries[j];
+//            a=TreeQuery(r,q);
+//            b=TreeQuery(rc,q);
+//            if(a!=b){
+//                cout<<a<<endl<<b<<endl<<j;
+//            }
+//        }
+
+
+
         std::cout<<ts1.m_IO<<" "<<ts2.m_IO<<endl;
+        std::cout<<ts1.m_boundingVisited<<" "<<ts2.m_boundingVisited<<endl;
     }
     catch (Tools::Exception& e)
     {
