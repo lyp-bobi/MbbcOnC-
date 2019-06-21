@@ -508,7 +508,7 @@ const Trajectory TrajStore::getTraj(id_type &id) {
     uint32_t len=e.m_start+e.m_len;
     uint8_t *load = new uint8_t[len];
     m_pStorageManager->loadByteArray(e.m_page,len,&load);
-    m_IO+=std::ceil(len/4096.0);
+    m_trajIO+=std::ceil(len/4096.0);
 //    std::cerr<<"get Traj "<<id<<" with length"<<len<<"\n";
     uint8_t *data = load+e.m_start;
     Trajectory traj;

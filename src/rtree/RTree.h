@@ -187,13 +187,15 @@ namespace SpatialIndex
 				double getMinimumDistance(const IShape& query, const IShape& entry)
 				{
 //				    std::cerr<<"pushed entry with dist"<<query.getMinimumDistance(entry)<<std::endl;
-					return query.getMinimumDistance(entry);
+//                    query.getMinimumDistance(entry);
+                    return query.getMinimumDistance(entry);
 				}
 
 				double getMinimumDistance(const IShape& query, const IData& data)
 				{
 					IShape* pS;
 					data.getShape(&pS);
+//                    query.getMinimumDistance(*pS);
 					double ret = query.getMinimumDistance(*pS);
 					delete pS;
 					return ret;

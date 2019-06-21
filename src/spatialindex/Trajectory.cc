@@ -219,10 +219,7 @@ void Trajectory::getMBC(SpatialIndex::MBC &out) const {
             prv=std::sqrt((vx-avx)*(vx-avx)+(vy-avy)*(vy-avy));
             if(prv>rv) rv=prv;
         }
-        p=TimePoint::makemid(p1,p2,ptime);
-        prd=m_points[i].getMinimumDistance(p);
-//        cout<<p<<endl<<prd<<endl;
-//        std::cout<<"calculated point\n"<<p.toString()<<endl<<"real point\n"<<m_points[i].toString()<<endl<<prd<<endl<<"\n\n\n\n";
+        prd=m_points[i].getMinimumDistance(*TimePoint::makemid(p1,p2,ptime));
         if(prd>rd) rd=prd;
     }
     out=MBC(p1.m_pCoords,p2.m_pCoords,startt,endt,m_dimension,rd,rv);
@@ -258,13 +255,13 @@ void Trajectory::getPartialTrajectory(double tstart, double tend, SpatialIndex::
     while(m_points[is].m_startTime<tstart) is++;
     while(m_points[ie].m_startTime>tend) ie--;
     if(is!=0&&m_points[is].m_startTime!=tstart){
-        out.m_points.emplace_back(TimePoint::makemid(m_points[is-1],m_points[is],tstart));
+        out.m_points.emplace_back(*TimePoint::makemid(m_points[is-1],m_points[is],tstart));
     }
     for(int i=is;i<=ie;i++){
         out.m_points.emplace_back(m_points[i]);
     }
     if(ie!=m_points.size()-1&&m_points[ie].m_startTime!=tend){
-        out.m_points.emplace_back(TimePoint::makemid(m_points[ie],m_points[ie+1],tend));
+        out.m_points.emplace_back(*TimePoint::makemid(m_points[ie],m_points[ie+1],tend));
     }
 }
 
@@ -276,7 +273,7 @@ const std::pair<int, double> findMaximumDistance(const vector<SpatialIndex::Time
 
     //distance calculation
     for(int i=1;i<points.size()-1;i++){ //traverse through second point to second last point
-        double Dist=SpatialIndex::TimePoint::makemid(firstpoint,lastpoint,points[i].m_startTime).getMinimumDistance(points[i]);
+        double Dist=SpatialIndex::TimePoint::makemid(firstpoint,lastpoint,points[i].m_startTime)->getMinimumDistance(points[i]);
         if (Dist>Mdist){
             Mdist=Dist;
             index=i;
@@ -572,6 +569,15 @@ double mbcArea(const SpatialIndex::MBC &r,double ts,double te){
 
 double Trajectory::line2MBCDistance(const SpatialIndex::TimePoint &ps, const SpatialIndex::TimePoint &pe,
                                     const SpatialIndex::MBC &r) {
+//    auto pr1=r.getCenterRdAtTime(ps.m_startTime),
+//        pr2=r.getCenterRdAtTime(pe.m_startTime);
+//    double s=line2lineDistance(ps,pe,pr1.first,pr2.first);
+//    double sm=mbcArea(r,ps.m_startTime,pe.m_startTime);
+//    double sm=0.5*(pe.m_startTime-ps.m_startTime)*(pr1.second+pr2.second);
+//    if(s>sm) return s-sm;
+//    else return 0;
+
+
     assert(std::isfinite(r.m_rv));
     double t0=r.m_startTime,t1=t0+r.m_rd/r.m_rv,t3=r.m_endTime,t2=t3-r.m_rd/r.m_rv;
     double ts=ps.m_startTime,te=pe.m_startTime;
@@ -607,15 +613,6 @@ double Trajectory::line2MBCDistance(const SpatialIndex::TimePoint &ps, const Spa
                 if(inter1<t3&&inter1>t2){}
                 else {
                     //inter1 and inter2 don't exist
-                    double aa,bb,cc,d,e;
-                    aa=theF(c1,c2,c3,c4,te);
-                    bb=theF(c1,c2,c3,c4,ts);
-                    cc=theD(c1,c2,c3,c4,te);
-                    d=theD(c1,c2,c3,c4,ts);
-                    e=mbcArea(r,ts,te);
-
-                    auto f=r.getCenterRdAtTime(ts);
-                    auto g=r.getCenterRdAtTime(te);
                     return theF(c1, c2, c3, c4, te) - theF(c1, c2, c3, c4, ts) - mbcArea(r, ts, te);
                 }
             }
@@ -628,15 +625,6 @@ double Trajectory::line2MBCDistance(const SpatialIndex::TimePoint &ps, const Spa
                 if(inter2<t1&&inter2>t0){}
                 else{
                     //inter1 and inter2 don't exist
-                    double aa,bb,cc,d,e;
-                    aa=theF(c1,c2,c3,c4,te);
-                    bb=theF(c1,c2,c3,c4,ts);
-                    cc=theD(c1,c2,c3,c4,te);
-                    d=theD(c1,c2,c3,c4,ts);
-                    e=mbcArea(r,ts,te);
-
-                    auto f=r.getCenterRdAtTime(ts);
-                    auto g=r.getCenterRdAtTime(te);
                     return theF(c1, c2, c3, c4, te) - theF(c1, c2, c3, c4, ts) - mbcArea(r, ts, te);
                 }
             }
@@ -667,30 +655,11 @@ double Trajectory::line2MBCDistance(const SpatialIndex::TimePoint &ps, const Spa
         if(ts<inter1){
             double tlow=ts;
             double thigh=std::min(inter1,te);
-            double aa,bb,cc,d,e;
-            aa=theF(c1,c2,c3,c4,thigh);
-            bb=theF(c1,c2,c3,c4,tlow);
-            cc=theD(c1,c2,c3,c4,thigh);
-            d=theD(c1,c2,c3,c4,tlow);
-            e=mbcArea(r,thigh,tlow);
-
-            auto f=r.getCenterRdAtTime(thigh);
-            auto g=r.getCenterRdAtTime(tlow);
             sum+= theF(c1,c2,c3,c4,thigh)-theF(c1,c2,c3,c4,tlow)-mbcArea(r,tlow,thigh);
         }
         if(te>inter2){
             double tlow=std::max(inter2,ts);
             double thigh=te;
-            double aa,bb,cc,d,e;
-            aa=theF(c1,c2,c3,c4,thigh);
-            bb=theF(c1,c2,c3,c4,tlow);
-            cc=theD(c1,c2,c3,c4,thigh);
-            d=theD(c1,c2,c3,c4,tlow);
-            e=mbcArea(r,tlow,thigh);
-
-            auto f=r.getCenterRdAtTime(thigh);
-            auto g=r.getCenterRdAtTime(tlow);
-
             sum+= theF(c1,c2,c3,c4,thigh)-theF(c1,c2,c3,c4,tlow)-mbcArea(r,tlow,thigh);
         }
         return sum;
@@ -764,7 +733,7 @@ double Trajectory::getMinimumDistance(const SpatialIndex::MBC &in) const {
 double Trajectory::getMinimumDistance(const SpatialIndex::TimePoint &in) const {
     int last;
     for(last=1;m_points[last].m_startTime<in.m_startTime;last++);
-    return in.getMinimumDistance(TimePoint::makemid(m_points[last-1],m_points[last],in.m_startTime));
+    return in.getMinimumDistance(*TimePoint::makemid(m_points[last-1],m_points[last],in.m_startTime));
 }
 
 double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const {
@@ -811,11 +780,11 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
             } else if ((iter1 + 1)->m_startTime < (iter2 + 1)->m_startTime) {
                 newtime = (iter1 + 1)->m_startTime;
                 newp1 = *(iter1 + 1);
-                newp2 = TimePoint::makemid(*iter2, *(iter2 + 1), newtime);
+                newp2 = *TimePoint::makemid(*iter2, *(iter2 + 1), newtime);
                 iter1++;
             } else {
                 newtime = (iter2 + 1)->m_startTime;
-                newp1 = TimePoint::makemid(*iter1, *(iter1 + 1), newtime);
+                newp1 = *TimePoint::makemid(*iter1, *(iter1 + 1), newtime);
                 newp2 = *(iter2 + 1);
                 iter2++;
             }

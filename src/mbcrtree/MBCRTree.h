@@ -186,6 +186,7 @@ namespace SpatialIndex
 			public:
 				double getMinimumDistance(const IShape& query, const IShape& entry)
 				{
+//                    query.getMinimumDistance(entry);
 					return query.getMinimumDistance(entry);
 				}
 
@@ -193,6 +194,7 @@ namespace SpatialIndex
 				{
 					IShape* pS;
 					data.getShape(&pS);
+//                    query.getMinimumDistance(*pS);
 					double ret = query.getMinimumDistance(*pS);
 					delete pS;
 					return ret;

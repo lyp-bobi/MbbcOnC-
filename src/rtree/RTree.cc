@@ -613,7 +613,7 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 		if (e->m_pEntry != 0) delete e->m_pEntry;
 		delete e;
 	}
-    std::cerr<<"iternum is "<<iternum<<"\n";
+//    std::cerr<<"iternum is "<<iternum<<"\n";
 //    std::cout<<"knearest is"<<knearest<<std::endl;
     m_stats.m_doubleExactQueryResults+=knearest;
 }
@@ -1482,18 +1482,15 @@ void SpatialIndex::RTree::RTree::rangeQuery(RangeQueryType type, const IShape& q
                         v.visitData(data);
 					}
 				}
-//				else{
-//                    std::cout<<"ack failed\n"<<query.toString()<<"\n"<<n->m_ptrMBR[cChild]->toString()<<"\n";
-//                }
 			}
 		}
 		else
 		{
 			v.visitNode(*n);
-
 			for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
 			{
-				if (query.intersectsShape(*(n->m_ptrMBR[cChild]))) st.push(readNode(n->m_pIdentifier[cChild]));
+				if (query.intersectsShape(*(n->m_ptrMBR[cChild])))
+				    st.push(readNode(n->m_pIdentifier[cChild]));
 			}
 		}
 	}

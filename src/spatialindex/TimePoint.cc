@@ -302,17 +302,10 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const TimePoint& pt)
 	return os;
 }
 
-void swap(double &x,double &y){
-    double z;
-    z=x;x=y;y=z;
-}
-TimePoint TimePoint::makemid(TimePoint p1, TimePoint p2, double t){
-    if(p1.m_dimension!=p2.m_dimension){
-        t=1;
-    }
+TimePoint* TimePoint::makemid(const TimePoint &p1, const TimePoint &p2, double t){
     assert(p1.m_dimension==p2.m_dimension);
     if(p1.m_startTime==p2.m_startTime)
-        return p1;
+        return new TimePoint(p1);
     int dim=p1.m_dimension;
     double* p1c=new double[dim];
     double* p2c=new double[dim];
@@ -332,5 +325,5 @@ TimePoint TimePoint::makemid(TimePoint p1, TimePoint p2, double t){
     delete[](p1c);
     delete[](p2c);
 
-    return TimePoint(p3c,t,t,dim);
+    return new TimePoint(p3c,t,t,dim);
 }

@@ -632,7 +632,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
 		delete e;
 	}
 //    std::cout<<"knearest is"<<knearest<<std::endl;
-    std::cerr<<"iternum is "<<iternum<<"\n";
+//    std::cerr<<"iternum is "<<iternum<<"\n";
     m_stats.m_doubleExactQueryResults+=knearest;
 }
 
@@ -1499,36 +1499,18 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                         v.visitData(data);
                     }
                 }
-//                else{
-//                    Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBC[cChild]), n->m_pIdentifier[cChild]);
-//                    Trajectory traj;
-//                    traj.loadFromByteArray(data.m_pData);
-//                    if(traj.intersectsShape(query)){
-//                        MBC tmpmbc;
-//                        traj.getMBC(tmpmbc);
-//                        std::cout<<"ptr mbc is"<<*n->m_ptrMBC[cChild]<<"\n"<<"tmp mbc is "<<tmpmbc<<"\n";
-//                        std::cout<<"traj is"<<traj.toString()<<"mbc is"<<*n->m_ptrMBC[cChild]<<"query is"<<query.toString();
-//                        std::cout<<"result is"<<n->m_ptrMBC[cChild]->intersectsShape(query)<<std::endl;
-//                        std::cout<<"result is"<<query.intersectsShape(tmpmbc)<<"\n";
-//                    }
-//                }
             }
         }
         else
         {
             v.visitNode(*n);
-//            if(n->m_level<3) {
-            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
-                if (n->m_ptrMBR[cChild]->intersectsShape(query)) {
+            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
+            {
+                if (query.intersectsShape(*(n->m_ptrMBR[cChild])))
+                {
                     st.push(readNode(n->m_pIdentifier[cChild]));
                 }
-
             }
-//            }else{
-//                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
-//                    if (n->m_ptrMBRk[cChild]->m_wmbr.intersectsShape(query)) st.push(readNode(n->m_pIdentifier[cChild]));
-//                }
-//            }
         }
     }
 }

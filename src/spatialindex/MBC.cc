@@ -165,19 +165,19 @@ void MBC::getVMBR(Region& out) const{
     }
 }
 void MBC::getMBRAtTime(double t, SpatialIndex::Region &out) const {
-    TimePoint tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
+    TimePoint *tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
                                       TimePoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
-    Point plow = tp, phigh = tp;
+    Point plow = *tp, phigh = *tp;
     if(std::isfinite(m_rv)) {
         double r = std::min(std::min((t - m_startTime) * m_rv, m_rd),(m_endTime-t) * m_rv);
         for (int i = 0; i < m_dimension; i++) {
-            plow.m_pCoords[i] = tp.m_pCoords[i] - r;
-            phigh.m_pCoords[i] = tp.m_pCoords[i] + r;
+            plow.m_pCoords[i] = tp->m_pCoords[i] - r;
+            phigh.m_pCoords[i] = tp->m_pCoords[i] + r;
         }
     }else{
         for (int i = 0; i < m_dimension; i++) {
-            plow.m_pCoords[i] = std::max(tp.m_pCoords[i],std::min(m_pLow[i],m_pHigh[i]));
-            phigh.m_pCoords[i] = std::min(tp.m_pCoords[i] ,std::max(m_pLow[i],m_pHigh[i]));
+            plow.m_pCoords[i] = std::max(tp->m_pCoords[i],std::min(m_pLow[i],m_pHigh[i]));
+            phigh.m_pCoords[i] = std::min(tp->m_pCoords[i] ,std::max(m_pLow[i],m_pHigh[i]));
         }
     }
     out = Region(plow, phigh);
@@ -185,16 +185,16 @@ void MBC::getMBRAtTime(double t, SpatialIndex::Region &out) const {
 
 
 std::pair<TimePoint,double> MBC::getCenterRdAtTime(double t) const {
-    TimePoint tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
+    TimePoint *tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
                                       TimePoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
-    Point plow = tp, phigh = tp;
+    Point plow = *tp, phigh = *tp;
     double r;
     if(std::isfinite(m_rv)) {
         r = std::min(std::min((t - m_startTime) * m_rv, m_rd),(m_endTime-t) * m_rv);
     }else{
         r=m_rd;
     }
-    return std::make_pair(tp,r);
+    return std::make_pair(*tp,r);
 }
 
 //
@@ -230,7 +230,7 @@ bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
     if(in.m_pLow[m_dimension]>m_endTime||in.m_pHigh[m_dimension]<m_startTime) return false;
     if(in.m_pLow[m_dimension]==in.m_pHigh[m_dimension]) {
         auto timed=getCenterRdAtTime(in.m_pLow[m_dimension]);
-        return timed.first.getMinimumDistance(Region(in.m_pLow,in.m_pHigh,m_dimension))<timed.second;
+        return timed.first.getMinimumDistance(Region(in.m_pLow,in.m_pHigh,m_dimension))<=timed.second+1e-10;
         Region br = Region(in.m_pLow, in.m_pHigh, 2);
         return timed.first.getMinimumDistance(br) <= timed.second;
     }else{
@@ -394,18 +394,18 @@ void MBC::combineMBC(const MBC& r)
     t1 = m_startTime + dt, t2 = m_endTime - dt;
     double newrd = 0;
     getMBRAtTime(m_startTime, tmpbr);
-    d = tmpbr.getMinimumDistance(TimePoint::makemid(p1, p2, m_startTime));
+    d = tmpbr.getMinimumDistance(*TimePoint::makemid(p1, p2, m_startTime));
     if (d > newrd) newrd = d;
     getMBRAtTime(t1, tmpbr);
     tmpbr.getCenter(p);
-    d = p.getMinimumDistance(TimePoint::makemid(p1, p2, t1)) + m_rd;
+    d = p.getMinimumDistance(*TimePoint::makemid(p1, p2, t1)) + m_rd;
     if (d > newrd) newrd = d;
     getMBRAtTime(t2, tmpbr);
     tmpbr.getCenter(p);
-    d = p.getMinimumDistance(TimePoint::makemid(p1, p2, t2)) + m_rd;
+    d = p.getMinimumDistance(*TimePoint::makemid(p1, p2, t2)) + m_rd;
     if (d > newrd) newrd = d;
     getMBRAtTime(m_endTime, tmpbr);
-    d = tmpbr.getMinimumDistance(TimePoint::makemid(p1, p2, m_endTime));
+    d = tmpbr.getMinimumDistance(*TimePoint::makemid(p1, p2, m_endTime));
     if (d > newrd) newrd = d;
 
     if(std::isfinite(r.m_rv))
@@ -414,18 +414,18 @@ void MBC::combineMBC(const MBC& r)
         dt=r.m_rd/(Point(pLow,r.m_dimension).getMinimumDistance(Point(pHigh,r.m_dimension))/(r.m_endTime-r.m_startTime));
     t1=r.m_startTime+dt;t2=r.m_endTime-dt;
     r.getMBRAtTime(r.m_startTime,tmpbr);
-    d=tmpbr.getMinimumDistance(TimePoint::makemid(p1,p2,r.m_startTime));
+    d=tmpbr.getMinimumDistance(*TimePoint::makemid(p1,p2,r.m_startTime));
     if(d>newrd) newrd=d;
     r.getMBRAtTime(t1,tmpbr);
     tmpbr.getCenter(p);
-    d=p.getMinimumDistance(TimePoint::makemid(p1,p2,t1))+r.m_rd;
+    d=p.getMinimumDistance(*TimePoint::makemid(p1,p2,t1))+r.m_rd;
     if(d>newrd) newrd=d;
     r.getMBRAtTime(t2,tmpbr);
     tmpbr.getCenter(p);
-    d=p.getMinimumDistance(TimePoint::makemid(p1,p2,t2))+r.m_rd;
+    d=p.getMinimumDistance(*TimePoint::makemid(p1,p2,t2))+r.m_rd;
     if(d>newrd) newrd=d;
     getMBRAtTime(r.m_endTime,tmpbr);
-    d=tmpbr.getMinimumDistance(TimePoint::makemid(p1,p2,r.m_endTime));
+    d=tmpbr.getMinimumDistance(*TimePoint::makemid(p1,p2,r.m_endTime));
     if(d>newrd) newrd=d;
     newrd=std::min(newrd,(Point(pLow,r.m_dimension).getMinimumDistance(Point(pHigh,r.m_dimension))));
     m_startTime=stime;

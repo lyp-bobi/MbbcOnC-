@@ -21,11 +21,11 @@
 //#define sourceFile "D://t200n100s.txt"
 #define sourceFile "D://t1000.txt"
 #define maxLinesToRead 1e10
-#define testtime 100
+#define testtime 10000
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
-#define QueryType 2
+#define QueryType 1
 //1 for time-slice range, 2 for 5-NN
 
 using namespace std;
@@ -88,20 +88,6 @@ public:
 //        }
 //        double mindist=m_query->getMinimumDistance(traj);
 //        cerr<<"traj dist is"<<mindist<<"\n";
-//        Region br;
-//        Mbbc bc;
-//        traj.getMBR(br);
-//        traj.getMbbc(bc);
-//        cout<<"br loose"<<mindist-m_query->getMinimumDistance(br)<<"\t";
-//        cout<<"bc loose is"<<mindist-m_query->getMinimumDistance(bc)<<"\n";
-//        if(mindist-m_query->getMinimumDistance(bc)<0){
-//            std::cerr<<m_query->toString()<<traj.toString();
-//            system("pause");
-//        }
-//        cout<<traj.toString()<<endl;
-//        double pLow[2]={39.993017,116.320135};
-//        double pHigh[2]={39.994017,116.321135};
-//        traj.intersectsShape(TimeRegion(pLow,pHigh,855,855,2));
         delete[] pData;
     }
 
@@ -188,33 +174,38 @@ vector<pair<id_type ,Trajectory> >  loadGTToTrajs(){
     multimap<id_type,xyt> trajs;
     vector<pair<id_type ,Trajectory> > res;
     int curLine=0;
-    double minx=40000,maxx=0,miny=40000,maxy=0;
+    double minx=1e300,maxx=-1e300,miny=1e300,maxy=-1e300;
     while (getline(inFile, lineStr)&&curLine<maxLinesToRead){
-        string str;
-        stringstream ss(lineStr);
-        getline(ss, str, '\t');
-        getline(ss, str, '\t');
-        int id= stringToNum<int>(str);
-        getline(ss, str, '\t');
-        getline(ss, str, '\t');
-        getline(ss, str, '\t');
-        double t= stringToNum<double>(str);
-        getline(ss, str, '\t');
-        double x= stringToNum<double>(str);
-        getline(ss, str, '\t');
-        double y= stringToNum<double>(str);
-        getline(ss, str, '\t');
-        double speed=stringToNum<double>(str);
-        xyt p={x,y,t};
-        if(x>maxx) maxx=x;
-        if(x<minx) minx=x;
-        if(y>maxy) maxy=y;
-        if(y<miny) miny=y;
-        ids.insert(id);
-        trajs.insert(make_pair(id,p));
-        curLine++;
+        try {
+            string str;
+            stringstream ss(lineStr);
+            getline(ss, str, '\t');
+            getline(ss, str, '\t');
+            int id = stringToNum<int>(str);
+            getline(ss, str, '\t');
+            getline(ss, str, '\t');
+            getline(ss, str, '\t');
+            double t = stringToNum<double>(str);
+            getline(ss, str, '\t');
+            double x = stringToNum<double>(str);
+            getline(ss, str, '\t');
+            double y = stringToNum<double>(str);
+            getline(ss, str, '\t');
+            double speed = stringToNum<double>(str);
+            xyt p = {x, y, t};
+            if (x > maxx) maxx = x;
+            if (x < minx) minx = x;
+            if (y > maxy) maxy = y;
+            if (y < miny) miny = y;
+            ids.insert(id);
+            trajs.insert(make_pair(id, p));
+            curLine++;
+        }
+        catch(...) {
+            break;
+        }
     }
-    cout<<minx<<" "<<maxx<<" "<<miny<<" "<<maxy<<endl;
+    cout<<curLine<<" "<<minx<<" "<<maxx<<" "<<miny<<" "<<maxy<<endl;
     for(auto id:ids){
         multimap<id_type ,xyt>::iterator beg,end,iter;
         vector<xyt> traj;
@@ -250,7 +241,7 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore
         }else if(QueryType==2){
             vis.m_query=queries[i];
             tree->nearestNeighborQuery(20,*queries[i],vis);
-            cerr<<"finished "<<i<<"already\n";
+//            cerr<<"finished "<<i<<"already\n";
         }
     }
     end=clock();
@@ -273,7 +264,11 @@ int TreeQuery(ISpatialIndex* tree,IShape* query){
         tree->nearestNeighborQuery(5,*query,vis);
     }
     end=clock();
-    return vis.m_lastResult;
+    if(QueryType==1){
+        return vis.m_resultGet;
+    }else {
+        return vis.m_lastResult;
+    }
 }
 
 
@@ -287,6 +282,10 @@ int main(){
             segs.push_back(make_pair(traj.first,traj.second.getSegments(3000)));
         }
         vector<IShape *> queries;
+        double plow[3]={16083.3,16481.8,485};
+        double pHigh[3]={17853,17749.1,485};
+        Region* rg=new Region(plow,pHigh,3);
+        queries.push_back(rg);
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
                 double t = int(random(0, 1000));
@@ -314,6 +313,9 @@ int main(){
         TrajStore ts1(file1,4096);
         ts1.loadSegments(segs);
 
+
+//        id_type that=242800;
+//        cout<<ts1.getTraj(that);
 
 //        for(int i=11;i<12;i++) {
 //            id_type that = i*100;
@@ -358,15 +360,18 @@ int main(){
 //            auto q=queries[j];
 //            a=TreeQuery(r,q);
 //            b=TreeQuery(rc,q);
+//            Region *qbr= dynamic_cast<Region*>(q);
 //            if(a!=b){
-//                cout<<a<<endl<<b<<endl<<j;
+//                cout<<*qbr<<endl;
+//                cout<<a<<endl<<b<<endl;
 //            }
 //        }
 
 
 
-        std::cout<<ts1.m_IO<<" "<<ts2.m_IO<<endl;
-        std::cout<<ts1.m_boundingVisited<<" "<<ts2.m_boundingVisited<<endl;
+        std::cout<<"index IO:"<<ts1.m_indexIO<<" "<<ts2.m_indexIO<<endl;
+        std::cout<<"traj IO:"<<ts1.m_trajIO<<" "<<ts2.m_trajIO<<endl;
+        std::cout<<"bounding IO:"<<ts1.m_boundingVisited<<" "<<ts2.m_boundingVisited<<endl;
     }
     catch (Tools::Exception& e)
     {

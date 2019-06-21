@@ -103,7 +103,7 @@ namespace SpatialIndex
             void flush(){m_pStorageManager->flush();}
             void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
                 m_pStorageManager->loadByteArray(page,len,data);
-                m_IO+=1;
+                m_indexIO+=1;
             }//for inner nodes
             void storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data){
                 m_pStorageManager->storeByteArray(page,len,data);
@@ -133,7 +133,7 @@ namespace SpatialIndex
             IStorageManager* m_pStorageManager;
             uint32_t m_pageSize;
             uint32_t m_maxTrajSegs=100;
-            uint32_t m_IO=0;
+            uint32_t m_trajIO=0,m_indexIO=0;
             uint32_t m_boundingVisited=0;
         };
     }//namespace StorageManager
