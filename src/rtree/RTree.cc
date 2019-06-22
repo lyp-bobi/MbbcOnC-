@@ -522,6 +522,10 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
     const Trajectory *queryTraj;
     if(m_DataType==TrajectoryType)
         queryTraj= dynamic_cast<const Trajectory*>(&query);
+    if(queryTraj == nullptr||queryTraj->m_points.size()<2){
+        std::cerr<<"bad query traj\n";
+        return;
+    }
 //	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
 
 #ifdef HAVE_PTHREAD_H

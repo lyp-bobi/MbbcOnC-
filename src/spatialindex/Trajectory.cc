@@ -361,8 +361,11 @@ double theD(double c1,double c2,double c3,double c4,double t){
     return sqrt(c1*t*t+c2*t+c3)/c4;
 }
 
-double line2lineDistance_impl(const SpatialIndex::TimePoint &p1s, const SpatialIndex::TimePoint &p1e,
-                              const SpatialIndex::TimePoint &p2s, const SpatialIndex::TimePoint &p2e){
+
+double Trajectory::line2lineDistance(const SpatialIndex::TimePoint &p1s, const SpatialIndex::TimePoint &p1e,
+                                const SpatialIndex::TimePoint &p2s, const SpatialIndex::TimePoint &p2e) {
+    if(p1s.m_startTime!=p2s.m_startTime|p1e.m_startTime!=p2e.m_startTime)
+        throw Tools::IllegalStateException("line2lineDistance: time period not the same");
     double ts = p1s.m_startTime, te = p1e.m_endTime;
     double dxs=p1s.m_pCoords[0]-p2s.m_pCoords[0];
     double dys=p1s.m_pCoords[1]-p2s.m_pCoords[1];
@@ -383,21 +386,15 @@ double line2lineDistance_impl(const SpatialIndex::TimePoint &p1s, const SpatialI
             return (theF(c1,c2,c3,c4,te)-theF(c1,c2,c3,c4,ts));
         }
     }
-}
-
-double Trajectory::line2lineDistance(const SpatialIndex::TimePoint &p1s, const SpatialIndex::TimePoint &p1e,
-                                const SpatialIndex::TimePoint &p2s, const SpatialIndex::TimePoint &p2e) {
-    if(p1s.m_startTime!=p2s.m_startTime|p1e.m_startTime!=p2e.m_startTime)
-        throw Tools::IllegalStateException("line2lineDistance: time period not the same");
-    TimePoint np1s=p1s,np1e=p1e,np2s=p2s,np2e=p2e;
-    double te=p1e.m_startTime-p1s.m_startTime;
-    np1s.m_startTime=np1s.m_endTime=np2s.m_startTime=np2s.m_endTime=0;
-    np1e.m_startTime=np1e.m_endTime=np2e.m_startTime=np2e.m_endTime=te;
-    np1s.m_pCoords[0]=np1s.m_pCoords[1]=0;
-    np2s.m_pCoords[0]-=p1s.m_pCoords[0];np2s.m_pCoords[1]-=p1s.m_pCoords[1];
-    np1e.m_pCoords[0]-=p1s.m_pCoords[0];np1e.m_pCoords[1]-=p1s.m_pCoords[1];
-    np2e.m_pCoords[0]-=p1s.m_pCoords[0];np2e.m_pCoords[1]-=p1s.m_pCoords[1];
-    return line2lineDistance_impl(np1s,np1e,np2s,np2e);
+//    TimePoint np1s=p1s,np1e=p1e,np2s=p2s,np2e=p2e;
+//    double te=p1e.m_startTime-p1s.m_startTime;
+//    np1s.m_startTime=np1s.m_endTime=np2s.m_startTime=np2s.m_endTime=0;
+//    np1e.m_startTime=np1e.m_endTime=np2e.m_startTime=np2e.m_endTime=te;
+//    np1s.m_pCoords[0]=np1s.m_pCoords[1]=0;
+//    np2s.m_pCoords[0]-=p1s.m_pCoords[0];np2s.m_pCoords[1]-=p1s.m_pCoords[1];
+//    np1e.m_pCoords[0]-=p1s.m_pCoords[0];np1e.m_pCoords[1]-=p1s.m_pCoords[1];
+//    np2e.m_pCoords[0]-=p1s.m_pCoords[0];np2e.m_pCoords[1]-=p1s.m_pCoords[1];
+//    return line2lineDistance_impl(np1s,np1e,np2s,np2e);
 }
 
 int getRealm(const SpatialIndex::Region &r,const Point &p1,const Point &p2){
@@ -573,7 +570,7 @@ double Trajectory::line2MBCDistance(const SpatialIndex::TimePoint &ps, const Spa
 //        pr2=r.getCenterRdAtTime(pe.m_startTime);
 //    double s=line2lineDistance(ps,pe,pr1.first,pr2.first);
 //    double sm=mbcArea(r,ps.m_startTime,pe.m_startTime);
-//    double sm=0.5*(pe.m_startTime-ps.m_startTime)*(pr1.second+pr2.second);
+////    double sm=0.5*(pe.m_startTime-ps.m_startTime)*(pr1.second+pr2.second);
 //    if(s>sm) return s-sm;
 //    else return 0;
 
@@ -714,17 +711,10 @@ double Trajectory::getMinimumDistance(const SpatialIndex::MBC &in) const {
     tend = std::min(m_endTime(), in.m_endTime);
     if(tstart>=tend) return 1e300;
     Trajectory timedtraj;
-    getPartialTrajectory(tstart,tend,timedtraj);
+        getPartialTrajectory(tstart,tend,timedtraj);
     double sum = 0;
     for (int i = 0; i < timedtraj.m_points.size()-1; i++) {
         double pd = line2MBCDistance(timedtraj.m_points[i],timedtraj.m_points[i+1],in);
-        line2MBCDistance(timedtraj.m_points[i],timedtraj.m_points[i+1],in);
-//        std::cerr<<"MBC dist for"<<timedtraj.m_points[i].m_startTime<<"is"<<pd<<endl;
-//        if(!(pd>-1)){
-//            std::cerr<<timedtraj.m_points[i]<<timedtraj.m_points[i+1]<<in<<endl;
-//            line2MBCDistance(timedtraj.m_points[i],timedtraj.m_points[i+1],in);
-//            std::cerr<<"minus distance at"<<pd<<"\n";
-//        }
         sum+=pd;
     }
     return sum;

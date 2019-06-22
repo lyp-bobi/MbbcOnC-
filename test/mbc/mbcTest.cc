@@ -21,11 +21,11 @@
 //#define sourceFile "D://t200n100s.txt"
 #define sourceFile "D://t1000.txt"
 #define maxLinesToRead 1e10
-#define testtime 10000
+#define testtime 100
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
-#define QueryType 1
+#define QueryType 2
 //1 for time-slice range, 2 for 5-NN
 
 using namespace std;
@@ -282,10 +282,10 @@ int main(){
             segs.push_back(make_pair(traj.first,traj.second.getSegments(3000)));
         }
         vector<IShape *> queries;
-        double plow[3]={16083.3,16481.8,485};
-        double pHigh[3]={17853,17749.1,485};
-        Region* rg=new Region(plow,pHigh,3);
-        queries.push_back(rg);
+//        double plow[3]={16083.3,16481.8,485};
+//        double pHigh[3]={17853,17749.1,485};
+//        Region* rg=new Region(plow,pHigh,3);
+//        queries.push_back(rg);
         for (int i = 0; i < testtime; i++) {
             if (QueryType == 1) {
                 double t = int(random(0, 1000));
@@ -295,7 +295,7 @@ int main(){
                 queries.emplace_back(rg);
             }
             else if(QueryType==2){
-                queries.emplace_back(&trajs[103+i%trajs.size()].second);
+                queries.emplace_back(&trajs[0+i%trajs.size()].second);
             }
         }
 //        trajs.swap(empty1);
@@ -310,7 +310,7 @@ int main(){
                 *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
 
-        TrajStore ts1(file1,4096);
+        TrajStore ts1(diskfile1,4096);
         ts1.loadSegments(segs);
 
 
@@ -339,9 +339,9 @@ int main(){
 //        }
 
 
-        TrajStore ts2(file2,4096);
+        TrajStore ts2(diskfile2,4096);
         ts2.loadSegments(segs);
-        TrajMbrStream ds1;
+//        TrajMbrStream ds1;
 //        ds1.feedTraj(&trajs);
 //        ds1.rewind();
 //        ISpatialIndex* real = RTree::createAndBulkLoadNewRTree(
@@ -354,7 +354,6 @@ int main(){
 //        TreeQueryBatch(real,queries);
         TreeQueryBatch(r, queries,&ts1);
         TreeQueryBatch(rc, queries,&ts2);
-
 //        double a,b;
 //        for(int j=0;j<queries.size();j++){
 //            auto q=queries[j];

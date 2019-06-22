@@ -62,9 +62,9 @@ namespace SpatialIndex
         virtual bool intersectsRegion(const Region& in) const;
         virtual bool intersectsMBC(const MBC& in) const;
 
-        virtual void combineMBC(const MBC& in);
-        virtual bool containsMBC(const MBC& in);
-        virtual void getCombinedMBC(MBC& out, const MBC& in) const;
+//        virtual void combineMBC(const MBC& in);
+//        virtual bool containsMBC(const MBC& in);
+//        virtual void getCombinedMBC(MBC& out, const MBC& in) const;
         virtual int getOrient() const;
 
         virtual void getTimeMBR(TimeRegion& out) const;

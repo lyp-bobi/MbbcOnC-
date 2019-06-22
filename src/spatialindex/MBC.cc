@@ -15,10 +15,28 @@
 using namespace SpatialIndex;
 //todo: solve the problem of 2 and 3 dimensions
 
-MBC::MBC(){
-    m_dimension=2;
-    m_pLow = new double[m_dimension];
-    m_pHigh = new double[m_dimension];
+MBC::MBC():m_dimension(0),m_pLow(0), m_pHigh(0)
+{
+}
+MBC::MBC(const SpatialIndex::MBC &in) {
+    m_dimension=in.m_dimension;
+    m_rd=in.m_rd;
+    m_rv=in.m_rv;
+    m_startTime=in.m_startTime;
+    m_endTime=in.m_endTime;
+    try
+    {
+        m_pLow = new double[m_dimension];
+        m_pHigh = new double[m_dimension];
+    }
+    catch (...)
+    {
+        delete[] m_pLow;
+        throw;
+    }
+
+    memcpy(m_pLow, in.m_pLow, (m_dimension) * sizeof(double));
+    memcpy(m_pHigh, in.m_pHigh, (m_dimension) * sizeof(double));
 }
 MBC::MBC(const double *pLow, const double *pHigh,double sTime,double eTime, uint32_t dimension, double rd, double rv){
     m_dimension=dimension;
@@ -46,26 +64,7 @@ MBC::~MBC(){
     delete[] m_pHigh;
 }
 
-MBC::MBC(const SpatialIndex::MBC &in) {
-    m_dimension=in.m_dimension;
-    m_rd=in.m_rd;
-    m_rv=in.m_rv;
-    m_startTime=in.m_startTime;
-    m_endTime=in.m_endTime;
-    try
-    {
-        m_pLow = new double[m_dimension];
-        m_pHigh = new double[m_dimension];
-    }
-    catch (...)
-    {
-        delete[] m_pLow;
-        throw;
-    }
 
-    memcpy(m_pLow, in.m_pLow, (m_dimension) * sizeof(double));
-    memcpy(m_pHigh, in.m_pHigh, (m_dimension) * sizeof(double));
-}
 
 MBC& MBC::operator=(const MBC& r)
 {
@@ -201,20 +200,21 @@ std::pair<TimePoint,double> MBC::getCenterRdAtTime(double t) const {
 // IShape interface
 //
 bool MBC::intersectsShape(const SpatialIndex::IShape& s) const {
-    const TimeRegion* ptr = dynamic_cast<const TimeRegion*>(&s);
-    if (ptr != 0) return intersectsTimeRegion(*ptr);
 
     const TimePoint* ptp = dynamic_cast<const TimePoint*>(&s);
     if (ptp != 0) return intersectsTimePoint(*ptp);
 
-    const Region* pr = dynamic_cast<const Region*>(&s);
-    if (pr != 0) return intersectsRegion(*pr);
+//    const Region* pr = dynamic_cast<const Region*>(&s);
+//    if (pr != 0) return intersectsRegion(*pr);
 
     const Trajectory* ptra = dynamic_cast<const Trajectory*>(&s);
     if (ptra != 0) return ptra->intersectsShape(*this);
 
-    const MBC* pMBC = dynamic_cast<const MBC*>(&s);
-    if (pMBC != 0) return intersectsMBC(*pMBC);
+//    const MBC* pMBC = dynamic_cast<const MBC*>(&s);
+//    if (pMBC != 0) return intersectsMBC(*pMBC);
+
+//    const TimeRegion* ptr = dynamic_cast<const TimeRegion*>(&s);
+//    if (ptr != 0) return intersectsTimeRegion(*ptr);
 }
 
 bool MBC::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
@@ -355,96 +355,96 @@ int MBC::getOrient() const {
     }
     return res;
 }
-[[deprecated]]
-void MBC::combineMBC(const MBC& r)
-{
-//    throw Tools::NotSupportedException("don't combine MBC here,load MBCs directly to Node Level1");
-    TimeRegion br1, br2;
-    getTimeMBR(br1);
-    r.getTimeMBR(br2);
-    br1.combineRegion(br2);
-    int ori = getOrient();
-    int mod = 2;
-    double *pLow = new double[m_dimension];
-    double *pHigh = new double[m_dimension];
-    for (int i = 0; i < m_dimension; i++) {
-        if (ori % mod == 1) {
-            pLow[i] = br1.m_pLow[i];
-            pHigh[i] = br1.m_pHigh[i];
-        } else {
-            pHigh[i] = br1.m_pLow[i];
-            pLow[i] = br1.m_pHigh[i];
-        }
-        ori /= 2;
-    }
-    double stime = std::min(m_startTime, r.m_startTime),
-            etime = std::min(m_endTime, r.m_endTime);
-    TimePoint p1(pLow, stime, stime, m_dimension);
-    TimePoint p2(pHigh, etime, etime, m_dimension);
-    Point p;
-    Region tmpbr;
-    double d;
-
-    double dt=0;
-    double t1=0,t2=0;
-    if(std::isfinite(m_rv))
-        dt=m_rd/m_rv;
-    else
-        dt=m_rd/(Point(pLow,m_dimension).getMinimumDistance(Point(pHigh,m_dimension))/(m_endTime-m_startTime));
-    t1 = m_startTime + dt, t2 = m_endTime - dt;
-    double newrd = 0;
-    getMBRAtTime(m_startTime, tmpbr);
-    d = tmpbr.getMinimumDistance(*TimePoint::makemid(p1, p2, m_startTime));
-    if (d > newrd) newrd = d;
-    getMBRAtTime(t1, tmpbr);
-    tmpbr.getCenter(p);
-    d = p.getMinimumDistance(*TimePoint::makemid(p1, p2, t1)) + m_rd;
-    if (d > newrd) newrd = d;
-    getMBRAtTime(t2, tmpbr);
-    tmpbr.getCenter(p);
-    d = p.getMinimumDistance(*TimePoint::makemid(p1, p2, t2)) + m_rd;
-    if (d > newrd) newrd = d;
-    getMBRAtTime(m_endTime, tmpbr);
-    d = tmpbr.getMinimumDistance(*TimePoint::makemid(p1, p2, m_endTime));
-    if (d > newrd) newrd = d;
-
-    if(std::isfinite(r.m_rv))
-        dt=r.m_rd/r.m_rv;
-    else
-        dt=r.m_rd/(Point(pLow,r.m_dimension).getMinimumDistance(Point(pHigh,r.m_dimension))/(r.m_endTime-r.m_startTime));
-    t1=r.m_startTime+dt;t2=r.m_endTime-dt;
-    r.getMBRAtTime(r.m_startTime,tmpbr);
-    d=tmpbr.getMinimumDistance(*TimePoint::makemid(p1,p2,r.m_startTime));
-    if(d>newrd) newrd=d;
-    r.getMBRAtTime(t1,tmpbr);
-    tmpbr.getCenter(p);
-    d=p.getMinimumDistance(*TimePoint::makemid(p1,p2,t1))+r.m_rd;
-    if(d>newrd) newrd=d;
-    r.getMBRAtTime(t2,tmpbr);
-    tmpbr.getCenter(p);
-    d=p.getMinimumDistance(*TimePoint::makemid(p1,p2,t2))+r.m_rd;
-    if(d>newrd) newrd=d;
-    getMBRAtTime(r.m_endTime,tmpbr);
-    d=tmpbr.getMinimumDistance(*TimePoint::makemid(p1,p2,r.m_endTime));
-    if(d>newrd) newrd=d;
-    newrd=std::min(newrd,(Point(pLow,r.m_dimension).getMinimumDistance(Point(pHigh,r.m_dimension))));
-    m_startTime=stime;
-    m_endTime=etime;
-    m_pLow=pLow;
-    m_pHigh=pHigh;
-    m_rv=std::numeric_limits<double>::infinity();
-    m_rd=newrd;
-}
-
-bool MBC::containsMBC(const SpatialIndex::MBC &r) {
-    throw Tools::NotSupportedException("containsMBC");
-}
-
-void MBC::getCombinedMBC(MBC& out, const MBC& in) const
-{
-    out = *this;
-    out.combineMBC(in);
-}
+//[[deprecated]]
+//void MBC::combineMBC(const MBC& r)
+//{
+////    throw Tools::NotSupportedException("don't combine MBC here,load MBCs directly to Node Level1");
+//    TimeRegion br1, br2;
+//    getTimeMBR(br1);
+//    r.getTimeMBR(br2);
+//    br1.combineRegion(br2);
+//    int ori = getOrient();
+//    int mod = 2;
+//    double *pLow = new double[m_dimension];
+//    double *pHigh = new double[m_dimension];
+//    for (int i = 0; i < m_dimension; i++) {
+//        if (ori % mod == 1) {
+//            pLow[i] = br1.m_pLow[i];
+//            pHigh[i] = br1.m_pHigh[i];
+//        } else {
+//            pHigh[i] = br1.m_pLow[i];
+//            pLow[i] = br1.m_pHigh[i];
+//        }
+//        ori /= 2;
+//    }
+//    double stime = std::min(m_startTime, r.m_startTime),
+//            etime = std::min(m_endTime, r.m_endTime);
+//    TimePoint p1(pLow, stime, stime, m_dimension);
+//    TimePoint p2(pHigh, etime, etime, m_dimension);
+//    Point p;
+//    Region tmpbr;
+//    double d;
+//
+//    double dt=0;
+//    double t1=0,t2=0;
+//    if(std::isfinite(m_rv))
+//        dt=m_rd/m_rv;
+//    else
+//        dt=m_rd/(Point(pLow,m_dimension).getMinimumDistance(Point(pHigh,m_dimension))/(m_endTime-m_startTime));
+//    t1 = m_startTime + dt, t2 = m_endTime - dt;
+//    double newrd = 0;
+//    getMBRAtTime(m_startTime, tmpbr);
+//    d = tmpbr.getMinimumDistance(*TimePoint::makemid(p1, p2, m_startTime));
+//    if (d > newrd) newrd = d;
+//    getMBRAtTime(t1, tmpbr);
+//    tmpbr.getCenter(p);
+//    d = p.getMinimumDistance(*TimePoint::makemid(p1, p2, t1)) + m_rd;
+//    if (d > newrd) newrd = d;
+//    getMBRAtTime(t2, tmpbr);
+//    tmpbr.getCenter(p);
+//    d = p.getMinimumDistance(*TimePoint::makemid(p1, p2, t2)) + m_rd;
+//    if (d > newrd) newrd = d;
+//    getMBRAtTime(m_endTime, tmpbr);
+//    d = tmpbr.getMinimumDistance(*TimePoint::makemid(p1, p2, m_endTime));
+//    if (d > newrd) newrd = d;
+//
+//    if(std::isfinite(r.m_rv))
+//        dt=r.m_rd/r.m_rv;
+//    else
+//        dt=r.m_rd/(Point(pLow,r.m_dimension).getMinimumDistance(Point(pHigh,r.m_dimension))/(r.m_endTime-r.m_startTime));
+//    t1=r.m_startTime+dt;t2=r.m_endTime-dt;
+//    r.getMBRAtTime(r.m_startTime,tmpbr);
+//    d=tmpbr.getMinimumDistance(*TimePoint::makemid(p1,p2,r.m_startTime));
+//    if(d>newrd) newrd=d;
+//    r.getMBRAtTime(t1,tmpbr);
+//    tmpbr.getCenter(p);
+//    d=p.getMinimumDistance(*TimePoint::makemid(p1,p2,t1))+r.m_rd;
+//    if(d>newrd) newrd=d;
+//    r.getMBRAtTime(t2,tmpbr);
+//    tmpbr.getCenter(p);
+//    d=p.getMinimumDistance(*TimePoint::makemid(p1,p2,t2))+r.m_rd;
+//    if(d>newrd) newrd=d;
+//    getMBRAtTime(r.m_endTime,tmpbr);
+//    d=tmpbr.getMinimumDistance(*TimePoint::makemid(p1,p2,r.m_endTime));
+//    if(d>newrd) newrd=d;
+//    newrd=std::min(newrd,(Point(pLow,r.m_dimension).getMinimumDistance(Point(pHigh,r.m_dimension))));
+//    m_startTime=stime;
+//    m_endTime=etime;
+//    m_pLow=pLow;
+//    m_pHigh=pHigh;
+//    m_rv=std::numeric_limits<double>::infinity();
+//    m_rd=newrd;
+//}
+//
+//bool MBC::containsMBC(const SpatialIndex::MBC &r) {
+//    throw Tools::NotSupportedException("containsMBC");
+//}
+//
+//void MBC::getCombinedMBC(MBC& out, const MBC& in) const
+//{
+//    out = *this;
+//    out.combineMBC(in);
+//}
 
 std::ostream& SpatialIndex::operator<<(std::ostream& os, const MBC& r)
 {

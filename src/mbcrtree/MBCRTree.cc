@@ -542,6 +542,10 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
     const Trajectory *queryTraj;
     if(m_DataType==TrajectoryType)
         queryTraj= dynamic_cast<const Trajectory*>(&query);
+    if(queryTraj == nullptr||queryTraj->m_points.size()<2) {
+        std::cerr << "bad query traj\n";
+        return;
+    }
 #ifdef HAVE_PTHREAD_H
 	Tools::LockGuard lock(&m_lock);
 #endif
