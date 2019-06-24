@@ -352,20 +352,20 @@ int main(){
         cerr << "start query!" << endl << endl << endl;
 
 //        TreeQueryBatch(real,queries);
-//        TreeQueryBatch(r, queries,&ts1);
-//        TreeQueryBatch(rc, queries,&ts2);
-        double a,b;
-        for(int j=0;j<queries.size();j++){
-            auto q=queries[j];
-            a=TreeQuery(r,q);
-            b=TreeQuery(rc,q);
-            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
-            if(a!=b){
-                cout<<j<<endl;
-                cout<<*qtraj<<endl;
-                cout<<a<<endl<<b<<endl;
-            }
-        }
+        TreeQueryBatch(r, queries,&ts1);
+        TreeQueryBatch(rc, queries,&ts2);
+//        double a,b;
+//        for(int j=0;j<queries.size();j++){
+//            auto q=queries[j];
+//            a=TreeQuery(r,q);
+//            b=TreeQuery(rc,q);
+//            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
+//            if(a!=b){
+//                cout<<j<<endl;
+//                cout<<*qtraj<<endl;
+//                cout<<a<<endl<<b<<endl;
+//            }
+//        }
 
 
 
