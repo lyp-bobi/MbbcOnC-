@@ -567,9 +567,9 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 					if(m_DataType==TrajectoryType&&m_bUsingTrajStore== false){
                         Trajectory traj;
                         traj.loadFromByteArray(e->m_pData);
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query, traj)));
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(*queryTraj, traj)));
 					}else{
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query, *e)));
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(*queryTraj, *e)));
 					}
 
 				}
@@ -588,7 +588,7 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
                 else {
                     ShapeList brs = m_ts->getMBRsByTime(pFirst->m_id, queryTraj->m_points.front().m_startTime,
                                                         queryTraj->m_points.back().m_startTime);
-                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(query, brs), 1));
+                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, brs), 1));
                     insertedTrajId[trajId]=1;
                 }
 //                std::cerr<<nnc.getMinimumDistance(query, brs)<<"\n";
@@ -596,7 +596,7 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 		    else if(m_bUsingTrajStore&&pFirst->m_type==1){
 		        //load Trajectory
                 Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_startTime,queryTraj->m_points.back().m_startTime);
-                queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(query, traj),2));
+                queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, traj),2));
 		    }
 		    else {
                 Data *e=static_cast<Data*>(pFirst->m_pEntry);

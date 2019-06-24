@@ -585,15 +585,15 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                     if(m_DataType==TrajectoryType&&m_bUsingTrajStore== false){
                         Trajectory traj;
                         traj.loadFromByteArray(e->m_pData);
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query, traj)));
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(*queryTraj, traj)));
                     }else{
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(query, *e)));
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(*queryTraj, *e)));
                     }
 
                 }
                 else
                 {
-                    queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, nnc.getMinimumDistance(query, *(n->m_ptrMBR[cChild]))));
+                    queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, nnc.getMinimumDistance(*queryTraj, *(n->m_ptrMBR[cChild]))));
                 }
             }
         }
@@ -606,7 +606,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                 else {
                     ShapeList bcs = m_ts->getMBCsByTime(pFirst->m_id, queryTraj->m_points.front().m_startTime,
                                                         queryTraj->m_points.back().m_startTime);
-                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(query, bcs), 1));
+                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, bcs), 1));
                     insertedTrajId[trajId]=1;
                 }
 //                std::cerr<<nnc.getMinimumDistance(query, bcs)<<"\n";
@@ -614,7 +614,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
             else if(m_bUsingTrajStore&&pFirst->m_type==1){
                 //load Trajectory
                 Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_startTime,queryTraj->m_points.back().m_startTime);
-                queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(query, traj),2));
+                queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, traj),2));
             }
             else {
                 Data *e=static_cast<Data*>(pFirst->m_pEntry);

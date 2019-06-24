@@ -385,6 +385,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     Region maxbr;
     maxbr.makeInfinite(3);
     double vol1=0,vol2=0;
+    m_maxVelocity=-1;
     for(auto &traj:trajs){
         for(int j=0;j<traj.second.size();j++){//segment
             Trajectory seg=traj.second[j];
@@ -393,6 +394,8 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
             seg.storeToByteArray(&data,len);
             MBC thebc;
             seg.getMBC(thebc);
+            double v=(Point(thebc.m_pLow,2).getMinimumDistance(Point(thebc.m_pHigh,2)))/(thebc.m_endTime-thebc.m_startTime)+thebc.m_rv;
+            if(v>m_maxVelocity) m_maxVelocity=v;
             Region thebr;
             seg.getMBRfull(thebr);
             maxbr.combineRegion(thebr);

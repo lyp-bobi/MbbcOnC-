@@ -254,14 +254,25 @@ void Trajectory::getPartialTrajectory(double tstart, double tend, SpatialIndex::
     int is=0,ie=m_points.size()-1;
     while(m_points[is].m_startTime<tstart) is++;
     while(m_points[ie].m_startTime>tend) ie--;
+    double x,y;
     if(is!=0&&m_points[is].m_startTime!=tstart){
-        out.m_points.emplace_back(*TimePoint::makemid(m_points[is-1],m_points[is],tstart));
+        x=makemidmacro(m_points[is-1].m_pCoords[0],m_points[is-1].m_startTime,
+                       m_points[is].m_pCoords[0],m_points[is].m_startTime,tstart);
+        y=makemidmacro(m_points[is-1].m_pCoords[1],m_points[is-1].m_startTime,
+                       m_points[is].m_pCoords[1],m_points[is].m_startTime,tstart);
+        double xy[2]={x,y};
+        out.m_points.emplace_back(TimePoint(xy,tstart,tstart,2));
     }
     for(int i=is;i<=ie;i++){
         out.m_points.emplace_back(m_points[i]);
     }
     if(ie!=m_points.size()-1&&m_points[ie].m_startTime!=tend){
-        out.m_points.emplace_back(*TimePoint::makemid(m_points[ie],m_points[ie+1],tend));
+        x=makemidmacro(m_points[ie].m_pCoords[0],m_points[ie].m_startTime,
+                       m_points[ie+1].m_pCoords[0],m_points[ie+1].m_startTime,tstart);
+        y=makemidmacro(m_points[ie].m_pCoords[1],m_points[ie].m_startTime,
+                       m_points[ie+1].m_pCoords[1],m_points[ie+1].m_startTime,tstart);
+        double xy[2]={x,y};
+        out.m_points.emplace_back(TimePoint(xy,tend,tend,2));
     }
 }
 
@@ -881,6 +892,57 @@ double Trajectory::getMinimumDistance(const ShapeList &in) const {
     return sum;
 }
 
+double Trajectory::getPeriodMinimumDistance(const SpatialIndex::Region &in) const {
+    double sum=getMinimumDistance(in);//midTraj
+    //frontTraj
+    Region mbr2d(in.m_pLow,in.m_pHigh,2);
+    if(in.m_pLow[m_dimension]>m_startTime()){
+        Trajectory frontTraj;
+        getPartialTrajectory(m_startTime(),in.m_pLow[m_dimension],frontTraj);
+        for(int i=0;i<frontTraj.m_points.size();i++){
+            double r1=frontTraj.m_points[i].getMinimumDistance(mbr2d)-frontTraj.m_points[i].m_startTime;
+            double r2=frontTraj.m_points[i+1].getMinimumDistance(mbr2d)-frontTraj.m_points[i+1].m_startTime;
+            if(r1>=0&&r2>=0) sum+=0.5*(frontTraj.m_points[i+1].m_startTime-frontTraj.m_points[i].m_startTime)
+                    *(r1+r2);
+        }
+    }
+    if(in.m_pHigh[m_dimension]<m_endTime()){
+        Trajectory backTraj;
+        getPartialTrajectory(in.m_pHigh[m_dimension],m_endTime(),backTraj);
+        for(int i=0;i<backTraj.m_points.size();i++){
+            double r1=backTraj.m_points[i].getMinimumDistance(mbr2d)-backTraj.m_points[i].m_startTime;
+            double r2=backTraj.m_points[i+1].getMinimumDistance(mbr2d)-backTraj.m_points[i+1].m_startTime;
+            if(r1>=0&&r2>=0) sum+=0.5*(backTraj.m_points[i+1].m_startTime-backTraj.m_points[i].m_startTime)
+                                  *(r1+r2);
+        }
+    }
+}
+
+double Trajectory::getPeriodMinimumDistance(const SpatialIndex::MBC &in) const {
+    double sum=getMinimumDistance(in);//midTraj
+    //frontTraj
+    Point sPoint(in.m_pLow,2),ePoint(in.m_pHigh,2);
+    if(in.m_pLow[m_dimension]>m_startTime()){
+        Trajectory frontTraj;
+        getPartialTrajectory(m_startTime(),in.m_pLow[m_dimension],frontTraj);
+        for(int i=0;i<frontTraj.m_points.size();i++){
+            double r1=frontTraj.m_points[i].getMinimumDistance(sPoint)-frontTraj.m_points[i].m_startTime;
+            double r2=frontTraj.m_points[i+1].getMinimumDistance(sPoint)-frontTraj.m_points[i+1].m_startTime;
+            if(r1>=0&&r2>=0) sum+=0.5*(frontTraj.m_points[i+1].m_startTime-frontTraj.m_points[i].m_startTime)
+                                  *(r1+r2);
+        }
+    }
+    if(in.m_pHigh[m_dimension]<m_endTime()){
+        Trajectory backTraj;
+        getPartialTrajectory(in.m_pHigh[m_dimension],m_endTime(),backTraj);
+        for(int i=0;i<backTraj.m_points.size();i++){
+            double r1=backTraj.m_points[i].getMinimumDistance(ePoint)-backTraj.m_points[i].m_startTime;
+            double r2=backTraj.m_points[i+1].getMinimumDistance(ePoint)-backTraj.m_points[i+1].m_startTime;
+            if(r1>=0&&r2>=0) sum+=0.5*(backTraj.m_points[i+1].m_startTime-backTraj.m_points[i].m_startTime)
+                                  *(r1+r2);
+        }
+    }
+}
 void Trajectory::makeInfinite(uint32_t dimension)
 {
     m_points.clear();

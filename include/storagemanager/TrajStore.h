@@ -135,6 +135,7 @@ namespace SpatialIndex
             uint32_t m_maxTrajSegs=100;
             uint32_t m_trajIO=0,m_indexIO=0;
             uint32_t m_boundingVisited=0;
+            uint32_t m_maxVelocity;
         };
     }//namespace StorageManager
     class baseSegmentStream:public IDataStream{
@@ -163,4 +164,12 @@ namespace SpatialIndex
 
         virtual void rewind(){iter=m_bcs->begin();}
     };
+    inline double triangleArea(double d,double v,double t){
+        if(d<v*t){
+            return d*d/v;
+        }
+        else{
+            return 0.5*d*(d-v*t)*t;
+        }
+    }
 }
