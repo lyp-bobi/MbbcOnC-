@@ -45,15 +45,15 @@
   #include <stdint.h>
 #endif
 
-//#if (defined _WIN32 || defined _WIN64 || defined WIN32 || defined WIN64) && !defined __GNUC__
-//  #ifdef SPATIALINDEX_CREATE_DLL
-//    #define SIDX_DLL __declspec(dllexport)
-//  #else
-//    #define SIDX_DLL __declspec(dllimport)
-//  #endif
-//#else
+#if (defined _WIN32 || defined _WIN64 || defined WIN32 || defined WIN64) && !defined __GNUC__
+  #ifdef SPATIALINDEX_CREATE_DLL
+    #define SIDX_DLL __declspec(dllexport)
+  #else
+    #define SIDX_DLL __declspec(dllimport)
+  #endif
+#else
   #define SIDX_DLL
-//#endif
+#endif
 
 #include <assert.h>
 #include <iostream>

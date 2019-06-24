@@ -2,8 +2,8 @@
 # top-level CMake configuration file for PDAL
 #
 # (based originally on the libLAS files copyright Mateusz Loskot)
-set (CMAKE_CXX_STANDARD 11)
-cmake_minimum_required(VERSION 2.6.0)
+
+cmake_minimum_required(VERSION 2.8.4)
 project(spatialindex)
 
 #------------------------------------------------------------------------------
@@ -18,6 +18,8 @@ mark_as_advanced(CMAKE_VERBOSE_MAKEFILE)
 # Path to additional CMake modules
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
 
+cmake_policy(SET CMP0054 NEW) # Make string comparison behave like you'd expect
+
 if (CMAKE_MAJOR_VERSION GREATER 2)
     cmake_policy(SET CMP0042 OLD) # osx rpath
 endif()
@@ -26,13 +28,19 @@ endif()
 #------------------------------------------------------------------------------
 
 SET(SIDX_VERSION_MAJOR "1")
-SET(SIDX_VERSION_MINOR "8")
-SET(SIDX_VERSION_PATCH "5")
-SET(SIDX_LIB_VERSION "4.1.0")
-SET(SIDX_LIB_SOVERSION "4")
+SET(SIDX_VERSION_MINOR "9")
+SET(SIDX_VERSION_PATCH "0")
+SET(SIDX_LIB_VERSION "5.0.0")
+SET(SIDX_LIB_SOVERSION "5")
 
 
 set(SIDX_VERSION_STRING "${SIDX_VERSION_MAJOR}.${SIDX_VERSION_MINOR}.${SIDX_VERSION_PATCH}")
+
+#------------------------------------------------------------------------------
+# libspatialindex general cmake options
+#------------------------------------------------------------------------------
+
+option(SIDX_BUILD_TESTS "Enables integrated test suites" ON)
 
 
 # Name of C++ library
@@ -41,8 +49,7 @@ set(SIDX_LIB_NAME spatialindex)
 set(SIDX_C_LIB_NAME spatialindex_c)
 
 if(WIN32)
-  if (MSVC)
-    if (MSVC80 OR MSVC90 OR MSVC10 OR MSVC11 OR MSVC12 OR MSVC13)
+    if (MSVC)
         if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
             set( SIDX_LIB_NAME "spatialindex-64" )
             set( SIDX_C_LIB_NAME "spatialindex_c-64" )
@@ -51,7 +58,6 @@ if(WIN32)
             set( SIDX_C_LIB_NAME "spatialindex_c-32"  )
         endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     endif()
-  endif()
 endif()
 
 
@@ -65,9 +71,8 @@ check_function_exists(memset HAVE_MEMSET)
 check_function_exists(memcpy HAVE_MEMCPY)
 check_function_exists(bcopy HAVE_BCOPY)
 
-INCLUDE (CheckIncludeFiles)
-check_include_files(pthread.h HAVE_PTHREAD_H)
 
+INCLUDE (CheckIncludeFiles)
 
 if (HAVE_SRAND48)
     add_definitions(-DHAVE_SRAND48=1)
@@ -103,11 +108,11 @@ endif()
 
 # note we default to debug mode
 if(NOT MSVC_IDE)
-  if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
-    "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel" FORCE)
-  endif()
-  message(STATUS "Setting libspatialindex build type - ${CMAKE_BUILD_TYPE}")
+    if(NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
+                "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel" FORCE)
+    endif()
+    message(STATUS "Setting libspatialindex build type - ${CMAKE_BUILD_TYPE}")
 endif()
 
 set(SIDX_BUILD_TYPE ${CMAKE_BUILD_TYPE})
@@ -130,100 +135,94 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${SIDX_BUILD_OUTPUT_DIRECTORY})
 #------------------------------------------------------------------------------
 
 if(WIN32)
-  if (MSVC)
-    if (MSVC80 OR MSVC90 OR MSVC10 OR MSVC11 OR MSVC12 OR MSVC13)
-      add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
-      add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-      add_definitions(-D_CRT_NONSTDC_NO_WARNING)
-      add_definitions(-D_SCL_SECURE_NO_WARNINGS)
-      add_definitions(-DSPATIALINDEX_CREATE_DLL=1)
-      add_definitions(-DNOMINMAX)
+    if (MSVC)
+        add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
+        add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+        add_definitions(-D_CRT_NONSTDC_NO_WARNING)
+        add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+        add_definitions(-DSPATIALINDEX_CREATE_DLL=1)
+        add_definitions(-DNOMINMAX)
+        set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /wd4068")
 
-      set(SIDX_COMPILER_MSVC 1)
+        if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+            string(REGEX REPLACE "/W[0-4]" "/W4"
+                    CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+        else()
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+        endif()
     endif()
-
-    if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-      string(REGEX REPLACE "/W[0-4]" "/W4"
-        CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    else()
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-    endif()
-  endif()
-
-  set(CMAKE_INCLUDE_PATH c:/osgeo4w/include;$ENV{CMAKE_INCLUDE_PATH})
-  set(CMAKE_LIBRARY_PATH c:/osgeo4w/lib;$ENV{CMAKE_LIBRARY_PATH})
-
-  set(SIDX_OS_WIN32 1)
 
 else()
-  # not WIN32
+    # not WIN32
 
-  # Recommended C++ compilation flags
-  # -Weffc++
-  set(SIDX_COMMON_CXX_FLAGS
-    "-pedantic -Wall -Wpointer-arith -Wcast-align -Wcast-qual  -Wredundant-decls -Wno-long-long")
+    # Recommended C++ compilation flags
+    # -Weffc++
+    set(SIDX_COMMON_CXX_FLAGS
+            "-pedantic -Wall -Wpointer-arith -Wcast-align -Wcast-qual  -Wredundant-decls -Wno-long-long")
 
-  if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+    if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SIDX_COMMON_CXX_FLAGS}")
-    if (CMAKE_COMPILER_IS_GNUCXX)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98 -ansi")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SIDX_COMMON_CXX_FLAGS}")
+        if (CMAKE_COMPILER_IS_GNUCXX AND NOT CMAKE_SYSTEM_NAME STREQUAL "CYGWIN")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+        endif()
+
+        set(SIDX_COMPILER_GCC 1)
+
+    elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER}" MATCHES "clang")
+        set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} ${SIDX_COMMON_CXX_FLAGS}")
+        set(SIDX_COMPILER_CLANG 1)
     endif()
-
-    set(SIDX_COMPILER_GCC 1)
-
-  elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER}" MATCHES "clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SIDX_COMMON_CXX_FLAGS}")
-    set(SIDX_COMPILER_CLANG 1)
-  endif()
 endif(WIN32)
 
 if (APPLE)
-  set(SO_EXT dylib)
-  set(CMAKE_FIND_FRAMEWORK "LAST")
+    set(SO_EXT dylib)
+    set(CMAKE_FIND_FRAMEWORK "LAST")
 elseif(WIN32)
-  set(SO_EXT dll)
+    set(SO_EXT dll)
 else()
-  set(SO_EXT so)
+    set(SO_EXT so)
 endif(APPLE)
 
+
+enable_testing()
 
 #------------------------------------------------------------------------------
 # installation path settings
 #------------------------------------------------------------------------------
 
 if(WIN32)
-  set(DEFAULT_LIB_SUBDIR lib)
-  set(DEFAULT_DATA_SUBDIR .)
-  set(DEFAULT_INCLUDE_SUBDIR include)
+    set(DEFAULT_LIB_SUBDIR lib)
+    set(DEFAULT_DATA_SUBDIR .)
+    set(DEFAULT_INCLUDE_SUBDIR include)
 
-  if (MSVC)
-    set(DEFAULT_BIN_SUBDIR bin)
-  else()
-    set(DEFAULT_BIN_SUBDIR .)
-  endif()
+    if (MSVC)
+        set(DEFAULT_BIN_SUBDIR bin)
+    else()
+        set(DEFAULT_BIN_SUBDIR .)
+    endif()
 else()
-  # Common locations for Unix and Mac OS X
-  set(DEFAULT_BIN_SUBDIR bin)
-  set(DEFAULT_LIB_SUBDIR lib${LIB_SUFFIX})
-  set(DEFAULT_DATA_SUBDIR share/spatialindex)
-  set(DEFAULT_INCLUDE_SUBDIR include)
+    # Common locations for Unix and Mac OS X
+    set(DEFAULT_BIN_SUBDIR bin)
+    set(DEFAULT_LIB_SUBDIR lib${LIB_SUFFIX})
+    set(DEFAULT_DATA_SUBDIR share/spatialindex)
+    set(DEFAULT_INCLUDE_SUBDIR include)
 endif()
 
 # Locations are changeable by user to customize layout of SIDX installation
 # (default values are platform-specific)
 set(SIDX_BIN_SUBDIR ${DEFAULT_BIN_SUBDIR} CACHE STRING
-  "Subdirectory where executables will be installed")
+        "Subdirectory where executables will be installed")
 set(SIDX_LIB_SUBDIR ${DEFAULT_LIB_SUBDIR} CACHE STRING
-  "Subdirectory where libraries will be installed")
+        "Subdirectory where libraries will be installed")
 set(SIDX_INCLUDE_SUBDIR ${DEFAULT_INCLUDE_SUBDIR} CACHE STRING
-  "Subdirectory where header files will be installed")
+        "Subdirectory where header files will be installed")
 set(SIDX_DATA_SUBDIR ${DEFAULT_DATA_SUBDIR} CACHE STRING
-  "Subdirectory where data will be installed")
+        "Subdirectory where data will be installed")
 
 # Mark *_SUBDIR variables as advanced and dedicated to use by power-users only.
 mark_as_advanced(SIDX_BIN_SUBDIR
-  SIDX_LIB_SUBDIR SIDX_INCLUDE_SUBDIR SIDX_DATA_SUBDIR)
+        SIDX_LIB_SUBDIR SIDX_INCLUDE_SUBDIR SIDX_DATA_SUBDIR)
 
 # Full paths for the installation
 set(SIDX_BIN_DIR ${SIDX_BIN_SUBDIR})
@@ -236,5 +235,55 @@ set(SIDX_DATA_DIR ${SIDX_DATA_SUBDIR})
 #------------------------------------------------------------------------------
 
 add_subdirectory(src)
-add_subdirectory(test)
 
+if(SIDX_BUILD_TESTS)
+    add_subdirectory(test)
+endif()
+
+#------------------------------------------------------------------------------
+# CPACK controls
+#------------------------------------------------------------------------------
+
+SET(CPACK_PACKAGE_VERSION_MAJOR ${PDAL_VERSION_MAJOR})
+SET(CPACK_PACKAGE_VERSION_MINOR ${PDAL_VERSION_MINOR})
+SET(CPACK_PACKAGE_VERSION_PATCH ${PDAL_VERSION_MINOR})
+SET(CPACK_PACKAGE_NAME "libspatialindex")
+
+SET(CPACK_SOURCE_GENERATOR "TBZ2;TGZ")
+SET(CPACK_PACKAGE_VENDOR "libspatialindex Development Team")
+SET(CPACK_RESOURCE_FILE_LICENSE    "${PROJECT_SOURCE_DIR}/COPYING")
+
+set(CPACK_SOURCE_PACKAGE_FILE_NAME
+        "${CMAKE_PROJECT_NAME}-${SIDX_VERSION_STRING}-src")
+
+set(CPACK_SOURCE_IGNORE_FILES
+        "/\\\\.gitattributes;/\\\\.vagrant;/\\\\.DS_Store;/CVS/;/\\\\.git/;\\\\.swp$;~$;\\\\.\\\\#;/\\\\#")
+
+list(APPEND CPACK_SOURCE_IGNORE_FILES "CMakeScripts/")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "CMakeCache.txt")
+list(APPEND CPACK_SOURCE_IGNORE_FILES ".xcodeproj")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "build.make")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "_CPack_Packages")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "cmake_install.cmake")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "Testing")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "PDAL.build/")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "/bin/")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "/lib/")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "/build/")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "Makefile")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "CMakeFiles")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "CTestTestfile.cmake")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "/test/data/local/")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "/test/unit/TestConfig.hpp$")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "/doc/doxygen/")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "/doc/build/")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "/doc/presentations/")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "/doc/_static/logo/dongle/")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "/cmake/examples/")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "pdal_features.hpp$")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "package.sh")
+list(APPEND CPACK_SOURCE_IGNORE_FILES ".gz2")
+list(APPEND CPACK_SOURCE_IGNORE_FILES ".bz2")
+
+include(CPack)
+add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)

@@ -1,16 +1,15 @@
 //
 // Created by Chuang on 2019/5/29.
 //
+#define _USE_MATH_DEFINES
 
 #include <cstring>
-#include <cmath>
+#include <math.h>
 #include <limits>
 #include <algorithm>
 #include <cfloat>
 
 #include <spatialindex/SpatialIndex.h>
-
-#define M_PI 3.141592654
 
 using namespace SpatialIndex;
 //todo: solve the problem of 2 and 3 dimensions

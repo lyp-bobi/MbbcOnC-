@@ -12,7 +12,7 @@ using std::vector;
 
 namespace SpatialIndex
 {
-    class XZ3Enocder{
+    class SIDX_DLL XZ3Enocder{
     private:
         XZ3Enocder();
         static XZ3Enocder* singleton;
@@ -97,7 +97,7 @@ namespace SpatialIndex
             uint32_t m_stI;
         };//tsExternalSorter
 
-        class TrajStore:public IStorageManager{
+        class SIDX_DLL TrajStore:public IStorageManager{
         public:
             TrajStore(IStorageManager *store,uint32_t pageSize);
             void flush(){m_pStorageManager->flush();}
