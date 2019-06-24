@@ -200,6 +200,7 @@ namespace SpatialIndex
 					delete pS;
 					return ret;
 				}
+
 			}; // NNComparator
 
 			class ValidateEntry

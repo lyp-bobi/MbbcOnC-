@@ -53,8 +53,8 @@ namespace SpatialIndex
     virtual double getMinimumDistance(const Trajectory& in) const;
     virtual double getMinimumDistance(const ShapeList& in) const;
 
-    virtual double getPeriodMinimumDistance(const Region& in) const;
-    virtual double getPeriodMinimumDistance(const MBC& in) const;
+    virtual double getPeriodMinimumDistance(const Region& in,double MaxVelocity) const;
+    virtual double getPeriodMinimumDistance(const MBC& in,double MaxVelocity) const;
 
     virtual bool intersectsTimeRegion(const TimeRegion& in) const;
     virtual bool intersectsRegion(const Region& in) const;

@@ -21,11 +21,11 @@
 //#define sourceFile "D://t200n100s.txt"
 #define sourceFile "D://t1000.txt"
 #define maxLinesToRead 1e10
-#define testtime 10000
+#define testtime 100
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
-#define QueryType 1
+#define QueryType 2
 //1 for time-slice range, 2 for 5-NN
 
 using namespace std;
