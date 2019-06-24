@@ -345,7 +345,7 @@ std::vector<Trajectory> Trajectory::getSegments(double threshold) {
 
 double Trajectory::getArea() const{ return 0;}
 
-double theF(double c1,double c2,double c3,double c4,double t){
+inline double theF(double c1,double c2,double c3,double c4,double t){
     //the c4 should be the length of that time period
     double delta=4*c1*c3-c2*c2;
     if(delta<=1e-3){
@@ -563,11 +563,12 @@ double mbcArea(const SpatialIndex::MBC &r,double ts,double te){
     }
     return sum;
 }
-#define makemidmacro(x1,t1,x2,t2,t) ((t)-(t1))/((t2)-(t1))*(x2)+((t2)-(t))/((t2)-(t1))*(x1)
+
 double Trajectory::line2MBCDistance(const SpatialIndex::TimePoint &ps, const SpatialIndex::TimePoint &pe,
                                     const SpatialIndex::MBC &r) {
-//    auto pr1=r.getCenterRdAtTime(ps.m_startTime),
-//        pr2=r.getCenterRdAtTime(pe.m_startTime);
+////    auto pr1=r.getCenterRdAtTime(ps.m_startTime),
+////        pr2=r.getCenterRdAtTime(pe.m_startTime);
+//  simple version
     double x1=r.m_pLow[0],y1=r.m_pLow[1],t1=r.m_startTime;
     double x2=r.m_pHigh[0],y2=r.m_pHigh[1],t2=r.m_endTime;
     double xts=makemidmacro(x1,t1,x2,t2,ps.m_startTime),xte=makemidmacro(x1,t1,x2,t2,pe.m_startTime);
@@ -596,78 +597,93 @@ double Trajectory::line2MBCDistance(const SpatialIndex::TimePoint &ps, const Spa
 //            c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
 //            c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
 //            c4=te-ts;
-//    if(c2*c2-4*c1*(c3-sq(r.m_rd*c4))<0){
-//        //root not exist
-//        return theF(c1,c2,c3,c4,te)-theF(c1,c2,c3,c4,ts)-mbcArea(r,ts,te);
-//    }else{
-//        double root1=(-c2-sqrt(c2*c2-4*c1*(c3-sq(r.m_rd*c4))))/2/c1;
-//        double root2=(-c2+sqrt(c2*c2-4*c1*(c3-sq(r.m_rd*c4))))/2/c1;
+//    double mid=-c2/2/c1;
+//    if(!(ts<mid&&te>mid)){
+//        double x1=r.m_pLow[0],y1=r.m_pLow[1],t1=r.m_startTime;
+//        double x2=r.m_pHigh[0],y2=r.m_pHigh[1],t2=r.m_endTime;
+//        double xts=makemidmacro(x1,t1,x2,t2,ps.m_startTime),xte=makemidmacro(x1,t1,x2,t2,pe.m_startTime);
+//        double yts=makemidmacro(y1,t1,y2,t2,ps.m_startTime),yte=makemidmacro(y1,t1,y2,t2,pe.m_startTime);
+//        double p2Low[2]={xts,yts},p2High[2]={xte,yte};
+//        double mbcr1=std::min(std::min(r.m_rd,(t1-r.m_startTime)*r.m_rv),(r.m_endTime-t1)*r.m_rv);
+//        double mbcr2=std::min(std::min(r.m_rd,(t1-r.m_startTime)*r.m_rv),(r.m_endTime-t1)*r.m_rv);
+//        TimePoint p2s(p2Low,ps.m_startTime,ps.m_startTime,2),p2e(p2High,pe.m_startTime,pe.m_startTime,2);
+//        double s=line2lineDistance(ps,pe,p2s,p2e);
+//    //    double sm=mbcArea(r,ps.m_startTime,pe.m_startTime);
+//        double sm=0.5*(pe.m_startTime-ps.m_startTime)*(mbcr1,mbcr2);
+//        if(s>sm) return s-sm;
+//    }else {
+//        if (c2 * c2 - 4 * c1 * (c3 - sq(r.m_rd * c4)) < 0) {
+//            //root not exist
+//            return theF(c1, c2, c3, c4, te) - theF(c1, c2, c3, c4, ts) - mbcArea(r, ts, te);
+//        } else {
+//            double root1 = (-c2 - sqrt(c2 * c2 - 4 * c1 * (c3 - sq(r.m_rd * c4)))) / 2 / c1;
+//            double root2 = (-c2 + sqrt(c2 * c2 - 4 * c1 * (c3 - sq(r.m_rd * c4)))) / 2 / c1;
 ////        if(theD(c1,c2,c3,c4,root1)-r.m_rd>1){
 ////            double d=theD(c1,c2,c3,c4,root1);
 ////            std::cerr<<"ha?";
 ////        }
-//        double inter1,inter2;
-//        if(root1>t2||root2<t1) {
-//            if (root1 > t2) {
-//                //check if inter1 and inter2 in range
-//                double a = c1 - sq(c4 * r.m_rv),
-//                        b = c2 + sq(c4 * r.m_rv) * 2 * t3,
-//                        c = c3 - sq(c4 * r.m_rv) * sq(t3);
-//                inter1 = (-b -(std::abs(a)/a)*sqrt(b * b - 4 * a * c)) / 2 / a;
-//                inter2 = (-b + (std::abs(a)/a)*sqrt(b * b - 4 * a * c)) / 2 / a;
-//                if(inter1<t3&&inter1>t2){}
-//                else {
-//                    //inter1 and inter2 don't exist
-//                    return theF(c1, c2, c3, c4, te) - theF(c1, c2, c3, c4, ts) - mbcArea(r, ts, te);
+//            double inter1, inter2;
+//            if (root1 > t2 || root2 < t1) {
+//                if (root1 > t2) {
+//                    //check if inter1 and inter2 in range
+//                    double a = c1 - sq(c4 * r.m_rv),
+//                            b = c2 + sq(c4 * r.m_rv) * 2 * t3,
+//                            c = c3 - sq(c4 * r.m_rv) * sq(t3);
+//                    inter1 = (-b - (std::abs(a) / a) * sqrt(b * b - 4 * a * c)) / 2 / a;
+//                    inter2 = (-b + (std::abs(a) / a) * sqrt(b * b - 4 * a * c)) / 2 / a;
+//                    if (inter1 < t3 && inter1 > t2) {}
+//                    else {
+//                        //inter1 and inter2 don't exist
+//                        return theF(c1, c2, c3, c4, te) - theF(c1, c2, c3, c4, ts) - mbcArea(r, ts, te);
+//                    }
+//                }
+//                if (root2 < t1) {
+//                    double a = c1 - sq(c4 * r.m_rv),
+//                            b = c2 + sq(c4 * r.m_rv) * 2 * t0,
+//                            c = c3 - sq(c4 * r.m_rv) * sq(t0);
+//                    inter1 = (-b - (std::abs(a) / a) * sqrt(b * b - 4 * a * c)) / 2 / a;
+//                    inter2 = (-b + (std::abs(a) / a) * sqrt(b * b - 4 * a * c)) / 2 / a;
+//                    if (inter2 < t1 && inter2 > t0) {}
+//                    else {
+//                        //inter1 and inter2 don't exist
+//                        return theF(c1, c2, c3, c4, te) - theF(c1, c2, c3, c4, ts) - mbcArea(r, ts, te);
+//                    }
+//                }
+//            } else {
+//                if (root1 < t1) {
+//                    //calculte inter1
+//                    double a = c1 - sq(c4 * r.m_rv),
+//                            b = c2 + sq(c4 * r.m_rv) * 2 * t0,
+//                            c = c3 - sq(c4 * r.m_rv) * sq(t0);
+//                    if (a > 0) inter1 = (-b - sqrt(b * b - 4 * a * c)) / 2 / a;
+//                    else inter1 = (-b + sqrt(b * b - 4 * a * c)) / 2 / a;
+//                } else {//if(root1>=t1&&root1<t2)
+//                    inter1 = root1;
+//                }
+//                if (root2 > t2) {
+//                    //calculate inter2
+//                    double a = c1 - sq(c4 * r.m_rv),
+//                            b = c2 + sq(c4 * r.m_rv) * 2 * t3,
+//                            c = c3 - sq(c4 * r.m_rv) * sq(t3);
+//                    if (a > 0) inter2 = (-b + sqrt(b * b - 4 * a * c)) / 2 / a;
+//                    else inter2 = (-b - sqrt(b * b - 4 * a * c)) / 2 / a;
+//                } else {//if(root2>t1&&root2<=t2)
+//                    inter2 = root2;
 //                }
 //            }
-//            if (root2 < t1) {
-//                double a = c1 - sq(c4 * r.m_rv),
-//                        b = c2 + sq(c4 * r.m_rv) * 2 * t0,
-//                        c = c3 - sq(c4 * r.m_rv) * sq(t0);
-//                inter1 = (-b -(std::abs(a)/a)*sqrt(b * b - 4 * a * c)) / 2 / a;
-//                inter2 = (-b + (std::abs(a)/a)*sqrt(b * b - 4 * a * c)) / 2 / a;
-//                if(inter2<t1&&inter2>t0){}
-//                else{
-//                    //inter1 and inter2 don't exist
-//                    return theF(c1, c2, c3, c4, te) - theF(c1, c2, c3, c4, ts) - mbcArea(r, ts, te);
-//                }
+//            double sum = 0;
+//            if (ts < inter1) {
+//                double tlow = ts;
+//                double thigh = std::min(inter1, te);
+//                sum += theF(c1, c2, c3, c4, thigh) - theF(c1, c2, c3, c4, tlow) - mbcArea(r, tlow, thigh);
 //            }
-//        }
-//        else {
-//            if (root1 < t1) {
-//                //calculte inter1
-//                double a = c1 - sq(c4 * r.m_rv),
-//                        b = c2 + sq(c4 * r.m_rv) * 2 * t0,
-//                        c = c3 - sq(c4 * r.m_rv) * sq(t0);
-//                if (a > 0) inter1 = (-b - sqrt(b * b - 4 * a * c)) / 2 / a;
-//                else inter1 = (-b + sqrt(b * b - 4 * a * c)) / 2 / a;
-//            } else {//if(root1>=t1&&root1<t2)
-//                inter1 = root1;
+//            if (te > inter2) {
+//                double tlow = std::max(inter2, ts);
+//                double thigh = te;
+//                sum += theF(c1, c2, c3, c4, thigh) - theF(c1, c2, c3, c4, tlow) - mbcArea(r, tlow, thigh);
 //            }
-//            if (root2 > t2) {
-//                //calculate inter2
-//                double a = c1 - sq(c4 * r.m_rv),
-//                        b = c2 + sq(c4 * r.m_rv) * 2 * t3,
-//                        c = c3 - sq(c4 * r.m_rv) * sq(t3);
-//                if (a > 0) inter2 = (-b + sqrt(b * b - 4 * a * c)) / 2 / a;
-//                else inter2 = (-b - sqrt(b * b - 4 * a * c)) / 2 / a;
-//            } else {//if(root2>t1&&root2<=t2)
-//                inter2 = root2;
-//            }
+//            return sum;
 //        }
-//        double sum=0;
-//        if(ts<inter1){
-//            double tlow=ts;
-//            double thigh=std::min(inter1,te);
-//            sum+= theF(c1,c2,c3,c4,thigh)-theF(c1,c2,c3,c4,tlow)-mbcArea(r,tlow,thigh);
-//        }
-//        if(te>inter2){
-//            double tlow=std::max(inter2,ts);
-//            double thigh=te;
-//            sum+= theF(c1,c2,c3,c4,thigh)-theF(c1,c2,c3,c4,tlow)-mbcArea(r,tlow,thigh);
-//        }
-//        return sum;
 //    }
 }
 

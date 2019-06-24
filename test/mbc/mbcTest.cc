@@ -21,11 +21,11 @@
 //#define sourceFile "D://t200n100s.txt"
 #define sourceFile "D://t1000.txt"
 #define maxLinesToRead 1e10
-#define testtime 100
+#define testtime 10000
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
-#define QueryType 2
+#define QueryType 1
 //1 for time-slice range, 2 for 5-NN
 
 using namespace std;
@@ -368,9 +368,9 @@ int main(){
 
 
 
-        std::cout<<"index IO:"<<ts1.m_indexIO<<" "<<ts2.m_indexIO<<endl;
-        std::cout<<"traj IO:"<<ts1.m_trajIO<<" "<<ts2.m_trajIO<<endl;
-        std::cout<<"bounding IO:"<<ts1.m_boundingVisited<<" "<<ts2.m_boundingVisited<<endl;
+        std::cerr<<"index IO:"<<ts1.m_indexIO<<" "<<ts2.m_indexIO<<endl;
+        std::cerr<<"traj IO:"<<ts1.m_trajIO<<" "<<ts2.m_trajIO<<endl;
+        std::cerr<<"bounding IO:"<<ts1.m_boundingVisited<<" "<<ts2.m_boundingVisited<<endl;
     }
     catch (Tools::Exception& e)
     {

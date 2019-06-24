@@ -179,6 +179,9 @@ void Region::storeToByteArray(uint8_t** data, uint32_t& len)
 //
 bool Region::intersectsShape(const IShape& s) const
 {
+    const MBC* pbc = dynamic_cast<const MBC*>(&s);
+    if (pbc != 0) return pbc->intersectsRegion(*this);
+
 	const Region* pr = dynamic_cast<const Region*>(&s);
 	if (pr != 0) return intersectsRegion(*pr);
 
@@ -254,6 +257,9 @@ double Region::getArea() const
 
 double Region::getMinimumDistance(const IShape& s) const
 {
+    const MBC* pbc = dynamic_cast<const MBC*>(&s);
+    if (pbc != 0) return pbc->getMinimumDistance(*this);
+
 	const Region* pr = dynamic_cast<const Region*>(&s);
 	if (pr != 0) return getMinimumDistance(*pr);
 

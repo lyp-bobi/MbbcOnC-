@@ -35,6 +35,7 @@
 
 #define sq(x) (x)*(x)
 #define cube(x) (x)*(x)*(x)
+#define makemidmacro(x1,t1,x2,t2,t) ((t)-(t1))/((t2)-(t1))*(x2)+((t2)-(t))/((t2)-(t1))*(x1)
 
 
 namespace SpatialIndex

@@ -164,19 +164,23 @@ void MBC::getVMBR(Region& out) const{
     }
 }
 void MBC::getMBRAtTime(double t, SpatialIndex::Region &out) const {
-    TimePoint *tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
-                                      TimePoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
-    Point plow = *tp, phigh = *tp;
+//    TimePoint *tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
+//                                      TimePoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
+//    Point plow = *tp, phigh = *tp;
+    double x=makemidmacro(m_pLow[0],m_startTime,m_pHigh[0],m_endTime,t);
+    double y=makemidmacro(m_pLow[1],m_startTime,m_pHigh[1],m_endTime,t);
+    double coord[2]={x,y};
+    Point plow(coord,2),phigh(coord,2);
     if(std::isfinite(m_rv)) {
         double r = std::min(std::min((t - m_startTime) * m_rv, m_rd),(m_endTime-t) * m_rv);
         for (int i = 0; i < m_dimension; i++) {
-            plow.m_pCoords[i] = tp->m_pCoords[i] - r;
-            phigh.m_pCoords[i] = tp->m_pCoords[i] + r;
+            plow.m_pCoords[i] = coord[i] - r;
+            phigh.m_pCoords[i] = coord[i] + r;
         }
     }else{
         for (int i = 0; i < m_dimension; i++) {
-            plow.m_pCoords[i] = std::max(tp->m_pCoords[i],std::min(m_pLow[i],m_pHigh[i]));
-            phigh.m_pCoords[i] = std::min(tp->m_pCoords[i] ,std::max(m_pLow[i],m_pHigh[i]));
+            plow.m_pCoords[i] = std::max(coord[i],std::min(m_pLow[i],m_pHigh[i]));
+            phigh.m_pCoords[i] = std::min(coord[i] ,std::max(m_pLow[i],m_pHigh[i]));
         }
     }
     out = Region(plow, phigh);
@@ -184,16 +188,20 @@ void MBC::getMBRAtTime(double t, SpatialIndex::Region &out) const {
 
 
 std::pair<TimePoint,double> MBC::getCenterRdAtTime(double t) const {
-    TimePoint *tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
-                                      TimePoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
-    Point plow = *tp, phigh = *tp;
+    double x=makemidmacro(m_pLow[0],m_startTime,m_pHigh[0],m_endTime,t);
+    double y=makemidmacro(m_pLow[1],m_startTime,m_pHigh[1],m_endTime,t);
+    double coord[2]={x,y};
+//    TimePoint *tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
+//                                      TimePoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
+//    Point plow = *tp, phigh = *tp;
     double r;
     if(std::isfinite(m_rv)) {
         r = std::min(std::min((t - m_startTime) * m_rv, m_rd),(m_endTime-t) * m_rv);
     }else{
         r=m_rd;
     }
-    return std::make_pair(*tp,r);
+    TimePoint tp(coord,t,t,2);
+    return std::make_pair(tp,r);
 }
 
 //
@@ -204,8 +212,8 @@ bool MBC::intersectsShape(const SpatialIndex::IShape& s) const {
     const TimePoint* ptp = dynamic_cast<const TimePoint*>(&s);
     if (ptp != 0) return intersectsTimePoint(*ptp);
 
-//    const Region* pr = dynamic_cast<const Region*>(&s);
-//    if (pr != 0) return intersectsRegion(*pr);
+    const Region* pr = dynamic_cast<const Region*>(&s);
+    if (pr != 0) return intersectsRegion(*pr);
 
     const Trajectory* ptra = dynamic_cast<const Trajectory*>(&s);
     if (ptra != 0) return ptra->intersectsShape(*this);
