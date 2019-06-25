@@ -552,23 +552,23 @@ double Trajectory::line2MBRDistance(const SpatialIndex::TimePoint &ps, const Spa
     }
 }
 
-inline double mbcArea(const SpatialIndex::MBC &r,double ts,double te){
-    double t0=r.m_startTime,t1=t0+r.m_rd/r.m_rv,t3=r.m_endTime,t2=t3-r.m_rd/r.m_rv;
+inline double mbcArea(double t0,double t3,double rd,double rv,double ts,double te){
+    double t1=t0+rd/rv,t2=t3-rd/rv;
     double sum=0;
     double tlow,thigh,rlow,rhigh;
     if(ts<t1){
         tlow=ts;
         thigh=std::min(te,t1);
-        rlow=r.getCenterRdAtTime(tlow).second;
-        rhigh=r.getCenterRdAtTime(thigh).second;
+        rlow=(tlow-t0)*rv;
+        rhigh=(thigh-t0)*rv;
         sum+=(thigh-tlow)*0.5*(rlow+rhigh);
     }
-    if(ts<t2&&te>t1) sum+=r.m_rd*(std::min(t2,te)-std::max(t1,ts));
+    if(ts<t2&&te>t1) sum+=rd*(std::min(t2,te)-std::max(t1,ts));
     if(te>t2){
         tlow=std::max(ts,t2);
         thigh=te;
-        rlow=r.getCenterRdAtTime(tlow).second;
-        rhigh=r.getCenterRdAtTime(thigh).second;
+        rlow=(t3-tlow)*rv;
+        rhigh=(t3-thigh)*rv;
         sum+=(thigh-tlow)*0.5*(rlow+rhigh);
     }
     return sum;
@@ -588,8 +588,7 @@ double Trajectory::line2MBCDistance(const SpatialIndex::TimePoint &ps, const Spa
     double mbcr2=std::min(std::min(r.m_rd,(pe.m_startTime-r.m_startTime)*r.m_rv),(r.m_endTime-pe.m_startTime)*r.m_rv);
     TimePoint p2s(p2Low,ps.m_startTime,ps.m_startTime,2),p2e(p2High,pe.m_startTime,pe.m_startTime,2);
     double s=line2lineDistance(ps,pe,p2s,p2e);
-//    double sm=mbcArea(r,ps.m_startTime,pe.m_startTime);
-    double sm=0.5*(pe.m_startTime-ps.m_startTime)*(mbcr1+mbcr2);
+    double sm=mbcArea(r.m_startTime,r.m_endTime,r.m_rd,r.m_rv,ps.m_startTime,pe.m_startTime);
     if(ps.getMinimumDistance(p2s)>mbcr1&&pe.getMinimumDistance(p2e)>mbcr2) return s-sm;
     else return 0;
 //    else {
