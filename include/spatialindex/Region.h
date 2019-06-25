@@ -73,6 +73,8 @@ namespace SpatialIndex
 
 		virtual bool intersectsLineSegment(const LineSegment& in) const;
 
+//        virtual bool intersectsMBC(const MBC& in) const;
+
 		virtual bool containsPoint(const Point& in) const;
 		virtual bool touchesPoint(const Point& in) const;
 		virtual double getMinimumDistance(const Point& in) const;

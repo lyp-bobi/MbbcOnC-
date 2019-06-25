@@ -238,8 +238,6 @@ bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
     if(in.m_pLow[m_dimension]==in.m_pHigh[m_dimension]) {
         auto timed=getCenterRdAtTime(in.m_pLow[m_dimension]);
         return timed.first.getMinimumDistance(Region(in.m_pLow,in.m_pHigh,m_dimension))<=timed.second+1e-10;
-        Region br = Region(in.m_pLow, in.m_pHigh, 2);
-        return timed.first.getMinimumDistance(br) <= timed.second;
     }else{
         throw Tools::NotSupportedException("MBC:intersect 3DMBR");
     }

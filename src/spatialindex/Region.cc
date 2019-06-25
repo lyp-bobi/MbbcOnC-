@@ -381,6 +381,21 @@ bool Region::intersectsLineSegment(const LineSegment& in) const
 
 }
 
+
+//bool Region::intersectsMBC(const SpatialIndex::MBC &in) const {
+//    if (m_pLow[m_dimension] > in.m_endTime || m_pHigh[m_dimension] < in.m_startTime) return false;
+//    if (in.m_pLow[m_dimension] == in.m_pHigh[m_dimension]) {
+//        double x1=in.m_pLow[0],y1=in.m_pLow[1],t1=in.m_startTime;
+//        double x2=in.m_pHigh[0],y2=in.m_pHigh[1],t2=in.m_endTime;
+//        double xt=makemidmacro(x1,t1,x2,t2,m_pLow[m_dimension]),
+//            yt=makemidmacro(y1,t1,y2,t2,m_pLow[m_dimension]);
+//        double xy[2]={xt,yt};
+//        double mbcr=std::min(std::min(in.m_rd,(m_pLow[m_dimension]-in.m_startTime)*in.m_rv),(in.m_endTime-m_pLow[m_dimension])*in.m_rv);
+//        return Point(xy,2).getMinimumDistance(Region(in.m_pLow, in.m_pHigh, m_dimension)) <= mbcr + 1e-10;
+//        Region br = Region(in.m_pLow, in.m_pHigh, 2);
+//        return timed.first.getMinimumDistance(br) <= timed.second;
+//    }
+//}
 bool Region::containsPoint(const Point& p) const
 {
 	if (m_dimension != p.m_dimension)
