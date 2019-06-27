@@ -127,6 +127,8 @@ namespace SpatialIndex
             const Trajectory getTrajByTime(id_type &id,double tstart,double tend);
             const ShapeList getMBRsByTime(id_type &id,double tstart,double tend);
             const ShapeList getMBCsByTime(id_type &id,double tstart,double tend);
+            const Region getMBR(id_type &id);
+            const MBC getMBC(id_type &id);
             std::map<id_type, Entry*> m_entries;//map from seg id to entry
             std::map<id_type, MBC> m_entryMbcs;
             std::map<id_type, Region> m_entryMbrs;
@@ -135,7 +137,7 @@ namespace SpatialIndex
             uint32_t m_maxTrajSegs=100;
             uint32_t m_trajIO=0,m_indexIO=0;
             uint32_t m_boundingVisited=0;
-            uint32_t m_maxVelocity;
+            double m_maxVelocity;
         };
     }//namespace StorageManager
     class baseSegmentStream:public IDataStream{

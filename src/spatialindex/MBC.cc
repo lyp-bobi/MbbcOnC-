@@ -301,6 +301,7 @@ void MBC::getTimeMBR(SpatialIndex::TimeRegion &out) const {
 }
 
 double MBC::getArea() const{
+    if(m_rv==0) return 0;
     double dt=m_rd/m_rv;
     double res=M_PI*sq(m_rd)*(m_endTime-m_startTime-2*dt)+2.0/3*M_PI*sq(m_rd);
     return res;

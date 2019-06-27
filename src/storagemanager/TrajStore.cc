@@ -565,6 +565,7 @@ const ShapeList TrajStore::getMBCsByTime(id_type &id, double tstart, double tend
         bc=&((*m_entryMbcs.find(newid)).second);
         mbclist.push_front(bc);
         tmpe=*(it->second);
+        m_boundingVisited++;
     }
     tmpe=e;
     while(tmpe.m_ntId>=0&&bc->m_endTime<tend){
@@ -573,6 +574,7 @@ const ShapeList TrajStore::getMBCsByTime(id_type &id, double tstart, double tend
         bc=&((*m_entryMbcs.find(newid)).second);
         mbclist.push_back(bc);
         tmpe=*(it->second);
+        m_boundingVisited++;
     }
     for ( const auto &mbc:mbclist) {
         bcs.insert(mbc);
@@ -596,6 +598,7 @@ const ShapeList TrajStore::getMBRsByTime(id_type &id, double tstart, double tend
         br=&((*m_entryMbrs.find(newid)).second);
         mbrlist.push_front(br);
         tmpe=*(it->second);
+        m_boundingVisited++;
     }
     tmpe=e;
     while(tmpe.m_ntId>=0&&br->m_pHigh[br->m_dimension-1]<tend){
@@ -604,9 +607,18 @@ const ShapeList TrajStore::getMBRsByTime(id_type &id, double tstart, double tend
         br=&((*m_entryMbrs.find(newid)).second);
         mbrlist.push_back(br);
         tmpe=*(it->second);
+        m_boundingVisited++;
     }
     for ( const auto &mbr:mbrlist) {
         brs.insert(mbr);
     }
     return brs;
+}
+
+const Region TrajStore::getMBR(id_type &id) {
+    return (*m_entryMbrs.find(id)).second;
+}
+
+const MBC TrajStore::getMBC(id_type &id) {
+    return (*m_entryMbcs.find(id)).second;
 }

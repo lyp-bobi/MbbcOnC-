@@ -569,8 +569,8 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
                         traj.loadFromByteArray(e->m_pData);
                         queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(*queryTraj, traj)));
 					}else{
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, queryTraj->getMinimumDistance(e->m_region)));
-//                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, queryTraj->getPeriodMinimumDistance(e->m_region,m_ts->m_maxVelocity)));
+//                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, queryTraj->getMinimumDistance(e->m_region)));
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, queryTraj->getPeriodMinimumDistance(e->m_region,m_ts->m_maxVelocity)));
 					}
 
 				}
@@ -598,9 +598,10 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 		        //load Trajectory
                 Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_startTime,queryTraj->m_points.back().m_startTime);
                 queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, traj),2));
+
 		    }
 		    else {
-                Data *e=static_cast<Data*>(pFirst->m_pEntry);
+//                Data *e=static_cast<Data*>(pFirst->m_pEntry);
                 v.visitData(*(static_cast<IData *>(pFirst->m_pEntry)));
                 ++(m_stats.m_u64QueryResults);
                 ++count;

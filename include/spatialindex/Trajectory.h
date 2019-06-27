@@ -126,6 +126,7 @@ namespace SpatialIndex
 
         static double line2lineDistance(const TimePoint &p1s,const TimePoint &p1e,const TimePoint &p2s,const TimePoint &p2e);
         static double line2MBRDistance(const TimePoint &ps,const TimePoint &pe,const Region &r);
+        static double line2MBRDistance_impl(const TimePoint &ps,const TimePoint &pe,const Region &r,int sr);
         static double line2MBCDistance(const TimePoint &ps,const TimePoint &pe,const MBC &r);
 
         std::vector<TimePoint> m_points;
