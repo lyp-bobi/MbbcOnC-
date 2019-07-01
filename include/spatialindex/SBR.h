@@ -5,22 +5,22 @@
 
 namespace SpatialIndex
 {
-    class SIDX_DLL MBC: public Tools::IObject, public virtual IShape,public IEvolvingShape{
+    class SIDX_DLL SBR: public Tools::IObject, public virtual IShape,public IEvolvingShape{
 
     public:
-        MBC();
-        ~MBC();
-        MBC(const double* pLow, const double* pHigh,double sTime,double eTime, uint32_t dimension,double rd,double rv);
-        MBC(const MBC& in);
-        MBC &operator=(const MBC &r);
+        SBR();
+        ~SBR();
+        SBR(const double* pLow, const double* pHigh,double sTime,double eTime, uint32_t dimension,double rd);
+        SBR(const SBR& in);
+        SBR &operator=(const SBR &r);
 
-        virtual bool operator==(const MBC &r) const;
+        virtual bool operator==(const SBR &r) const;
 
 
         //
         // IObject interface
         //
-        virtual MBC *clone();
+        virtual SBR *clone();
 
         //
         // ISerializable interface
@@ -38,8 +38,6 @@ namespace SpatialIndex
         virtual void getMBRAtTime(double t, Region& out) const;
 
 
-        virtual std::pair<TimePoint,double> getCenterRdAtTime(double t) const;
-
 
         //
         // IShape interface
@@ -47,6 +45,7 @@ namespace SpatialIndex
         virtual bool intersectsShape(const IShape& in) const;
         virtual bool containsShape(const IShape& in) const;
         virtual bool touchesShape(const IShape& in) const;
+        virtual bool touchesSBR(const SBR& in) const;
         virtual void getCenter(Point& out) const;
         virtual uint32_t getDimension() const;
         virtual void getMBR(Region& out) const;
@@ -60,27 +59,29 @@ namespace SpatialIndex
         virtual bool intersectsTimeRegion(const TimeRegion& in) const;
         virtual bool intersectsTimePoint(const TimePoint& in) const;
         virtual bool intersectsRegion(const Region& in) const;
-        virtual bool intersectsMBC(const MBC& in) const;
 
-//        virtual void combineMBC(const MBC& in);
-//        virtual bool containsMBC(const MBC& in);
-//        virtual void getCombinedMBC(MBC& out, const MBC& in) const;;
+        virtual bool containsSBR(const SBR& in);
         virtual int getOrient() const;
 
+        virtual double getMargin() const;
+        virtual void combineMBC(const MBC& in);
+        virtual void combineSBR(const SBR& in);
+        virtual void getFromMBC(const MBC& in,double tstart,double tend);
+        virtual void getCombinedSBR(SBR& out, const SBR& in) const;
+        virtual double getIntersectingArea(const SBR& in) const;
 
         double m_startTime;
         double m_endTime;
         double m_rd;
-        double m_rv;
         double* m_pLow;
         double* m_pHigh;
         uint32_t m_dimension=2;
 
-        friend SIDX_DLL std::ostream& operator<<(std::ostream& os, const MBC& r);
+        friend SIDX_DLL std::ostream& operator<<(std::ostream& os, const SBR& r);
 
         virtual void makeInfinite(uint32_t dimension);
     private:
     };
-    typedef Tools::PoolPointer<MBC> MBCPtr;
-    SIDX_DLL std::ostream& operator<<(std::ostream& os, const MBC& r);
+    typedef Tools::PoolPointer<SBR> SBRPtr;
+    SIDX_DLL std::ostream& operator<<(std::ostream& os, const SBR& r);
 }

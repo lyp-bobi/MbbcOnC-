@@ -655,6 +655,9 @@ double Trajectory::getMinimumDistance(const IShape& s) const{
     const MBC* pmbc= dynamic_cast<const MBC*>(&s);
     if(pmbc!=0) return getMinimumDistance(*pmbc);
 
+    const SBR* psbr= dynamic_cast<const SBR*>(&s);
+    if(psbr!=0) return getMinimumDistance(*psbr);
+
     const Region* pr = dynamic_cast<const Region*>(&s);
     if (pr != 0) return getMinimumDistance(*pr);
 
@@ -697,6 +700,22 @@ double Trajectory::getMinimumDistance(const SpatialIndex::MBC &in) const {
     double sum = 0;
     for (int i = 0; i < timedtraj.m_size-1; i++) {
         double pd = line2MBCDistance(timedtraj[i],timedtraj[i+1],in);
+        sum+=pd;
+    }
+    return sum;
+}
+double Trajectory::getMinimumDistance(const SpatialIndex::SBR &in) const {
+    double tstart, tend;
+    tstart = std::max(m_startTime(), in.m_startTime);
+    tend = std::min(m_endTime(), in.m_endTime);
+    if(tstart>=tend) return 1e300;
+    fakeTpVector timedtraj(&m_points,tstart,tend);
+    double sum = 0;
+    Region rg1,rg2;
+    for (int i = 0; i < timedtraj.m_size-1; i++) {
+        in.getMBRAtTime(timedtraj[i].m_startTime,rg1);
+        in.getMBRAtTime(timedtraj[i+1].m_startTime,rg2);
+        double pd = 0.5*(timedtraj[i].getMinimumDistance(rg1)+timedtraj[i+1].getMinimumDistance(rg2));
         sum+=pd;
     }
     return sum;
@@ -767,7 +786,6 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
     }
     return sum;
 }
-
 
 double Trajectory::getMinimumDistance(const ShapeList &in) const {
     double sum=0;

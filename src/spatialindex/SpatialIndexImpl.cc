@@ -28,6 +28,7 @@
 
 #include "../rtree/RTree.h"
 #include "../mbcrtree/MBCRTree.h"
+#include "../sbrtree/SBRTree.h"
 
 #include "../mvrtree/MVRTree.h"
 #include "../tprtree/TPRTree.h"
@@ -56,6 +57,12 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const ISpatialIndex& i)
     if (pMBCRTree != 0)
     {
         os << *pMBCRTree;
+        return os;
+    }
+    const SpatialIndex::SBRTree::SBRTree* pSBRTree = dynamic_cast<const SpatialIndex::SBRTree::SBRTree*>(&i);
+    if (pSBRTree != 0)
+    {
+        os << *pSBRTree;
         return os;
     }
 
@@ -88,6 +95,13 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const IStatistics& s)
 
     const SpatialIndex::MBCRTree::Statistics* pMBCRTreeStats = dynamic_cast<const SpatialIndex::MBCRTree::Statistics*>(&s);
     if (pMBCRTreeStats != 0)
+    {
+        os << *pMBCRTreeStats;
+        return os;
+    }
+
+    const SpatialIndex::SBRTree::Statistics* pSBRTreeStats = dynamic_cast<const SpatialIndex::SBRTree::Statistics*>(&s);
+    if (pSBRTreeStats != 0)
     {
         os << *pMBCRTreeStats;
         return os;

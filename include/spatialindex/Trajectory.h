@@ -96,6 +96,7 @@ namespace SpatialIndex
         virtual double getMinimumDistance(const TimePoint& in) const;
         virtual double getMinimumDistance(const Region& in) const;
         virtual double getMinimumDistance(const MBC& in) const;
+        virtual double getMinimumDistance(const SBR& in) const;
         virtual double getMinimumDistance(const Trajectory& in) const;
         virtual double getMinimumDistance(const ShapeList& in) const;
 
