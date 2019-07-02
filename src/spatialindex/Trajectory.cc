@@ -788,10 +788,13 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
 }
 
 double Trajectory::getMinimumDistance(const ShapeList &in) const {
+    if(in.m_MBRList.size()==0&&in.m_MBCList.size()==0){
+        std::cerr<<"???\n";
+    }
     double sum=0;
     double ints,inte;
     double pd;
-    if(in.m_shapeType==SpatialIndex::LeafBoundByMBR) {
+    if(in.m_shapeType==SpatialIndex::LeafBoundByMBR||!in.m_MBRList.empty()) {
         ints=in.m_MBRList.front()->m_pLow[m_dimension];
         inte=in.m_MBRList.back()->m_pHigh[m_dimension];
         Region smbr=*in.m_MBRList.front(),embr=*in.m_MBRList.back();
@@ -811,7 +814,7 @@ double Trajectory::getMinimumDistance(const ShapeList &in) const {
             pd=getMinimumDistance(embr);
             if(pd!=1e300) sum+=pd;
         }
-    }else if(in.m_shapeType==SpatialIndex::LeafBoundByMBC){
+    }else if(in.m_shapeType==SpatialIndex::LeafBoundByMBC||!in.m_MBCList.empty()){
         Point sPoint,ePoint;
         ints=in.m_MBCList.front()->m_startTime;
         inte=in.m_MBCList.back()->m_endTime;
@@ -845,7 +848,9 @@ double Trajectory::getMinimumDistance(const ShapeList &in) const {
             pd=getMinimumDistance(ebr);
             if(pd!=1e300) sum+=pd;
         }
-    } else throw Tools::IllegalStateException("ShapeList: missing datatype");
+    } else{
+        std::cerr<<"ShapeList without DataType?\n"<<in<<"\n";
+    }
     return sum;
 }
 
@@ -934,7 +939,7 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const Trajectory& r) {
     std::string s;
     s = "Trajectory length:" + std::to_string(r.m_points.size()) + "\n" +
         "m_points are" + "\n";
-    for (auto p:r.m_points) {
+    for (const auto &p:r.m_points) {
         s += std::to_string(p.m_pCoords[0]) + "," + std::to_string(p.m_pCoords[1]) +
              "," + std::to_string(p.m_startTime) + " ";
     }
@@ -942,7 +947,7 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const Trajectory& r) {
     os<<s;
     return os;
 }
-std::vector<std::string> split(std::string strtem,char a)
+std::vector<std::string> split(const std::string strtem,char a)
 {
     std::vector<std::string> strvec;
 

@@ -14,14 +14,14 @@
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x)+x)
 #include <spatialindex/SpatialIndex.h>
 #include "storagemanager/TrajStore.h"
-#define sourceFile "D://t200n100s.txt"
+#define sourceFile "D://t50n10ks.txt"
 //#define sourceFile "D://t1000.txt"
 #define maxLinesToRead 1e10
 #define testtime 100
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
-#define QueryType 2
+#define QueryType 1
 //1 for time-slice range, 2 for 5-NN
 
 using namespace std;
@@ -283,8 +283,9 @@ int main(){
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, Trajectory> > empty1;
         for(auto traj:trajs){
-            segs.push_back(make_pair(traj.first,traj.second.getSegments(3000)));
+            segs.push_back(make_pair(traj.first,traj.second.getSegments(300000)));
         }
+        int i;
         vector<IShape *> queries;
 //        double plow[3]={16083.3,16481.8,485};
 //        double pHigh[3]={17853,17749.1,485};
@@ -293,7 +294,7 @@ int main(){
         int realtesttime=(QueryType==2)?testtime:(100*testtime);
         for (int i = 0; i < realtesttime; i++) {
             if (QueryType == 1) {
-                double t = int(random(0, 2000));
+                double t = int(random(0, 50));
                 double pLow[3] = {random(0, 25000), random(0, 30000), t};
                 double pHigh[3] = {pLow[0] + random(500, 2000), pLow[1] + random(500, 2000), t};
                 Region *rg = new Region(pLow, pHigh, 3);
@@ -303,6 +304,7 @@ int main(){
                 queries.emplace_back(&trajs[(457+i)%trajs.size()].second);
             }
         }
+        cin>>i;
 //        trajs.swap(empty1);
         string name0 = "name0", name1 = "name1", name2 = "name2";
         id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
@@ -351,8 +353,8 @@ int main(){
 //        real->m_DataType=TrajectoryType;
 
 
-        ISpatialIndex *r=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts1,16,3,indexIdentifier1);
-        ISpatialIndex *rc=SBRTree::createAndBulkLoadNewSBRTreeWithTrajStore(&ts2,16,2,indexIdentifier2);
+        ISpatialIndex *r=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts1,32,3,indexIdentifier1);
+        ISpatialIndex *rc=SBRTree::createAndBulkLoadNewSBRTreeWithTrajStore(&ts2,32,2,indexIdentifier2);
         cerr << "start query!" << endl << endl << endl;
 
 //        TreeQueryBatch(real,queries);

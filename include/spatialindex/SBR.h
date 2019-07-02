@@ -68,6 +68,7 @@ namespace SpatialIndex
         virtual void combineSBR(const SBR& in);
         virtual void getFromMBC(const MBC& in,double tstart,double tend);
         virtual void getCombinedSBR(SBR& out, const SBR& in) const;
+        static SBR getSBR(std::vector<SBR>& in);
         virtual double getIntersectingArea(const SBR& in) const;
 
         double m_startTime;

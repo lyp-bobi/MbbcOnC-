@@ -354,7 +354,7 @@ void Node::insertEntry(uint32_t dataLength, uint8_t* pData, SBR& sbr, id_type id
 	m_totalDataLength += dataLength;
 	++m_children;
 
-	m_nodeSBR.combineSBR(sbr);
+//	m_nodeSBR.combineSBR(sbr);
 }
 
 void Node::insertEntry(uint32_t dataLength, uint8_t *pData,SBR& sbr, MBC &mbc, SpatialIndex::id_type id) {
@@ -369,7 +369,7 @@ void Node::insertEntry(uint32_t dataLength, uint8_t *pData,SBR& sbr, MBC &mbc, S
     m_totalDataLength += dataLength;
     ++m_children;
 
-    m_nodeSBR.combineSBR(sbr);
+//    m_nodeSBR.combineSBR(sbr);
 }
 
 void Node::deleteEntry(uint32_t index)

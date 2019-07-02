@@ -577,7 +577,7 @@ const ShapeList TrajStore::getMBCsByTime(id_type &id, double tstart, double tend
         m_boundingVisited++;
     }
     for ( const auto &mbc:mbclist) {
-        bcs.insert(mbc);
+        bcs.insertbc(mbc);
     }
     return bcs;
 }
@@ -610,7 +610,7 @@ const ShapeList TrajStore::getMBRsByTime(id_type &id, double tstart, double tend
         m_boundingVisited++;
     }
     for ( const auto &mbr:mbrlist) {
-        brs.insert(mbr);
+        brs.insertbr(mbr);
     }
     return brs;
 }

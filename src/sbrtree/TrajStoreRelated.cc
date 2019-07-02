@@ -11,7 +11,7 @@ public:
     SBRTreeSegmentStream(TrajStore *ts): baseSegmentStream(ts){}
     IData* constructData(id_type id,Region mbr,MBC mbc) override {
         SBR sbr;
-        sbr.getFromMBC(mbc,0,200);
+        sbr.getFromMBC(mbc,0,50);
 //        std::cerr<<sbr<<"\n";
         SBRTree::Data* d=new SBRTree::Data(0, nullptr, mbc,sbr, id);
         return d;

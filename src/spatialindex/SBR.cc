@@ -351,6 +351,8 @@ int SBR::getOrient() const {
 }
 
 void SBR::combineSBR(const SpatialIndex::SBR &in) {
+//    throw Tools::NotSupportedException("this function have proved its inefficiency");
+    std::cerr<<"SBR::combineSBR:this function have proved its inefficiency\n";
     if(m_dimension!=in.m_dimension){
         throw Tools::IllegalStateException("combineSBR:different dimension");
     }
@@ -372,6 +374,37 @@ void SBR::combineSBR(const SpatialIndex::SBR &in) {
     m_pHigh[0]=ect.m_pCoords[0];
     m_pHigh[1]=ect.m_pCoords[1];
     m_rd=std::max(sr,er);
+}
+
+SBR SBR::getSBR(std::vector<SpatialIndex::SBR> &in) {
+    assert(in.size()>0);
+    double ts=in.front().m_startTime,te=in.front().m_endTime;
+    Region smbr,embr;
+    Region tr1,tr2;
+    smbr.makeInfinite(in.front().m_dimension);
+    embr.makeInfinite(in.front().m_dimension);
+    for(const auto &sbr:in){
+        sbr.getMBRAtTime(ts,tr1);
+        sbr.getMBRAtTime(te,tr2);
+        smbr.combineRegion(tr1);
+        embr.combineRegion(tr2);
+    }
+    std::cerr<<"s,e MBR is"<<smbr<<"\n"<<embr<<"\n";
+    Point sct,ect;
+    smbr.getCenter(sct);
+    embr.getCenter(ect);
+    double sr=std::max(smbr.m_pHigh[0]-smbr.m_pLow[0],smbr.m_pHigh[1]-smbr.m_pLow[1])/2;
+    double er=std::max(embr.m_pHigh[0]-embr.m_pLow[0],embr.m_pHigh[1]-embr.m_pLow[1])/2;
+    SBR ret;
+    ret.makeInfinite(in.front().m_dimension);
+    ret.m_startTime=ts;
+    ret.m_endTime=te;
+    ret.m_pLow[0]=sct.m_pCoords[0];
+    ret.m_pLow[1]=sct.m_pCoords[1];
+    ret.m_pHigh[0]=ect.m_pCoords[0];
+    ret.m_pHigh[1]=ect.m_pCoords[1];
+    ret.m_rd=std::max(sr,er);
+    return ret;
 }
 
 

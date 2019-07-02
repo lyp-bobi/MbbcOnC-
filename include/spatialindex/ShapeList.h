@@ -63,10 +63,10 @@ namespace SpatialIndex {
 
         ShapeList(const ShapeList &in);
 
-        void insert(MBC* shape);
-        void insert(Region* shape);
+        void insertbc(MBC *shape);
+        void insertbr(Region *shape);
 
-        void insert(IShape* shape);
+//        void insert(IShape* shape);
 
         uint32_t m_dimension = 3;
 

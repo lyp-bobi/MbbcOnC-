@@ -418,8 +418,9 @@ void BulkLoader::createLevel(
 	uint64_t b = (level == 0) ? bleaf : bindex;
     uint64_t P = static_cast<uint64_t>(std::ceil(static_cast<double>(es->getTotalEntries()) / static_cast<double>(b)));
     int remainDim;
-    remainDim=pTree->m_dimension-dimension;
+    remainDim=2*pTree->m_dimension-dimension;
     uint64_t S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P),1.0/remainDim)));
+    std::cerr<<"crtLvl at"<<b<<" "<<P<<" "<<S<<" "<<level<<" "<<dimension<<" \n";
 
 	if (S == 1 || remainDim==1 || S * b == es->getTotalEntries())
 	{
@@ -480,16 +481,25 @@ Node* BulkLoader::createNode(SpatialIndex::SBRTree::SBRTree* pTree, std::vector<
 	Node* n;
 	if (level == 0) n = new Leaf(pTree, -1);
 	else n = new Index(pTree, -1, level);
-	n->m_nodeSBR.m_startTime=e[0]->m_sbr.m_startTime;
-    n->m_nodeSBR.m_endTime=e[0]->m_sbr.m_endTime;
+//	n->m_nodeSBR.m_startTime=e[0]->m_sbr.m_startTime;
+//    n->m_nodeSBR.m_endTime=e[0]->m_sbr.m_endTime;
+//    n->m_nodeSBR.m_pLow[0]=e[0]->m_sbr.m_pLow[0];
+//    n->m_nodeSBR.m_pLow[1]=e[0]->m_sbr.m_pLow[1];
+//    n->m_nodeSBR.m_pHigh[0]=e[0]->m_sbr.m_pHigh[0];
+//    n->m_nodeSBR.m_pHigh[1]=e[0]->m_sbr.m_pHigh[1];
+    std::vector<SBR> sbrs;
 	for (size_t cChild = 0; cChild < e.size(); ++cChild)
 	{
         if (level == 0) {
             n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData,e[cChild]->m_sbr, e[cChild]->m_mbc, e[cChild]->m_id);
+            std::cerr<<"inserted entry\n"<<e[cChild]->m_mbc<<"\n"<<e[cChild]->m_sbr<<"\n";
         }
         else n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData, e[cChild]->m_sbr, e[cChild]->m_id);
+        sbrs.push_back(e[cChild]->m_sbr);
 	    e[cChild]->m_pData = 0;
 		delete e[cChild];
 	}
+	n->m_nodeSBR=SBR::getSBR(sbrs);
+    std::cerr<<"node sbr\n"<<n->m_nodeSBR<<"\n";
 	return n;
 }
