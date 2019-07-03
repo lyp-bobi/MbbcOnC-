@@ -594,7 +594,12 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                 }
                 else
                 {
-                    queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, nnc.getMinimumDistance(*queryTraj, *(n->m_ptrMBR[cChild]))));
+                    if(m_DataType==BoundingBoxType){
+                        const Region* br= dynamic_cast<const Region*>(&query);
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr,br->getMinimumDistance(*(n->m_ptrMBR[cChild]))));
+                    }
+                    else
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, nnc.getMinimumDistance(query, *(n->m_ptrMBR[cChild]))));
                 }
             }
         }
