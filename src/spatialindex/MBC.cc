@@ -254,7 +254,12 @@ void MBC::getCenter(Point& out) const{
     Region br;
     getMBRAtTime(t,br);
     Point p;
-    br.getCenter(out);
+    br.getCenter(p);
+    double p3d[3];
+    p3d[0]=p.m_pCoords[0];
+    p3d[1]=p.m_pCoords[1];
+    p3d[2]=t;
+    out=Point(p3d,3);
 }
 uint32_t MBC::getDimension() const{return m_dimension;}
 void MBC::getMBR(Region& out) const{
