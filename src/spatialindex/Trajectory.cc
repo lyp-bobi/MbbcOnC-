@@ -827,31 +827,34 @@ double Trajectory::getMinimumDistance(const ShapeList &in) const {
             if(pd!=1e300) sum+=pd;
         }
         if(m_startTime()<ints){
-            double pLow[m_dimension+1],pHigh[m_dimension+1];
-            for(int i=0;i<m_dimension;i++){
-                pLow[i]=sPoint.m_pCoords[i];
-                pHigh[i]=sPoint.m_pCoords[i];
-            }
-            pLow[m_dimension]=m_startTime();
-            pHigh[m_dimension]=ints;
-            Region sbr(pLow,pHigh,m_dimension+1);
-            pd=getMinimumDistance(sbr);
+            pd=getMinimumDistance(sPoint.m_pCoords[0],sPoint.m_pCoords[1],m_startTime(),ints);
             if(pd!=1e300) sum+=pd;
         }
         if(m_endTime()>inte){
-            double pLow[m_dimension+1],pHigh[m_dimension+1];
-            for(int i=0;i<m_dimension;i++){
-                pLow[i]=ePoint.m_pCoords[i];
-                pHigh[i]=ePoint.m_pCoords[i];
-            }
-            pLow[m_dimension]=inte;
-            pHigh[m_dimension]=m_endTime();
-            Region ebr(pLow,pHigh,m_dimension+1);
-            pd=getMinimumDistance(ebr);
+            pd=getMinimumDistance(ePoint.m_pCoords[0],ePoint.m_pCoords[1],inte,m_endTime());
             if(pd!=1e300) sum+=pd;
         }
     } else{
         std::cerr<<"ShapeList without DataType?\n"<<in<<"\n";
+    }
+
+    return sum;
+}
+
+double Trajectory::getMinimumDistance(double x,double y, double t1,double t2) const {
+    double tstart, tend;
+    tstart = std::max(m_startTime(), t1);
+    tend = std::min(m_endTime(), t2);
+    if(tstart>=tend) return 1e300;
+    fakeTpVector timedtraj(&m_points,tstart,tend);
+    double sum = 0;
+    double xy[2]={x,y};
+    TimePoint ps(xy,0,0,2),pe(xy,0,0,2);
+    for (int i = 0; i < timedtraj.m_size-1; i++) {
+        ps.m_startTime=ps.m_endTime=timedtraj[i].m_startTime;
+        pe.m_startTime=pe.m_endTime=timedtraj[i+1].m_startTime;
+        double pd = line2lineDistance(timedtraj[i],timedtraj[i+1],ps,pe);
+        sum+=pd;
     }
     return sum;
 }
