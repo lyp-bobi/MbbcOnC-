@@ -9,6 +9,8 @@
 #include <string>
 
 #include <spatialindex/SpatialIndex.h>
+double calcuTime[2]={0,0};
+int testPhase=0;
 
 using namespace SpatialIndex;
 using std::vector;

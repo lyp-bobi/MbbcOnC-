@@ -59,6 +59,8 @@ namespace SpatialIndex
 			std::map<id_type, Entry*> m_pageIndex;
 
 			uint8_t* m_buffer;
+        public:
+			double iotime=0;
 		}; // DiskStorageManager
 	}
 }

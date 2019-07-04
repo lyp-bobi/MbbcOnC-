@@ -18,6 +18,7 @@
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x)+x)
 #include <spatialindex/SpatialIndex.h>
 #include "storagemanager/TrajStore.h"
+#include "../../src/storagemanager/DiskStorageManager.h"
 //#define sourceFile "D://t200n100s.txt"
 #define sourceFile "D://t1000.txt"
 #define maxLinesToRead 1e10
@@ -209,7 +210,7 @@ vector<pair<id_type ,Trajectory> >  loadGTToTrajs(){
             break;
         }
     }
-    cout<<curLine<<" "<<minx<<" "<<maxx<<" "<<miny<<" "<<maxy<<endl;
+    cerr<<curLine<<" "<<minx<<" "<<maxx<<" "<<miny<<" "<<maxy<<endl;
     for(auto id:ids){
         multimap<id_type ,xyt>::iterator beg,end,iter;
         vector<xyt> traj;
@@ -230,14 +231,14 @@ vector<pair<id_type ,Trajectory> >  loadGTToTrajs(){
             }
         }
     }
+    std::cerr<<"load data finished\n";
     return res;
 }
 
 void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr){
-    clock_t start,end;
     MyVisitor vis;
     vis.ts=ts;
-    start=clock();
+    auto start = std::chrono::system_clock::now();
     for(int i=0;i<queries.size();i++){
 //        cerr<<"Query is "<<queries.at(i)->toString();
         if(QueryType==1){
@@ -248,9 +249,11 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore
 //            cerr<<"finished "<<i<<"already\n";
         }
     }
-    end=clock();
+    double time;
+    auto end = std::chrono::system_clock::now();auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    time=double(duration.count()) * std::chrono::microseconds::period::num/ std::chrono::microseconds::period::den;
     cerr<< "=================\n\n";
-    cerr<<"Querying time: "<< end-start<<endl;
+    cerr<<"Querying time: "<< time<<endl;
     cerr<<"VISIT NODE "<<vis.m_indexvisited<<"\t"<<vis.m_leafvisited<<endl;
     cerr<<"Byte loaded "<<vis.m_indexIO<<"\t"<<vis.m_leafIO<<endl;
     cerr << *tree;
@@ -282,18 +285,20 @@ int TreeQuery(ISpatialIndex* tree,IShape* query,TrajStore *ts= nullptr){
 
 int main(){
     try {
+        calcuTime[0]=0;
         srand((int) time(NULL));
         vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, Trajectory> > empty1;
         for(auto traj:trajs){
-            segs.push_back(make_pair(traj.first,traj.second.getSegments(20000)));
+            segs.push_back(make_pair(traj.first,traj.second.getSegments(3000)));
         }
         vector<IShape *> queries;
 //        double plow[3]={16083.3,16481.8,485};
 //        double pHigh[3]={17853,17749.1,485};
 //        Region* rg=new Region(plow,pHigh,3);
 //        queries.push_back(rg);
+        cerr<<"generating queries\n";
         int realtesttime=(QueryType==2)?testtime:(100*testtime);
         for (int i = 0; i < realtesttime; i++) {
             if (QueryType == 1) {
@@ -304,9 +309,10 @@ int main(){
                 queries.emplace_back(rg);
             }
             else if(QueryType==2){
-                queries.emplace_back(&trajs[457+i%trajs.size()].second);
+                queries.emplace_back(&trajs[(0+i)%trajs.size()].second);
             }
         }
+        cerr<<"queries generated\n";
 //        trajs.swap(empty1);
         string name0 = "name0", name1 = "name1", name2 = "name2";
         id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
@@ -314,45 +320,26 @@ int main(){
                 *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
                 *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096);
         // Create a new storage manager with the provided base name and a 4K page size.
-        StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
-                *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
-                *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
+        StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 100, false),
+                *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 100, false),
+                *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 100, false);
 
+        StorageManager::DiskStorageManager *dsm1,*dsm2;
+        dsm1= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile1);
+        dsm2= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile2);
 
-        TrajStore ts1(file1,4096);
+        TrajStore ts1(diskfile1,4096);
         ts1.loadSegments(segs);
-
-//        auto query=trajs[457].second;
-//        id_type that = 61000;
-//        auto traj=ts1.getTrajByTime(that,0,1000);
-//        auto br = ts1.getMBR(that);
-//        auto bc = ts1.getMBC(that);
-//        auto brs = ts1.getMBRsByTime(that,0,1000);
-//        auto bcs = ts1.getMBCsByTime(that,0,1000);
-//        double a,b,c;
-//        a=query.getMinimumDistance(traj);
-//        b=query.getMinimumDistance(br);
-////        b=query.getPeriodMinimumDistance(br,ts1.m_maxVelocity);
-//        c=query.getMinimumDistance(bcs);
-//        cout<<query<<traj<<br<<"\n";
-//        cout<<"abc is"<<a<<" "<<b<<" "<<c<<endl;
-
-
-//        if((b>a||c>a||std::isnan(b)||std::isnan(c))&&a!=std::numeric_limits<double>::max()) {
-//            cout << queries[0]->getMinimumDistance(trajs[i].second) << endl;
-//            cout << queries[0]->getMinimumDistance(brs) << endl;
-//            cout << queries[0]->getMinimumDistance(bcs) << endl;
-//        }
-        TrajStore ts2(file2,4096);
+        TrajStore ts2(diskfile2,4096);
         ts2.loadSegments(segs);
 
 
-        TrajMbrStream ds1;
-        ds1.feedTraj(&trajs);
-        ds1.rewind();
-        ISpatialIndex* real = RTree::createAndBulkLoadNewRTree(
-                RTree::BulkLoadMethod::BLM_STR, ds1, *file0, 0.9, 10000,100000, 3,RTree::RV_RSTAR, indexIdentifier0);
-        real->m_DataType=TrajectoryType;
+//        TrajMbrStream ds1;
+//        ds1.feedTraj(&trajs);
+//        ds1.rewind();
+//        ISpatialIndex* real = RTree::createAndBulkLoadNewRTree(
+//                RTree::BulkLoadMethod::BLM_STR, ds1, *file0, 0.9, 10000,100000, 3,RTree::RV_RSTAR, indexIdentifier0);
+//        real->m_DataType=TrajectoryType;
 
 
         ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,16,3,indexIdentifier1);
@@ -382,6 +369,9 @@ int main(){
         std::cerr<<"traj IO:"<<ts1.m_trajIO<<" "<<ts2.m_trajIO<<endl;
         std::cerr<<"total IO:"<<ts1.m_indexIO+ts1.m_trajIO<<" "<<ts2.m_indexIO+ts2.m_trajIO<<endl;
         std::cerr<<"bounding IO:"<<ts1.m_boundingVisited<<" "<<ts2.m_boundingVisited<<endl;
+        std::cerr<<"IO time:"<<dsm1->iotime<<" "<<dsm2->iotime<<"\n";
+        std::cerr<<"calculation time"<<calcuTime[0]<<" "<<calcuTime[1]<<"\n";
+        delete file0,file1,file2,diskfile0,diskfile1,diskfile2;
     }
     catch (Tools::Exception& e)
     {

@@ -7,6 +7,11 @@
 
 #include "ShapeList.h"
 
+extern double calcuTime[2];
+extern int testPhase;
+#define bip auto start = std::chrono::system_clock::now();
+#define bbip auto end = std::chrono::system_clock::now();auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);calcuTime[testPhase]+=double(duration.count()) * std::chrono::microseconds::period::num/ std::chrono::microseconds::period::den;
+
 namespace SpatialIndex
 {
     class SIDX_DLL Trajectory: public Tools::IObject, public virtual IShape{

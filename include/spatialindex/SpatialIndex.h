@@ -28,6 +28,7 @@
 #pragma once
 
 #include "tools/Tools.h"
+#include <chrono>
 
 #ifndef M_PI_2
 #define M_PI_2 1.57079632679489661922

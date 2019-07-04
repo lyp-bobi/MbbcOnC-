@@ -27,7 +27,7 @@
 
 #include <fstream>
 #include <cstring>
-
+#include <chrono>
 // For checking if a file exists - hobu
 #include <sys/stat.h>
 
@@ -349,6 +349,7 @@ void DiskStorageManager::flush()
 
 void DiskStorageManager::loadByteArray(const id_type page, uint32_t& len, uint8_t** data)
 {
+    auto start = std::chrono::system_clock::now();
 	std::map<id_type, Entry*>::iterator it = m_pageIndex.find(page);
 
 	if (it == m_pageIndex.end())
@@ -383,6 +384,10 @@ void DiskStorageManager::loadByteArray(const id_type page, uint32_t& len, uint8_
 		++cNext;
 	}
 	while (cNext < cTotal);
+    auto end = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    iotime+=double(duration.count()) * std::chrono::microseconds::period::num
+            / std::chrono::microseconds::period::den;
 }
 
 void DiskStorageManager::storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data)
