@@ -21,50 +21,50 @@ namespace SpatialIndex
         public:
             int m_is=0;
             int m_size=0;
-            TimePoint *m_front= nullptr;
-            TimePoint *m_back = nullptr;
-            std::vector<TimePoint> *m_vectorPointer;
+            STPoint *m_front= nullptr;
+            STPoint *m_back = nullptr;
+            std::vector<STPoint> *m_vectorPointer;
             ~fakeTpVector(){
                 delete(m_front);
                 delete(m_back);
             }
-            fakeTpVector(const std::vector<TimePoint> *vector,double ts,double te)
+            fakeTpVector(const std::vector<STPoint> *vector,double ts,double te)
             {
-                m_vectorPointer= const_cast<std::vector<TimePoint>*>(vector);
+                m_vectorPointer= const_cast<std::vector<STPoint>*>(vector);
                 if(ts==te) return;
-                if(ts>m_vectorPointer->back().m_startTime||te<m_vectorPointer->front().m_startTime) return;
+                if(ts>m_vectorPointer->back().m_time||te<m_vectorPointer->front().m_time) return;
                 m_is=0;
                 int m_ie=m_vectorPointer->size()-1;
-                while(m_vectorPointer->at(m_is).m_startTime<ts) m_is++;
-                while(m_vectorPointer->at(m_ie).m_startTime>te) m_ie--;
-                if(m_is!=0&&m_vectorPointer->at(m_is).m_startTime!=ts){
-                    double x=makemidmacro(m_vectorPointer->at(m_is-1).m_pCoords[0],m_vectorPointer->at(m_is-1).m_startTime,
-                                          m_vectorPointer->at(m_is).m_pCoords[0],m_vectorPointer->at(m_is).m_startTime,ts);
-                    double y=makemidmacro(m_vectorPointer->at(m_is-1).m_pCoords[1],m_vectorPointer->at(m_is-1).m_startTime,
-                                          m_vectorPointer->at(m_is).m_pCoords[1],m_vectorPointer->at(m_is).m_startTime,ts);
+                while(m_vectorPointer->at(m_is).m_time<ts) m_is++;
+                while(m_vectorPointer->at(m_ie).m_time>te) m_ie--;
+                if(m_is!=0&&m_vectorPointer->at(m_is).m_time!=ts){
+                    double x=makemidmacro(m_vectorPointer->at(m_is-1).m_pCoords[0],m_vectorPointer->at(m_is-1).m_time,
+                                          m_vectorPointer->at(m_is).m_pCoords[0],m_vectorPointer->at(m_is).m_time,ts);
+                    double y=makemidmacro(m_vectorPointer->at(m_is-1).m_pCoords[1],m_vectorPointer->at(m_is-1).m_time,
+                                          m_vectorPointer->at(m_is).m_pCoords[1],m_vectorPointer->at(m_is).m_time,ts);
                     double xy[2]={x,y};
-                    m_front=new TimePoint(xy,ts,ts,2);
+                    m_front=new STPoint(xy,ts,2);
                     m_is--;
                 }
-                if(m_ie!=m_vectorPointer->size()-1&&m_vectorPointer->at(m_ie).m_startTime!=te){
-                    double x=makemidmacro(m_vectorPointer->at(m_ie).m_pCoords[0],m_vectorPointer->at(m_ie).m_startTime,
-                                          m_vectorPointer->at(m_ie+1).m_pCoords[0],m_vectorPointer->at(m_ie+1).m_startTime,ts);
-                    double y=makemidmacro(m_vectorPointer->at(m_ie).m_pCoords[1],m_vectorPointer->at(m_ie).m_startTime,
-                                          m_vectorPointer->at(m_ie+1).m_pCoords[1],m_vectorPointer->at(m_ie+1).m_startTime,ts);
+                if(m_ie!=m_vectorPointer->size()-1&&m_vectorPointer->at(m_ie).m_time!=te){
+                    double x=makemidmacro(m_vectorPointer->at(m_ie).m_pCoords[0],m_vectorPointer->at(m_ie).m_time,
+                                          m_vectorPointer->at(m_ie+1).m_pCoords[0],m_vectorPointer->at(m_ie+1).m_time,ts);
+                    double y=makemidmacro(m_vectorPointer->at(m_ie).m_pCoords[1],m_vectorPointer->at(m_ie).m_time,
+                                          m_vectorPointer->at(m_ie+1).m_pCoords[1],m_vectorPointer->at(m_ie+1).m_time,ts);
                     double xy[2]={x,y};
-                    m_back=new TimePoint(xy,te,te,2);
+                    m_back=new STPoint(xy,te,2);
                     m_ie++;
                 }
                 m_size=m_ie-m_is+1;
             }
-            TimePoint& operator[](int n){
+            STPoint& operator[](int n){
                 if(n==0&&m_front!= nullptr) return *m_front;
                 if(n==m_is+m_size-1&&m_back!= nullptr) return *m_back;
                 return m_vectorPointer->at(m_is+n);
             }
         };
         Trajectory();
-        explicit Trajectory(std::vector<TimePoint> &in);
+        explicit Trajectory(std::vector<STPoint> &in);
         Trajectory(const Trajectory& in);
         Trajectory &operator=(const Trajectory &r);
 
@@ -98,7 +98,7 @@ namespace SpatialIndex
         virtual void getMBR(Region& out) const;
         virtual double getArea() const;
         virtual double getMinimumDistance(const IShape& in) const;
-        virtual double getMinimumDistance(const TimePoint& in) const;
+        virtual double getMinimumDistance(const STPoint& in) const;
         virtual double getMinimumDistance(const Region& in) const;
         virtual double getMinimumDistance(const MBC& in) const;
         virtual double getMinimumDistance(const SBR& in) const;
@@ -121,23 +121,23 @@ namespace SpatialIndex
         virtual void getMBC(MBC& out) const;
         virtual void getMBRfull(Region& out) const;
         virtual void getTimeMBR(TimeRegion& out) const;
-        TimePoint getPointAtTime(double time) const;
-        static std::vector<SpatialIndex::TimePoint> simplifyWithRDP(std::vector<SpatialIndex::TimePoint>& Points, double threshold);
-        std::vector<Trajectory> cuttraj(std::vector<SpatialIndex::TimePoint>);
+        STPoint getPointAtTime(double time) const;
+        static std::vector<SpatialIndex::STPoint> simplifyWithRDP(std::vector<SpatialIndex::STPoint>& Points, double threshold);
+        std::vector<Trajectory> cuttraj(std::vector<SpatialIndex::STPoint>);
         std::vector<Trajectory> getSegments(double threshold);
         void linkTrajectory(Trajectory other);
 
-        double m_startTime() const{return m_points.front().m_startTime;}
-        double m_endTime() const { return m_points.back().m_startTime;}
+        double m_startTime() const{return m_points.front().m_time;}
+        double m_endTime() const { return m_points.back().m_time;}
 
         void loadFromString(std::string s);
 
-        static double line2lineDistance(const TimePoint &p1s,const TimePoint &p1e,const TimePoint &p2s,const TimePoint &p2e);
-        static double line2MBRDistance(const TimePoint &ps,const TimePoint &pe,const Region &r);
-        static double line2MBRDistance_impl(const TimePoint &ps,const TimePoint &pe,const Region &r,int sr);
-        static double line2MBCDistance(const TimePoint &ps,const TimePoint &pe,const MBC &r);
+        static double line2lineDistance(const STPoint &p1s,const STPoint &p1e,const STPoint &p2s,const STPoint &p2e);
+        static double line2MBRDistance(const STPoint &ps,const STPoint &pe,const Region &r);
+        static double line2MBRDistance_impl(const STPoint &ps,const STPoint &pe,const Region &r,int sr);
+        static double line2MBCDistance(const STPoint &ps,const STPoint &pe,const MBC &r);
 
-        std::vector<TimePoint> m_points;
+        std::vector<STPoint> m_points;
 
         friend SIDX_DLL std::ostream& operator<<(std::ostream& os,const Trajectory &r);
 

@@ -540,11 +540,12 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
 {
 //	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
     const Trajectory *queryTraj;
-    if(m_DataType==TrajectoryType)
-        queryTraj= dynamic_cast<const Trajectory*>(&query);
-    if(queryTraj == nullptr||queryTraj->m_points.size()<2) {
-        std::cerr << "bad query traj\n";
-        return;
+    if(m_DataType==TrajectoryType) {
+        queryTraj = dynamic_cast<const Trajectory *>(&query);
+        if (queryTraj == nullptr||queryTraj->m_points.size()<2) {
+            std::cerr << "bad query traj\n";
+            return;
+        }
     }
 #ifdef HAVE_PTHREAD_H
 	Tools::LockGuard lock(&m_lock);
@@ -605,21 +606,21 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
         }
         else
         {
-            if(m_bUsingTrajStore&&pFirst->m_type==0){
+            if(m_DataType==TrajectoryType&&m_bUsingTrajStore&&pFirst->m_type==0){
                 //load ShapeList<MBC>, aka retrieve MBCs
                 id_type trajId=m_ts->getTrajId(pFirst->m_id);
                 if(insertedTrajId[trajId]==1){}
                 else {
-                    ShapeList bcs = m_ts->getMBCsByTime(pFirst->m_id, queryTraj->m_points.front().m_startTime,
-                                                        queryTraj->m_points.back().m_startTime);
+                    ShapeList bcs = m_ts->getMBCsByTime(pFirst->m_id, queryTraj->m_points.front().m_time,
+                                                        queryTraj->m_points.back().m_time);
                     queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, bcs), 1));
                     insertedTrajId[trajId]=1;
                 }
 //                std::cerr<<nnc.getMinimumDistance(query, bcs)<<"\n";
             }
-            else if(m_bUsingTrajStore&&pFirst->m_type==1){
+            else if(m_DataType==TrajectoryType&&m_bUsingTrajStore&&pFirst->m_type==1){
                 //load Trajectory
-                Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_startTime,queryTraj->m_points.back().m_startTime);
+                Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_time,queryTraj->m_points.back().m_time);
                 queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, traj),2));
             }
             else {

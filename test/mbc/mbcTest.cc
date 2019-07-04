@@ -221,10 +221,10 @@ vector<pair<id_type ,Trajectory> >  loadGTToTrajs(){
         }
         trajs.erase(id);
         if(traj.size()>=10){
-            vector<TimePoint> tps;
+            vector<STPoint> tps;
             for(auto p:traj){
                 double xy[]={p.x,p.y};
-                tps.emplace_back(TimePoint(xy, p.t, p.t, dimension));
+                tps.emplace_back(STPoint(xy, p.t, dimension));
             }
             if(!tps.empty()){
                 res.emplace_back(make_pair(id,Trajectory(tps)));
@@ -321,8 +321,8 @@ int main(){
                 *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096);
         // Create a new storage manager with the provided base name and a 4K page size.
         StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 100, false),
-                *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 100, false),
-                *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 100, false);
+                *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
+                *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
         StorageManager::DiskStorageManager *dsm1,*dsm2;
         dsm1= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile1);
@@ -342,13 +342,14 @@ int main(){
 //        real->m_DataType=TrajectoryType;
 
 
-        ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,16,3,indexIdentifier1);
-        ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,16,3,indexIdentifier2);
+        ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,64,3,indexIdentifier1);
+        ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,64,3,indexIdentifier2);
         cerr << "start query!" << endl << endl << endl;
 
 //        TreeQueryBatch(real,queries);
         TreeQueryBatch(r, queries,&ts1);
         TreeQueryBatch(rc, queries,&ts2);
+
 //        double aa,bb,oo;
 //        for(int j=0;j<queries.size();j++){
 //            auto q=queries[j];
@@ -371,7 +372,8 @@ int main(){
         std::cerr<<"bounding IO:"<<ts1.m_boundingVisited<<" "<<ts2.m_boundingVisited<<endl;
         std::cerr<<"IO time:"<<dsm1->iotime<<" "<<dsm2->iotime<<"\n";
         std::cerr<<"calculation time"<<calcuTime[0]<<" "<<calcuTime[1]<<"\n";
-        delete file0,file1,file2,diskfile0,diskfile1,diskfile2;
+        delete file0;delete file1;delete file2;
+        delete diskfile0;delete diskfile1;delete diskfile2;
     }
     catch (Tools::Exception& e)
     {

@@ -259,6 +259,7 @@ namespace SpatialIndex
 #include "Region.h"
 #include "LineSegment.h"
 #include "TimePoint.h"
+#include "STPoint.h"
 #include "TimeRegion.h"
 #include "MovingPoint.h"
 #include "MovingRegion.h"

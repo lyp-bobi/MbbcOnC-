@@ -149,8 +149,8 @@ void SBR::getVMBR(Region& out) const{
     throw Tools::NotSupportedException("SBR::getVMBR:not supported");
 }
 void SBR::getMBRAtTime(double t, SpatialIndex::Region &out) const {
-//    TimePoint *tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
-//                                      TimePoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
+//    STPoint *tp = STPoint::makemid(STPoint(m_pLow, m_startTime, m_startTime, m_dimension),
+//                                      STPoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
 //    Point plow = *tp, phigh = *tp;
     double x=makemidmacro(m_pLow[0],m_startTime,m_pHigh[0],m_endTime,t);
     double y=makemidmacro(m_pLow[1],m_startTime,m_pHigh[1],m_endTime,t);
@@ -170,8 +170,8 @@ void SBR::getMBRAtTime(double t, SpatialIndex::Region &out) const {
 //
 bool SBR::intersectsShape(const SpatialIndex::IShape& s) const {
 
-    const TimePoint* ptp = dynamic_cast<const TimePoint*>(&s);
-    if (ptp != 0) return intersectsTimePoint(*ptp);
+    const STPoint* ptp = dynamic_cast<const STPoint*>(&s);
+    if (ptp != 0) return intersectsSTPoint(*ptp);
 
     const Region* pr = dynamic_cast<const Region*>(&s);
     if (pr != 0) return intersectsRegion(*pr);
@@ -191,9 +191,9 @@ bool SBR::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     getMBRAtTime(in.m_startTime,r);
     return r.intersectsRegion(in);
 }
-bool SBR::intersectsTimePoint(const SpatialIndex::TimePoint &in) const {
+bool SBR::intersectsSTPoint(const SpatialIndex::STPoint &in) const {
     Region r;
-    getMBRAtTime(in.m_startTime,r);
+    getMBRAtTime(in.m_time,r);
     return r.containsPoint(in);
 }
 bool SBR::intersectsRegion(const SpatialIndex::Region &in) const {
@@ -250,7 +250,7 @@ double SBR::getArea() const{
     return res;
 }
 double SBR::getMinimumDistance(const IShape& in) const{
-    const TimePoint* ptp = dynamic_cast<const TimePoint*>(&in);
+    const STPoint* ptp = dynamic_cast<const STPoint*>(&in);
     if (ptp != 0) return getMinimumDistance(*ptp);
     const Region* pr = dynamic_cast<const Region*>(&in);
     if (pr != 0) return getMinimumDistance(*pr);
@@ -263,9 +263,9 @@ double SBR::getMinimumDistance(const IShape& in) const{
 double SBR::getMinimumDistance(const SpatialIndex::Region &in) const {
     throw Tools::NotSupportedException("");
 }
-double SBR::getMinimumDistance(const SpatialIndex::TimePoint &in) const {
+double SBR::getMinimumDistance(const SpatialIndex::STPoint &in) const {
     Region r;
-    getMBRAtTime(in.m_startTime,r);
+    getMBRAtTime(in.m_time,r);
     return r.getMinimumDistance(in);
 }
 

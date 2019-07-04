@@ -533,14 +533,14 @@ const Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double ten
     traj=getTraj(id);
 //    traj.loadFromByteArray(data);
     Entry tmpe=e;
-    while(tmpe.m_pvId>=0 && traj.m_points.front().m_startTime>=tstart){
+    while(tmpe.m_pvId>=0 && traj.m_points.front().m_time>=tstart){
         tmptraj=getTraj(tmpe.m_pvId);
         it=m_entries.find(tmpe.m_pvId);
         tmpe=*(it->second);
         traj.linkTrajectory(tmptraj);
     }
     tmpe=e;
-    while(tmpe.m_ntId>=0 && traj.m_points.back().m_startTime<=tend){
+    while(tmpe.m_ntId>=0 && traj.m_points.back().m_time<=tend){
         tmptraj=getTraj(tmpe.m_ntId);
         it=m_entries.find(tmpe.m_ntId);
         tmpe=*(it->second);

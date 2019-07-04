@@ -596,8 +596,8 @@ void SpatialIndex::SBRTree::SBRTree::nearestNeighborQuery(uint32_t k, const ISha
                 id_type trajId=m_ts->getTrajId(pFirst->m_id);
                 if(insertedTrajId[trajId]==1){}
                 else {
-                    ShapeList bcs = m_ts->getMBCsByTime(pFirst->m_id, queryTraj->m_points.front().m_startTime,
-                                                        queryTraj->m_points.back().m_startTime);
+                    ShapeList bcs = m_ts->getMBCsByTime(pFirst->m_id, queryTraj->m_points.front().m_time,
+                                                        queryTraj->m_points.back().m_time);
                     queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, bcs), 1));
                     insertedTrajId[trajId]=1;
                 }
@@ -605,7 +605,7 @@ void SpatialIndex::SBRTree::SBRTree::nearestNeighborQuery(uint32_t k, const ISha
             }
             else if(m_bUsingTrajStore&&pFirst->m_type==1){
                 //load Trajectory
-                Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_startTime,queryTraj->m_points.back().m_startTime);
+                Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_time,queryTraj->m_points.back().m_time);
                 queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, traj),2));
             }
             else {

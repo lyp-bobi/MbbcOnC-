@@ -121,7 +121,7 @@ void MovingPoint::initialize(
 	m_endTime = tEnd;
 	m_pCoords = 0;
 
-	if (m_endTime <= m_startTime) 
+	if (m_endTime <= m_startTime)
 		throw Tools::IllegalArgumentException("MovingPoint: Cannot support degenerate time intervals.");
 
 	try

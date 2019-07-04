@@ -163,8 +163,8 @@ void MBC::getVMBR(Region& out) const{
     }
 }
 void MBC::getMBRAtTime(double t, SpatialIndex::Region &out) const {
-//    TimePoint *tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
-//                                      TimePoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
+//    STPoint *tp = STPoint::makemid(STPoint(m_pLow, m_startTime, m_startTime, m_dimension),
+//                                      STPoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
 //    Point plow = *tp, phigh = *tp;
     double x=makemidmacro(m_pLow[0],m_startTime,m_pHigh[0],m_endTime,t);
     double y=makemidmacro(m_pLow[1],m_startTime,m_pHigh[1],m_endTime,t);
@@ -186,12 +186,12 @@ void MBC::getMBRAtTime(double t, SpatialIndex::Region &out) const {
 }
 
 
-std::pair<TimePoint,double> MBC::getCenterRdAtTime(double t) const {
+std::pair<STPoint,double> MBC::getCenterRdAtTime(double t) const {
     double x=makemidmacro(m_pLow[0],m_startTime,m_pHigh[0],m_endTime,t);
     double y=makemidmacro(m_pLow[1],m_startTime,m_pHigh[1],m_endTime,t);
     double coord[2]={x,y};
-//    TimePoint *tp = TimePoint::makemid(TimePoint(m_pLow, m_startTime, m_startTime, m_dimension),
-//                                      TimePoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
+//    STPoint *tp = STPoint::makemid(STPoint(m_pLow, m_startTime, m_startTime, m_dimension),
+//                                      STPoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
 //    Point plow = *tp, phigh = *tp;
     double r;
     if(std::isfinite(m_rv)) {
@@ -199,7 +199,7 @@ std::pair<TimePoint,double> MBC::getCenterRdAtTime(double t) const {
     }else{
         r=m_rd;
     }
-    TimePoint tp(coord,t,t,2);
+    STPoint tp(coord,t,2);
     return std::make_pair(tp,r);
 }
 
@@ -208,8 +208,8 @@ std::pair<TimePoint,double> MBC::getCenterRdAtTime(double t) const {
 //
 bool MBC::intersectsShape(const SpatialIndex::IShape& s) const {
 
-    const TimePoint* ptp = dynamic_cast<const TimePoint*>(&s);
-    if (ptp != 0) return intersectsTimePoint(*ptp);
+    const STPoint* ptp = dynamic_cast<const STPoint*>(&s);
+    if (ptp != 0) return intersectsSTPoint(*ptp);
 
     const Region* pr = dynamic_cast<const Region*>(&s);
     if (pr != 0) return intersectsRegion(*pr);
@@ -229,8 +229,8 @@ bool MBC::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     auto timed=getCenterRdAtTime(in.m_startTime);
     return timed.first.getMinimumDistance(in)<timed.second;
 }
-bool MBC::intersectsTimePoint(const SpatialIndex::TimePoint &in) const {
-    auto timed=getCenterRdAtTime(in.m_startTime);
+bool MBC::intersectsSTPoint(const SpatialIndex::STPoint &in) const {
+    auto timed=getCenterRdAtTime(in.m_time);
     return timed.first.getMinimumDistance(in)<timed.second;
 }
 bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
@@ -297,7 +297,7 @@ double MBC::getArea() const{
     return res;
 }
 double MBC::getMinimumDistance(const IShape& in) const{
-    const TimePoint* ptp = dynamic_cast<const TimePoint*>(&in);
+    const STPoint* ptp = dynamic_cast<const STPoint*>(&in);
     if (ptp != 0) return getMinimumDistance(*ptp);
     const Region* pr = dynamic_cast<const Region*>(&in);
     if (pr != 0) return getMinimumDistance(*pr);
@@ -311,8 +311,8 @@ double MBC::getMinimumDistance(const IShape& in) const{
 double MBC::getMinimumDistance(const SpatialIndex::Region &in) const {
     throw Tools::NotSupportedException("");
 }
-double MBC::getMinimumDistance(const SpatialIndex::TimePoint &in) const {
-    auto timed=getCenterRdAtTime(in.m_startTime);
+double MBC::getMinimumDistance(const SpatialIndex::STPoint &in) const {
+    auto timed=getCenterRdAtTime(in.m_time);
     double d=in.getMinimumDistance(timed.first);
     if(d<timed.second) return 0;
     else return d-timed.second;

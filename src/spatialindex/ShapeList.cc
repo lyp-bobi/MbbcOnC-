@@ -15,8 +15,8 @@ ShapeList::ShapeList(const SpatialIndex::ShapeList &in) {
 }
 uint32_t ShapeList::getByteArraySize() const {
     int size= 2*sizeof(uint32_t)+sizeof(id_type);
-    for(auto s:m_MBRList) size+=s->getByteArraySize();
-    for(auto s:m_MBCList) size+=s->getByteArraySize();
+    for(const auto &s:m_MBRList) size+=s->getByteArraySize();
+    for(const auto &s:m_MBCList) size+=s->getByteArraySize();
     return size;
 }
 

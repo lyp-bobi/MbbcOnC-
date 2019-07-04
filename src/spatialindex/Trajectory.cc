@@ -20,7 +20,7 @@ using std::sqrt;
 
 Trajectory::Trajectory() {
 }
-Trajectory::Trajectory(std::vector<SpatialIndex::TimePoint>& in) {
+Trajectory::Trajectory(std::vector<SpatialIndex::STPoint>& in) {
     m_points=in;
 }
 
@@ -61,7 +61,7 @@ void Trajectory::loadFromByteArray(const uint8_t* ptr) {
     unsigned long size;
     memcpy(&size, ptr, sizeof(unsigned long));
     ptr += sizeof(unsigned long);
-    std::vector<TimePoint> p(size);
+    std::vector<STPoint> p(size);
     for(int i=0;i<size;i++){
         p[i].loadFromByteArray(ptr);
         if(i!=size-1){
@@ -111,8 +111,8 @@ bool Trajectory::intersectsShape(const SpatialIndex::IShape& s) const {
     );
 }
 
-TimePoint Trajectory::getPointAtTime(const double time) const {
-    if(time<m_points.front().m_startTime||time>m_points.back().m_endTime){
+STPoint Trajectory::getPointAtTime(const double time) const {
+    if(time<m_points.front().m_time||time>m_points.back().m_time){
         throw Tools::IllegalArgumentException(
                 "Trajectory::getPointAtTime: time"+std::to_string(time)+"is illegal."
                 );}
@@ -120,26 +120,26 @@ TimePoint Trajectory::getPointAtTime(const double time) const {
         return m_points[0];
     }
     auto pre =m_points.begin(),next=m_points.begin();
-    while(next->m_startTime-pre->m_startTime<0.01) next++;
-    while(next->m_startTime<time&&next!=m_points.end()){
+    while(next->m_time-pre->m_time<0.01) next++;
+    while(next->m_time<time&&next!=m_points.end()){
         pre=next;
-        while(next->m_startTime-pre->m_startTime<0.01) next++;
+        while(next->m_time-pre->m_time<0.01) next++;
     }
-    double h1= (time-pre->m_startTime)/(next->m_startTime-pre->m_startTime);
-    double h2= (next->m_startTime-time)/(next->m_startTime-pre->m_startTime);
+    double h1= (time-pre->m_time)/(next->m_time-pre->m_time);
+    double h2= (next->m_time-time)/(next->m_time-pre->m_time);
     double *coords= new double[m_dimension];
     for (int i = 0; i < m_dimension; ++i) {
         coords[i]=h2*pre->m_pCoords[i]+h1*next->m_pCoords[i];
     }
-    return TimePoint(coords,time,time,m_dimension);
+    return STPoint(coords,time,m_dimension);
 }
 
 bool Trajectory::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     if(in.m_startTime==in.m_endTime){//time slice
-        if(in.m_startTime<m_points.front().m_startTime||in.m_startTime>m_points.back().m_endTime){
+        if(in.m_startTime<m_points.front().m_time||in.m_startTime>m_points.back().m_time){
             return false;
         }
-        TimePoint tp=getPointAtTime(in.m_startTime);
+        STPoint tp=getPointAtTime(in.m_startTime);
         return tp.intersectsShape(in);
     }else{
         throw Tools::NotSupportedException("time interval range not supported");
@@ -148,10 +148,10 @@ bool Trajectory::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const 
 bool Trajectory::intersectsRegion(const Region& in) const{
     if(m_dimension==in.m_dimension-1){
         Region spatial(in.m_pLow,in.m_pHigh,m_dimension);
-        if(in.m_pHigh[m_dimension]<m_points.front().m_startTime||in.m_pLow[m_dimension]>m_points.back().m_endTime){
+        if(in.m_pHigh[m_dimension]<m_points.front().m_time||in.m_pLow[m_dimension]>m_points.back().m_time){
             return false;
         }
-        TimePoint tp=getPointAtTime(in.m_pLow[m_dimension]);
+        STPoint tp=getPointAtTime(in.m_pLow[m_dimension]);
         return tp.intersectsShape(spatial);
     }
     else if(m_dimension==in.m_dimension) {
@@ -198,15 +198,15 @@ void Trajectory::getMBC(SpatialIndex::MBC &out) const {
         out.makeInfinite(m_dimension+1);
         return;
     }
-    double startx=m_points[0].m_pCoords[0],starty=m_points[0].m_pCoords[1],startt=m_points[0].m_startTime;
-    double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_startTime;
+    double startx=m_points[0].m_pCoords[0],starty=m_points[0].m_pCoords[1],startt=m_points[0].m_time;
+    double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_time;
     double avx=(endx-startx)/(endt-startt),avy=(endy-starty)/(endt-startt);
-    TimePoint p1=*m_points.begin(),p2=m_points.back();
+    STPoint p1=*m_points.begin(),p2=m_points.back();
     double rd=0,rv=0;
     double vx,vy;
     for(int i=0;i<m_points.size();i++){
-        TimePoint p;
-        double ptime=m_points[i].m_startTime;
+        STPoint p;
+        double ptime=m_points[i].m_time;
         double prd,prv;
         if(ptime-startt>0){
             vx=(m_points[i].m_pCoords[0]-startx)/(ptime-startt);
@@ -214,13 +214,13 @@ void Trajectory::getMBC(SpatialIndex::MBC &out) const {
             prv=std::sqrt((vx-avx)*(vx-avx)+(vy-avy)*(vy-avy));
             if(prv>rv) rv=prv;
         }
-        if(endt-m_points[i].m_startTime>0) {
+        if(endt-m_points[i].m_time>0) {
             vx = (endx - m_points[i].m_pCoords[0]) / (endt - ptime);
             vy = (endy - m_points[i].m_pCoords[1]) / (endt - ptime);
             prv=std::sqrt((vx-avx)*(vx-avx)+(vy-avy)*(vy-avy));
             if(prv>rv) rv=prv;
         }
-        prd=m_points[i].getMinimumDistance(*TimePoint::makemid(p1,p2,ptime));
+        prd=m_points[i].getMinimumDistance(*STPoint::makemid(p1,p2,ptime));
         if(prd>rd) rd=prd;
     }
     out=MBC(p1.m_pCoords,p2.m_pCoords,startt,endt,m_dimension,rd,rv);
@@ -231,7 +231,7 @@ void Trajectory::getMBRfull(SpatialIndex::Region &out) const {
     double *pc=new double[m_dimension+1];
     for(int i=0;i<m_points.size();i++){
         for(int d=0;d<m_dimension;d++) pc[d]=m_points[i].m_pCoords[d];
-        pc[m_dimension]=m_points[i].m_startTime;
+        pc[m_dimension]=m_points[i].m_time;
         out.combinePoint(Point(pc,m_dimension+1));
 //        std::cout<<out<<std::endl;
     }
@@ -242,20 +242,20 @@ void Trajectory::getTimeMBR(SpatialIndex::TimeRegion &out) const {
     out.makeInfinite(m_dimension);
     for(int i=0;i<m_points.size();i++){
         out.combinePoint(m_points[i]);
-        if(m_points[i].m_startTime<out.m_startTime) out.m_startTime=m_points[i].m_startTime;
-        if(m_points[i].m_startTime>out.m_endTime) out.m_endTime=m_points[i].m_startTime;
+        if(m_points[i].m_time<out.m_startTime) out.m_startTime=m_points[i].m_time;
+        if(m_points[i].m_time>out.m_endTime) out.m_endTime=m_points[i].m_time;
     }
 }
 
-const std::pair<int, double> findMaximumDistance(const vector<SpatialIndex::TimePoint>& points) {
-    SpatialIndex::TimePoint firstpoint=points[0];
-    SpatialIndex::TimePoint lastpoint=points[points.size()-1];
+const std::pair<int, double> findMaximumDistance(const vector<SpatialIndex::STPoint>& points) {
+    SpatialIndex::STPoint firstpoint=points[0];
+    SpatialIndex::STPoint lastpoint=points[points.size()-1];
     int index=0;  //index to be returned
     double Mdist=-1; //the Maximum distance to be returned
 
     //distance calculation
     for(int i=1;i<points.size()-1;i++){ //traverse through second point to second last point
-        double Dist=SpatialIndex::TimePoint::makemid(firstpoint,lastpoint,points[i].m_startTime)->getMinimumDistance(points[i]);
+        double Dist=SpatialIndex::STPoint::makemid(firstpoint,lastpoint,points[i].m_time)->getMinimumDistance(points[i]);
         if (Dist>Mdist){
             Mdist=Dist;
             index=i;
@@ -263,7 +263,7 @@ const std::pair<int, double> findMaximumDistance(const vector<SpatialIndex::Time
     }
     return std::make_pair(index, Mdist);
 }
-std::vector<SpatialIndex::TimePoint> Trajectory::simplifyWithRDP(std::vector<SpatialIndex::TimePoint> &Points,
+std::vector<SpatialIndex::STPoint> Trajectory::simplifyWithRDP(std::vector<SpatialIndex::STPoint> &Points,
                                                                  double epsilon) {
     if(Points.size()<3){  //base case 1
         return Points;
@@ -271,28 +271,28 @@ std::vector<SpatialIndex::TimePoint> Trajectory::simplifyWithRDP(std::vector<Spa
     std::pair<int, double> maxDistance=findMaximumDistance(Points);
     if(maxDistance.second>=epsilon){
         int index=maxDistance.first;
-        vector<SpatialIndex::TimePoint>::iterator it=Points.begin();
-        vector<SpatialIndex::TimePoint> path1(Points.begin(),it+index+1); //new path l1 from 0 to index
-        vector<SpatialIndex::TimePoint> path2(it+index,Points.end()); // new path l2 from index to last
+        vector<SpatialIndex::STPoint>::iterator it=Points.begin();
+        vector<SpatialIndex::STPoint> path1(Points.begin(),it+index+1); //new path l1 from 0 to index
+        vector<SpatialIndex::STPoint> path2(it+index,Points.end()); // new path l2 from index to last
 
-        vector<SpatialIndex::TimePoint> r1 =simplifyWithRDP(path1,epsilon);
-        vector<SpatialIndex::TimePoint> r2=simplifyWithRDP(path2,epsilon);
+        vector<SpatialIndex::STPoint> r1 =simplifyWithRDP(path1,epsilon);
+        vector<SpatialIndex::STPoint> r2=simplifyWithRDP(path2,epsilon);
 
         //Concat simplified path1 and path2 together
-        vector<SpatialIndex::TimePoint> rs(r1);
+        vector<SpatialIndex::STPoint> rs(r1);
         rs.pop_back();
         rs.insert(rs.end(),r2.begin(),r2.end());
         return rs;
     }
     else { //base case 2, all points between are to be removed.
-        vector<SpatialIndex::TimePoint> r(1,Points[0]);
+        vector<SpatialIndex::STPoint> r(1,Points[0]);
         r.emplace_back(Points[Points.size()-1]);
         return r;
     }
 }
 
-std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::TimePoint> mask){
-    vector<TimePoint> seg;
+std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::STPoint> mask){
+    vector<STPoint> seg;
     vector<Trajectory> res;
     auto iter1=m_points.begin();
     auto iter2=mask.begin();
@@ -300,7 +300,7 @@ std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::TimePoint>
     iter2++;
     for(;iter2!=mask.end();iter2++){
         seg.clear();
-        while(iter1!=m_points.end()&&iter1->m_startTime<=iter2->m_startTime){
+        while(iter1!=m_points.end()&&iter1->m_time<=iter2->m_time){
 //            std::cerr<<"placed"<<*iter1<<"\n";
             seg.emplace_back(*iter1);
             iter1++;
@@ -344,11 +344,11 @@ double theD(double c1,double c2,double c3,double c4,double t){
 }
 
 
-double Trajectory::line2lineDistance(const SpatialIndex::TimePoint &p1s, const SpatialIndex::TimePoint &p1e,
-                                const SpatialIndex::TimePoint &p2s, const SpatialIndex::TimePoint &p2e) {
-    if(p1s.m_startTime!=p2s.m_startTime|p1e.m_startTime!=p2e.m_startTime)
+double Trajectory::line2lineDistance(const SpatialIndex::STPoint &p1s, const SpatialIndex::STPoint &p1e,
+                                const SpatialIndex::STPoint &p2s, const SpatialIndex::STPoint &p2e) {
+    if(p1s.m_time!=p2s.m_time|p1e.m_time!=p2e.m_time)
         throw Tools::IllegalStateException("line2lineDistance: time period not the same");
-    double ts = p1s.m_startTime, te = p1e.m_endTime;
+    double ts = p1s.m_time, te = p1e.m_time;
     double dxs=p1s.m_pCoords[0]-p2s.m_pCoords[0];
     double dys=p1s.m_pCoords[1]-p2s.m_pCoords[1];
     double dxe=p1e.m_pCoords[0]-p2e.m_pCoords[0];
@@ -389,7 +389,7 @@ int getRealm(const SpatialIndex::Region &r,const Point &p1,const Point &p2){
     return res;
 }
 
-TimePoint* cutByLine(const SpatialIndex::TimePoint &ps, const SpatialIndex::TimePoint &pe,double value,int axis){
+STPoint* cutByLine(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,double value,int axis){
     int otheraxis=1-axis;
     double axisv1=ps.m_pCoords[axis],axisv2=pe.m_pCoords[axis];
     if((axisv1<value)==(axisv2<value)||std::fabs(axisv1-value)<1e-7||std::fabs(axisv2-value)<1e-7) //need no cut
@@ -403,23 +403,23 @@ TimePoint* cutByLine(const SpatialIndex::TimePoint &ps, const SpatialIndex::Time
         if(axis==0) {
             xyt[0]=value;
             xyt[1]=d2 * ps.m_pCoords[otheraxis] + d1 * pe.m_pCoords[otheraxis];
-            xyt[2]=d2 * ps.m_startTime + d1 * pe.m_endTime;
+            xyt[2]=d2 * ps.m_time + d1 * pe.m_time;
         }else{
             xyt[0]=d2 * ps.m_pCoords[otheraxis] + d1 * pe.m_pCoords[otheraxis];
             xyt[1]=value;
-            xyt[2]=d2 * ps.m_startTime + d1 * pe.m_endTime;
+            xyt[2]=d2 * ps.m_time + d1 * pe.m_time;
         }
-        return new TimePoint(xyt, xyt[2], xyt[2], 2);
+        return new STPoint(xyt, xyt[2], 2);
     }
 }
-std::vector<std::pair<TimePoint,TimePoint>> cutByRealm(const SpatialIndex::TimePoint &ps, const SpatialIndex::TimePoint &pe,
+std::vector<std::pair<STPoint,STPoint>> cutByRealm(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                                      const SpatialIndex::Region &r){
     double xd1=r.m_pLow[0],xd2=r.m_pHigh[0],yd1=r.m_pLow[1],yd2=r.m_pHigh[1];
-    std::vector<std::pair<TimePoint,TimePoint>> res;
-    std::vector<std::pair<TimePoint,TimePoint>> tmp;
+    std::vector<std::pair<STPoint,STPoint>> res;
+    std::vector<std::pair<STPoint,STPoint>> tmp;
     res.emplace_back(std::make_pair(ps,pe));
-    for(auto line:res){
-        TimePoint *tp=cutByLine(line.first,line.second,xd1,0);
+    for(const auto &line:res){
+        STPoint *tp=cutByLine(line.first,line.second,xd1,0);
         if(tp!= nullptr){
             tmp.emplace_back(std::make_pair(line.first,*tp));
             tmp.emplace_back(std::make_pair(*tp,line.second));
@@ -429,8 +429,8 @@ std::vector<std::pair<TimePoint,TimePoint>> cutByRealm(const SpatialIndex::TimeP
         }
     }
     res=tmp;tmp.clear();
-    for(auto line:res){
-        TimePoint *tp=cutByLine(line.first,line.second,xd2,0);
+    for(const auto &line:res){
+        STPoint *tp=cutByLine(line.first,line.second,xd2,0);
         if(tp!= nullptr){
             tmp.emplace_back(std::make_pair(line.first,*tp));
             tmp.emplace_back(std::make_pair(*tp,line.second));
@@ -440,8 +440,8 @@ std::vector<std::pair<TimePoint,TimePoint>> cutByRealm(const SpatialIndex::TimeP
         }
     }
     res=tmp;tmp.clear();
-    for(auto line:res){
-        TimePoint *tp=cutByLine(line.first,line.second,yd1,1);
+    for(const auto &line:res){
+        STPoint *tp=cutByLine(line.first,line.second,yd1,1);
         if(tp!= nullptr){
             tmp.emplace_back(std::make_pair(line.first,*tp));
             tmp.emplace_back(std::make_pair(*tp,line.second));
@@ -451,8 +451,8 @@ std::vector<std::pair<TimePoint,TimePoint>> cutByRealm(const SpatialIndex::TimeP
         }
     }
     res=tmp;tmp.clear();
-    for(auto line:res){
-        TimePoint *tp=cutByLine(line.first,line.second,yd2,1);
+    for(const auto &line:res){
+        STPoint *tp=cutByLine(line.first,line.second,yd2,1);
         if(tp!= nullptr){
             tmp.emplace_back(std::make_pair(line.first,*tp));
             tmp.emplace_back(std::make_pair(*tp,line.second));
@@ -467,9 +467,9 @@ std::vector<std::pair<TimePoint,TimePoint>> cutByRealm(const SpatialIndex::TimeP
 //    }
     return res;
 }
-double Trajectory::line2MBRDistance_impl(const SpatialIndex::TimePoint &ps, const SpatialIndex::TimePoint &pe,
+double Trajectory::line2MBRDistance_impl(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                     const SpatialIndex::Region &r,int sr) {
-    double ts = ps.m_startTime, te = pe.m_startTime;
+    double ts = ps.m_time, te = pe.m_time;
     if(std::fabs(te-ts)<1e-7) return 0;
     Region r_2d=Region(r.m_pLow,r.m_pHigh,2);
     double res;
@@ -484,15 +484,15 @@ double Trajectory::line2MBRDistance_impl(const SpatialIndex::TimePoint &ps, cons
         if (sr == 1 || sr == 3) py = r.m_pLow[1];
         else py = r.m_pHigh[1];
         double coord[2]={px,py};
-        return line2lineDistance(ps,pe,TimePoint(coord,ts,ts,2),TimePoint(coord,te,te,2));
+        return line2lineDistance(ps,pe,STPoint(coord,ts,2),STPoint(coord,te,2));
     }
 }
 
-double Trajectory::line2MBRDistance(const SpatialIndex::TimePoint &ps, const SpatialIndex::TimePoint &pe,
+double Trajectory::line2MBRDistance(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                     const SpatialIndex::Region &r) {
     //the line's time period should be in the MBR's time period
-    assert(r.m_pLow[m_dimension]<=ps.m_startTime);
-    assert(r.m_pHigh[m_dimension]>=pe.m_startTime);
+    assert(r.m_pLow[m_dimension]<=ps.m_time);
+    assert(r.m_pHigh[m_dimension]>=pe.m_time);
     //check if need cutting
     int sr=getRealm(r,ps,pe);
     if(sr>0){
@@ -532,28 +532,28 @@ inline double mbcArea(double t0,double t3,double rd,double rv,double ts,double t
     return sum;
 }
 
-double Trajectory::line2MBCDistance(const SpatialIndex::TimePoint &ps, const SpatialIndex::TimePoint &pe,
+double Trajectory::line2MBCDistance(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                     const SpatialIndex::MBC &r) {
 ////    auto pr1=r.getCenterRdAtTime(ps.m_startTime),
 ////        pr2=r.getCenterRdAtTime(pe.m_startTime);
 //  simple version
     double x1=r.m_pLow[0],y1=r.m_pLow[1],t1=r.m_startTime;
     double x2=r.m_pHigh[0],y2=r.m_pHigh[1],t2=r.m_endTime;
-    double xts=makemidmacro(x1,t1,x2,t2,ps.m_startTime),xte=makemidmacro(x1,t1,x2,t2,pe.m_startTime);
-    double yts=makemidmacro(y1,t1,y2,t2,ps.m_startTime),yte=makemidmacro(y1,t1,y2,t2,pe.m_startTime);
+    double xts=makemidmacro(x1,t1,x2,t2,ps.m_time),xte=makemidmacro(x1,t1,x2,t2,pe.m_time);
+    double yts=makemidmacro(y1,t1,y2,t2,ps.m_time),yte=makemidmacro(y1,t1,y2,t2,pe.m_time);
     double p2Low[2]={xts,yts},p2High[2]={xte,yte};
-    double mbcr1=std::min(std::min(r.m_rd,(ps.m_startTime-r.m_startTime)*r.m_rv),(r.m_endTime-ps.m_startTime)*r.m_rv);
-    double mbcr2=std::min(std::min(r.m_rd,(pe.m_startTime-r.m_startTime)*r.m_rv),(r.m_endTime-pe.m_startTime)*r.m_rv);
-    TimePoint p2s(p2Low,ps.m_startTime,ps.m_startTime,2),p2e(p2High,pe.m_startTime,pe.m_startTime,2);
+    double mbcr1=std::min(std::min(r.m_rd,(ps.m_time-r.m_startTime)*r.m_rv),(r.m_endTime-ps.m_time)*r.m_rv);
+    double mbcr2=std::min(std::min(r.m_rd,(pe.m_time-r.m_startTime)*r.m_rv),(r.m_endTime-pe.m_time)*r.m_rv);
+    STPoint p2s(p2Low,ps.m_time,2),p2e(p2High,pe.m_time,2);
     double s=line2lineDistance(ps,pe,p2s,p2e);
-    double sm=mbcArea(r.m_startTime,r.m_endTime,r.m_rd,r.m_rv,ps.m_startTime,pe.m_startTime);
+    double sm=mbcArea(r.m_startTime,r.m_endTime,r.m_rd,r.m_rv,ps.m_time,pe.m_time);
     if(ps.getMinimumDistance(p2s)>mbcr1&&pe.getMinimumDistance(p2e)>mbcr2) return s-sm;
     else return 0;
 //    else {
 //        assert(std::isfinite(r.m_rv));
 //        double t0=r.m_startTime,t1=t0+r.m_rd/r.m_rv,t3=r.m_endTime,t2=t3-r.m_rd/r.m_rv;
 //        double ts=ps.m_startTime,te=pe.m_startTime;
-//        TimePoint p1s=ps,p1e=pe,p2s=r.getCenterRdAtTime(ts).first,
+//        STPoint p1s=ps,p1e=pe,p2s=r.getCenterRdAtTime(ts).first,
 //                p2e=r.getCenterRdAtTime(te).first;
 //        double dxs=p1s.m_pCoords[0]-p2s.m_pCoords[0];
 //        double dys=p1s.m_pCoords[1]-p2s.m_pCoords[1];
@@ -651,7 +651,7 @@ double Trajectory::getMinimumDistance(const IShape& s) const{
     const Trajectory* pTrajectory = dynamic_cast<const Trajectory*>(&s);
     if (pTrajectory != 0) return getMinimumDistance(*pTrajectory);
 
-//    const TimePoint* ptp = dynamic_cast<const TimePoint*>(&s);
+//    const STPoint* ptp = dynamic_cast<const STPoint*>(&s);
 //    if (ptp != 0) return getMinimumDistance(*ptp);
 
     const MBC* pmbc= dynamic_cast<const MBC*>(&s);
@@ -715,25 +715,25 @@ double Trajectory::getMinimumDistance(const SpatialIndex::SBR &in) const {
     double sum = 0;
     Region rg1,rg2;
     for (int i = 0; i < timedtraj.m_size-1; i++) {
-        in.getMBRAtTime(timedtraj[i].m_startTime,rg1);
-        in.getMBRAtTime(timedtraj[i+1].m_startTime,rg2);
+        in.getMBRAtTime(timedtraj[i].m_time,rg1);
+        in.getMBRAtTime(timedtraj[i+1].m_time,rg2);
         double pd = 0.5*(timedtraj[i].getMinimumDistance(rg1)+timedtraj[i+1].getMinimumDistance(rg2));
         sum+=pd;
     }
     return sum;
 }
 
-double Trajectory::getMinimumDistance(const SpatialIndex::TimePoint &in) const {
+double Trajectory::getMinimumDistance(const SpatialIndex::STPoint &in) const {
     int last;
-    for(last=1;m_points[last].m_startTime<in.m_startTime;last++);
-    return in.getMinimumDistance(*TimePoint::makemid(m_points[last-1],m_points[last],in.m_startTime));
+    for(last=1;m_points[last].m_time<in.m_time;last++);
+    return in.getMinimumDistance(*STPoint::makemid(m_points[last-1],m_points[last],in.m_time));
 }
 
 double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const {
     if(m_startTime()>=in.m_endTime()||m_endTime()<=in.m_startTime())
         return 1e300;
     fakeTpVector timedTraj2(&in.m_points,m_startTime(),m_endTime());
-    double cut1=timedTraj2[0].m_startTime,cut2=timedTraj2[timedTraj2.m_size-1].m_startTime;
+    double cut1=timedTraj2[0].m_time,cut2=timedTraj2[timedTraj2.m_size-1].m_time;
     double sum=0;
     fakeTpVector frontTraj(&m_points,m_startTime(),cut1);
     fakeTpVector midTraj(&m_points,cut1,cut2);
@@ -742,7 +742,7 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
         for(int i=0;i<frontTraj.m_size-1;i++){
             double pd=0.5*(frontTraj[i].getMinimumDistance(timedTraj2[0])
                     +frontTraj[i+1].getMinimumDistance(timedTraj2[0]))
-                            *(frontTraj[i+1].m_startTime-frontTraj[i].m_startTime);
+                            *(frontTraj[i+1].m_time-frontTraj[i].m_time);
 //            std::cerr<<"point dist for"<<frontTraj.m_points[i].m_startTime<<"is"<<pd<<endl;
             sum+=pd;
         }
@@ -751,31 +751,31 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
         for(int i=0;i<backTraj.m_size-1;i++){
             double pd=0.5*(backTraj[i].getMinimumDistance(timedTraj2[timedTraj2.m_size-1])
                       +backTraj[i+1].getMinimumDistance(timedTraj2[timedTraj2.m_size-1]))
-                 *(backTraj[i+1].m_startTime-backTraj[i].m_startTime);
+                 *(backTraj[i+1].m_time-backTraj[i].m_time);
 //            std::cerr<<"point dist for"<<backTraj.m_points[i].m_startTime<<"is"<<pd<<endl;
             sum+=pd;
         }
     }
     if(midTraj.m_size!=0) {
-        double newtime = midTraj[0].m_startTime, lasttime = midTraj[0].m_startTime;
+        double newtime = midTraj[0].m_time, lasttime = midTraj[0].m_time;
         auto iter1 = midTraj.m_vectorPointer->begin()+midTraj.m_is;
         auto iter2 = timedTraj2.m_vectorPointer->begin()+timedTraj2.m_is;
-        TimePoint lastp1 = *iter1, lastp2 = *iter2, newp1, newp2;
-        while (lasttime != timedTraj2[timedTraj2.m_size-1].m_startTime) {
-            if ((iter1 + 1)->m_startTime == (iter2 + 1)->m_startTime) {
-                newtime = (iter1 + 1)->m_startTime;
+        STPoint lastp1 = *iter1, lastp2 = *iter2, newp1, newp2;
+        while (lasttime != timedTraj2[timedTraj2.m_size-1].m_time) {
+            if ((iter1 + 1)->m_time == (iter2 + 1)->m_time) {
+                newtime = (iter1 + 1)->m_time;
                 newp1 = *(iter1 + 1);
                 newp2 = *(iter2 + 1);
                 iter1++;
                 iter2++;
-            } else if ((iter1 + 1)->m_startTime < (iter2 + 1)->m_startTime) {
-                newtime = (iter1 + 1)->m_startTime;
+            } else if ((iter1 + 1)->m_time < (iter2 + 1)->m_time) {
+                newtime = (iter1 + 1)->m_time;
                 newp1 = *(iter1 + 1);
-                newp2 = *TimePoint::makemid(*iter2, *(iter2 + 1), newtime);
+                newp2 = *STPoint::makemid(*iter2, *(iter2 + 1), newtime);
                 iter1++;
             } else {
-                newtime = (iter2 + 1)->m_startTime;
-                newp1 = *TimePoint::makemid(*iter1, *(iter1 + 1), newtime);
+                newtime = (iter2 + 1)->m_time;
+                newp1 = *STPoint::makemid(*iter1, *(iter1 + 1), newtime);
                 newp2 = *(iter2 + 1);
                 iter2++;
             }
@@ -800,7 +800,7 @@ double Trajectory::getMinimumDistance(const ShapeList &in) const {
         ints=in.m_MBRList.front()->m_pLow[m_dimension];
         inte=in.m_MBRList.back()->m_pHigh[m_dimension];
         Region smbr=*in.m_MBRList.front(),embr=*in.m_MBRList.back();
-        for(auto &br:in.m_MBRList){
+        for(const auto &br:in.m_MBRList){
             pd=getMinimumDistance(*br);
             if(pd!=1e300) sum+=pd;
         }
@@ -822,7 +822,7 @@ double Trajectory::getMinimumDistance(const ShapeList &in) const {
         inte=in.m_MBCList.back()->m_endTime;
         sPoint=Point(in.m_MBCList.front()->m_pLow,m_dimension);
         ePoint=Point(in.m_MBCList.back()->m_pHigh,m_dimension);
-        for(auto &bc:in.m_MBCList){
+        for(const auto &bc:in.m_MBCList){
             pd=getMinimumDistance(*bc);
             if(pd!=1e300) sum+=pd;
         }
@@ -849,10 +849,10 @@ double Trajectory::getMinimumDistance(double x,double y, double t1,double t2) co
     fakeTpVector timedtraj(&m_points,tstart,tend);
     double sum = 0;
     double xy[2]={x,y};
-    TimePoint ps(xy,0,0,2),pe(xy,0,0,2);
+    STPoint ps(xy,0,2),pe(xy,0,2);
     for (int i = 0; i < timedtraj.m_size-1; i++) {
-        ps.m_startTime=ps.m_endTime=timedtraj[i].m_startTime;
-        pe.m_startTime=pe.m_endTime=timedtraj[i+1].m_startTime;
+        ps.m_time=timedtraj[i].m_time;
+        pe.m_time=timedtraj[i+1].m_time;
         double pd = line2lineDistance(timedtraj[i],timedtraj[i+1],ps,pe);
         sum+=pd;
     }
@@ -867,10 +867,10 @@ double Trajectory::getPeriodMinimumDistance(const SpatialIndex::Region &in,doubl
         fakeTpVector frontTraj(&m_points,m_startTime(),in.m_pLow[m_dimension]);
         for(int i=0;i<frontTraj.m_size-1;i++){
             double r1=frontTraj[i].getMinimumDistance(mbr2d)-
-                    frontTraj[i].m_startTime*MaxVelocity;
+                    frontTraj[i].m_time*MaxVelocity;
             double r2=frontTraj[i+1].getMinimumDistance(mbr2d)-
-                    frontTraj[i+1].m_startTime*MaxVelocity;
-            if(r1>=0&&r2>=0) sum+=0.5*(frontTraj[i+1].m_startTime-frontTraj[i].m_startTime)
+                    frontTraj[i+1].m_time*MaxVelocity;
+            if(r1>=0&&r2>=0) sum+=0.5*(frontTraj[i+1].m_time-frontTraj[i].m_time)
                     *(r1+r2);
         }
     }
@@ -878,10 +878,10 @@ double Trajectory::getPeriodMinimumDistance(const SpatialIndex::Region &in,doubl
         fakeTpVector backTraj(&m_points,in.m_pHigh[m_dimension],m_endTime());
         for(int i=0;i<backTraj.m_size-1;i++){
             double r1=backTraj[i].getMinimumDistance(mbr2d)-
-                    backTraj[i].m_startTime*MaxVelocity;
+                    backTraj[i].m_time*MaxVelocity;
             double r2=backTraj[i+1].getMinimumDistance(mbr2d)-
-                    backTraj[i+1].m_startTime*MaxVelocity;
-            if(r1>=0&&r2>=0) sum+=0.5*(backTraj[i+1].m_startTime-backTraj[i].m_startTime)
+                    backTraj[i+1].m_time*MaxVelocity;
+            if(r1>=0&&r2>=0) sum+=0.5*(backTraj[i+1].m_time-backTraj[i].m_time)
                                   *(r1+r2);
         }
     }
@@ -896,10 +896,10 @@ double Trajectory::getPeriodMinimumDistance(const SpatialIndex::MBC &in,double M
         fakeTpVector frontTraj(&m_points,m_startTime(),in.m_startTime);
         for(int i=0;i<frontTraj.m_size-1;i++){
             double r1=frontTraj[i].getMinimumDistance(sPoint)
-                    -frontTraj[i].m_startTime*MaxVelocity;
+                    -frontTraj[i].m_time*MaxVelocity;
             double r2=frontTraj[i+1].getMinimumDistance(sPoint)
-                    -frontTraj[i+1].m_startTime*MaxVelocity;
-            if(r1>=0&&r2>=0) sum+=0.5*(frontTraj[i+1].m_startTime-frontTraj[i].m_startTime)
+                    -frontTraj[i+1].m_time*MaxVelocity;
+            if(r1>=0&&r2>=0) sum+=0.5*(frontTraj[i+1].m_time-frontTraj[i].m_time)
                                   *(r1+r2);
         }
     }
@@ -907,10 +907,10 @@ double Trajectory::getPeriodMinimumDistance(const SpatialIndex::MBC &in,double M
         fakeTpVector backTraj(&m_points,in.m_endTime,m_endTime());
         for(int i=0;i<backTraj.m_size-1;i++){
             double r1=backTraj[i].getMinimumDistance(ePoint)
-                    -backTraj[i].m_startTime*MaxVelocity;
+                    -backTraj[i].m_time*MaxVelocity;
             double r2=backTraj[i+1].getMinimumDistance(ePoint)
-                    -backTraj[i+1].m_startTime*MaxVelocity;
-            if(r1>=0&&r2>=0) sum+=0.5*(backTraj[i+1].m_startTime-backTraj[i].m_startTime)
+                    -backTraj[i+1].m_time*MaxVelocity;
+            if(r1>=0&&r2>=0) sum+=0.5*(backTraj[i+1].m_time-backTraj[i].m_time)
                                   *(r1+r2);
         }
     }
@@ -946,7 +946,7 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const Trajectory& r) {
         "m_points are" + "\n";
     for (const auto &p:r.m_points) {
         s += std::to_string(p.m_pCoords[0]) + "," + std::to_string(p.m_pCoords[1]) +
-             "," + std::to_string(p.m_startTime) + " ";
+             "," + std::to_string(p.m_time) + " ";
     }
     s += "\n";
     os<<s;
@@ -972,19 +972,19 @@ std::vector<std::string> split(const std::string strtem,char a)
 
 void Trajectory::loadFromString(std::string str) {
     std::vector<std::string> points=split(str,' ');
-    for(auto p: points){
+    for(const auto &p: points){
         std::vector<std::string> xyt=split(p,',');
         double xy[2];
         xy[0]=std::stod(xyt[0]);xy[1]=std::stod(xyt[1]);
-        m_points.emplace_back(TimePoint(xy,std::stod(xyt[2]),std::stod(xyt[2]),2));
+        m_points.emplace_back(STPoint(xy,std::stod(xyt[2]),2));
     }
 }
 
 void Trajectory::linkTrajectory(SpatialIndex::Trajectory other) {
-    if(m_points.back().m_startTime==other.m_points.front().m_startTime){
+    if(m_points.back().m_time==other.m_points.front().m_time){
         m_points.insert(m_points.end(),++other.m_points.begin(),other.m_points.end());
     }
-    else if (other.m_points.back().m_startTime==m_points.front().m_startTime){
+    else if (other.m_points.back().m_time==m_points.front().m_time){
         m_points.insert(m_points.begin(),other.m_points.begin(),other.m_points.end()-1);
     }
     else{

@@ -36,6 +36,7 @@ set(SIDX_BASE_HPP
   "${SIDX_HEADERS_DIR}/MBCRTree.h"
   "${SIDX_HEADERS_DIR}/SpatialIndex.h"
   "${SIDX_HEADERS_DIR}/TimePoint.h"
+  "${SIDX_HEADERS_DIR}/STPoint.h"
   "${SIDX_HEADERS_DIR}/TimeRegion.h"
   "${SIDX_HEADERS_DIR}/TPRTree.h"
   "${SIDX_HEADERS_DIR}/Version.h"
@@ -86,6 +87,7 @@ set(SIDX_SPATIALINDEX_CPP
   "${SIDX_SRC_DIR}/spatialindex/Region.cc"
   "${SIDX_SRC_DIR}/spatialindex/SpatialIndexImpl.cc"
   "${SIDX_SRC_DIR}/spatialindex/TimePoint.cc"
+  "${SIDX_SRC_DIR}/spatialindex/STPoint.cc"
   "${SIDX_SRC_DIR}/spatialindex/TimeRegion.cc"
   "${SIDX_SRC_DIR}/spatialindex/ShapeList.cc"
 )

@@ -520,11 +520,12 @@ void SpatialIndex::RTree::RTree::pointLocationQuery(const Point& query, IVisitor
 void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v, INearestNeighborComparator& nnc)
 {
     const Trajectory *queryTraj;
-    if(m_DataType==TrajectoryType)
-        queryTraj= dynamic_cast<const Trajectory*>(&query);
-    if(queryTraj == nullptr||queryTraj->m_points.size()<2){
-        std::cerr<<"bad query traj\n";
-        return;
+    if(m_DataType==TrajectoryType) {
+        queryTraj = dynamic_cast<const Trajectory *>(&query);
+        if (queryTraj == nullptr||queryTraj->m_points.size()<2) {
+            std::cerr << "bad query traj\n";
+            return;
+        }
     }
 //	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
 
@@ -569,34 +570,38 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
                         traj.loadFromByteArray(e->m_pData);
                         queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(*queryTraj, traj)));
 					}else{
-//                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, queryTraj->getMinimumDistance(e->m_region)));
                         queue.push(new NNEntry(n->m_pIdentifier[cChild], e, queryTraj->getPeriodMinimumDistance(e->m_region,m_ts->m_maxVelocity)));
 					}
 
 				}
 				else
 				{
-					queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, nnc.getMinimumDistance(query, *(n->m_ptrMBR[cChild]))));
+				    if(m_DataType==BoundingBoxType){
+                        const Region* br= dynamic_cast<const Region*>(&query);
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr,br->getMinimumDistance(*(n->m_ptrMBR[cChild]))));
+				    }
+				    else
+					    queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, nnc.getMinimumDistance(query, *(n->m_ptrMBR[cChild]))));
 				}
 			}
 		}
 		else
 		{
-		    if(m_bUsingTrajStore&&pFirst->m_type==0){
+		    if(m_DataType==TrajectoryType&&m_bUsingTrajStore&&pFirst->m_type==0){
 		        //load ShapeList<MBR>, aka retrieve MBRs
                 id_type trajId=m_ts->getTrajId(pFirst->m_id);
                 if(insertedTrajId[trajId]==1){}
                 else {
-                    ShapeList brs = m_ts->getMBRsByTime(pFirst->m_id, queryTraj->m_points.front().m_startTime,
-                                                        queryTraj->m_points.back().m_startTime);
+                    ShapeList brs = m_ts->getMBRsByTime(pFirst->m_id, queryTraj->m_points.front().m_time,
+                                                        queryTraj->m_points.back().m_time);
                     queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, brs), 1));
                     insertedTrajId[trajId]=1;
                 }
 //                std::cerr<<nnc.getMinimumDistance(query, brs)<<"\n";
 		    }
-		    else if(m_bUsingTrajStore&&pFirst->m_type==1){
+		    else if(m_DataType==TrajectoryType&&m_bUsingTrajStore&&pFirst->m_type==1){
 		        //load Trajectory
-                Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_startTime,queryTraj->m_points.back().m_startTime);
+                Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_time,queryTraj->m_points.back().m_time);
                 queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, traj),2));
 
 		    }

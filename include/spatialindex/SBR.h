@@ -53,11 +53,11 @@ namespace SpatialIndex
         virtual double getMinimumDistance(const IShape& in) const;
 
         virtual double getMinimumDistance(const Region& in) const;
-        virtual double getMinimumDistance(const TimePoint& in) const;
+        virtual double getMinimumDistance(const STPoint& in) const;
 
 
         virtual bool intersectsTimeRegion(const TimeRegion& in) const;
-        virtual bool intersectsTimePoint(const TimePoint& in) const;
+        virtual bool intersectsSTPoint(const STPoint& in) const;
         virtual bool intersectsRegion(const Region& in) const;
 
         virtual bool containsSBR(const SBR& in);
