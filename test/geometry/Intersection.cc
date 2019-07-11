@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
     //line distace test
 //    double v1[2]={0,1},v2[2]={1,0},v3[2]={0,1},v4[2]={0,0};
 //    double pLow[3]={0,0,0},pHigh[3]={1,1,1};
-//    cout<<Trajectory::line2lineDistance(TimePoint(v1,0,0,2),TimePoint(v2,1,1,2),
+//    cout<<Trajectory::line2lineIED(TimePoint(v1,0,0,2),TimePoint(v2,1,1,2),
 //            TimePoint(v3,0,0,2),TimePoint(v4,1,1,2))<<endl;
 //    cout<<Trajectory::line2MBRDistance(TimePoint(v1,0,0,2),TimePoint(v2,1,1,2),
 //            Region(pLow,pHigh,3))<<endl;

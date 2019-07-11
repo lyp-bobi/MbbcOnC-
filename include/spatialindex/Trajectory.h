@@ -9,6 +9,8 @@
 
 extern double calcuTime[2];
 extern int testPhase;
+extern int disttype;
+
 #define bip auto start = std::chrono::system_clock::now();
 #define bbip auto end = std::chrono::system_clock::now();auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);calcuTime[testPhase]+=double(duration.count()) * std::chrono::microseconds::period::num/ std::chrono::microseconds::period::den;
 
@@ -110,6 +112,10 @@ namespace SpatialIndex
         virtual double getPeriodMinimumDistance(const Region& in,double MaxVelocity) const;
         virtual double getPeriodMinimumDistance(const MBC& in,double MaxVelocity) const;
 
+        virtual double minSED(const Region& in) const;
+        virtual double minSED(const MBC& in) const;
+
+
         virtual bool intersectsTimeRegion(const TimeRegion& in) const;
         virtual bool intersectsRegion(const Region& in) const;
         virtual bool intersectsTrajectory(const Trajectory& in) const;
@@ -132,9 +138,9 @@ namespace SpatialIndex
 
         void loadFromString(std::string s);
 
-        static double line2lineDistance(const STPoint &p1s,const STPoint &p1e,const STPoint &p2s,const STPoint &p2e);
+        static double line2lineIED(const STPoint &p1s, const STPoint &p1e, const STPoint &p2s, const STPoint &p2e);
         static double line2MBRDistance(const STPoint &ps,const STPoint &pe,const Region &r);
-        static double line2MBRDistance_impl(const STPoint &ps,const STPoint &pe,const Region &r,int sr);
+        static double line2MBRIED_impl(const STPoint &ps, const STPoint &pe, const Region &r, int sr);
         static double line2MBCDistance(const STPoint &ps,const STPoint &pe,const MBC &r);
 
         std::vector<STPoint> m_points;

@@ -240,10 +240,38 @@ bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
         auto timed=getCenterRdAtTime(in.m_pLow[m_dimension]);
         return timed.first.getMinimumDistance(Region(in.m_pLow,in.m_pHigh,m_dimension))<=timed.second+1e-10;
     }else{
-        throw Tools::NotSupportedException("MBC:intersect 3DMBR");
+        Region mbr2d(in.m_pLow,in.m_pHigh,in.m_dimension-1);
+        double t0=m_startTime,t1=m_startTime+m_rd/m_rv,t2=m_endTime-m_rd/m_rv,t3=m_endTime;
+        double ts=in.m_pLow[m_dimension],te=in.m_pHigh[m_dimension];
+        if(t0>te||t3<ts) return false;
+        if(ts>t0&&ts<t3){
+            auto a =getCenterRdAtTime(ts);
+            if(a.first.getMinimumDistance(mbr2d)<=a.second) return true;
+        }
+        if(te>t0&&te<t3){
+            auto a =getCenterRdAtTime(te);
+            if(a.first.getMinimumDistance(mbr2d)<=a.second) return true;
+        }
+        if(t0>ts&&t0<te){
+            auto a =getCenterRdAtTime(t0);
+            if(a.first.getMinimumDistance(mbr2d)<=a.second) return true;
+        }
+        if(t1>ts&&t1<te){
+            auto a =getCenterRdAtTime(t1);
+            if(a.first.getMinimumDistance(mbr2d)<=a.second) return true;
+        }
+        if(t2>ts&&t2<te){
+            auto a =getCenterRdAtTime(t2);
+            if(a.first.getMinimumDistance(mbr2d)<=a.second) return true;
+        }
+        if(t3>ts&&t3<te){
+            auto a =getCenterRdAtTime(t3);
+            if(a.first.getMinimumDistance(mbr2d)<=a.second) return true;
+        }
+        return false;
     }
 }
-bool MBC::intersectsMBC(const MBC& in) const{return false;}
+bool MBC::intersectsMBC(const MBC& in) const{throw Tools::NotSupportedException("MBC::intersectsMBC");}
 
 bool MBC::containsShape(const SpatialIndex::IShape& in) const{return false;}
 bool MBC::touchesShape(const SpatialIndex::IShape& in) const{
@@ -304,7 +332,7 @@ double MBC::getMinimumDistance(const IShape& in) const{
 
 
     throw Tools::IllegalStateException(
-            "Region::getMinimumDistance: Not implemented yet!"
+            "MBC::getMinimumDistance: Not implemented yet!"
     );
 }
 

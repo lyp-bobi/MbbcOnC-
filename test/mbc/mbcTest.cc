@@ -78,19 +78,30 @@ public:
         m_lastResult=d.getIdentifier();
 
 
-//        //id of the data
-//        cerr << d.getIdentifier() << endl;
-//        //the traj
-//        Trajectory traj;
-//        if(ts== nullptr) {
-//            traj.loadFromByteArray(pData);
-//        }
-//        else{
-//            id_type tid=d.getIdentifier();
-//            traj=ts->getTrajByTime(tid,0,1000);
-//        }
-//        double mindist=m_query->getMinimumDistance(traj);
-//        cerr<<"traj dist is"<<mindist<<"\n";
+        //id of the data
+        if(ts== nullptr)
+            cerr << d.getIdentifier() << endl;
+        else
+            cerr << d.getIdentifier() /100<< endl;
+        if(d.getIdentifier()==46100)
+            m_leafIO=1;
+        //the traj
+        Trajectory traj;
+        if(ts== nullptr) {
+            traj.loadFromByteArray(pData);
+            double mindist=m_query->getMinimumDistance(traj);
+            cerr<<"traj dist is"<<mindist<<"\n\n";
+        }
+        else{
+            id_type tid=d.getIdentifier();
+            traj=ts->getTrajByTime(tid,0,1000);
+            auto brs=ts->getMBRsByTime(tid,0,1000);
+            auto bcs=ts->getMBCsByTime(tid,0,1000);
+            cerr<<"traj dist is"<<m_query->getMinimumDistance(traj)<<"\n"
+                    <<m_query->getMinimumDistance(brs)<<"\n"
+                    <<m_query->getMinimumDistance(bcs)<<"\n\n";
+        }
+
 
 
         delete[] pData;
@@ -271,7 +282,7 @@ int TreeQuery(ISpatialIndex* tree,IShape* query,TrajStore *ts= nullptr){
         tree->intersectsWithQuery(*query,vis);
     }else if(QueryType==2){
         vis.m_query=query;
-        tree->nearestNeighborQuery(5,*query,vis);
+        tree->nearestNeighborQuery(25,*query,vis);
     }
     end=clock();
     if(QueryType==1){
@@ -312,6 +323,7 @@ int main(){
                 queries.emplace_back(&trajs[(0+i)%trajs.size()].second);
             }
         }
+
         cerr<<"queries generated\n";
 //        trajs.swap(empty1);
         string name0 = "name0", name1 = "name1", name2 = "name2";
@@ -334,24 +346,54 @@ int main(){
         ts2.loadSegments(segs);
 
 
-//        TrajMbrStream ds1;
-//        ds1.feedTraj(&trajs);
-//        ds1.rewind();
-//        ISpatialIndex* real = RTree::createAndBulkLoadNewRTree(
-//                RTree::BulkLoadMethod::BLM_STR, ds1, *file0, 0.9, 10000,100000, 3,RTree::RV_RSTAR, indexIdentifier0);
-//        real->m_DataType=TrajectoryType;
+        TrajMbrStream ds1;
+        ds1.feedTraj(&trajs);
+        ds1.rewind();
+        ISpatialIndex* real = RTree::createAndBulkLoadNewRTree(
+                RTree::BulkLoadMethod::BLM_STR, ds1, *file0, 0.9, 10000,100000, 3,RTree::RV_RSTAR, indexIdentifier0);
+        real->m_DataType=TrajectoryType;
+
+
+
+
+
+//        id_type that=242800;
+//        cout<<ts1.getTraj(that);
+//        cout<<trajs[0].second;
+//        for(int i=11;i<12;i++) {
+//            id_type that = i*100;
+//            auto brs = ts1.getMBRsByTime(that,0,1000);
+//            auto bcs = ts1.getMBCsByTime(that,0,1000);
+////        cout<<trajs[10].second;
+////            cout << trajs[71].second << endl;
+////            cout << brs << endl;
+////            cout << bcs << endl;
+//            cout<< i<<endl;
+//            double a,b,c;
+//            a=queries[0]->getMinimumDistance(trajs[i].second);
+//            b=queries[0]->getMinimumDistance(brs);
+//            c=queries[0]->getMinimumDistance(bcs);
+//            cout<<a<<" "<<b<<" "<<c<<endl;
+//            if((b>a||c>a||std::isnan(b)||std::isnan(c))&&a!=std::numeric_limits<double>::max()) {
+//                cout << queries[0]->getMinimumDistance(trajs[i].second) << endl;
+//                cout << queries[0]->getMinimumDistance(brs) << endl;
+//                cout << queries[0]->getMinimumDistance(bcs) << endl;
+//            }
+//        }
+
 
 
         ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,64,3,indexIdentifier1);
         ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,64,3,indexIdentifier2);
         cerr << "start query!" << endl << endl << endl;
 
-//        TreeQueryBatch(real,queries);
+        TreeQueryBatch(real,queries);
         TreeQueryBatch(r, queries,&ts1);
         TreeQueryBatch(rc, queries,&ts2);
 
 //        double aa,bb,oo;
-//        for(int j=0;j<queries.size();j++){
+////        for(int j=0;j<queries.size();j++){
+//        for(int j=0;j<1;j++){
 //            auto q=queries[j];
 //            oo=TreeQuery(real,q);
 //            aa=TreeQuery(r,q,&ts1);

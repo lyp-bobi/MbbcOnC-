@@ -3,7 +3,7 @@
 //
 
 #include <spatialindex/SpatialIndex.h>
-#include "MBCRtree.h"
+#include "MBCRTree.h"
 #include "storagemanager/TrajStore.h"
 
 class mbcrtreeSegmentStream:public baseSegmentStream{

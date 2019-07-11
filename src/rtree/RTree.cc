@@ -551,7 +551,7 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 		if (count >= k && pFirst->m_minDist > knearest)	break;
 
 		queue.pop();
-
+//        std::cerr<<"iter dist is"<<pFirst->m_minDist<<std::endl;
 		if (pFirst->m_pEntry == nullptr)
 		{
 			// n is a leaf or an index.

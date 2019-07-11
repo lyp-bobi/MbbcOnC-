@@ -8,7 +8,7 @@ namespace SpatialIndex
 	public:
 		STPoint();
 		STPoint(const double* pCoords, const Tools::IInterval& ti, uint32_t dimension);
-		STPoint(const double* pCoords, double tStart,uint32_t dimension);
+		STPoint(const double* pCoords, double t,uint32_t dimension);
 		STPoint(const Point& p, const Tools::IInterval& ti);
 		STPoint(const Point& p, double tStart, double tEnd);
 		STPoint(const STPoint& p);
