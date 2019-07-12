@@ -1008,31 +1008,31 @@ double Trajectory::getLeafMinimumDistance(const SpatialIndex::Region &in, double
     }
     else if(disttype==1){
         double min=getMaxSED(in);
-        Region sembr=in;
-        if(in.m_pLow[m_dimension]>m_startTime()){
-            fakeTpVector frontTraj(&m_points,m_startTime(),in.m_pLow[m_dimension]);
-            for(int i=0;i<frontTraj.m_size-1;i++){
-                sembr.m_pLow[m_dimension]=frontTraj[i].m_time;
-                sembr.m_pHigh[m_dimension]=frontTraj[i+1].m_time;
-                double pd=line2MBRMinSED(frontTraj[i],frontTraj[i+1],sembr);
-                double r1=(frontTraj[i].m_time-m_startTime())*MaxVelocity;
-                double r2=(frontTraj[i+1].m_time-m_startTime())*MaxVelocity;
-                double minus = std::max(r1,r2);//inaccurate, but a lower bound
-                min=std::min(pd-minus,min);
-            }
-        }
-        if(in.m_pHigh[m_dimension]<m_endTime()){
-            fakeTpVector backTraj(&m_points,in.m_pHigh[m_dimension],m_endTime());
-            for(int i=0;i<backTraj.m_size-1;i++){
-                sembr.m_pLow[m_dimension]=backTraj[i].m_time;
-                sembr.m_pHigh[m_dimension]=backTraj[i+1].m_time;
-                double pd=line2MBRMinSED(backTraj[i],backTraj[i+1],sembr);
-                double r1=(backTraj[i].m_time-m_startTime())*MaxVelocity;
-                double r2=(backTraj[i+1].m_time-m_startTime())*MaxVelocity;
-                double minus = std::max(r1,r2);//inaccurate, but a lower bound
-                min=std::min(pd-minus,min);
-            }
-        }
+//        Region sembr=in;
+//        if(in.m_pLow[m_dimension]>m_startTime()){
+//            fakeTpVector frontTraj(&m_points,m_startTime(),in.m_pLow[m_dimension]);
+//            for(int i=0;i<frontTraj.m_size-1;i++){
+//                sembr.m_pLow[m_dimension]=frontTraj[i].m_time;
+//                sembr.m_pHigh[m_dimension]=frontTraj[i+1].m_time;
+//                double pd=line2MBRMinSED(frontTraj[i],frontTraj[i+1],sembr);
+//                double r1=(frontTraj[i].m_time-m_startTime())*MaxVelocity;
+//                double r2=(frontTraj[i+1].m_time-m_startTime())*MaxVelocity;
+//                double minus = std::max(r1,r2);//inaccurate, but a lower bound
+//                min=std::min(pd-minus,min);
+//            }
+//        }
+//        if(in.m_pHigh[m_dimension]<m_endTime()){
+//            fakeTpVector backTraj(&m_points,in.m_pHigh[m_dimension],m_endTime());
+//            for(int i=0;i<backTraj.m_size-1;i++){
+//                sembr.m_pLow[m_dimension]=backTraj[i].m_time;
+//                sembr.m_pHigh[m_dimension]=backTraj[i+1].m_time;
+//                double pd=line2MBRMinSED(backTraj[i],backTraj[i+1],sembr);
+//                double r1=(backTraj[i].m_time-m_startTime())*MaxVelocity;
+//                double r2=(backTraj[i+1].m_time-m_startTime())*MaxVelocity;
+//                double minus = std::max(r1,r2);//inaccurate, but a lower bound
+//                min=std::min(pd-minus,min);
+//            }
+//        }
         return std::max(0.0,min);
     }else
         throw Tools::NotSupportedException("Wrong distance");
@@ -1072,31 +1072,31 @@ double Trajectory::getLeafMinimumDistance(const SpatialIndex::MBC &in, double Ma
     else if(disttype==1) {
         double min=getMinimumDistance(in);
         //frontTraj
-        STPoint sPoint(in.m_pLow, 0, 2), sPoint2(in.m_pLow, 0, 2), ePoint(in.m_pHigh, 0, 2), ePoint2(in.m_pHigh, 0, 2);
-        if (in.m_startTime > m_startTime()) {
-            fakeTpVector frontTraj(&m_points, m_startTime(), in.m_startTime);
-            for (int i = 0; i < frontTraj.m_size - 1; i++) {
-                sPoint.m_time = frontTraj[i].m_time;
-                sPoint2.m_time = frontTraj[i + 1].m_time;
-                double pd=line2lineMinSED(frontTraj[i],frontTraj[i+1],sPoint,sPoint2);
-                double r1=(frontTraj[i].m_time-m_startTime())*MaxVelocity;
-                double r2=(frontTraj[i+1].m_time-m_startTime())*MaxVelocity;
-                double minus = std::max(r1,r2);//inaccurate, but a lower bound
-                min=std::min(pd-minus,min);
-            }
-        }
-        if (in.m_endTime < m_endTime()) {
-            fakeTpVector backTraj(&m_points, in.m_endTime, m_endTime());
-            for (int i = 0; i < backTraj.m_size - 1; i++) {
-                ePoint.m_time = backTraj[i].m_time;
-                ePoint2.m_time = backTraj[i + 1].m_time;
-                double pd=line2lineMinSED(backTraj[i],backTraj[i+1],ePoint,ePoint2);
-                double r1=(backTraj[i].m_time-m_startTime())*MaxVelocity;
-                double r2=(backTraj[i+1].m_time-m_startTime())*MaxVelocity;
-                double minus = std::max(r1,r2);//inaccurate, but a lower bound
-                min=std::min(pd-minus,min);
-            }
-        }
+//        STPoint sPoint(in.m_pLow, 0, 2), sPoint2(in.m_pLow, 0, 2), ePoint(in.m_pHigh, 0, 2), ePoint2(in.m_pHigh, 0, 2);
+//        if (in.m_startTime > m_startTime()) {
+//            fakeTpVector frontTraj(&m_points, m_startTime(), in.m_startTime);
+//            for (int i = 0; i < frontTraj.m_size - 1; i++) {
+//                sPoint.m_time = frontTraj[i].m_time;
+//                sPoint2.m_time = frontTraj[i + 1].m_time;
+//                double pd=line2lineMinSED(frontTraj[i],frontTraj[i+1],sPoint,sPoint2);
+//                double r1=(frontTraj[i].m_time-m_startTime())*MaxVelocity;
+//                double r2=(frontTraj[i+1].m_time-m_startTime())*MaxVelocity;
+//                double minus = std::max(r1,r2);//inaccurate, but a lower bound
+//                min=std::min(pd-minus,min);
+//            }
+//        }
+//        if (in.m_endTime < m_endTime()) {
+//            fakeTpVector backTraj(&m_points, in.m_endTime, m_endTime());
+//            for (int i = 0; i < backTraj.m_size - 1; i++) {
+//                ePoint.m_time = backTraj[i].m_time;
+//                ePoint2.m_time = backTraj[i + 1].m_time;
+//                double pd=line2lineMinSED(backTraj[i],backTraj[i+1],ePoint,ePoint2);
+//                double r1=(backTraj[i].m_time-m_startTime())*MaxVelocity;
+//                double r2=(backTraj[i+1].m_time-m_startTime())*MaxVelocity;
+//                double minus = std::max(r1,r2);//inaccurate, but a lower bound
+//                min=std::min(pd-minus,min);
+//            }
+//        }
         return std::max(0.0,min);
     }
     else
