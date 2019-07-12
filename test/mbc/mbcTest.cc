@@ -78,29 +78,27 @@ public:
         m_lastResult=d.getIdentifier();
 
 
-        //id of the data
-        if(ts== nullptr)
-            cerr << d.getIdentifier() << endl;
-        else
-            cerr << d.getIdentifier() /100<< endl;
-        if(d.getIdentifier()==46100)
-            m_leafIO=1;
-        //the traj
-        Trajectory traj;
-        if(ts== nullptr) {
-            traj.loadFromByteArray(pData);
-            double mindist=m_query->getMinimumDistance(traj);
-            cerr<<"traj dist is"<<mindist<<"\n\n";
-        }
-        else{
-            id_type tid=d.getIdentifier();
-            traj=ts->getTrajByTime(tid,0,1000);
-            auto brs=ts->getMBRsByTime(tid,0,1000);
-            auto bcs=ts->getMBCsByTime(tid,0,1000);
-            cerr<<"traj dist is"<<m_query->getMinimumDistance(traj)<<"\n"
-                    <<m_query->getMinimumDistance(brs)<<"\n"
-                    <<m_query->getMinimumDistance(bcs)<<"\n\n";
-        }
+//        //id of the data
+//        if(ts== nullptr)
+//            cerr << d.getIdentifier() << endl;
+//        else
+//            cerr << d.getIdentifier() /100<< endl;
+//        //the traj
+//        Trajectory traj;
+//        if(ts== nullptr) {
+//            traj.loadFromByteArray(pData);
+//            double mindist=m_query->getMinimumDistance(traj);
+//            cerr<<"traj dist is"<<mindist<<"\n\n";
+//        }
+//        else{
+//            id_type tid=d.getIdentifier();
+//            traj=ts->getTrajByTime(tid,0,1000);
+//            auto brs=ts->getMBRsByTime(tid,0,1000);
+//            auto bcs=ts->getMBCsByTime(tid,0,1000);
+//            cerr<<"traj dist is"<<m_query->getMinimumDistance(traj)<<"\n"
+//                    <<m_query->getMinimumDistance(brs)<<"\n"
+//                    <<m_query->getMinimumDistance(bcs)<<"\n\n";
+//        }
 
 
 
@@ -282,7 +280,7 @@ int TreeQuery(ISpatialIndex* tree,IShape* query,TrajStore *ts= nullptr){
         tree->intersectsWithQuery(*query,vis);
     }else if(QueryType==2){
         vis.m_query=query;
-        tree->nearestNeighborQuery(25,*query,vis);
+        tree->nearestNeighborQuery(5,*query,vis);
     }
     end=clock();
     if(QueryType==1){

@@ -579,7 +579,8 @@ void SpatialIndex::SBRTree::SBRTree::nearestNeighborQuery(uint32_t k, const ISha
                         queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(*queryTraj, traj)));
                     }else{
 //                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, queryTraj->getMinimumDistance(e->m_mbc)));
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, queryTraj->getPeriodMinimumDistance(e->m_mbc,m_ts->m_maxVelocity)));
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e,
+                                               queryTraj->getLeafMinimumDistance(e->m_mbc, m_ts->m_maxVelocity)));
                     }
 
                 }
