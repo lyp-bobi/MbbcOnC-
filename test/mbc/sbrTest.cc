@@ -216,10 +216,10 @@ vector<pair<id_type ,Trajectory> >  loadGTToTrajs(){
         }
         trajs.erase(id);
         if(traj.size()>=10){
-            vector<TimePoint> tps;
+            vector<STPoint> tps;
             for(auto p:traj){
                 double xy[]={p.x,p.y};
-                tps.emplace_back(TimePoint(xy, p.t, p.t, dimension));
+                tps.emplace_back(STPoint(xy, p.t, dimension));
             }
             if(!tps.empty()){
                 res.emplace_back(make_pair(id,Trajectory(tps)));
