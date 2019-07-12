@@ -367,6 +367,32 @@ double Trajectory::line2lineIED(const SpatialIndex::STPoint &p1s, const SpatialI
     }
 }
 
+double Trajectory::line2lineMinSED(const SpatialIndex::STPoint &p1s, const SpatialIndex::STPoint &p1e,
+                                const SpatialIndex::STPoint &p2s, const SpatialIndex::STPoint &p2e) {
+    if(p1s.m_time!=p2s.m_time|p1e.m_time!=p2e.m_time)
+        throw Tools::IllegalStateException("line2lineIED: time period not the same");
+    double ts = p1s.m_time, te = p1e.m_time;
+    double dxs=p1s.m_pCoords[0]-p2s.m_pCoords[0];
+    double dys=p1s.m_pCoords[1]-p2s.m_pCoords[1];
+    double dxe=p1e.m_pCoords[0]-p2e.m_pCoords[0];
+    double dye=p1e.m_pCoords[1]-p2e.m_pCoords[1];
+    double c1=sq(dxs-dxe)+sq(dys-dye),
+            c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
+            c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
+            c4=te-ts;
+    if(c1==0){
+        return std::sqrt(sq(dxs)+sq(dys));
+    }else{
+        double middle=c2/c1/2;
+        if(middle>ts&&middle<te){
+            return sqrt((4*c1*c3-c2*c2)/4/c1)/c4;
+        }
+        else{
+            return std::min(std::sqrt(sq(dxs)+sq(dys)),std::sqrt(sq(dxe)+sq(dye)));
+        }
+    }
+}
+
 int getRealm(const SpatialIndex::Region &r,const Point &p1,const Point &p2){
     // 7 8 9
     // 4 5 6
@@ -470,6 +496,48 @@ std::vector<std::pair<STPoint,STPoint>> cutByRealm(const SpatialIndex::STPoint &
 //    }
     return res;
 }
+
+double Trajectory::line2MBRMinSED_impl(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
+                                       const SpatialIndex::Region &r, int sr) {
+    double ts = ps.m_time, te = pe.m_time;
+    if(std::fabs(te-ts)<1e-7) return 0;
+    Region r_2d=Region(r.m_pLow,r.m_pHigh,2);
+    double res;
+    if (sr == 5) return 0;
+    else if (sr % 2 == 0){
+        return std::min(ps.getMinimumDistance(r_2d),pe.getMinimumDistance(r_2d));
+    }
+    else {
+        double px, py;
+        if (sr == 1 || sr == 7) px = r.m_pLow[0];
+        else px = r.m_pHigh[0];
+        if (sr == 1 || sr == 3) py = r.m_pLow[1];
+        else py = r.m_pHigh[1];
+        double coord[2]={px,py};
+        return line2lineMinSED(ps, pe, STPoint(coord, ts, 2), STPoint(coord, te, 2));
+    }
+}
+
+double Trajectory::line2MBRMinSED(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
+                                  const SpatialIndex::Region &r) {
+    assert(r.m_pLow[m_dimension]<=ps.m_time);
+    assert(r.m_pHigh[m_dimension]>=pe.m_time);
+    int sr = getRealm(r, ps, pe);
+    if (sr > 0) {
+        return line2MBRMinSED_impl(ps, pe, r, sr);
+    } else {
+        double min = 1e300;
+        auto part = cutByRealm(ps, pe, r);
+        for (const auto &p:part) {
+            int tmpsr = getRealm(r, p.first, p.second);
+            double tmpres = line2MBRMinSED_impl(p.first, p.second, r, tmpsr);
+//            cout<<tmpsr<<" "<<tmpres<<"\n";
+            min=std::min(min,tmpres);
+        }
+        return min;
+    }
+}
+
 double Trajectory::line2MBRIED_impl(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                     const SpatialIndex::Region &r, int sr) {
     double ts = ps.m_time, te = pe.m_time;
@@ -491,9 +559,18 @@ double Trajectory::line2MBRIED_impl(const SpatialIndex::STPoint &ps, const Spati
     }
 }
 
+double Trajectory::line2MBRMaxSED(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
+                                  const SpatialIndex::Region &r) {
+    assert(r.m_pLow[m_dimension]<=ps.m_time);
+    assert(r.m_pHigh[m_dimension]>=pe.m_time);
+    Region mbr2d(r.m_pLow,r.m_pHigh,r.m_dimension-1);
+    return std::max(ps.getMinimumDistance(mbr2d),pe.getMinimumDistance(mbr2d));
+}
+
 double Trajectory::line2MBRDistance(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                     const SpatialIndex::Region &r) {
     //the line's time period should be in the MBR's time period
+    //this is for inner nodes
     assert(r.m_pLow[m_dimension]<=ps.m_time);
     assert(r.m_pHigh[m_dimension]>=pe.m_time);
     //check if need cutting
@@ -513,8 +590,7 @@ double Trajectory::line2MBRDistance(const SpatialIndex::STPoint &ps, const Spati
             return sum;
         }
     }else if(disttype==1){
-        Region mbr2d(r.m_pLow,r.m_pHigh,r.m_dimension-1);
-        return std::max(ps.getMinimumDistance(mbr2d),pe.getMinimumDistance(mbr2d));
+        return line2MBRMinSED(ps,pe,r);
     }
     else{throw Tools::NotSupportedException("Wrong distance");}
 }
@@ -614,21 +690,37 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Region &in) const {
         tend = std::min(m_endTime(), in.m_pHigh[in.m_dimension - 1]);
         if(tstart>=tend) return 1e300;
         fakeTpVector timedtraj(&m_points,tstart,tend);
-        double sum = 0,max=0;
+        double sum = 0,min=0;
         for (int i = 0; i < timedtraj.m_size-1; i++) {
-            double pd = line2MBRDistance(timedtraj[i],timedtraj[i+1],in);
             if(disttype==0){
+                double pd = line2MBRDistance(timedtraj[i],timedtraj[i+1],in);
                 sum+=pd;
             }
             else if(disttype==1){
-                max=std::max(max,pd);
+                double pd = line2MBRMinSED(timedtraj[i],timedtraj[i+1],in);
+                min=std::min(min,pd);
             }
         }
         if(disttype==0)
             return sum;
         else if(disttype==1)
-            return max;
+            return min;
         else{throw Tools::NotSupportedException("Wrong distance");}
+}
+
+double Trajectory::getMaxSED(const SpatialIndex::Region &in) const {
+    //used for single trajectory
+    double tstart, tend;
+    tstart = std::max(m_startTime(), in.m_pLow[in.m_dimension - 1]);
+    tend = std::min(m_endTime(), in.m_pHigh[in.m_dimension - 1]);
+    if(tstart>=tend) return 1e300;
+    fakeTpVector timedtraj(&m_points,tstart,tend);
+    double max=0;
+    for (int i = 0; i < timedtraj.m_size-1; i++) {
+        double pd = line2MBRMaxSED(timedtraj[i],timedtraj[i+1],in);
+            max=std::max(max,pd);
+    }
+    return max;
 }
 
 double Trajectory::getMinimumDistance(const SpatialIndex::MBC &in) const {
@@ -882,95 +974,133 @@ double Trajectory::getMinimumDistance(double x,double y, double t1,double t2) co
         throw Tools::NotSupportedException("Wrong distance");
 }
 
-double Trajectory::minSED(const SpatialIndex::Region &in) const {
-    assert(in.m_dimension==3);
-    Region rg2d(in.m_pLow,in.m_pHigh,in.m_dimension-1);
-    fakeTpVector part(&m_points,in.m_pLow[in.m_dimension-1],in.m_pHigh[in.m_dimension-1]);
-    double min = 1e300;
-    for(int i=0;i<part.m_size;i++){
-        double dist=part[i].getMinimumDistance(rg2d);
-        if(dist<min) min=dist;
-    }
-    // WARNING: This is not accurate, only a higher bound!
-    if(min==1e300)
-        return -1;
-    return min;
-}
-
-double Trajectory::minSED(const SpatialIndex::MBC &in) const {
-    assert(in.m_dimension==2);
-    fakeTpVector part(&m_points,in.m_startTime,in.m_endTime);
-    double min = 1e300;
-    for(int i=0;i<part.m_size;i++){
-        double dist=part[i].getMinimumDistance(in);
-        if(dist<min) min=dist;
-    }
-    // WARNING: This is not accurate, only a higher bound!
-    if(min==1e300)
-        return -1;
-    return min;
-}
-
 double Trajectory::getLeafMinimumDistance(const SpatialIndex::Region &in, double MaxVelocity) const {
-    double sum=getMinimumDistance(in);//midTraj
-    //frontTraj
-    Region sembr=in;
-    if(in.m_pLow[m_dimension]>m_startTime()){
-        fakeTpVector frontTraj(&m_points,m_startTime(),in.m_pLow[m_dimension]);
-        for(int i=0;i<frontTraj.m_size-1;i++){
-            sembr.m_pLow[m_dimension]=frontTraj[i].m_time;
-            sembr.m_pHigh[m_dimension]=frontTraj[i+1].m_time;
-            double pd=line2MBRDistance(frontTraj[i],frontTraj[i+1],sembr);
-            double r1=(frontTraj[i].m_time-m_startTime())*MaxVelocity;
-            double r2=(frontTraj[i+1].m_time-m_startTime())*MaxVelocity;
-            double minus = 0.5*(frontTraj[i+1].m_time-frontTraj[i].m_time)*(r1+r2);
-            sum+=std::max(0.0,pd-minus);
+    if(disttype==0) {
+        double sum=0;
+        sum = getMinimumDistance(in);//midTraj
+        //frontTraj
+        Region sembr=in;
+        if(in.m_pLow[m_dimension]>m_startTime()){
+            fakeTpVector frontTraj(&m_points,m_startTime(),in.m_pLow[m_dimension]);
+            for(int i=0;i<frontTraj.m_size-1;i++){
+                sembr.m_pLow[m_dimension]=frontTraj[i].m_time;
+                sembr.m_pHigh[m_dimension]=frontTraj[i+1].m_time;
+                double pd=line2MBRDistance(frontTraj[i],frontTraj[i+1],sembr);
+                double r1=(frontTraj[i].m_time-m_startTime())*MaxVelocity;
+                double r2=(frontTraj[i+1].m_time-m_startTime())*MaxVelocity;
+                double minus = 0.5*(frontTraj[i+1].m_time-frontTraj[i].m_time)*(r1+r2);
+                sum+=std::max(0.0,pd-minus);
+            }
         }
-    }
-    if(in.m_pHigh[m_dimension]<m_endTime()){
-        fakeTpVector backTraj(&m_points,in.m_pHigh[m_dimension],m_endTime());
-        for(int i=0;i<backTraj.m_size-1;i++){
-            sembr.m_pLow[m_dimension]=backTraj[i].m_time;
-            sembr.m_pHigh[m_dimension]=backTraj[i+1].m_time;
-            double pd=line2MBRDistance(backTraj[i],backTraj[i+1],sembr);
-            double r1=(m_endTime()-backTraj[i].m_time)*MaxVelocity;
-            double r2=(m_endTime()-backTraj[i+1].m_time)*MaxVelocity;
-            double minus = 0.5*(backTraj[i+1].m_time-backTraj[i].m_time)*(r1+r2);
-            sum+=std::max(0.0,pd-minus);
+        if(in.m_pHigh[m_dimension]<m_endTime()){
+            fakeTpVector backTraj(&m_points,in.m_pHigh[m_dimension],m_endTime());
+            for(int i=0;i<backTraj.m_size-1;i++){
+                sembr.m_pLow[m_dimension]=backTraj[i].m_time;
+                sembr.m_pHigh[m_dimension]=backTraj[i+1].m_time;
+                double pd=line2MBRDistance(backTraj[i],backTraj[i+1],sembr);
+                double r1=(m_endTime()-backTraj[i].m_time)*MaxVelocity;
+                double r2=(m_endTime()-backTraj[i+1].m_time)*MaxVelocity;
+                double minus = 0.5*(backTraj[i+1].m_time-backTraj[i].m_time)*(r1+r2);
+                sum+=std::max(0.0,pd-minus);
+            }
         }
+        return sum;
     }
-    return sum;
+    else if(disttype==1){
+        double min=getMaxSED(in);
+        Region sembr=in;
+        if(in.m_pLow[m_dimension]>m_startTime()){
+            fakeTpVector frontTraj(&m_points,m_startTime(),in.m_pLow[m_dimension]);
+            for(int i=0;i<frontTraj.m_size-1;i++){
+                sembr.m_pLow[m_dimension]=frontTraj[i].m_time;
+                sembr.m_pHigh[m_dimension]=frontTraj[i+1].m_time;
+                double pd=line2MBRMinSED(frontTraj[i],frontTraj[i+1],sembr);
+                double r1=(frontTraj[i].m_time-m_startTime())*MaxVelocity;
+                double r2=(frontTraj[i+1].m_time-m_startTime())*MaxVelocity;
+                double minus = std::max(r1,r2);//inaccurate, but a lower bound
+                min=std::min(pd-minus,min);
+            }
+        }
+        if(in.m_pHigh[m_dimension]<m_endTime()){
+            fakeTpVector backTraj(&m_points,in.m_pHigh[m_dimension],m_endTime());
+            for(int i=0;i<backTraj.m_size-1;i++){
+                sembr.m_pLow[m_dimension]=backTraj[i].m_time;
+                sembr.m_pHigh[m_dimension]=backTraj[i+1].m_time;
+                double pd=line2MBRMinSED(backTraj[i],backTraj[i+1],sembr);
+                double r1=(backTraj[i].m_time-m_startTime())*MaxVelocity;
+                double r2=(backTraj[i+1].m_time-m_startTime())*MaxVelocity;
+                double minus = std::max(r1,r2);//inaccurate, but a lower bound
+                min=std::min(pd-minus,min);
+            }
+        }
+        return std::max(0.0,min);
+    }else
+        throw Tools::NotSupportedException("Wrong distance");
 }
 
 double Trajectory::getLeafMinimumDistance(const SpatialIndex::MBC &in, double MaxVelocity) const {
-    double sum=getMinimumDistance(in);//midTraj
-    //frontTraj
-    STPoint sPoint(in.m_pLow,0,2),sPoint2(in.m_pLow,0,2),ePoint(in.m_pHigh,0,2),ePoint2(in.m_pHigh,0,2);
-    if(in.m_startTime>m_startTime()){
-        fakeTpVector frontTraj(&m_points,m_startTime(),in.m_startTime);
-        for(int i=0;i<frontTraj.m_size-1;i++){
-            sPoint.m_time=frontTraj[i].m_time;
-            sPoint2.m_time=frontTraj[i+1].m_time;
-            double pd=line2lineIED(sPoint,sPoint2,frontTraj[i],frontTraj[i+1]);
-            double r1=(frontTraj[i].m_time-m_startTime())*MaxVelocity;
-            double r2=(frontTraj[i+1].m_time-m_startTime())*MaxVelocity;
-            double minus = 0.5*(frontTraj[i+1].m_time-frontTraj[i].m_time)*(r1+r2);
-            sum+=std::max(0.0,pd-minus);
+    if(disttype==0) {
+        double sum = getMinimumDistance(in);//midTraj
+        //frontTraj
+        STPoint sPoint(in.m_pLow, 0, 2), sPoint2(in.m_pLow, 0, 2), ePoint(in.m_pHigh, 0, 2), ePoint2(in.m_pHigh, 0, 2);
+        if (in.m_startTime > m_startTime()) {
+            fakeTpVector frontTraj(&m_points, m_startTime(), in.m_startTime);
+            for (int i = 0; i < frontTraj.m_size - 1; i++) {
+                sPoint.m_time = frontTraj[i].m_time;
+                sPoint2.m_time = frontTraj[i + 1].m_time;
+                double pd = line2lineIED(sPoint, sPoint2, frontTraj[i], frontTraj[i + 1]);
+                double r1 = (frontTraj[i].m_time - m_startTime()) * MaxVelocity;
+                double r2 = (frontTraj[i + 1].m_time - m_startTime()) * MaxVelocity;
+                double minus = 0.5 * (frontTraj[i + 1].m_time - frontTraj[i].m_time) * (r1 + r2);
+                sum += std::max(0.0, pd - minus);
+            }
         }
-    }
-    if(in.m_endTime<m_endTime()){
-        fakeTpVector backTraj(&m_points,in.m_endTime,m_endTime());
-        for(int i=0;i<backTraj.m_size-1;i++){
-            ePoint.m_time=backTraj[i].m_time;
-            ePoint2.m_time=backTraj[i+1].m_time;
-            double pd=line2lineIED(ePoint,ePoint2,backTraj[i],backTraj[i+1]);
-            double r1=(m_endTime()-backTraj[i].m_time)*MaxVelocity;
-            double r2=(m_endTime()-backTraj[i+1].m_time)*MaxVelocity;
-            double minus = 0.5*(backTraj[i+1].m_time-backTraj[i].m_time)*(r1+r2);
-            sum+=std::max(0.0,pd-minus);
+        if (in.m_endTime < m_endTime()) {
+            fakeTpVector backTraj(&m_points, in.m_endTime, m_endTime());
+            for (int i = 0; i < backTraj.m_size - 1; i++) {
+                ePoint.m_time = backTraj[i].m_time;
+                ePoint2.m_time = backTraj[i + 1].m_time;
+                double pd = line2lineIED(ePoint, ePoint2, backTraj[i], backTraj[i + 1]);
+                double r1 = (m_endTime() - backTraj[i].m_time) * MaxVelocity;
+                double r2 = (m_endTime() - backTraj[i + 1].m_time) * MaxVelocity;
+                double minus = 0.5 * (backTraj[i + 1].m_time - backTraj[i].m_time) * (r1 + r2);
+                sum += std::max(0.0, pd - minus);
+            }
         }
+        return sum;
     }
-    return sum;
+    else if(disttype==1) {
+        double min=getMinimumDistance(in);
+        //frontTraj
+        STPoint sPoint(in.m_pLow, 0, 2), sPoint2(in.m_pLow, 0, 2), ePoint(in.m_pHigh, 0, 2), ePoint2(in.m_pHigh, 0, 2);
+        if (in.m_startTime > m_startTime()) {
+            fakeTpVector frontTraj(&m_points, m_startTime(), in.m_startTime);
+            for (int i = 0; i < frontTraj.m_size - 1; i++) {
+                sPoint.m_time = frontTraj[i].m_time;
+                sPoint2.m_time = frontTraj[i + 1].m_time;
+                double pd=line2lineMinSED(frontTraj[i],frontTraj[i+1],sPoint,sPoint2);
+                double r1=(frontTraj[i].m_time-m_startTime())*MaxVelocity;
+                double r2=(frontTraj[i+1].m_time-m_startTime())*MaxVelocity;
+                double minus = std::max(r1,r2);//inaccurate, but a lower bound
+                min=std::min(pd-minus,min);
+            }
+        }
+        if (in.m_endTime < m_endTime()) {
+            fakeTpVector backTraj(&m_points, in.m_endTime, m_endTime());
+            for (int i = 0; i < backTraj.m_size - 1; i++) {
+                ePoint.m_time = backTraj[i].m_time;
+                ePoint2.m_time = backTraj[i + 1].m_time;
+                double pd=line2lineMinSED(backTraj[i],backTraj[i+1],ePoint,ePoint2);
+                double r1=(backTraj[i].m_time-m_startTime())*MaxVelocity;
+                double r2=(backTraj[i+1].m_time-m_startTime())*MaxVelocity;
+                double minus = std::max(r1,r2);//inaccurate, but a lower bound
+                min=std::min(pd-minus,min);
+            }
+        }
+        return std::max(0.0,min);
+    }
+    else
+        throw Tools::NotSupportedException("Wrong distance");
 }
 void Trajectory::makeInfinite(uint32_t dimension)
 {

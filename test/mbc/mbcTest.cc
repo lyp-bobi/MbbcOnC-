@@ -100,8 +100,6 @@ public:
 //                    <<m_query->getMinimumDistance(bcs)<<"\n\n";
 //        }
 
-
-
         delete[] pData;
     }
 
@@ -280,7 +278,7 @@ int TreeQuery(ISpatialIndex* tree,IShape* query,TrajStore *ts= nullptr){
         tree->intersectsWithQuery(*query,vis);
     }else if(QueryType==2){
         vis.m_query=query;
-        tree->nearestNeighborQuery(5,*query,vis);
+        tree->nearestNeighborQuery(25,*query,vis);
     }
     end=clock();
     if(QueryType==1){

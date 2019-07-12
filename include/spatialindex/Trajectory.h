@@ -102,6 +102,7 @@ namespace SpatialIndex
         virtual double getMinimumDistance(const IShape& in) const;
         virtual double getMinimumDistance(const STPoint& in) const;
         virtual double getMinimumDistance(const Region& in) const;
+        virtual double getMaxSED(const Region& in) const;
         virtual double getMinimumDistance(const MBC& in) const;
         virtual double getMinimumDistance(const SBR& in) const;
         virtual double getMinimumDistance(const Trajectory& in) const;
@@ -111,9 +112,6 @@ namespace SpatialIndex
 
         virtual double getLeafMinimumDistance(const Region &in, double MaxVelocity) const;
         virtual double getLeafMinimumDistance(const MBC &in, double MaxVelocity) const;
-
-        virtual double minSED(const Region& in) const;
-        virtual double minSED(const MBC& in) const;
 
 
         virtual bool intersectsTimeRegion(const TimeRegion& in) const;
@@ -139,8 +137,12 @@ namespace SpatialIndex
         void loadFromString(std::string s);
 
         static double line2lineIED(const STPoint &p1s, const STPoint &p1e, const STPoint &p2s, const STPoint &p2e);
+        static double line2lineMinSED(const STPoint &p1s, const STPoint &p1e, const STPoint &p2s, const STPoint &p2e);
         static double line2MBRDistance(const STPoint &ps,const STPoint &pe,const Region &r);
         static double line2MBRIED_impl(const STPoint &ps, const STPoint &pe, const Region &r, int sr);
+        static double line2MBRMinSED(const STPoint &ps, const STPoint &pe, const Region &r);
+        static double line2MBRMaxSED(const STPoint &ps, const STPoint &pe, const Region &r);
+        static double line2MBRMinSED_impl(const STPoint &ps, const STPoint &pe, const Region &r, int sr);
         static double line2MBCDistance(const STPoint &ps,const STPoint &pe,const MBC &r);
 
         std::vector<STPoint> m_points;
