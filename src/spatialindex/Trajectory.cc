@@ -977,7 +977,7 @@ double Trajectory::getMinimumDistance(double x,double y, double t1,double t2) co
 double Trajectory::getPeriodMinimumDistance(const SpatialIndex::Region &in, double MaxVelocity) const {
         Region sembr=in;
         double sum=0;
-        for(int i=0;i<m_points.size();i++){
+        for(int i=0;i<m_points.size()-1;i++){
             sembr.m_pLow[m_dimension]=m_points[i].m_time;
             sembr.m_pHigh[m_dimension]=m_points[i+1].m_time;
             double pd=line2MBRDistance(m_points[i],m_points[i+1],sembr);
@@ -987,6 +987,10 @@ double Trajectory::getPeriodMinimumDistance(const SpatialIndex::Region &in, doub
             sum+=std::max(0.0,pd-minus);
         }
     return 0;
+}
+
+double Trajectory::getNodeMinimumDistance(const SpatialIndex::Region &in,double MaxVelocity) const {
+    return std::max(getMinimumDistance(in),getPeriodMinimumDistance(in,MaxVelocity));
 }
 
 double Trajectory::getLeafMinimumDistance(const SpatialIndex::Region &in, double MaxVelocity) const {
