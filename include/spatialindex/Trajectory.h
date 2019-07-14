@@ -110,6 +110,8 @@ namespace SpatialIndex
         virtual double getMinimumDistance(double x,double y, double t1,double t2) const;
 
 
+        virtual double getPeriodMinimumDistance(const Region &in, double MaxVelocity) const;
+
         virtual double getLeafMinimumDistance(const Region &in, double MaxVelocity) const;
         virtual double getLeafMinimumDistance(const MBC &in, double MaxVelocity) const;
 
