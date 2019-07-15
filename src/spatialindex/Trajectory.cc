@@ -266,15 +266,15 @@ const std::pair<int, double> findMaximumDistance(const vector<SpatialIndex::STPo
     }
     return std::make_pair(index, Mdist);
 }
-std::vector<SpatialIndex::STPoint> Trajectory::simplifyWithRDP(std::vector<SpatialIndex::STPoint> &Points,
-                                                                 double epsilon) {
+std::vector<SpatialIndex::STPoint> Trajectory::simplifyWithRDP(const std::vector<SpatialIndex::STPoint> &Points,
+                                                                 double epsilon){
     if(Points.size()<3){  //base case 1
         return Points;
     }
     std::pair<int, double> maxDistance=findMaximumDistance(Points);
     if(maxDistance.second>=epsilon){
         int index=maxDistance.first;
-        vector<SpatialIndex::STPoint>::iterator it=Points.begin();
+        vector<SpatialIndex::STPoint>::const_iterator it=Points.begin();
         vector<SpatialIndex::STPoint> path1(Points.begin(),it+index+1); //new path l1 from 0 to index
         vector<SpatialIndex::STPoint> path2(it+index,Points.end()); // new path l2 from index to last
 

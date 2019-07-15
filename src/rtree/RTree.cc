@@ -519,6 +519,7 @@ void SpatialIndex::RTree::RTree::pointLocationQuery(const Point& query, IVisitor
 
 void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v, INearestNeighborComparator& nnc)
 {
+    ///	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
     const Trajectory *queryTraj;
     if(m_DataType==TrajectoryType) {
         queryTraj = dynamic_cast<const Trajectory *>(&query);
@@ -527,7 +528,13 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
             return;
         }
     }
-//	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
+    MBC queryBC;
+    queryTraj->getMBC(queryBC);
+    //todo: design a better function
+    double thres=(queryBC.m_endTime-queryBC.m_startTime)*queryBC.m_rv*0.05;
+    auto simpleTrajPoint=Trajectory::simplifyWithRDP(queryTraj->m_points,thres);
+    Trajectory simpleTraj(simpleTrajPoint);
+    double delta=queryTraj->getMinimumDistance(simpleTraj);
 
 #ifdef HAVE_PTHREAD_H
 	Tools::LockGuard lock(&m_lock);
@@ -570,8 +577,10 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
                         traj.loadFromByteArray(e->m_pData);
                         queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(*queryTraj, traj)));
 					}else{
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e,
-                                               queryTraj->getLeafMinimumDistance(e->m_region, m_ts->m_maxVelocity)));
+//                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e,
+//                                               queryTraj->getLeafMinimumDistance(e->m_region, m_ts->m_maxVelocity)));
+					    double pd=std::max(0.0,simpleTraj.getLeafMinimumDistance(e->m_region,m_ts->m_maxVelocity)-delta);
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e,pd));
 					}
 
 				}
@@ -582,7 +591,8 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
                         queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr,br->getMinimumDistance(*(n->m_ptrMBR[cChild]))));
 				    }
 				    else{
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, queryTraj->getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),m_ts->m_maxVelocity)));
+				        double pd=std::max(0.0,simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),m_ts->m_maxVelocity)-delta);
+                        queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, pd));
 				    }
 
 				}
