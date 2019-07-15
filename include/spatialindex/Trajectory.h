@@ -50,9 +50,9 @@ namespace SpatialIndex
                 }
                 if(m_ie!=m_vectorPointer->size()-1&&m_vectorPointer->at(m_ie).m_time!=te){
                     double x=makemidmacro(m_vectorPointer->at(m_ie).m_pCoords[0],m_vectorPointer->at(m_ie).m_time,
-                                          m_vectorPointer->at(m_ie+1).m_pCoords[0],m_vectorPointer->at(m_ie+1).m_time,ts);
+                                          m_vectorPointer->at(m_ie+1).m_pCoords[0],m_vectorPointer->at(m_ie+1).m_time,te);
                     double y=makemidmacro(m_vectorPointer->at(m_ie).m_pCoords[1],m_vectorPointer->at(m_ie).m_time,
-                                          m_vectorPointer->at(m_ie+1).m_pCoords[1],m_vectorPointer->at(m_ie+1).m_time,ts);
+                                          m_vectorPointer->at(m_ie+1).m_pCoords[1],m_vectorPointer->at(m_ie+1).m_time,te);
                     double xy[2]={x,y};
                     m_back=new STPoint(xy,te,2);
                     m_ie++;
