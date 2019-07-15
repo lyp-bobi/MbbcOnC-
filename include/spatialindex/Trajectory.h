@@ -61,7 +61,7 @@ namespace SpatialIndex
             }
             STPoint& operator[](int n){
                 if(n==0&&m_front!= nullptr) return *m_front;
-                if(n==m_is+m_size-1&&m_back!= nullptr) return *m_back;
+                if(n==m_size-1&&m_back!= nullptr) return *m_back;
                 return m_vectorPointer->at(m_is+n);
             }
         };
@@ -129,7 +129,7 @@ namespace SpatialIndex
         virtual void getMBRfull(Region& out) const;
         virtual void getTimeMBR(TimeRegion& out) const;
         STPoint getPointAtTime(double time) const;
-        static std::vector<SpatialIndex::STPoint> simplifyWithRDP(std::vector<SpatialIndex::STPoint>& Points, double threshold);
+        static std::vector<SpatialIndex::STPoint> simplifyWithRDP(const std::vector<SpatialIndex::STPoint>& Points, double threshold);
         std::vector<Trajectory> cuttraj(std::vector<SpatialIndex::STPoint>);
         std::vector<Trajectory> getSegments(double threshold);
         void linkTrajectory(Trajectory other);
