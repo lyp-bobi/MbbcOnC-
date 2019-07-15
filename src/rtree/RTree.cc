@@ -607,7 +607,8 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
                 else {
                     ShapeList brs = m_ts->getMBRsByTime(pFirst->m_id, queryTraj->m_points.front().m_time,
                                                         queryTraj->m_points.back().m_time);
-                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, brs), 1));
+                    double pd=std::max(0.0,simpleTraj.getMinimumDistance(brs)-delta);
+                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, pd, 1));
                     insertedTrajId[trajId]=1;
                 }
 //                std::cerr<<nnc.getMinimumDistance(query, brs)<<"\n";

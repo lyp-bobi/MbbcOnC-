@@ -623,7 +623,8 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                 else {
                     ShapeList bcs = m_ts->getMBCsByTime(pFirst->m_id, queryTraj->m_points.front().m_time,
                                                         queryTraj->m_points.back().m_time);
-                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, bcs), 1));
+                    double pd=std::max(0.0,simpleTraj.getMinimumDistance(bcs)-delta);
+                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, pd, 1));
                     insertedTrajId[trajId]=1;
                 }
 //                std::cerr<<nnc.getMinimumDistance(query, bcs)<<"\n";
