@@ -1301,6 +1301,8 @@ SpatialIndex::id_type SpatialIndex::MBCRTree::MBCRTree::writeNode(Node* n)
 	uint32_t dataLength;
 	n->storeToByteArray(&buffer, dataLength);
 
+	Leaf *leaf=new Leaf(n->m_pTree,-1);
+
 	id_type page;
 	if (n->m_identifier < 0) page = StorageManager::NewPage;
 	else page = n->m_identifier;
@@ -1342,7 +1344,6 @@ SpatialIndex::id_type SpatialIndex::MBCRTree::MBCRTree::writeNode(Node* n)
 	{
 		m_writeNodeCommands[cIndex]->execute(*n);
 	}
-    std::cerr<<"store node "<<page<<"at level"<<n->m_level<<"\n";
 	return page;
 }
 

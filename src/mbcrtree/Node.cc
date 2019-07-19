@@ -51,7 +51,6 @@ Tools::IObject* Node::clone()
 //
 uint32_t Node::getByteArraySize() const
 {
-    //todo: don't store the dimensions of each mbr/mbc
     if(m_level>0||m_pTree->m_bUsingMBR)
         return
                 (sizeof(uint32_t) +
@@ -77,10 +76,16 @@ void Node::loadFromByteArray(const uint8_t* ptr)
     memcpy(&m_children, ptr, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
 
+    m_pIdentifier=new id_type[m_children+1];
     if(m_level>0||m_pTree->m_bUsingMBR)
         m_ptrMBR = new RegionPtr[m_children + 1];
     else
         m_ptrMBC = new MBCPtr[m_children + 1];
+    if(m_level==0){
+        m_prevNode=new id_type[m_children+1];
+        m_nextNode=new id_type[m_children+1];
+    }
+
     for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
         memcpy(&(m_pIdentifier[u32Child]), ptr, sizeof(id_type));
         ptr += sizeof(id_type);
@@ -94,6 +99,8 @@ void Node::loadFromByteArray(const uint8_t* ptr)
         }
         else{
             m_ptrMBC[u32Child] = m_pTree->m_mbcPool.acquire();
+            MBC bc=MBC();bc.makeInfinite(m_pTree->m_dimension);
+            *(m_ptrMBC[u32Child]) = bc;
             memcpy(m_ptrMBC[u32Child]->m_pLow, ptr, (m_pTree->m_dimension-1) * sizeof(double));
             ptr += (m_pTree->m_dimension-1) * sizeof(double);
             memcpy(m_ptrMBC[u32Child]->m_pHigh, ptr, (m_pTree->m_dimension-1) * sizeof(double));
