@@ -92,21 +92,10 @@ namespace Tools
 			{
 				if (m_pool.size() < m_capacity)
 				{
-					if (p->m_pData != 0)
-					{
-						for (uint32_t cChild = 0; cChild < p->m_children; ++cChild)
-						{
-							// there is no need to set the pointer to zero, after deleting it,
-							// since it will be redeleted only if it is actually initialized again,
-							// a fact that will be depicted by variable m_children.
-							if (p->m_pData[cChild] != 0) delete[] p->m_pData[cChild];
-						}
-					}
 
 					p->m_level = 0;
 					p->m_identifier = -1;
 					p->m_children = 0;
-					p->m_totalDataLength = 0;
 
 					m_pool.push(p);
 				}

@@ -96,16 +96,14 @@ void Leaf::split(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id, N
 
 	for (cIndex = 0; cIndex < g1.size(); ++cIndex)
 	{
-		pLeft->insertEntry(m_pDataLength[g1[cIndex]], m_pData[g1[cIndex]], *(m_ptrMBR[g1[cIndex]]), m_pIdentifier[g1[cIndex]]);
+		pLeft->insertEntry(0, 0, *(m_ptrMBR[g1[cIndex]]), m_pIdentifier[g1[cIndex]]);
 		// we don't want to delete the data array from this node's destructor!
-		m_pData[g1[cIndex]] = 0;
 	}
 
 	for (cIndex = 0; cIndex < g2.size(); ++cIndex)
 	{
-		pRight->insertEntry(m_pDataLength[g2[cIndex]], m_pData[g2[cIndex]], *(m_ptrMBR[g2[cIndex]]), m_pIdentifier[g2[cIndex]]);
+		pRight->insertEntry(0, 0, *(m_ptrMBR[g2[cIndex]]), m_pIdentifier[g2[cIndex]]);
 		// we don't want to delete the data array from this node's destructor!
-		m_pData[g2[cIndex]] = 0;
 	}
 }
 
@@ -137,8 +135,7 @@ void Leaf::deleteData(id_type id, std::stack<id_type>& pathBuffer)
 			// keep this in the for loop. The tree height might change after insertions.
 			uint8_t* overflowTable = new uint8_t[m_pTree->m_stats.m_u32TreeHeight];
 			memset(overflowTable, 0, m_pTree->m_stats.m_u32TreeHeight);
-			m_pTree->insertData_impl(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBR[cChild]), n->m_pIdentifier[cChild], n->m_level, overflowTable);
-			n->m_pData[cChild] = 0;
+			m_pTree->insertData_impl(0, 0, *(n->m_ptrMBR[cChild]), n->m_pIdentifier[cChild], n->m_level, overflowTable);
 			delete[] overflowTable;
 		}
 		if (n.get() == this) n.relinquish();

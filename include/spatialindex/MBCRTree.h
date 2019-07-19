@@ -96,7 +96,8 @@ namespace SpatialIndex
 			uint32_t leafCapacity,
 			uint32_t dimension,
 			MBCRTreeVariant rv,
-			id_type& indexIdentifier
+			id_type& indexIdentifier,
+			bool useMBR=false
 		);
 		SIDX_DLL ISpatialIndex* createAndBulkLoadNewMBCRTree(
 			BulkLoadMethod m,
@@ -107,6 +108,12 @@ namespace SpatialIndex
 		);
 		SIDX_DLL ISpatialIndex* loadMBCRTree(IStorageManager& in, id_type indexIdentifier);
         SIDX_DLL ISpatialIndex* createAndBulkLoadNewMBCRTreeWithTrajStore(
+                IStorageManager *tsm,
+                uint32_t indexCapacity,
+                uint32_t dimension,
+                id_type& indexIdentifier
+        );
+        SIDX_DLL ISpatialIndex* createAndBulkLoadNewRTreeWithTrajStore(
                 IStorageManager *tsm,
                 uint32_t indexCapacity,
                 uint32_t dimension,

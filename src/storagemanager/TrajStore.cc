@@ -550,7 +550,6 @@ const Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double ten
 }
 
 const ShapeList TrajStore::getMBCsByTime(id_type &id, double tstart, double tend) {
-    m_boundingVisited++;
     auto it=m_entries.find(id);
     auto bc=&((*m_entryMbcs.find(id)).second);
     assert(it!=m_entries.end());
@@ -583,7 +582,6 @@ const ShapeList TrajStore::getMBCsByTime(id_type &id, double tstart, double tend
 }
 
 const ShapeList TrajStore::getMBRsByTime(id_type &id, double tstart, double tend) {
-    m_boundingVisited++;
     auto it=m_entries.find(id);
     auto br=&((*m_entryMbrs.find(id)).second);
     assert(it!=m_entries.end());

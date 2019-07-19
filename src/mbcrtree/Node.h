@@ -52,7 +52,6 @@ namespace SpatialIndex
 			// Tools::ISerializable interface
 			//
 			virtual uint32_t getByteArraySize() const;
-            virtual uint32_t getIndexByteArraySize() const;
 			virtual void loadFromByteArray(const uint8_t* data);
 			virtual void storeToByteArray(uint8_t** data, uint32_t& len);
 
@@ -67,8 +66,8 @@ namespace SpatialIndex
 			//
 			virtual uint32_t getChildrenCount() const;
 			virtual id_type getChildIdentifier(uint32_t index)  const;
+            virtual void getChildData(uint32_t index, uint32_t& len, uint8_t** data) const;
 			virtual void getChildShape(uint32_t index, IShape** out)  const;
-                        virtual void getChildData(uint32_t index, uint32_t& length, uint8_t** data) const;
 			virtual uint32_t getLevel() const;
 			virtual bool isIndex() const;
 			virtual bool isLeaf() const;
@@ -118,20 +117,16 @@ namespace SpatialIndex
 			Region m_nodeMBR;
 				// The minimum bounding region enclosing all data contained in the node.
 
-			uint8_t** m_pData;
-				// The data stored in the node.
-
-			RegionPtr* m_ptrMBR;
+			RegionPtr* m_ptrMBR= nullptr;
+            MBCPtr* m_ptrMBC= nullptr;
 				// The corresponding data MBRs.
 
-			MBCPtr* m_ptrMBC;
 
 			id_type* m_pIdentifier;
 				// The corresponding data identifiers.
 
-			uint32_t* m_pDataLength;
-
-			uint32_t m_totalDataLength;
+            id_type * m_prevNode= nullptr;
+            id_type* m_nextNode = nullptr;
 
 			class RstarSplitEntry
 			{

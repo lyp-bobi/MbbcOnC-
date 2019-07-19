@@ -104,6 +104,7 @@ namespace SpatialIndex
             void visitSubTree(NodePtr subTree, IVisitor& v);
         public:
             bool m_bUsingTrajStore=false;
+            bool m_bUsingMBR=true;
 
             TrajStore *m_ts=nullptr;
 

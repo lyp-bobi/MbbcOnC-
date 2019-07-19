@@ -26,7 +26,7 @@
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
-#define QueryType 2
+#define QueryType 1
 //1 for time-slice range, 2 for 5-NN
 
 using namespace std;
@@ -336,18 +336,18 @@ int main(){
         dsm1= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile1);
         dsm2= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile2);
 
-        TrajStore ts1(diskfile1,4096);
-        ts1.loadSegments(segs);
-        TrajStore ts2(diskfile2,4096);
+//        TrajStore ts1(file1,4096);
+//        ts1.loadSegments(segs);
+        TrajStore ts2(file2,4096);
         ts2.loadSegments(segs);
 
 
-        TrajMbrStream ds1;
-        ds1.feedTraj(&trajs);
-        ds1.rewind();
-        ISpatialIndex* real = RTree::createAndBulkLoadNewRTree(
-                RTree::BulkLoadMethod::BLM_STR, ds1, *file0, 0.9, 10000,100000, 3,RTree::RV_RSTAR, indexIdentifier0);
-        real->m_DataType=TrajectoryType;
+//        TrajMbrStream ds1;
+//        ds1.feedTraj(&trajs);
+//        ds1.rewind();
+//        ISpatialIndex* real = RTree::createAndBulkLoadNewRTree(
+//                RTree::BulkLoadMethod::BLM_STR, ds1, *file0, 0.9, 10000,100000, 3,RTree::RV_RSTAR, indexIdentifier0);
+//        real->m_DataType=TrajectoryType;
 
 
 
@@ -379,12 +379,12 @@ int main(){
 
 
 
-        ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,64,3,indexIdentifier1);
+//        ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,64,3,indexIdentifier1);
         ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,48,3,indexIdentifier2);
         cerr << "start query!" << endl << endl << endl;
 
 //        TreeQueryBatch(real,queries);
-        TreeQueryBatch(r, queries,&ts1);
+//        TreeQueryBatch(r, queries,&ts1);
         TreeQueryBatch(rc, queries,&ts2);
 
 //        double aa,bb,oo;
@@ -404,10 +404,10 @@ int main(){
 
 
 
-        std::cerr<<"index IO:"<<ts1.m_indexIO<<" "<<ts2.m_indexIO<<endl;
-        std::cerr<<"traj IO:"<<ts1.m_trajIO<<" "<<ts2.m_trajIO<<endl;
-        std::cerr<<"total IO:"<<ts1.m_indexIO+ts1.m_trajIO<<" "<<ts2.m_indexIO+ts2.m_trajIO<<endl;
-        std::cerr<<"bounding IO:"<<ts1.m_boundingVisited<<" "<<ts2.m_boundingVisited<<endl;
+//        std::cerr<<"index IO:"<<ts1.m_indexIO<<" "<<ts2.m_indexIO<<endl;
+//        std::cerr<<"traj IO:"<<ts1.m_trajIO<<" "<<ts2.m_trajIO<<endl;
+//        std::cerr<<"total IO:"<<ts1.m_indexIO+ts1.m_trajIO<<" "<<ts2.m_indexIO+ts2.m_trajIO<<endl;
+//        std::cerr<<"bounding IO:"<<ts1.m_boundingVisited<<" "<<ts2.m_boundingVisited<<endl;
         std::cerr<<"IO time:"<<dsm1->iotime<<" "<<dsm2->iotime<<"\n";
         std::cerr<<"calculation time"<<calcuTime[0]<<" "<<calcuTime[1]<<"\n";
         delete file0;delete file1;delete file2;

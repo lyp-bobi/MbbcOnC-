@@ -449,6 +449,37 @@ void BulkLoader::createLevel(
 			pTree->writeNode(n);
 			es2->insert(new ExternalSorter::Record(n->m_nodeMBR, n->m_identifier, 0, 0, 0,level));
 			pTree->m_rootID = n->m_identifier;
+//            if(level==0&&pTree->m_bUsingTrajStore){
+//                //state the storage place of bounding boxes
+//                for(int i=0;i<n->m_children;i++){
+//                    pTree->m_ts->trajNodeChildTuple[n->m_pIdentifier[i]]=std::make_pair(n->m_identifier,i);
+//                }
+//            }
+//            else if(level==1&&pTree->m_bUsingTrajStore){
+//                //linking the bounding boxes
+//                for(int i=0;i<n->m_children;i++){
+//                    auto child=pTree->readNode(n->m_pIdentifier[i]);
+//                    for(int j=0;j<child->m_children;j++){
+//                        id_type id=child->m_pIdentifier[j];
+//                        id_type pvId=pTree->m_ts->m_entries[id]->m_pvId;
+//                        if(pvId>=0){
+//                            auto store=pTree->m_ts->trajNodeChildTuple[pvId];
+//                            child->m_prevNode[j]=store.first;
+//                        }else{
+//                            child->m_prevNode[j]=-1;
+//                        }
+//                        id_type ntId=pTree->m_ts->m_entries[id]->m_ntId;
+//                        if(ntId>=0){
+//                            auto store=pTree->m_ts->trajNodeChildTuple[ntId];
+//                            child->m_nextNode[j]=store.first;
+//                        }else{
+//                            child->m_nextNode[j]=-1;
+//                        }
+//                        std::cerr<<"linked"<<id<<"\n";
+//                    }
+//                    pTree->writeNode(child.get());
+//                }
+//            }
 			delete n;
 		}
 	}
