@@ -519,7 +519,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
 	Tools::LockGuard lock(&m_lock);
 #endif
 
-    PartsSore ps(simpleTraj,m_ts,m_bUsingMBR);
+    PartsSore ps(simpleTraj,delta,m_ts,m_bUsingMBR);
 	ps.push(new NNEntry(m_rootID, 0, 0));
 
 	uint32_t count = 0;

@@ -62,7 +62,6 @@ public:
     void visitData(const IData& d)
     {
         m_resultGet++;
-//        auto mou=dynamic_cast<const MBCRTree::MBCRTree::simpleData*>(&d);
         IShape* pS;
         d.getShape(&pS);
         // do something.
@@ -79,8 +78,8 @@ public:
 //        cout << *s << endl;
 
         m_lastResult=d.getIdentifier();
-
-
+//        auto mou=dynamic_cast<const MBCRTree::MBCRTree::simpleData*>(&d);
+//        cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
 //        //id of the data
 //        if(ts== nullptr)
 //            cerr << d.getIdentifier() << endl;
@@ -395,9 +394,9 @@ int main(){
 ////        for(int j=0;j<queries.size();j++){
 //        for(int j=0;j<1;j++){
 //            auto q=queries[j];
-//            oo=TreeQuery(real,q);
+////            oo=TreeQuery(real,q);
 //            aa=TreeQuery(r,q,&ts1);
-//            bb=TreeQuery(rc,q,&ts1);
+//            bb=TreeQuery(rc,q,&ts2);
 //            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
 //            if(aa!=oo||bb!=oo){
 //                cout<<j<<endl;

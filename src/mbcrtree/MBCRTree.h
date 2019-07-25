@@ -308,6 +308,7 @@ namespace SpatialIndex
                 EntryMPQ m_mpq;
                 bool m_useMBR=false;
                 Trajectory m_query;
+                double m_error;
                 TrajStore* m_ts;
                 std::map<id_type ,Parts> m_parts;
                 int m_dimension=2;
@@ -477,6 +478,7 @@ namespace SpatialIndex
                     parts->m_computedTime=computedTime;
                     int type=2;
                     if(parts->m_missingLeaf.empty()) type=3;
+                    sum=std::max(0.0,sum-m_error);
                     if(m_handlers.count(id)==0){
                         auto handle=m_mpq.push(new NNEntry(id,sum,type));
                         m_handlers[id]=handle;
@@ -537,8 +539,8 @@ namespace SpatialIndex
                     return (*m_parts[id].m_missingLeaf.begin());
                 }
                 auto getMissingPart(id_type id){return m_parts[id].m_missingLeaf;}
-                PartsSore(Trajectory &traj,TrajStore* ts,bool useMBR)
-                :m_query(traj),m_useMBR(useMBR),m_ts(ts){}
+                PartsSore(Trajectory &traj,double error,TrajStore* ts,bool useMBR)
+                :m_query(traj),m_error(error),m_useMBR(useMBR),m_ts(ts){}
                 ~PartsSore(){}
 			};
 

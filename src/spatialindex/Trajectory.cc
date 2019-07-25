@@ -1230,6 +1230,7 @@ double Trajectory::getMidIED(const MBC &sbc, const MBC &ebc,
 //            double t0=(2*(pex-psx)*(inte))
         }
     }
+    return sum;
 }
 
 double Trajectory::getStaticIED(double x, double y, double t1, double t2) const {
