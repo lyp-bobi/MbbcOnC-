@@ -159,27 +159,27 @@ namespace SpatialIndex
 #ifdef HAVE_PTHREAD_H
 			pthread_mutex_t m_lock;
 #endif
-
+		public: class simpleData:public IData{
+            public:
+                simpleData(id_type id,double dist):m_id(id),m_dist(dist){}
+                id_type m_id;
+                double m_dist;
+                virtual Data* clone(){throw Tools::NotSupportedException(".");}
+                virtual id_type getIdentifier() const{return m_id;}
+                virtual void getShape(IShape** out) const{ *out= nullptr;}
+                virtual void getData(uint32_t& len, uint8_t** data) const{len=0;*data= nullptr;}
+            };
 			class NNEntry
 			{
 			public:
-                uint32_t m_type=0;
+                uint32_t m_type;
 				id_type m_id;
-				IEntry* m_pEntry;
 				double m_minDist;
 
-				NNEntry(id_type id, IEntry* e, double f, uint32_t type=0)
-				    : m_id(id), m_pEntry(e), m_minDist(f),m_type(type) {}
+				NNEntry(id_type id, double f, uint32_t type)
+				    : m_id(id), m_minDist(f),m_type(type) {
+				}
 				~NNEntry() {}
-
-				struct ascending : public std::binary_function<NNEntry*, NNEntry*, bool>
-				{
-					bool operator()(const NNEntry* __x, const NNEntry* __y) const {
-                        if(std::isinf(__x->m_minDist)||std::isnan(__x->m_minDist)) return true;
-                        if(std::isinf(__y->m_minDist)||std::isnan(__y->m_minDist)) return true;
-					    return __x->m_minDist > __y->m_minDist;
-					}
-				};
 			}; // NNEntry
 
 			class NNComparator : public INearestNeighborComparator
@@ -211,6 +211,337 @@ namespace SpatialIndex
 				Region m_parentMBR;
 				NodePtr m_pNode;
 			}; // ValidateEntry
+
+
+			class EntryMPQ: public MutablePriorityQueue<NNEntry*>{
+            public:
+			    EntryMPQ()
+			        :MutablePriorityQueue<NNEntry*>(
+			                [](NNEntry* &a, NNEntry* &b) {
+			                    if(a->m_minDist < b->m_minDist) return true;
+			                    if(a->m_minDist==b->m_minDist) return a->m_type>b->m_type;
+			                    return false;
+			                }
+			                ){}
+                void update(const MutablePriorityQueue<NNEntry*>::handle_type &handle,id_type id, double minDist,int type)
+                {
+                    m_vElements[handle]->m_id=id;
+                    m_vElements[handle]->m_minDist=minDist;
+                    m_vElements[handle]->m_type=type;
+//                    std::cerr<<"update"<<minDist<<" "<<type<<"\n";
+                    size_t index=m_vHandleIndex[handle];
+                    if (!lower(index))
+                    {
+                        raise(index);
+                    }
+                }
+			};
+
+			class PartsSore{
+            protected:
+                class Parts{
+                public:
+                    PartsSore* m_ps;
+                    std::set<id_type> m_missingLeaf, m_loadedLeaf;
+                    std::list<RegionPtr> m_mbrs;
+                    std::list<MBCPtr> m_mbcs;
+                    std::map<std::pair<double,double>,double> m_computedDist;
+                    double m_calcMin=0;
+                    double m_mintime=1e300,m_maxtime=-1e300;
+                    bool m_hasPrev=true,m_hasNext=true;
+                    double m_computedTime=0,m_loadedTime=0;
+                    Parts(PartsSore* ps= nullptr):m_ps(ps){}
+                    void insert(RegionPtr &r,id_type prev,id_type next){
+                        if(m_mbrs.empty()) m_mbrs.emplace_back(r);
+                        else{
+                            auto j=m_mbrs.begin();
+                            for(;j!=m_mbrs.end()&&(*j)->m_pLow[m_ps->m_dimension]<r->m_pLow[m_ps->m_dimension];j++);
+                            m_mbrs.insert(j,r);
+                        }
+                        m_loadedTime+=r->m_pHigh[m_ps->m_dimension]-r->m_pLow[m_ps->m_dimension];
+                        if(r->m_pHigh[m_ps->m_dimension]>m_maxtime){
+                            m_maxtime=r->m_pHigh[m_ps->m_dimension];
+                            if(next==-1) {
+                                m_hasNext=false;
+                                m_loadedTime+=m_ps->m_query.m_endTime()-m_maxtime;
+                            }
+                        }
+                        if(r->m_pLow[m_ps->m_dimension]<m_mintime){
+                            m_mintime=r->m_pLow[m_ps->m_dimension];
+                            if(prev==-1) {
+                                m_hasPrev=false;
+                                m_loadedTime+=m_mintime-m_ps->m_query.m_startTime();
+                            }
+                        }
+                        if(prev>=0&&m_loadedLeaf.count(prev)==0) m_missingLeaf.insert(prev);
+                        if(next>=0&&m_loadedLeaf.count(next)==0) m_missingLeaf.insert(next);
+                    }
+                    void insert(MBCPtr &r,id_type prev,id_type next){
+                        if(m_mbrs.empty()) m_mbcs.emplace_back(r);
+                        else{
+                            auto j=m_mbcs.begin();
+                            for(;j!=m_mbcs.end()&&(*j)->m_startTime<r->m_startTime;j++);
+                            m_mbcs.insert(j,r);
+                        }
+                        m_loadedTime+=r->m_endTime-r->m_startTime;
+                        if(r->m_endTime>m_maxtime){
+                            m_maxtime=r->m_endTime;
+                            if(next==-1) {
+                                m_hasNext=false;
+                                m_loadedTime+=m_ps->m_query.m_endTime()-m_maxtime;
+                            }
+                        }
+                        if(r->m_startTime<m_mintime){
+                            m_mintime=r->m_startTime;
+                            if(prev==-1) {
+                                m_hasPrev=false;
+                                m_loadedTime+=m_mintime-m_ps->m_query.m_startTime();
+                            }
+                        }
+                        if(prev>=0&&m_loadedLeaf.count(prev)==0) m_missingLeaf.insert(prev);
+                        if(next>=0&&m_loadedLeaf.count(next)==0) m_missingLeaf.insert(next);
+                    }
+                    void removeCalculated(double ts,double te){}
+                };
+
+                std::map<id_type ,MutablePriorityQueue<NNEntry>::handle_type > m_handlers;
+                EntryMPQ m_mpq;
+                bool m_useMBR=false;
+                Trajectory m_query;
+                TrajStore* m_ts;
+                std::map<id_type ,Parts> m_parts;
+                int m_dimension=2;
+                std::set<id_type > loadedLeaf;
+                void insert(id_type id, RegionPtr &br,id_type prev,id_type next){
+                    if(m_parts.count(id)==0){
+                        m_parts[id]=Parts(this);
+                    }
+                    m_parts[id].insert(br,prev,next);
+                }
+                void insert(id_type id, MBCPtr &bc,id_type prev,id_type next){
+                    if(m_parts.count(id)==0){
+                        m_parts[id]=Parts(this);
+                    }
+                    m_parts[id].insert(bc,prev,next);
+                }
+
+                double update(id_type id){
+                    Parts* parts=&m_parts[id];
+                    double computedTime=0;
+                    double pd,sum=0;
+                    std::pair<double,double> timeInterval;
+                    if(m_useMBR){
+                        //inferred distance(front dist, back dist and mid dist) should be stored as negative values
+                        //front dist
+                        if(parts->m_mintime!=m_query.m_startTime()){
+                            timeInterval=std::make_pair(m_query.m_startTime(),parts->m_mintime);
+                            if(parts->m_computedDist.count(timeInterval)>0){
+                                sum+=std::fabs(parts->m_computedDist[timeInterval]);
+                            }else{
+                                if(parts->m_hasPrev){
+                                    pd=m_query.getFrontIED(*parts->m_mbrs.front(),m_ts->m_maxVelocity);
+                                    parts->m_computedDist[timeInterval]=-pd;
+                                }else{
+                                    pd=m_query.getStaticIED(*parts->m_mbrs.front(),m_query.m_startTime(),parts->m_mintime);
+                                    parts->m_computedDist[timeInterval]=pd;
+                                    computedTime+=timeInterval.second-timeInterval.first;
+                                }
+                                sum+=pd;
+                            }
+                        }
+                        //mid dist
+                        Region* prev;
+                        for(const auto &box:parts->m_mbrs){
+                            //this box
+                            timeInterval=std::make_pair(box->m_pLow[m_dimension],box->m_pHigh[m_dimension]);
+                            if(parts->m_computedDist.count(timeInterval)>0){
+                                if(parts->m_computedDist[timeInterval]>0){
+                                    pd=parts->m_computedDist[timeInterval];
+                                }
+                                else{
+                                    pd=m_query.getMinimumDistance(*box);
+                                    parts->m_computedDist[timeInterval]=pd;
+                                }
+                            }else{
+                                pd=m_query.getMinimumDistance(*box);
+                                parts->m_computedDist[timeInterval]=pd;
+                            }
+                            sum+=pd;
+                            computedTime+=timeInterval.second-timeInterval.first;
+                            //the gap
+                            if(box->m_pLow[m_dimension]!=parts->m_mbrs.front()->m_pLow[m_dimension]){
+                                if(prev->m_pHigh[m_dimension]<box->m_pLow[m_dimension]){
+                                    timeInterval=std::make_pair(prev->m_pHigh[m_dimension],box->m_pLow[m_dimension]);
+                                    if(parts->m_computedDist.count(timeInterval)>0){
+                                        sum+=std::fabs(parts->m_computedDist[timeInterval]);
+                                    }else{
+                                        pd=m_query.getMidIED(*prev,*box,m_ts->m_maxVelocity);
+                                        parts->m_computedDist[timeInterval]=-pd;
+                                        sum+=pd;
+                                    }
+                                }
+                            }
+                            prev=box.get();
+                        }
+                        //backdist
+                        if(parts->m_maxtime!=m_query.m_endTime()){
+                            timeInterval=std::make_pair(parts->m_maxtime,m_query.m_endTime());
+                            if(parts->m_computedDist.count(timeInterval)>0){
+                                sum+=std::fabs(parts->m_computedDist[timeInterval]);
+                            }else{
+                                if(parts->m_hasNext){
+                                    pd=m_query.getFrontIED(*parts->m_mbrs.back(),m_ts->m_maxVelocity);
+                                    parts->m_computedDist[timeInterval]=-pd;
+                                }else{
+                                    pd=m_query.getStaticIED(*parts->m_mbrs.back(),parts->m_maxtime,m_query.m_endTime());
+                                    parts->m_computedDist[timeInterval]=pd;
+                                    computedTime+=timeInterval.second-timeInterval.first;
+                                }
+                                sum+=pd;
+                            }
+                        }
+                    } else{
+                        //inferred distance(front dist, back dist and mid dist) should be stored as negative values
+                        //front dist
+                        if(parts->m_mintime>m_query.m_startTime()){
+                            timeInterval=std::make_pair(m_query.m_startTime(),parts->m_mintime);
+                            if(parts->m_computedDist.count(timeInterval)>0){
+                                sum+=std::fabs(parts->m_computedDist[timeInterval]);
+                            }else{
+                                if(parts->m_hasPrev){
+                                    pd=m_query.getFrontIED(parts->m_mbcs.front()->m_pLow[0],parts->m_mbcs.front()->m_pLow[1],parts->m_mbcs.front()->m_startTime,m_ts->m_maxVelocity);
+                                    parts->m_computedDist[timeInterval]=-pd;
+                                }else{
+                                    pd=m_query.getStaticIED(parts->m_mbcs.front()->m_pLow[0],parts->m_mbcs.front()->m_pLow[1],m_query.m_startTime(),parts->m_mintime);
+                                    parts->m_computedDist[timeInterval]=pd;
+                                    computedTime+=timeInterval.second-timeInterval.first;
+                                }
+                                sum+=pd;
+                            }
+                        }
+                        //mid dist
+                        MBC* prev;
+                        for(const auto &box:parts->m_mbcs){
+                            //this box
+                            timeInterval=std::make_pair(box->m_startTime,box->m_endTime);
+                            if(parts->m_computedDist.count(timeInterval)>0){
+                                if(parts->m_computedDist[timeInterval]>0){
+                                    pd=parts->m_computedDist[timeInterval];
+                                }
+                                else{
+                                    pd=m_query.getMinimumDistance(*box);
+                                    parts->m_computedDist[timeInterval]=pd;
+                                }
+                            }else{
+                                pd=m_query.getMinimumDistance(*box);
+                                parts->m_computedDist[timeInterval]=pd;
+                            }
+                            sum+=pd;
+                            computedTime+=timeInterval.second-timeInterval.first;
+                            //the gap
+                            if(box->m_startTime!=parts->m_mbcs.front()->m_startTime){
+                                if(prev->m_pHigh[m_dimension]<box->m_pLow[m_dimension]){
+                                    timeInterval=std::make_pair(prev->m_pHigh[m_dimension],box->m_pLow[m_dimension]);
+                                    if(parts->m_computedDist.count(timeInterval)>0){
+                                        sum+=std::fabs(parts->m_computedDist[timeInterval]);
+                                    }else{
+                                        pd=m_query.getMidIED(*prev,*box,m_ts->m_maxVelocity);
+                                        parts->m_computedDist[timeInterval]=-pd;
+                                        sum+=pd;
+                                    }
+                                }
+                            }
+                            prev=box.get();
+                        }
+                        //backdist
+                        if(parts->m_maxtime<m_query.m_endTime()){
+                            timeInterval=std::make_pair(parts->m_maxtime,m_query.m_endTime());
+                            if(parts->m_computedDist.count(timeInterval)>0){
+                                sum+=std::fabs(parts->m_computedDist[timeInterval]);
+                            }else{
+                                if(parts->m_hasNext){
+                                    pd=m_query.getFrontIED(parts->m_mbcs.back()->m_pHigh[0],parts->m_mbcs.back()->m_pHigh[1],
+                                                            parts->m_mbcs.back()->m_endTime,m_ts->m_maxVelocity);
+                                    parts->m_computedDist[timeInterval]=-pd;
+                                }else{
+                                    pd=m_query.getStaticIED(parts->m_mbcs.back()->m_pHigh[0],parts->m_mbcs.back()->m_pHigh[1]
+                                            ,parts->m_maxtime,m_query.m_endTime());
+                                    parts->m_computedDist[timeInterval]=pd;
+                                    computedTime+=timeInterval.second-timeInterval.first;
+                                }
+                                sum+=pd;
+                            }
+                        }
+                    }
+                    parts->m_calcMin=sum;
+                    parts->m_computedTime=computedTime;
+                    int type=2;
+                    if(parts->m_missingLeaf.empty()) type=3;
+                    if(m_handlers.count(id)==0){
+                        auto handle=m_mpq.push(new NNEntry(id,sum,type));
+                        m_handlers[id]=handle;
+                    }else{
+                        m_mpq.update(m_handlers[id],id,sum,type);
+                    }
+                    return sum;
+                }
+
+            public:
+			    void loadLeaf(Node &n){
+			        if(loadedLeaf.count(n.m_identifier)!=0) {
+			            return;
+			        }
+			        loadedLeaf.insert(n.m_identifier);
+                    std::vector<id_type > relatedIds;
+                    for(int i=0;i<n.m_children;i++){
+                        id_type trajid=m_ts->getTrajId(n.m_pIdentifier[i]);
+                        if(m_useMBR) {
+                            double bts=n.m_ptrMBR[i]->m_pLow[m_dimension],bte=n.m_ptrMBR[i]->m_pHigh[m_dimension];
+                            if(bts>=m_query.m_endTime()||
+                                bte<=m_query.m_startTime()){}
+                            else{
+                                insert(trajid, n.m_ptrMBR[i],
+                                       (m_query.m_startTime()<bts)?n.m_prevNode[i]:-1
+                                        , (m_query.m_endTime()>bte)?n.m_nextNode[i]:-1
+                                        );
+                                relatedIds.emplace_back(trajid);
+                            }
+
+                        }else{
+                            double bts=n.m_ptrMBC[i]->m_startTime,bte=n.m_ptrMBC[i]->m_endTime;
+                            if(bts>=m_query.m_endTime()||
+                               bte<=m_query.m_startTime()){}
+                            else {
+                                insert(trajid, n.m_ptrMBC[i],
+                                       (m_query.m_startTime()<bts)?n.m_prevNode[i]:-1
+                                        , (m_query.m_endTime()>bte)?n.m_nextNode[i]:-1
+                                        );
+                                relatedIds.emplace_back(trajid);
+                            }
+                        }
+                    }
+                    for(const auto &rid:relatedIds){
+                        m_parts[rid].m_missingLeaf.erase(n.m_identifier);
+                        m_parts[rid].m_loadedLeaf.insert(n.m_identifier);
+                        update(rid);
+                    }
+                }
+                auto top(){return m_mpq.top();}
+                auto pop(){return m_mpq.pop();}
+                auto push(NNEntry* e){return m_mpq.push(e);}
+                auto empty(){return m_mpq.empty();}
+                id_type getOneMissingPart(id_type id) {
+                    if(m_parts[id].m_missingLeaf.empty()){
+                        throw Tools::IllegalStateException("wrong NNEntry Type");
+                    }
+                    return (*m_parts[id].m_missingLeaf.begin());
+                }
+                auto getMissingPart(id_type id){return m_parts[id].m_missingLeaf;}
+                PartsSore(Trajectory &traj,TrajStore* ts,bool useMBR)
+                :m_query(traj),m_useMBR(useMBR),m_ts(ts){}
+                ~PartsSore(){}
+			};
+
 
 			friend class Node;
 			friend class Leaf;

@@ -36,6 +36,7 @@
 #include "BulkLoader.h"
 #include "MBCRTree.h"
 
+
 using namespace SpatialIndex::MBCRTree;
 using namespace SpatialIndex;
 
@@ -493,6 +494,8 @@ void SpatialIndex::MBCRTree::MBCRTree::pointLocationQuery(const Point& query, IV
 	rangeQuery(IntersectionQuery, r, v);
 }
 
+
+
 void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v, INearestNeighborComparator& nnc)
 {
 //	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
@@ -516,98 +519,77 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
 	Tools::LockGuard lock(&m_lock);
 #endif
 
-	std::priority_queue<NNEntry*, std::vector<NNEntry*>, NNEntry::ascending> queue;
-
-	queue.push(new NNEntry(m_rootID, 0, 0.0));
+    PartsSore ps(simpleTraj,m_ts,m_bUsingMBR);
+	ps.push(new NNEntry(m_rootID, 0, 0));
 
 	uint32_t count = 0;
 	double knearest = 0.0;
     int iternum=0;
     std::map<id_type ,int> insertedTrajId;
-    while (! queue.empty())
-    {
+    while (! ps.empty()) {
         iternum++;
-        NNEntry* pFirst = queue.top();
+        NNEntry *pFirst = ps.top();
 
         // report all nearest neighbors with equal greatest distances.
         // (neighbors can be more than k, if many happen to have the same greatest distance).
-        if (count >= k && pFirst->m_minDist > knearest)	break;
-
-        queue.pop();
-
-        if (pFirst->m_pEntry == nullptr)
-        {
-            // n is a leaf or an index.
-            NodePtr n = readNode(pFirst->m_id);
-            v.visitNode(*n);
-
-            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
-            {
-                if (n->m_level == 0)
-                {
-                    Data* e = new Data(0, 0, *(n->m_ptrMBC[cChild]), n->m_pIdentifier[cChild]);
-                    // we need to compare the query with the actual data entry here, so we call the
-                    // appropriate getMinimumDistance method of NearestNeighborComparator.
-                    if(m_DataType==TrajectoryType&&m_bUsingTrajStore== false){
-                        Trajectory traj;
-                        traj.loadFromByteArray(e->m_pData);
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(*queryTraj, traj)));
-                    }else{
-                        double pd=std::max(0.0,simpleTraj.getLeafMinimumDistance(e->m_mbc,m_ts->m_maxVelocity)-delta);
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e,pd));
-                    }
-
-                }
-                else
-                {
-                    if(m_DataType==BoundingBoxType){
-                        const Region* br= dynamic_cast<const Region*>(&query);
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr,br->getMinimumDistance(*(n->m_ptrMBR[cChild]))));
-                    }
-                    else{
-                        double pd=std::max(0.0,simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),m_ts->m_maxVelocity)-delta);
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, pd));
+        if (count >= k && pFirst->m_minDist > knearest) break;
+        switch (pFirst->m_type) {
+            case 0: {//inner node
+                ps.pop();
+                NodePtr n = readNode(pFirst->m_id);
+                v.visitNode(*n);
+                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+                    double pd = std::max(0.0, simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),
+                                                                                m_ts->m_maxVelocity) - delta);
+                    if(pd<1e300) {
+                        if (n->m_level == 1)
+                            ps.push(new NNEntry(n->m_pIdentifier[cChild], pd, 1));
+                        else
+                            ps.push(new NNEntry(n->m_pIdentifier[cChild], pd, 0));
                     }
                 }
+                delete pFirst;
+                break;
             }
-        }
-        else
-        {
-            if(m_DataType==TrajectoryType&&m_bUsingTrajStore&&pFirst->m_type==0){
-                //load ShapeList<MBC>, aka retrieve MBCs
-                id_type trajId=m_ts->getTrajId(pFirst->m_id);
-                if(insertedTrajId[trajId]==1){}
-                else {
-                    ShapeList bcs = m_ts->getMBCsByTime(pFirst->m_id, queryTraj->m_points.front().m_time,
-                                                        queryTraj->m_points.back().m_time);
-                    double pd=std::max(0.0,simpleTraj.getMinimumDistance(bcs)-delta);
-                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, pd, 1));
-                    insertedTrajId[trajId]=1;
-                }
-//                std::cerr<<nnc.getMinimumDistance(query, bcs)<<"\n";
+            case 1: {//leaf node
+                ps.pop();
+                NodePtr n = readNode(pFirst->m_id);
+                v.visitNode(*n);
+                ps.loadLeaf(*n);
+                delete pFirst;
+                break;
             }
-            else if(m_DataType==TrajectoryType&&m_bUsingTrajStore&&pFirst->m_type==1){
-                //load Trajectory
-                Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_time,queryTraj->m_points.back().m_time);
-                queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, traj),2));
+            case 2: {//incomplete bounding
+                id_type missing = ps.getOneMissingPart(pFirst->m_id);
+                NodePtr n = readNode(missing);
+                v.visitNode(*n);
+                ps.loadLeaf(*n);
+                break;
             }
-            else {
-                Data *e=static_cast<Data*>(pFirst->m_pEntry);
-                v.visitData(*(static_cast<IData *>(pFirst->m_pEntry)));
+            case 3: {//complete bounding
+                ps.pop();
+                Trajectory traj = m_ts->getTrajByTime(pFirst->m_id, queryTraj->m_startTime(), queryTraj->m_endTime());
+                ps.push(new NNEntry(pFirst->m_id, queryTraj->getMinimumDistance(traj), 4));
+                delete pFirst;
+                break;
+            }
+            case 4: {//exact traj
+                ps.pop();
                 ++(m_stats.m_u64QueryResults);
                 ++count;
                 knearest = pFirst->m_minDist;
-//            std::cout<<"knearest is"<<knearest<<std::endl;
-                delete pFirst->m_pEntry;
+                simpleData d(pFirst->m_id,pFirst->m_minDist);
+                v.visitData(d);
+                delete pFirst;
+                break;
             }
+            default:
+                throw Tools::IllegalStateException("illegal NNEntry state");
         }
-		delete pFirst;
-	}
-
-	while (! queue.empty())
+    }
+	while (! ps.empty())
 	{
-		NNEntry* e = queue.top(); queue.pop();
-		if (e->m_pEntry != 0) delete e->m_pEntry;
+		NNEntry* e = ps.top(); ps.pop();
 		delete e;
 	}
 //    std::cout<<"knearest is"<<knearest<<std::endl;

@@ -51,18 +51,23 @@ Tools::IObject* Node::clone()
 //
 uint32_t Node::getByteArraySize() const
 {
+    double len;
     if(m_level>0||m_pTree->m_bUsingMBR)
-        return
+        len=
                 (sizeof(uint32_t) +
                  sizeof(uint32_t) +
                  (m_children * (m_pTree->m_dimension * sizeof(double) * 2 + sizeof(id_type))) +
                          (2 * m_pTree->m_dimension * sizeof(double)));
     else
-        return
+        len=
                 (sizeof(uint32_t) +
                  sizeof(uint32_t) +
                  (m_children * (m_pTree->m_dimension * sizeof(double) * 2+ sizeof(double)*2 + sizeof(id_type))) +
                          (2 * m_pTree->m_dimension * sizeof(double)));
+    if(m_level==0)
+        len=len+m_children *(2* sizeof(id_type));
+//    std::cerr<<len<<"\n";
+    return len;
 }
 
 
@@ -89,6 +94,12 @@ void Node::loadFromByteArray(const uint8_t* ptr)
     for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
         memcpy(&(m_pIdentifier[u32Child]), ptr, sizeof(id_type));
         ptr += sizeof(id_type);
+        if(m_level==0){
+            memcpy(&(m_prevNode[u32Child]), ptr, sizeof(id_type));
+            ptr += sizeof(id_type);
+            memcpy(&(m_nextNode[u32Child]), ptr, sizeof(id_type));
+            ptr += sizeof(id_type);
+        }
         if(m_level>0||m_pTree->m_bUsingMBR) {
             m_ptrMBR[u32Child] = m_pTree->m_regionPool.acquire();
             *(m_ptrMBR[u32Child]) = m_pTree->m_infiniteRegion;
@@ -99,7 +110,7 @@ void Node::loadFromByteArray(const uint8_t* ptr)
         }
         else{
             m_ptrMBC[u32Child] = m_pTree->m_mbcPool.acquire();
-            MBC bc=MBC();bc.makeInfinite(m_pTree->m_dimension);
+            MBC bc=MBC();bc.makeInfinite(m_pTree->m_dimension-1);
             *(m_ptrMBC[u32Child]) = bc;
             memcpy(m_ptrMBC[u32Child]->m_pLow, ptr, (m_pTree->m_dimension-1) * sizeof(double));
             ptr += (m_pTree->m_dimension-1) * sizeof(double);
@@ -114,7 +125,6 @@ void Node::loadFromByteArray(const uint8_t* ptr)
             memcpy(&m_ptrMBC[u32Child]->m_rv,ptr, sizeof(double));
             ptr+= sizeof(double);
         }
-
     }
     memcpy(m_nodeMBR.m_pLow, ptr, m_pTree->m_dimension * sizeof(double));
     ptr += m_pTree->m_dimension * sizeof(double);
@@ -137,6 +147,12 @@ void Node::storeToByteArray(uint8_t** data, uint32_t& len)
     for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
         memcpy(ptr, &(m_pIdentifier[u32Child]), sizeof(id_type));
         ptr += sizeof(id_type);
+        if(m_level==0){
+            memcpy(ptr, &(m_prevNode[u32Child]), sizeof(id_type));
+            ptr += sizeof(id_type);
+            memcpy(ptr, &(m_nextNode[u32Child]), sizeof(id_type));
+            ptr += sizeof(id_type);
+        }
         if(m_level>0||m_pTree->m_bUsingMBR){
             memcpy(ptr, m_ptrMBR[u32Child]->m_pLow, m_pTree->m_dimension * sizeof(double));
             ptr += m_pTree->m_dimension * sizeof(double);
@@ -304,9 +320,13 @@ void Node::insertEntry(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type
 
 void Node::insertEntry(uint32_t dataLength, uint8_t *pData,Region& mbr, MBC &mbc, SpatialIndex::id_type id) {
     assert(m_children < m_capacity);
-    m_ptrMBC[m_children] = m_pTree->m_mbcPool.acquire();
-    *(m_ptrMBC[m_children]) = mbc;
-
+    if(m_pTree->m_bUsingMBR){
+        m_ptrMBR[m_children] = m_pTree->m_regionPool.acquire();
+        *(m_ptrMBR[m_children]) = mbr;
+    }else {
+        m_ptrMBC[m_children] = m_pTree->m_mbcPool.acquire();
+        *(m_ptrMBC[m_children]) = mbc;
+    }
     m_pIdentifier[m_children] = id;
 
     ++m_children;

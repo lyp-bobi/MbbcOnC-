@@ -17,8 +17,10 @@
 #include <cmath>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x)+x)
 #include <spatialindex/SpatialIndex.h>
+
 #include "storagemanager/TrajStore.h"
 #include "../../src/storagemanager/DiskStorageManager.h"
+#include "../../src/mbcrtree/MBCRTree.h"
 //#define sourceFile "D://t200n100s.txt"
 #define sourceFile "D://t1000.txt"
 #define maxLinesToRead 1e10
@@ -26,7 +28,7 @@
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
-#define QueryType 1
+#define QueryType 2
 //1 for time-slice range, 2 for 5-NN
 
 using namespace std;
@@ -60,6 +62,7 @@ public:
     void visitData(const IData& d)
     {
         m_resultGet++;
+//        auto mou=dynamic_cast<const MBCRTree::MBCRTree::simpleData*>(&d);
         IShape* pS;
         d.getShape(&pS);
         // do something.
@@ -264,6 +267,7 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore
     cerr<<"VISIT NODE "<<vis.m_indexvisited<<"\t"<<vis.m_leafvisited<<endl;
     cerr<<"Byte loaded "<<vis.m_indexIO<<"\t"<<vis.m_leafIO<<endl;
     cerr << *tree;
+    cerr <<"TrajStore Statistic"<< ts->m_indexIO<<"\t"<<ts->m_trajIO<<endl;
     cerr << "================\n\n";
 }
 
@@ -336,8 +340,8 @@ int main(){
         dsm1= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile1);
         dsm2= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile2);
 
-//        TrajStore ts1(file1,4096);
-//        ts1.loadSegments(segs);
+        TrajStore ts1(file1,4096);
+        ts1.loadSegments(segs);
         TrajStore ts2(file2,4096);
         ts2.loadSegments(segs);
 
@@ -379,12 +383,12 @@ int main(){
 
 
 
-//        ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,64,3,indexIdentifier1);
-        ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,48,3,indexIdentifier2);
+        ISpatialIndex *r=MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,62,3,indexIdentifier1);
+        ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,50,3,indexIdentifier2);
         cerr << "start query!" << endl << endl << endl;
 
 //        TreeQueryBatch(real,queries);
-//        TreeQueryBatch(r, queries,&ts1);
+        TreeQueryBatch(r, queries,&ts1);
         TreeQueryBatch(rc, queries,&ts2);
 
 //        double aa,bb,oo;

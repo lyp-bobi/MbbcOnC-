@@ -21,12 +21,19 @@ STPoint::STPoint(const double* pCoords, double tStart, uint32_t dimension)
 {
 }
 
+STPoint::STPoint(double x, double y, double t) {
+    makeInfinite(2);
+    m_pCoords[0]=x;
+    m_pCoords[1]=y;
+    m_time=t;
+}
+
 STPoint::STPoint(const Point& p, const IInterval& ti)
 	: Point(p), m_time(ti.getLowerBound())
 {
 }
 
-STPoint::STPoint(const Point& p, double tStart, double tEnd)
+STPoint::STPoint(const Point& p, double tStart)
 	: Point(p), m_time(tStart)
 {
 }

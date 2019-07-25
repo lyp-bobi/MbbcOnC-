@@ -521,7 +521,8 @@ const Trajectory TrajStore::getTraj(id_type &id) {
     return traj;
 }
 
-const Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double tend) {
+const Trajectory TrajStore::getTrajByTime(id_type &tid, double tstart, double tend) {
+    id_type id=getSegId(tid,0);
     auto it=m_entries.find(id);
     assert(it!=m_entries.end());
     Entry e=*(it->second);

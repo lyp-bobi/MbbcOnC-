@@ -9,8 +9,9 @@ namespace SpatialIndex
 		STPoint();
 		STPoint(const double* pCoords, const Tools::IInterval& ti, uint32_t dimension);
 		STPoint(const double* pCoords, double t,uint32_t dimension);
+		STPoint(double x,double y,double t);
 		STPoint(const Point& p, const Tools::IInterval& ti);
-		STPoint(const Point& p, double tStart, double tEnd);
+		STPoint(const Point& p, double tStart);
 		STPoint(const STPoint& p);
 		virtual ~STPoint();
 

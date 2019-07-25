@@ -132,7 +132,7 @@ namespace SpatialIndex
             std::map<id_type, Entry*> m_entries;//map from seg id to entry
             std::map<id_type, MBC> m_entryMbcs;
             std::map<id_type, Region> m_entryMbrs;
-            std::map<id_type,std::pair<id_type,int>> trajNodeChildTuple;
+            std::map<id_type,id_type> m_part2node;
             IStorageManager* m_pStorageManager;
             uint32_t m_pageSize;
             uint32_t m_maxTrajSegs=100;

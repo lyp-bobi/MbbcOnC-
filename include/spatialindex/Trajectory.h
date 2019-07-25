@@ -100,6 +100,8 @@ namespace SpatialIndex
         virtual void getMBR(Region& out) const;
         virtual double getArea() const;
         virtual double getMinimumDistance(const IShape& in) const;
+
+
         virtual double getMinimumDistance(const STPoint& in) const;
         virtual double getMinimumDistance(const Region& in) const;
         virtual double getMaxSED(const Region& in) const;
@@ -107,10 +109,28 @@ namespace SpatialIndex
         virtual double getMinimumDistance(const SBR& in) const;
         virtual double getMinimumDistance(const Trajectory& in) const;
         virtual double getMinimumDistance(const ShapeList& in,bool hasPrev=false,bool hasNext=false,double MaxVelocity=1e300) const;
-        virtual double getMinimumDistance(double x,double y, double t1,double t2) const;
 
+        static double line2lineIED(const STPoint &p1s, const STPoint &p1e, const STPoint &p2s, const STPoint &p2e);
+        static double line2lineMinSED(const STPoint &p1s, const STPoint &p1e, const STPoint &p2s, const STPoint &p2e);
+        static double line2MBRDistance(const STPoint &ps,const STPoint &pe,const Region &r);
+        static double line2MBRIED_impl(const STPoint &ps, const STPoint &pe, const Region &r, int sr);
+        static double line2MBRMinSED(const STPoint &ps, const STPoint &pe, const Region &r);
+        static double line2MBRMaxSED(const STPoint &ps, const STPoint &pe, const Region &r);
+        static double line2MBRMinSED_impl(const STPoint &ps, const STPoint &pe, const Region &r, int sr);
+        static double line2MBCDistance(const STPoint &ps,const STPoint &pe,const MBC &r);
 
-        virtual double getPeriodMinimumDistance(const Region &in, double MaxVelocity) const;
+        virtual double getFrontIED(const Region smbr, double MaxVelocity) const;
+        virtual double getBackIED(const Region embr, double MaxVelocity) const;
+        virtual double getFrontIED(double x,double y,double ts, double MaxVelocity) const;
+        virtual double getBackIED(double x,double y,double te, double MaxVelocity) const;
+
+        virtual double getMidIED(const Region &sbr,const Region &ebr,double MaxVelocity,double queryVelocity=-1);
+        virtual double getMidIED(const MBC &sbc, const MBC &ebc,double MaxVelocity,double queryVelocity=-1);
+
+        virtual double getStaticIED(double x, double y, double t1, double t2) const;
+        virtual double getStaticIED(const Region in,double ints, double inte) const;
+
+        virtual double getInferredNodeMinimumIED(const Region &in, double MaxVelocity) const;
 
         virtual double getNodeMinimumDistance(const Region &in,double MaxVelocity) const;
         virtual double getLeafMinimumDistance(const Region &in, double MaxVelocity) const;
@@ -139,14 +159,6 @@ namespace SpatialIndex
 
         void loadFromString(std::string s);
 
-        static double line2lineIED(const STPoint &p1s, const STPoint &p1e, const STPoint &p2s, const STPoint &p2e);
-        static double line2lineMinSED(const STPoint &p1s, const STPoint &p1e, const STPoint &p2s, const STPoint &p2e);
-        static double line2MBRDistance(const STPoint &ps,const STPoint &pe,const Region &r);
-        static double line2MBRIED_impl(const STPoint &ps, const STPoint &pe, const Region &r, int sr);
-        static double line2MBRMinSED(const STPoint &ps, const STPoint &pe, const Region &r);
-        static double line2MBRMaxSED(const STPoint &ps, const STPoint &pe, const Region &r);
-        static double line2MBRMinSED_impl(const STPoint &ps, const STPoint &pe, const Region &r, int sr);
-        static double line2MBCDistance(const STPoint &ps,const STPoint &pe,const MBC &r);
 
         std::vector<STPoint> m_points;
 
