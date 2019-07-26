@@ -382,8 +382,8 @@ int main(){
 
 
 
-        ISpatialIndex *r=MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,62,3,indexIdentifier1);
-        ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,50,3,indexIdentifier2);
+        ISpatialIndex *r=MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,40,3,indexIdentifier1);
+        ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,40,3,indexIdentifier2);
         cerr << "start query!" << endl << endl << endl;
 
 //        TreeQueryBatch(real,queries);

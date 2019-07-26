@@ -117,16 +117,20 @@ namespace SpatialIndex
 			Region m_nodeMBR;
 				// The minimum bounding region enclosing all data contained in the node.
 
-			RegionPtr* m_ptrMBR= nullptr;
-            MBCPtr* m_ptrMBC= nullptr;
+			RegionPtr* m_ptrMBR{nullptr};
+            MBCPtr* m_ptrMBC{nullptr};
 				// The corresponding data MBRs.
 
 
-			id_type* m_pIdentifier;
+			id_type* m_pIdentifier{nullptr};
 				// The corresponding data identifiers.
 
-            id_type * m_prevNode= nullptr;
-            id_type* m_nextNode = nullptr;
+            id_type* m_prevNode{nullptr};
+            id_type* m_nextNode {nullptr};
+
+            id_type* m_pageNum{nullptr};
+            uint32_t* m_pageOff{nullptr};
+            uint32_t* m_dataLen{nullptr};
 
 			class RstarSplitEntry
 			{

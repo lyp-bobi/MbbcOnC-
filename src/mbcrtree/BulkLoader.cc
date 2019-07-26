@@ -450,7 +450,8 @@ void BulkLoader::createLevel(
                         auto child=pTree->readNode(n->m_pIdentifier[i]);
                         for(int j=0;j<child->m_children;j++){
                             id_type id=child->m_pIdentifier[j];
-                            id_type pvId=pTree->m_ts->m_entries[id]->m_pvId;
+                            auto entry=pTree->m_ts->m_entries[id];
+                            id_type pvId=entry->m_pvId;
                             if(pvId>=0){
                                 auto store=pTree->m_ts->m_part2node[pvId];
                                 child->m_prevNode[j]=store;
@@ -458,7 +459,7 @@ void BulkLoader::createLevel(
                             }else{
                                 child->m_prevNode[j]=-1;
                             }
-                            id_type ntId=pTree->m_ts->m_entries[id]->m_ntId;
+                            id_type ntId=entry->m_ntId;
                             if(ntId>=0){
                                 auto store=pTree->m_ts->m_part2node[ntId];
                                 child->m_nextNode[j]=store;
@@ -466,6 +467,10 @@ void BulkLoader::createLevel(
                             }else{
                                 child->m_nextNode[j]=-1;
                             }
+                            child->m_pageNum[j]=entry->m_page;
+                            child->m_pageOff[j]=entry->m_start;
+                            child->m_dataLen[j]=entry->m_len;
+//                            std::cerr<<store->m_page<<" "<<store->m_start<<" "<<store->m_len<<"\n";
                         }
                         pTree->writeNode(child.get());
                     }
@@ -493,22 +498,27 @@ void BulkLoader::createLevel(
                     auto child=pTree->readNode(n->m_pIdentifier[i]);
                     for(int j=0;j<child->m_children;j++){
                         id_type id=child->m_pIdentifier[j];
-                        id_type pvId=pTree->m_ts->m_entries[id]->m_pvId;
+                        auto entry=pTree->m_ts->m_entries[id];
+                        id_type pvId=entry->m_pvId;
                         if(pvId>=0){
                             auto store=pTree->m_ts->m_part2node[pvId];
                             child->m_prevNode[j]=store;
-//                            std::cerr<<"linked"<<id<<"to"<<pvId<<"\n";
+//                                std::cerr<<"linked"<<id<<"to"<<pvId<<"\n";
                         }else{
                             child->m_prevNode[j]=-1;
                         }
-                        id_type ntId=pTree->m_ts->m_entries[id]->m_ntId;
+                        id_type ntId=entry->m_ntId;
                         if(ntId>=0){
                             auto store=pTree->m_ts->m_part2node[ntId];
                             child->m_nextNode[j]=store;
-//                            std::cerr<<"linked"<<id<<"to"<<ntId<<"\n";
+//                                std::cerr<<"linked"<<id<<"to"<<ntId<<"\n";
                         }else{
                             child->m_nextNode[j]=-1;
                         }
+                        child->m_pageNum[j]=entry->m_page;
+                        child->m_pageOff[j]=entry->m_start;
+                        child->m_dataLen[j]=entry->m_len;
+//                            std::cerr<<store->m_page<<" "<<store->m_start<<" "<<store->m_len<<"\n";
                     }
                     pTree->writeNode(child.get());
                 }

@@ -568,7 +568,8 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
             }
             case 3: {//complete bounding
                 ps.pop();
-                Trajectory traj = m_ts->getTrajByTime(pFirst->m_id, queryTraj->m_startTime(), queryTraj->m_endTime());
+                Trajectory traj=ps.getTraj(pFirst->m_id);
+//                Trajectory traj = m_ts->getTrajByTime(pFirst->m_id, queryTraj->m_startTime(), queryTraj->m_endTime());
                 ps.push(new NNEntry(pFirst->m_id, queryTraj->getMinimumDistance(traj), 4));
                 delete pFirst;
                 break;

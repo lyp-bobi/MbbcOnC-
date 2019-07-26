@@ -65,7 +65,7 @@ uint32_t Node::getByteArraySize() const
                  (m_children * (m_pTree->m_dimension * sizeof(double) * 2+ sizeof(double)*2 + sizeof(id_type))) +
                          (2 * m_pTree->m_dimension * sizeof(double)));
     if(m_level==0)
-        len=len+m_children *(2* sizeof(id_type));
+        len=len+m_children *(2* sizeof(id_type)+ sizeof(id_type)+ 2*sizeof(uint32_t));
 //    std::cerr<<len<<"\n";
     return len;
 }
@@ -89,6 +89,9 @@ void Node::loadFromByteArray(const uint8_t* ptr)
     if(m_level==0){
         m_prevNode=new id_type[m_children+1];
         m_nextNode=new id_type[m_children+1];
+        m_pageNum=new id_type[m_children+1];
+        m_pageOff = new uint32_t[m_children+1];
+        m_dataLen=new uint32_t[m_children+1];
     }
 
     for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
@@ -99,6 +102,12 @@ void Node::loadFromByteArray(const uint8_t* ptr)
             ptr += sizeof(id_type);
             memcpy(&(m_nextNode[u32Child]), ptr, sizeof(id_type));
             ptr += sizeof(id_type);
+            memcpy(&(m_pageNum[u32Child]), ptr, sizeof(id_type));
+            ptr += sizeof(id_type);
+            memcpy(&(m_pageOff[u32Child]), ptr, sizeof(uint32_t));
+            ptr += sizeof(uint32_t);
+            memcpy(&(m_dataLen[u32Child]), ptr, sizeof(uint32_t));
+            ptr += sizeof(uint32_t);
         }
         if(m_level>0||m_pTree->m_bUsingMBR) {
             m_ptrMBR[u32Child] = m_pTree->m_regionPool.acquire();
@@ -152,6 +161,12 @@ void Node::storeToByteArray(uint8_t** data, uint32_t& len)
             ptr += sizeof(id_type);
             memcpy(ptr, &(m_nextNode[u32Child]), sizeof(id_type));
             ptr += sizeof(id_type);
+            memcpy(ptr,&(m_pageNum[u32Child]),  sizeof(id_type));
+            ptr += sizeof(id_type);
+            memcpy(ptr,&(m_pageOff[u32Child]), sizeof(uint32_t));
+            ptr += sizeof(uint32_t);
+            memcpy(ptr,&(m_dataLen[u32Child]), sizeof(uint32_t));
+            ptr += sizeof(uint32_t);
         }
         if(m_level>0||m_pTree->m_bUsingMBR){
             memcpy(ptr, m_ptrMBR[u32Child]->m_pLow, m_pTree->m_dimension * sizeof(double));
@@ -240,16 +255,7 @@ bool Node::isIndex() const
 // Internal
 //
 
-Node::Node() :
-	m_pTree(0),
-	m_level(0),
-	m_identifier(-1),
-	m_children(0),
-	m_capacity(0),
-	m_ptrMBR(0),
-	m_pIdentifier(0)
-{
-}
+Node::Node()=default;
 
 Node::Node(SpatialIndex::MBCRTree::MBCRTree* pTree, id_type id, uint32_t level, uint32_t capacity) :
 	m_pTree(pTree),
@@ -257,9 +263,14 @@ Node::Node(SpatialIndex::MBCRTree::MBCRTree* pTree, id_type id, uint32_t level, 
 	m_identifier(id),
 	m_children(0),
 	m_capacity(capacity),
-	m_ptrMBR(0),
-    m_ptrMBC(0),
-	m_pIdentifier(0)
+    m_prevNode(nullptr),
+    m_nextNode(nullptr),
+    m_pageNum(nullptr),
+    m_pageOff(nullptr),
+    m_dataLen(nullptr),
+	m_ptrMBR(nullptr),
+    m_ptrMBC(nullptr),
+	m_pIdentifier(nullptr)
 {
 	m_nodeMBR.makeInfinite(m_pTree->m_dimension);
 
@@ -272,9 +283,15 @@ Node::Node(SpatialIndex::MBCRTree::MBCRTree* pTree, id_type id, uint32_t level, 
 		if(m_level==0){
 		    m_prevNode=new id_type[m_capacity+1];
 		    m_nextNode=new id_type[m_capacity+1];
+            m_pageNum=new id_type[m_capacity+1];
+            m_pageOff = new uint32_t[m_capacity+1];
+            m_dataLen=new uint32_t[m_capacity+1];
 		    for(int i=0;i<m_capacity+1;i++){
 		        m_prevNode[i]=-1;
                 m_nextNode[i]=-1;
+                m_pageNum[i]=-1;
+                m_pageOff[i]=0;
+                m_dataLen[i]=0;
 		    }
 		}
 		m_pIdentifier = new id_type[m_capacity + 1];
@@ -286,6 +303,9 @@ Node::Node(SpatialIndex::MBCRTree::MBCRTree* pTree, id_type id, uint32_t level, 
 		delete[] m_pIdentifier;
 		delete[] m_prevNode;
 		delete[] m_nextNode;
+        delete[] m_pageNum;
+        delete[] m_pageOff;
+        delete[] m_dataLen;
 		throw;
 	}
 }
@@ -297,6 +317,9 @@ Node::~Node()
 	delete[] m_pIdentifier;
     delete[] m_prevNode;
     delete[] m_nextNode;
+    delete[] m_pageNum;
+    delete[] m_pageOff;
+    delete[] m_dataLen;
 }
 
 Node& Node::operator=(const Node&)

@@ -236,7 +236,14 @@ namespace SpatialIndex
                     }
                 }
 			};
-
+            struct storeEntry{
+                id_type m_page;
+                uint32_t m_off;
+                uint32_t m_len;
+                bool operator <( const storeEntry& y) const{
+                    return std::tie(m_page, m_off, m_len) < std::tie(y.m_page, y.m_off, y.m_len);
+                }
+            };
 			class PartsSore{
             protected:
                 class Parts{
@@ -246,12 +253,13 @@ namespace SpatialIndex
                     std::list<RegionPtr> m_mbrs;
                     std::list<MBCPtr> m_mbcs;
                     std::map<std::pair<double,double>,double> m_computedDist;
+                    std::set<storeEntry> m_entries;
                     double m_calcMin=0;
                     double m_mintime=1e300,m_maxtime=-1e300;
                     bool m_hasPrev=true,m_hasNext=true;
                     double m_computedTime=0,m_loadedTime=0;
                     Parts(PartsSore* ps= nullptr):m_ps(ps){}
-                    void insert(RegionPtr &r,id_type prev,id_type next){
+                    void insert(RegionPtr &r,id_type prev,id_type next,storeEntry &entry){
                         if(m_mbrs.empty()) m_mbrs.emplace_back(r);
                         else{
                             auto j=m_mbrs.begin();
@@ -275,8 +283,10 @@ namespace SpatialIndex
                         }
                         if(prev>=0&&m_loadedLeaf.count(prev)==0) m_missingLeaf.insert(prev);
                         if(next>=0&&m_loadedLeaf.count(next)==0) m_missingLeaf.insert(next);
+                        m_entries.insert(entry);
                     }
-                    void insert(MBCPtr &r,id_type prev,id_type next){
+                    void insert(MBCPtr &r,id_type prev,id_type next,storeEntry &entry){
+                        m_entries.insert(entry);
                         if(m_mbrs.empty()) m_mbcs.emplace_back(r);
                         else{
                             auto j=m_mbcs.begin();
@@ -313,17 +323,17 @@ namespace SpatialIndex
                 std::map<id_type ,Parts> m_parts;
                 int m_dimension=2;
                 std::set<id_type > loadedLeaf;
-                void insert(id_type id, RegionPtr &br,id_type prev,id_type next){
+                void insert(id_type id, RegionPtr &br,id_type prev,id_type next,storeEntry &entry){
                     if(m_parts.count(id)==0){
                         m_parts[id]=Parts(this);
                     }
-                    m_parts[id].insert(br,prev,next);
+                    m_parts[id].insert(br,prev,next,entry);
                 }
-                void insert(id_type id, MBCPtr &bc,id_type prev,id_type next){
+                void insert(id_type id, MBCPtr &bc,id_type prev,id_type next,storeEntry &entry){
                     if(m_parts.count(id)==0){
                         m_parts[id]=Parts(this);
                     }
-                    m_parts[id].insert(bc,prev,next);
+                    m_parts[id].insert(bc,prev,next,entry);
                 }
 
                 double update(id_type id){
@@ -497,6 +507,11 @@ namespace SpatialIndex
                     std::vector<id_type > relatedIds;
                     for(int i=0;i<n.m_children;i++){
                         id_type trajid=m_ts->getTrajId(n.m_pIdentifier[i]);
+                        storeEntry entry= {
+                                .m_page=n.m_pageNum[i],
+                                .m_off=n.m_pageOff[i],
+                                .m_len=n.m_dataLen[i]
+                        };
                         if(m_useMBR) {
                             double bts=n.m_ptrMBR[i]->m_pLow[m_dimension],bte=n.m_ptrMBR[i]->m_pHigh[m_dimension];
                             if(bts>=m_query.m_endTime()||
@@ -504,8 +519,8 @@ namespace SpatialIndex
                             else{
                                 insert(trajid, n.m_ptrMBR[i],
                                        (m_query.m_startTime()<bts)?n.m_prevNode[i]:-1
-                                        , (m_query.m_endTime()>bte)?n.m_nextNode[i]:-1
-                                        );
+                                        , (m_query.m_endTime()>bte)?n.m_nextNode[i]:-1,
+                                        entry);
                                 relatedIds.emplace_back(trajid);
                             }
 
@@ -516,8 +531,8 @@ namespace SpatialIndex
                             else {
                                 insert(trajid, n.m_ptrMBC[i],
                                        (m_query.m_startTime()<bts)?n.m_prevNode[i]:-1
-                                        , (m_query.m_endTime()>bte)?n.m_nextNode[i]:-1
-                                        );
+                                        , (m_query.m_endTime()>bte)?n.m_nextNode[i]:-1,
+                                        entry);
                                 relatedIds.emplace_back(trajid);
                             }
                         }
@@ -542,6 +557,24 @@ namespace SpatialIndex
                 PartsSore(Trajectory &traj,double error,TrajStore* ts,bool useMBR)
                 :m_query(traj),m_error(error),m_useMBR(useMBR),m_ts(ts){}
                 ~PartsSore(){}
+                Trajectory getTraj(id_type id){
+                    Trajectory traj;
+                    Trajectory tmpTraj;
+                    for(const auto &e:m_parts[id].m_entries){
+                        uint32_t len=e.m_off+e.m_len;
+                        uint8_t *load = new uint8_t[len];
+                        m_ts->loadByteArray(e.m_page,len,&load);
+                        uint8_t *data = load+e.m_off;
+                        tmpTraj.loadFromByteArray(data);
+                        delete[](load);
+                    }
+                    if(traj.m_points.empty()){
+                        traj=tmpTraj;
+                    }else{
+                        traj.linkTrajectory(tmpTraj);
+                    }
+                    return traj;
+                }
 			};
 
 
