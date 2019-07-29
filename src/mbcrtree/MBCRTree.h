@@ -344,7 +344,7 @@ namespace SpatialIndex
                     if(m_useMBR){
                         //inferred distance(front dist, back dist and mid dist) should be stored as negative values
                         //front dist
-                        if(parts->m_mintime!=m_query.m_startTime()){
+                        if(parts->m_mintime>m_query.m_startTime()){
                             timeInterval=std::make_pair(m_query.m_startTime(),parts->m_mintime);
                             if(parts->m_computedDist.count(timeInterval)>0){
                                 sum+=std::fabs(parts->m_computedDist[timeInterval]);
@@ -395,7 +395,7 @@ namespace SpatialIndex
                             prev=box.get();
                         }
                         //backdist
-                        if(parts->m_maxtime!=m_query.m_endTime()){
+                        if(parts->m_maxtime<m_query.m_endTime()){
                             timeInterval=std::make_pair(parts->m_maxtime,m_query.m_endTime());
                             if(parts->m_computedDist.count(timeInterval)>0){
                                 sum+=std::fabs(parts->m_computedDist[timeInterval]);
