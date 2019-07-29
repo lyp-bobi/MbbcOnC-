@@ -519,7 +519,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
 	Tools::LockGuard lock(&m_lock);
 #endif
 
-    PartsSore ps(simpleTraj,delta,m_ts,m_bUsingMBR);
+    PartsStore ps(simpleTraj,delta,m_ts,m_bUsingMBR);
 	ps.push(new NNEntry(m_rootID, 0, 0));
 
 	uint32_t count = 0;
@@ -553,9 +553,11 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
             }
             case 1: {//leaf node
                 ps.pop();
-                NodePtr n = readNode(pFirst->m_id);
-                v.visitNode(*n);
-                ps.loadLeaf(*n);
+                if(!ps.isLoaded(pFirst->m_id)) {
+                    NodePtr n = readNode(pFirst->m_id);
+                    v.visitNode(*n);
+                    ps.loadLeaf(*n);
+                }
                 delete pFirst;
                 break;
             }

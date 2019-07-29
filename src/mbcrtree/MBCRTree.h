@@ -244,11 +244,11 @@ namespace SpatialIndex
                     return std::tie(m_page, m_off, m_len) < std::tie(y.m_page, y.m_off, y.m_len);
                 }
             };
-			class PartsSore{
+			class PartsStore{
             protected:
                 class Parts{
                 public:
-                    PartsSore* m_ps;
+                    PartsStore* m_ps;
                     std::set<id_type> m_missingLeaf, m_loadedLeaf;
                     std::list<RegionPtr> m_mbrs;
                     std::list<MBCPtr> m_mbcs;
@@ -258,7 +258,7 @@ namespace SpatialIndex
                     double m_mintime=1e300,m_maxtime=-1e300;
                     bool m_hasPrev=true,m_hasNext=true;
                     double m_computedTime=0,m_loadedTime=0;
-                    Parts(PartsSore* ps= nullptr):m_ps(ps){}
+                    Parts(PartsStore* ps= nullptr):m_ps(ps){}
                     void insert(RegionPtr &r,id_type prev,id_type next,storeEntry &entry){
                         if(m_mbrs.empty()) m_mbrs.emplace_back(r);
                         else{
@@ -286,7 +286,6 @@ namespace SpatialIndex
                         m_entries.insert(entry);
                     }
                     void insert(MBCPtr &r,id_type prev,id_type next,storeEntry &entry){
-                        m_entries.insert(entry);
                         if(m_mbrs.empty()) m_mbcs.emplace_back(r);
                         else{
                             auto j=m_mbcs.begin();
@@ -310,6 +309,7 @@ namespace SpatialIndex
                         }
                         if(prev>=0&&m_loadedLeaf.count(prev)==0) m_missingLeaf.insert(prev);
                         if(next>=0&&m_loadedLeaf.count(next)==0) m_missingLeaf.insert(next);
+                        m_entries.insert(entry);
                     }
                     void removeCalculated(double ts,double te){}
                 };
@@ -499,10 +499,8 @@ namespace SpatialIndex
                 }
 
             public:
+			    bool isLoaded(id_type id){ return loadedLeaf.count(id)>0;}
 			    void loadLeaf(Node &n){
-			        if(loadedLeaf.count(n.m_identifier)!=0) {
-			            return;
-			        }
 			        loadedLeaf.insert(n.m_identifier);
                     std::vector<id_type > relatedIds;
                     for(int i=0;i<n.m_children;i++){
@@ -554,13 +552,14 @@ namespace SpatialIndex
                     return (*m_parts[id].m_missingLeaf.begin());
                 }
                 auto getMissingPart(id_type id){return m_parts[id].m_missingLeaf;}
-                PartsSore(Trajectory &traj,double error,TrajStore* ts,bool useMBR)
+                PartsStore(Trajectory &traj,double error,TrajStore* ts,bool useMBR)
                 :m_query(traj),m_error(error),m_useMBR(useMBR),m_ts(ts){}
-                ~PartsSore(){}
+                ~PartsStore(){}
                 Trajectory getTraj(id_type id){
                     Trajectory traj;
                     Trajectory tmpTraj;
                     for(const auto &e:m_parts[id].m_entries){
+                        m_ts->m_trajIO++;
                         uint32_t len=e.m_off+e.m_len;
                         uint8_t *load = new uint8_t[len];
                         m_ts->loadByteArray(e.m_page,len,&load);
