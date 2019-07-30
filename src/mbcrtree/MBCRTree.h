@@ -286,7 +286,7 @@ namespace SpatialIndex
                         m_entries[r->m_pLow[m_ps->m_dimension]]=entry;
                     }
                     void insert(MBCPtr &r,id_type prev,id_type next,storeEntry &entry){
-                        if(m_mbrs.empty()) m_mbcs.emplace_back(r);
+                        if(m_mbcs.empty()) m_mbcs.emplace_back(r);
                         else{
                             auto j=m_mbcs.begin();
                             for(;j!=m_mbcs.end()&&(*j)->m_startTime<r->m_startTime;j++);

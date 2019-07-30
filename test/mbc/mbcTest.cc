@@ -287,7 +287,7 @@ int TreeQuery(ISpatialIndex* tree,IShape* query,TrajStore *ts= nullptr){
     if(QueryType==1){
         return vis.m_resultGet;
     }else if(ts!= nullptr){
-        return vis.m_lastResult/100;
+        return vis.m_lastResult;
     }
     else return vis.m_lastResult;
 }
@@ -392,16 +392,16 @@ int main(){
 
 //        double aa,bb,oo;
 ////        for(int j=0;j<queries.size();j++){
-//        for(int j=0;j<1;j++){
+//        for(int j=2;j<3;j++){
 //            auto q=queries[j];
 ////            oo=TreeQuery(real,q);
-//            aa=TreeQuery(r,q,&ts1);
+////            aa=TreeQuery(r,q,&ts1);
 //            bb=TreeQuery(rc,q,&ts2);
 //            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
-//            if(aa!=oo||bb!=oo){
-//                cout<<j<<endl;
-//                cout<<aa<<endl<<bb<<endl<<oo<<endl;
-//                cout<<*qtraj<<endl;
+//            if(aa!=bb){
+//                cerr<<"error"<<j<<endl;
+//                cerr<<aa<<endl<<bb<<endl<<oo<<endl;
+//                cerr<<*qtraj<<endl;
 //            }
 //        }
 
