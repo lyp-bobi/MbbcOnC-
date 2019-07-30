@@ -253,7 +253,7 @@ namespace SpatialIndex
                     std::list<RegionPtr> m_mbrs;
                     std::list<MBCPtr> m_mbcs;
                     std::map<std::pair<double,double>,double> m_computedDist;
-                    std::set<storeEntry> m_entries;
+                    std::map<double,storeEntry> m_entries;
                     double m_calcMin=0;
                     double m_mintime=1e300,m_maxtime=-1e300;
                     bool m_hasPrev=true,m_hasNext=true;
@@ -283,7 +283,7 @@ namespace SpatialIndex
                         }
                         if(prev>=0&&m_loadedLeaf.count(prev)==0) m_missingLeaf.insert(prev);
                         if(next>=0&&m_loadedLeaf.count(next)==0) m_missingLeaf.insert(next);
-                        m_entries.insert(entry);
+                        m_entries[r->m_pLow[m_ps->m_dimension]]=entry;
                     }
                     void insert(MBCPtr &r,id_type prev,id_type next,storeEntry &entry){
                         if(m_mbrs.empty()) m_mbcs.emplace_back(r);
@@ -309,7 +309,7 @@ namespace SpatialIndex
                         }
                         if(prev>=0&&m_loadedLeaf.count(prev)==0) m_missingLeaf.insert(prev);
                         if(next>=0&&m_loadedLeaf.count(next)==0) m_missingLeaf.insert(next);
-                        m_entries.insert(entry);
+                        m_entries[r->m_startTime]=entry;
                     }
                     void removeCalculated(double ts,double te){}
                 };
@@ -558,7 +558,8 @@ namespace SpatialIndex
                 Trajectory getTraj(id_type id){
                     Trajectory traj;
                     Trajectory tmpTraj;
-                    for(const auto &e:m_parts[id].m_entries){
+                    for(const auto &pair:m_parts[id].m_entries){
+                        auto e=pair.second;
                         m_ts->m_trajIO++;
                         uint32_t len=e.m_off+e.m_len;
                         uint8_t *load = new uint8_t[len];
@@ -566,11 +567,11 @@ namespace SpatialIndex
                         uint8_t *data = load+e.m_off;
                         tmpTraj.loadFromByteArray(data);
                         delete[](load);
-                    }
-                    if(traj.m_points.empty()){
-                        traj=tmpTraj;
-                    }else{
-                        traj.linkTrajectory(tmpTraj);
+                        if(traj.m_points.empty()){
+                            traj=tmpTraj;
+                        }else{
+                            traj.linkTrajectory(tmpTraj);
+                        }
                     }
                     return traj;
                 }

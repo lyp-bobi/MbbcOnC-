@@ -1283,7 +1283,8 @@ double Trajectory::getInferredNodeMinimumIED(const SpatialIndex::Region &in, dou
 
 double Trajectory::getNodeMinimumDistance(const SpatialIndex::Region &in,double MaxVelocity) const {
     if(disttype==0)
-        return std::max(getMinimumDistance(in), getInferredNodeMinimumIED(in, MaxVelocity));
+        return getInferredNodeMinimumIED(in, MaxVelocity);
+//        return std::max(getMinimumDistance(in), getInferredNodeMinimumIED(in, MaxVelocity));
     else
         return getMinimumDistance(in);
 }
@@ -1430,7 +1431,7 @@ void Trajectory::loadFromString(std::string str) {
     }
 }
 
-void Trajectory::linkTrajectory(SpatialIndex::Trajectory other) {
+void Trajectory::linkTrajectory(SpatialIndex::Trajectory &other) {
     if(m_points.back().m_time==other.m_points.front().m_time){
         m_points.insert(m_points.end(),++other.m_points.begin(),other.m_points.end());
     }
