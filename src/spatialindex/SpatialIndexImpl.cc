@@ -59,12 +59,12 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const ISpatialIndex& i)
         os << *pMBCRTree;
         return os;
     }
-    const SpatialIndex::SBRTree::SBRTree* pSBRTree = dynamic_cast<const SpatialIndex::SBRTree::SBRTree*>(&i);
-    if (pSBRTree != 0)
-    {
-        os << *pSBRTree;
-        return os;
-    }
+//    const SpatialIndex::SBRTree::SBRTree* pSBRTree = dynamic_cast<const SpatialIndex::SBRTree::SBRTree*>(&i);
+//    if (pSBRTree != 0)
+//    {
+//        os << *pSBRTree;
+//        return os;
+//    }
 
 	const SpatialIndex::MVRTree::MVRTree* pMVRTree = dynamic_cast<const SpatialIndex::MVRTree::MVRTree*>(&i);
 	if (pMVRTree != 0)

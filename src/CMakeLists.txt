@@ -81,7 +81,7 @@ set(SIDX_SPATIALINDEX_CPP
   "${SIDX_SRC_DIR}/spatialindex/MovingPoint.cc"
   "${SIDX_SRC_DIR}/spatialindex/MovingRegion.cc"
   "${SIDX_SRC_DIR}/spatialindex/MBC.cc"
-  "${SIDX_SRC_DIR}/spatialindex/SBR.cc"
+#  "${SIDX_SRC_DIR}/spatialindex/SBR.cc"
   "${SIDX_SRC_DIR}/spatialindex/Trajectory.cc"
   "${SIDX_SRC_DIR}/spatialindex/Point.cc"
   "${SIDX_SRC_DIR}/spatialindex/Region.cc"
@@ -144,23 +144,23 @@ set(SIDX_MBCRTREE_CPP
         )
 list (APPEND SIDX_CPP ${SIDX_MBCRTREE_CPP})
 
-set(SIDX_SBRTREE_CPP
-        "${SIDX_SRC_DIR}/sbrtree/BulkLoader.cc"
-        "${SIDX_SRC_DIR}/sbrtree/BulkLoader.h"
-        "${SIDX_SRC_DIR}/sbrtree/Index.cc"
-        "${SIDX_SRC_DIR}/sbrtree/Index.h"
-        "${SIDX_SRC_DIR}/sbrtree/Leaf.cc"
-        "${SIDX_SRC_DIR}/sbrtree/Leaf.h"
-        "${SIDX_SRC_DIR}/sbrtree/Node.cc"
-        "${SIDX_SRC_DIR}/sbrtree/Node.h"
-        "${SIDX_SRC_DIR}/sbrtree/PointerPoolNode.h"
-        "${SIDX_SRC_DIR}/sbrtree/SBRTree.cc"
-        "${SIDX_SRC_DIR}/sbrtree/SBRTree.h"
-        "${SIDX_SRC_DIR}/sbrtree/Statistics.cc"
-        "${SIDX_SRC_DIR}/sbrtree/Statistics.h"
-        "${SIDX_SRC_DIR}/sbrtree/TrajStoreRelated.cc"
-        )
-list (APPEND SIDX_CPP ${SIDX_SBRTREE_CPP})
+#set(SIDX_SBRTREE_CPP
+#        "${SIDX_SRC_DIR}/sbrtree/BulkLoader.cc"
+#        "${SIDX_SRC_DIR}/sbrtree/BulkLoader.h"
+#        "${SIDX_SRC_DIR}/sbrtree/Index.cc"
+#        "${SIDX_SRC_DIR}/sbrtree/Index.h"
+#        "${SIDX_SRC_DIR}/sbrtree/Leaf.cc"
+#        "${SIDX_SRC_DIR}/sbrtree/Leaf.h"
+#        "${SIDX_SRC_DIR}/sbrtree/Node.cc"
+#        "${SIDX_SRC_DIR}/sbrtree/Node.h"
+#        "${SIDX_SRC_DIR}/sbrtree/PointerPoolNode.h"
+#        "${SIDX_SRC_DIR}/sbrtree/SBRTree.cc"
+#        "${SIDX_SRC_DIR}/sbrtree/SBRTree.h"
+#        "${SIDX_SRC_DIR}/sbrtree/Statistics.cc"
+#        "${SIDX_SRC_DIR}/sbrtree/Statistics.h"
+#        "${SIDX_SRC_DIR}/sbrtree/TrajStoreRelated.cc"
+#        )
+#list (APPEND SIDX_CPP ${SIDX_SBRTREE_CPP})
 
 set(SIDX_STORAGEMANAGER_CPP
   "${SIDX_SRC_DIR}/storagemanager/Buffer.cc"

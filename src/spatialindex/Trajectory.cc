@@ -12,7 +12,7 @@
 double calcuTime[2]={0,0};
 int testPhase=0;
 
-int disttype = 0;
+int disttype = 1;
 //0 for IED, 1 for MaxSED
 
 using namespace SpatialIndex;
@@ -570,7 +570,6 @@ double Trajectory::line2MBRMaxSED(const SpatialIndex::STPoint &ps, const Spatial
 double Trajectory::line2MBRDistance(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                     const SpatialIndex::Region &r) {
     //the line's time period should be in the MBR's time period
-    //this is for inner nodes
     assert(r.m_pLow[m_dimension]<=ps.m_time);
     assert(r.m_pHigh[m_dimension]>=pe.m_time);
     //check if need cutting
@@ -751,6 +750,7 @@ double Trajectory::getMinimumDistance(const SpatialIndex::MBC &in) const {
     }
     else{throw Tools::NotSupportedException("Wrong distance");}
 }
+[[deprecated]]
 double Trajectory::getMinimumDistance(const SpatialIndex::SBR &in) const {
     double tstart, tend;
     tstart = std::max(m_startTime(), in.m_startTime);
@@ -803,7 +803,7 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
         double newtime = midTraj[0].m_time, lasttime = midTraj[0].m_time;
         auto iter1 = midTraj.m_vectorPointer->begin()+midTraj.m_is;
         auto iter2 = timedTraj2.m_vectorPointer->begin()+timedTraj2.m_is;
-        STPoint lastp1 = *iter1, lastp2 = *iter2, newp1, newp2;
+        STPoint lastp1 = midTraj[0], lastp2 = timedTraj2[0], newp1, newp2;
         newp1.makeInfinite(2);newp2.makeInfinite(2);
         if(disttype==1) {max=std::max(max,iter1->getMinimumDistance(*iter2));}
         while (lasttime != timedTraj2[timedTraj2.m_size-1].m_time) {
@@ -1265,23 +1265,119 @@ double Trajectory::getStaticIED(const SpatialIndex::Region in,double ints, doubl
     }
     return sum;
 }
-
-double Trajectory::getInferredNodeMinimumIED(const SpatialIndex::Region &in, double MaxVelocity) const {
-        Region sembr=in;
-        double sum=0;
-        for(int i=0;i<m_points.size()-1;i++){
-            sembr.m_pLow[m_dimension]=m_points[i].m_time;
-            sembr.m_pHigh[m_dimension]=m_points[i+1].m_time;
-            double pd=line2MBRDistance(m_points[i],m_points[i+1],sembr);
-            double r1=std::max(std::fabs(m_points[i].m_time-in.m_pLow[m_dimension]),std::fabs(m_points[i].m_time-in.m_pHigh[m_dimension]))*MaxVelocity;
-            double r2=std::max(std::fabs(m_points[i+1].m_time-in.m_pLow[m_dimension]),std::fabs(m_points[i+1].m_time-in.m_pHigh[m_dimension]))*MaxVelocity;
-            double minus = 0.5*(m_points[i+1].m_time-m_points[i].m_time)*(r1+r2);
-            sum+=std::max(0.0,pd-minus);
+#define sign(x) (x>0?1.0:-1.0)
+double getInterTime(const STPoint &ps, const STPoint &pe,Region &r,double t_o, double vmax){
+    //vmax could be positive or negative
+    int sr = getRealm(r, ps, pe);
+    if (sr > 0) {
+        assert(sr!=5);//should be handled previously
+        if(sr%2==0){
+            double d1=ps.getMinimumDistance(r)-(ps.m_time-t_o)*vmax;
+            double d2=pe.getMinimumDistance(r)-(pe.m_time-t_o)*vmax;
+            assert(sign(d1)*sign(d2)<=0);
+            return (d1*pe.m_time+d2*ps.m_time)/(pe.m_time-ps.m_time);
         }
-    return 0;
+        else{
+            double px, py;
+            if (sr == 1 || sr == 7) px = r.m_pLow[0];
+            else px = r.m_pHigh[0];
+            if (sr == 1 || sr == 3) py = r.m_pLow[1];
+            else py = r.m_pHigh[1];
+            double ts = ps.m_time, te = pe.m_time;
+            double dxs=ps.m_pCoords[0]-px;
+            double dys=ps.m_pCoords[1]-py;
+            double dxe=pe.m_pCoords[0]-px;
+            double dye=pe.m_pCoords[1]-py;
+            double c1=sq(dxs-dxe)+sq(dys-dye),
+                    c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
+                    c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
+                    c4=te-ts;
+            double a=c1-c4*c4*vmax*vmax,
+                b=c2+2*c4*c4*vmax*vmax*t_o,
+                c=c3-c4*c4*vmax*vmax*t_o*t_o;
+            double t=(-b+sign(a)*sign(vmax)*std::sqrt(b*b-4*a*c))/2/a;
+            return t;
+        }
+    }else {
+        auto part = cutByRealm(ps, pe, r);
+        for (const auto &p:part) {
+            double d1=p.first.getMinimumDistance(r)-(p.first.m_time-t_o)*vmax;
+            double d2=p.second.getMinimumDistance(r)-(p.second.m_time-t_o)*vmax;
+            if(sign(d1)*sign(d2)<0) return getInterTime(p.first,p.second,r,t_o,vmax);
+        }
+        throw Tools::IllegalStateException("getInterTime");
+    }
+}
+
+double Trajectory::getInferredNodeMinimumIED(const SpatialIndex::Region &in, double MaxVelocity,double queryMaxVelocity) const {
+
+
+    Region sembr=in,mbr2d(in.m_pLow,in.m_pHigh,in.m_dimension-1);
+    double vmax=std::max(MaxVelocity,queryMaxVelocity);
+    double t0=in.m_pLow[in.m_dimension-1],t3=in.m_pHigh[in.m_dimension-1];
+    double tmid=(t0+t3)/2;
+    double d1=m_points.front().getMinimumDistance(mbr2d)-vmax*(m_points.front().m_time-t0);
+    double d2=m_points.back().getMinimumDistance(mbr2d)-vmax*(t3-m_points.back().m_time);
+    if(d1>0&&d2>0){//if it has no chance to intersect
+        double pd=getStaticIED(in,m_startTime(),m_endTime());
+        double minus;
+        if(m_endTime()<tmid){//only lower side
+            minus=(m_endTime()-m_startTime())*((2*t3-m_points.front().m_time-m_points.back().m_time)*vmax)/2;
+        }else if(m_startTime()>tmid){//only higher side
+            minus=(m_endTime()-m_startTime())*((m_points.front().m_time+m_points.back().m_time-2*t0))*vmax/2;
+        }else{//two sides
+            minus=(m_endTime()-tmid)*(vmax*(t3-t0)/2+vmax*(m_points.back().m_time-t0)*vmax)/2+
+                    (tmid-m_startTime())*(vmax*t3-t0+vmax*(t3-m_points.front().m_time)*vmax)/2;
+        }
+        return pd-minus;
+    }
+    if(m_startTime()>tmid&&d1<0) return 0;
+    if(m_endTime()<tmid&&d2<0) return 0;
+    double ts=std::max(t0,m_startTime()),te=std::min(t3,m_endTime());
+    if(ts>=te) return 1e300; //the distance could be measured, but this means "some other part is better related"
+    double inter1=m_startTime(),inter2=m_endTime();//the period that have positive distance
+    for(int i=0;i<m_points.size()-1;i++) {
+        double t1=m_points[i].m_time,t2=m_points[i+1].m_time;
+        if(t1>inter2||t2<inter1) break;
+        double l1 = (t1 - t0) * vmax,//smaller
+                l2 = (t2 - t0) * vmax, //larger
+                h1 = (t3 - t1) * vmax,//larger
+                h2 = (t3 - t2) * vmax;//smaller
+        double ds1=m_points[i].getMinimumDistance(mbr2d),
+                ds2=m_points[i+1].getMinimumDistance(mbr2d);
+        if(t2>tmid){// inter2 might be updated
+            if(ds2-l2<=0&&ds1-l1>=0){
+                inter2=getInterTime(m_points[i],m_points[i+1],mbr2d,t0,vmax);
+            }
+        }
+        if(t1<tmid){// inter1 might be updated
+            if(ds2-h2>=0&&ds1-h1<=0){
+                inter1=getInterTime(m_points[i],m_points[i+1],mbr2d,t3,-vmax);
+            }
+        }
+    }
+    fakeTpVector timedTraj(&m_points,inter1,inter2);
+    sembr.m_pLow[sembr.m_dimension-1]=inter1;
+    sembr.m_pHigh[sembr.m_dimension-1]=inter2;
+    double sum = 0;
+    for (int i = 0; i < timedTraj.m_size-1; i++) {
+        double pd = line2MBRDistance(timedTraj[i],timedTraj[i+1],sembr);
+        sum+=pd;
+    }
+    double minus;
+    if(inter2<tmid){//only lower side
+        minus=(inter2-inter1)*((2*t3-timedTraj.front().m_time-timedTraj.back().m_time)*vmax)/2;
+    }else if(inter1>tmid){//only higher side
+        minus=(inter2-inter1)*((timedTraj.front().m_time+timedTraj.back().m_time-2*t0))*vmax/2;
+    }else{//two sides
+        minus=(inter2-tmid)*(vmax*(t3-t0)/2+vmax*(timedTraj.back().m_time-t0)*vmax)/2+
+              (tmid-inter1)*(vmax*t3-t0+vmax*(t3-timedTraj.front().m_time)*vmax)/2;
+    }
+    return sum-minus;
 }
 
 double Trajectory::getNodeMinimumDistance(const SpatialIndex::Region &in,double MaxVelocity) const {
+    if(m_startTime()>=in.m_pHigh[in.m_dimension-1]||m_endTime()<=in.m_pLow[in.m_dimension-1]) return 1e300;
     if(disttype==0)
         return getInferredNodeMinimumIED(in, MaxVelocity);
 //        return std::max(getMinimumDistance(in), getInferredNodeMinimumIED(in, MaxVelocity));
@@ -1442,5 +1538,37 @@ void Trajectory::linkTrajectory(SpatialIndex::Trajectory &other) {
         std::cerr<<m_points.back()<<" "<<other.m_points.front()<<"\n"
             <<other.m_points.back()<<" "<<m_points.front();
         throw Tools::IllegalStateException("Trajectory::linkTrajectory: the two trajectories to be linked should have a common point.");
+    }
+}
+
+
+void Trajectory::getPartialTrajectory(double tstart, double tend, SpatialIndex::Trajectory &out) const {
+    //may produce non-exist points through makemid
+    //get the inner or equal points
+    out.makeInfinite(2);
+    if(tstart==tend) return;
+    if(tstart>m_endTime()||tend<m_startTime()) return;
+    int is=0,ie=m_points.size()-1;
+    while(m_points[is].m_time<tstart) is++;
+    while(m_points[ie].m_time>tend) ie--;
+    double x,y;
+    if(is!=0&&m_points[is].m_time!=tstart){
+        x=makemidmacro(m_points[is-1].m_pCoords[0],m_points[is-1].m_time,
+                       m_points[is].m_pCoords[0],m_points[is].m_time,tstart);
+        y=makemidmacro(m_points[is-1].m_pCoords[1],m_points[is-1].m_time,
+                       m_points[is].m_pCoords[1],m_points[is].m_time,tstart);
+        double xy[2]={x,y};
+        out.m_points.emplace_back(STPoint(xy,tstart,2));
+    }
+    for(int i=is;i<=ie;i++){
+        out.m_points.emplace_back(m_points[i]);
+    }
+    if(ie!=m_points.size()-1&&m_points[ie].m_time!=tend){
+        x=makemidmacro(m_points[ie].m_pCoords[0],m_points[ie].m_time,
+                       m_points[ie+1].m_pCoords[0],m_points[ie+1].m_time,tstart);
+        y=makemidmacro(m_points[ie].m_pCoords[1],m_points[ie].m_time,
+                       m_points[ie+1].m_pCoords[1],m_points[ie+1].m_time,tstart);
+        double xy[2]={x,y};
+        out.m_points.emplace_back(STPoint(xy,tend,2));
     }
 }

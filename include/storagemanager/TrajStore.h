@@ -102,8 +102,12 @@ namespace SpatialIndex
             TrajStore(IStorageManager *store,uint32_t pageSize);
             void flush(){m_pStorageManager->flush();}
             void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
+                auto start = std::chrono::system_clock::now();
                 m_pStorageManager->loadByteArray(page,len,data);
-                m_indexIO+=1;
+                auto end = std::chrono::system_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+                m_IOtime+=double(duration.count()) * std::chrono::microseconds::period::num
+                        / std::chrono::microseconds::period::den;
             }//for inner nodes
             void storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data){
                 m_pStorageManager->storeByteArray(page,len,data);
@@ -139,6 +143,7 @@ namespace SpatialIndex
             uint32_t m_trajIO=0,m_indexIO=0;
             uint32_t m_boundingVisited=0;
             double m_maxVelocity;
+            double m_IOtime=0;
         };
     }//namespace StorageManager
     class baseSegmentStream:public IDataStream{

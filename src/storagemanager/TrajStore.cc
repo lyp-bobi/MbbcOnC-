@@ -504,6 +504,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     delete[] pageData;
 }
 
+[[deprecated]]
 const Trajectory TrajStore::getTraj(id_type &id) {
     auto it=m_entries.find(id);
     assert(it!=m_entries.end());
@@ -520,7 +521,7 @@ const Trajectory TrajStore::getTraj(id_type &id) {
     delete[](load);
     return traj;
 }
-
+[[deprecated]]
 const Trajectory TrajStore::getTrajByTime(id_type &tid, double tstart, double tend) {
     id_type id=getSegId(tid,0);
     auto it=m_entries.find(id);

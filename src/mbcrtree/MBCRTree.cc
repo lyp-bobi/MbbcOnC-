@@ -1334,6 +1334,7 @@ SpatialIndex::id_type SpatialIndex::MBCRTree::MBCRTree::writeNode(Node* n)
 
 SpatialIndex::MBCRTree::NodePtr SpatialIndex::MBCRTree::MBCRTree::readNode(id_type page)
 {
+    m_ts->m_indexIO++;
 	uint32_t dataLength;
 	uint8_t* buffer;
 

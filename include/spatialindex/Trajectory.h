@@ -64,6 +64,14 @@ namespace SpatialIndex
                 if(n==m_size-1&&m_back!= nullptr) return *m_back;
                 return m_vectorPointer->at(m_is+n);
             }
+            STPoint& front(){
+                if(m_front!= nullptr) return *m_front;
+                else return m_vectorPointer->at(m_is);
+            }
+            STPoint& back(){
+                if(m_back!= nullptr) return *m_back;
+                return m_vectorPointer->at(m_is+m_size-1);
+            }
         };
         Trajectory();
         explicit Trajectory(std::vector<STPoint> &in);
@@ -98,8 +106,12 @@ namespace SpatialIndex
         virtual void getCenter(Point& out) const;
         virtual uint32_t getDimension() const;
         virtual void getMBR(Region& out) const;
+
+        virtual void getPartialTrajectory(double tstart, double tend, SpatialIndex::Trajectory &out) const;
+
         virtual double getArea() const;
         virtual double getMinimumDistance(const IShape& in) const;
+
 
 
         virtual double getMinimumDistance(const STPoint& in) const;
@@ -130,7 +142,7 @@ namespace SpatialIndex
         virtual double getStaticIED(double x, double y, double t1, double t2) const;
         virtual double getStaticIED(const Region in,double ints, double inte) const;
 
-        virtual double getInferredNodeMinimumIED(const Region &in, double MaxVelocity) const;
+        virtual double getInferredNodeMinimumIED(const Region &in, double MaxVelocity,double queryMaxVelocity=0) const;
 
         virtual double getNodeMinimumDistance(const Region &in,double MaxVelocity) const;
         virtual double getLeafMinimumDistance(const Region &in, double MaxVelocity) const;
@@ -154,8 +166,8 @@ namespace SpatialIndex
         std::vector<Trajectory> getSegments(double threshold);
         void linkTrajectory(Trajectory &other);
 
-        double m_startTime() const{return m_points.front().m_time;}
-        double m_endTime() const { return m_points.back().m_time;}
+        inline double m_startTime() const{return m_points.front().m_time;}
+        inline double m_endTime() const { return m_points.back().m_time;}
 
         void loadFromString(std::string s);
 

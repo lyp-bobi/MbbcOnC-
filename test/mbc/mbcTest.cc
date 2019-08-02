@@ -21,10 +21,10 @@
 #include "storagemanager/TrajStore.h"
 #include "../../src/storagemanager/DiskStorageManager.h"
 #include "../../src/mbcrtree/MBCRTree.h"
-//#define sourceFile "D://t200n100s.txt"
-#define sourceFile "D://t1000.txt"
+//#define sourceFile "D://t1000.txt"
+#define sourceFile "D://t500n200se.txt"
 #define maxLinesToRead 1e10
-#define testtime 100
+#define testtime 1
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
@@ -300,9 +300,14 @@ int main(){
         vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, Trajectory> > empty1;
-        for(auto traj:trajs){
-            segs.push_back(make_pair(traj.first,traj.second.getSegments(3000)));
+        int totallen=0,totalseg=0;
+        for(auto &traj:trajs){
+            totallen+=traj.second.m_points.size();
+            auto seg= traj.second.getSegments(3000);
+            totalseg+= seg.size();
+            segs.push_back(make_pair(traj.first,seg));
         }
+        std::cerr<<"segments' average length is "<<totallen*1.0/totalseg<<"\n";
         vector<IShape *> queries;
 //        double plow[3]={16083.3,16481.8,485};
 //        double pHigh[3]={17853,17749.1,485};
@@ -319,7 +324,13 @@ int main(){
                 queries.emplace_back(rg);
             }
             else if(QueryType==2){
-                queries.emplace_back(&trajs[(0+i)%trajs.size()].second);
+                auto ori = &trajs[(0+i)%trajs.size()].second;
+                Trajectory* concate= new Trajectory();
+                double ts=ori->m_startTime(),te=ori->m_endTime();
+//                concate=ori;
+                ori->getPartialTrajectory(0.75*ts+0.25*te,0.25*te+0.75*te,*concate);
+//                ori->getPartialTrajectory((i%5)*100,(i%5)*100+100,*concate);
+                queries.emplace_back(concate);
             }
         }
 
@@ -411,7 +422,7 @@ int main(){
 //        std::cerr<<"traj IO:"<<ts1.m_trajIO<<" "<<ts2.m_trajIO<<endl;
 //        std::cerr<<"total IO:"<<ts1.m_indexIO+ts1.m_trajIO<<" "<<ts2.m_indexIO+ts2.m_trajIO<<endl;
 //        std::cerr<<"bounding IO:"<<ts1.m_boundingVisited<<" "<<ts2.m_boundingVisited<<endl;
-        std::cerr<<"IO time:"<<dsm1->iotime<<" "<<dsm2->iotime<<"\n";
+        std::cerr<<"IO time:"<<ts1.m_IOtime<<" "<<ts2.m_IOtime<<"\n";
         std::cerr<<"calculation time"<<calcuTime[0]<<" "<<calcuTime[1]<<"\n";
         delete file0;delete file1;delete file2;
         delete diskfile0;delete diskfile1;delete diskfile2;

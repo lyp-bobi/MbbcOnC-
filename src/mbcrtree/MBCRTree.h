@@ -336,171 +336,222 @@ namespace SpatialIndex
                     m_parts[id].insert(bc,prev,next,entry);
                 }
 
-                double update(id_type id){
-                    Parts* parts=&m_parts[id];
-                    double computedTime=0;
-                    double pd,sum=0;
-                    std::pair<double,double> timeInterval;
-                    if(m_useMBR){
-                        //inferred distance(front dist, back dist and mid dist) should be stored as negative values
-                        //front dist
-                        if(parts->m_mintime>m_query.m_startTime()){
-                            timeInterval=std::make_pair(m_query.m_startTime(),parts->m_mintime);
-                            if(parts->m_computedDist.count(timeInterval)>0){
-                                sum+=std::fabs(parts->m_computedDist[timeInterval]);
-                            }else{
-                                if(parts->m_hasPrev){
-                                    pd=m_query.getFrontIED(*parts->m_mbrs.front(),m_ts->m_maxVelocity);
-                                    parts->m_computedDist[timeInterval]=-pd;
-                                }else{
-                                    pd=m_query.getStaticIED(*parts->m_mbrs.front(),m_query.m_startTime(),parts->m_mintime);
-                                    parts->m_computedDist[timeInterval]=pd;
-                                    computedTime+=timeInterval.second-timeInterval.first;
+                double update(id_type id) {
+                    Parts *parts = &m_parts[id];
+                    double computedTime = 0;
+                    double pd, sum = 0;
+                    std::pair<double, double> timeInterval;
+                    if (disttype == 0) {
+                        if (m_useMBR) {
+                            //inferred distance(front dist, back dist and mid dist) should be stored as negative values
+                            //front dist
+                            if (parts->m_mintime > m_query.m_startTime()) {
+                                timeInterval = std::make_pair(m_query.m_startTime(), parts->m_mintime);
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    sum += std::fabs(parts->m_computedDist[timeInterval]);
+                                } else {
+                                    if (parts->m_hasPrev) {
+                                        pd = m_query.getFrontIED(*parts->m_mbrs.front(), m_ts->m_maxVelocity);
+                                        parts->m_computedDist[timeInterval] = -pd;
+                                    } else {
+                                        pd = m_query.getStaticIED(*parts->m_mbrs.front(), m_query.m_startTime(),
+                                                                  parts->m_mintime);
+                                        parts->m_computedDist[timeInterval] = pd;
+                                        computedTime += timeInterval.second - timeInterval.first;
+                                    }
+                                    sum += pd;
                                 }
-                                sum+=pd;
                             }
-                        }
-                        //mid dist
-                        Region* prev;
-                        for(const auto &box:parts->m_mbrs){
-                            //this box
-                            timeInterval=std::make_pair(box->m_pLow[m_dimension],box->m_pHigh[m_dimension]);
-                            if(parts->m_computedDist.count(timeInterval)>0){
-                                if(parts->m_computedDist[timeInterval]>0){
-                                    pd=parts->m_computedDist[timeInterval];
+                            //mid dist
+                            Region *prev;
+                            for (const auto &box:parts->m_mbrs) {
+                                //this box
+                                timeInterval = std::make_pair(box->m_pLow[m_dimension], box->m_pHigh[m_dimension]);
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    if (parts->m_computedDist[timeInterval] > 0) {
+                                        pd = parts->m_computedDist[timeInterval];
+                                    } else {
+                                        pd = m_query.getMinimumDistance(*box);
+                                        parts->m_computedDist[timeInterval] = pd;
+                                    }
+                                } else {
+                                    pd = m_query.getMinimumDistance(*box);
+                                    parts->m_computedDist[timeInterval] = pd;
                                 }
-                                else{
-                                    pd=m_query.getMinimumDistance(*box);
-                                    parts->m_computedDist[timeInterval]=pd;
-                                }
-                            }else{
-                                pd=m_query.getMinimumDistance(*box);
-                                parts->m_computedDist[timeInterval]=pd;
-                            }
-                            sum+=pd;
-                            computedTime+=timeInterval.second-timeInterval.first;
-                            //the gap
-                            if(box->m_pLow[m_dimension]!=parts->m_mbrs.front()->m_pLow[m_dimension]){
-                                if(prev->m_pHigh[m_dimension]<box->m_pLow[m_dimension]){
-                                    timeInterval=std::make_pair(prev->m_pHigh[m_dimension],box->m_pLow[m_dimension]);
-                                    if(parts->m_computedDist.count(timeInterval)>0){
-                                        sum+=std::fabs(parts->m_computedDist[timeInterval]);
-                                    }else{
-                                        pd=m_query.getMidIED(*prev,*box,m_ts->m_maxVelocity);
-                                        parts->m_computedDist[timeInterval]=-pd;
-                                        sum+=pd;
+                                sum += pd;
+                                computedTime += timeInterval.second - timeInterval.first;
+                                //the gap
+                                if (box->m_pLow[m_dimension] != parts->m_mbrs.front()->m_pLow[m_dimension]) {
+                                    if (prev->m_pHigh[m_dimension] < box->m_pLow[m_dimension]) {
+                                        timeInterval = std::make_pair(prev->m_pHigh[m_dimension],
+                                                                      box->m_pLow[m_dimension]);
+                                        if (parts->m_computedDist.count(timeInterval) > 0) {
+                                            sum += std::fabs(parts->m_computedDist[timeInterval]);
+                                        } else {
+                                            pd = m_query.getMidIED(*prev, *box, m_ts->m_maxVelocity);
+                                            parts->m_computedDist[timeInterval] = -pd;
+                                            sum += pd;
+                                        }
                                     }
                                 }
+                                prev = box.get();
                             }
-                            prev=box.get();
-                        }
-                        //backdist
-                        if(parts->m_maxtime<m_query.m_endTime()){
-                            timeInterval=std::make_pair(parts->m_maxtime,m_query.m_endTime());
-                            if(parts->m_computedDist.count(timeInterval)>0){
-                                sum+=std::fabs(parts->m_computedDist[timeInterval]);
-                            }else{
-                                if(parts->m_hasNext){
-                                    pd=m_query.getFrontIED(*parts->m_mbrs.back(),m_ts->m_maxVelocity);
-                                    parts->m_computedDist[timeInterval]=-pd;
-                                }else{
-                                    pd=m_query.getStaticIED(*parts->m_mbrs.back(),parts->m_maxtime,m_query.m_endTime());
-                                    parts->m_computedDist[timeInterval]=pd;
-                                    computedTime+=timeInterval.second-timeInterval.first;
+                            //backdist
+                            if (parts->m_maxtime < m_query.m_endTime()) {
+                                timeInterval = std::make_pair(parts->m_maxtime, m_query.m_endTime());
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    sum += std::fabs(parts->m_computedDist[timeInterval]);
+                                } else {
+                                    if (parts->m_hasNext) {
+                                        pd = m_query.getFrontIED(*parts->m_mbrs.back(), m_ts->m_maxVelocity);
+                                        parts->m_computedDist[timeInterval] = -pd;
+                                    } else {
+                                        pd = m_query.getStaticIED(*parts->m_mbrs.back(), parts->m_maxtime,
+                                                                  m_query.m_endTime());
+                                        parts->m_computedDist[timeInterval] = pd;
+                                        computedTime += timeInterval.second - timeInterval.first;
+                                    }
+                                    sum += pd;
                                 }
-                                sum+=pd;
                             }
-                        }
-                    } else{
-                        //inferred distance(front dist, back dist and mid dist) should be stored as negative values
-                        //front dist
-                        if(parts->m_mintime>m_query.m_startTime()){
-                            timeInterval=std::make_pair(m_query.m_startTime(),parts->m_mintime);
-                            if(parts->m_computedDist.count(timeInterval)>0){
-                                sum+=std::fabs(parts->m_computedDist[timeInterval]);
-                            }else{
-                                if(parts->m_hasPrev){
-                                    pd=m_query.getFrontIED(parts->m_mbcs.front()->m_pLow[0],parts->m_mbcs.front()->m_pLow[1],parts->m_mbcs.front()->m_startTime,m_ts->m_maxVelocity);
-                                    parts->m_computedDist[timeInterval]=-pd;
-                                }else{
-                                    pd=m_query.getStaticIED(parts->m_mbcs.front()->m_pLow[0],parts->m_mbcs.front()->m_pLow[1],m_query.m_startTime(),parts->m_mintime);
-                                    parts->m_computedDist[timeInterval]=pd;
-                                    computedTime+=timeInterval.second-timeInterval.first;
+                        } else {
+                            //inferred distance(front dist, back dist and mid dist) should be stored as negative values
+                            //front dist
+                            if (parts->m_mintime > m_query.m_startTime()) {
+                                timeInterval = std::make_pair(m_query.m_startTime(), parts->m_mintime);
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    sum += std::fabs(parts->m_computedDist[timeInterval]);
+                                } else {
+                                    if (parts->m_hasPrev) {
+                                        pd = m_query.getFrontIED(parts->m_mbcs.front()->m_pLow[0],
+                                                                 parts->m_mbcs.front()->m_pLow[1],
+                                                                 parts->m_mbcs.front()->m_startTime,
+                                                                 m_ts->m_maxVelocity);
+                                        parts->m_computedDist[timeInterval] = -pd;
+                                    } else {
+                                        pd = m_query.getStaticIED(parts->m_mbcs.front()->m_pLow[0],
+                                                                  parts->m_mbcs.front()->m_pLow[1],
+                                                                  m_query.m_startTime(), parts->m_mintime);
+                                        parts->m_computedDist[timeInterval] = pd;
+                                        computedTime += timeInterval.second - timeInterval.first;
+                                    }
+                                    sum += pd;
                                 }
-                                sum+=pd;
                             }
-                        }
-                        //mid dist
-                        MBC* prev;
-                        for(const auto &box:parts->m_mbcs){
-                            //this box
-                            timeInterval=std::make_pair(box->m_startTime,box->m_endTime);
-                            if(parts->m_computedDist.count(timeInterval)>0){
-                                if(parts->m_computedDist[timeInterval]>0){
-                                    pd=parts->m_computedDist[timeInterval];
+                            //mid dist
+                            MBC *prev;
+                            for (const auto &box:parts->m_mbcs) {
+                                //this box
+                                timeInterval = std::make_pair(box->m_startTime, box->m_endTime);
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    if (parts->m_computedDist[timeInterval] > 0) {
+                                        pd = parts->m_computedDist[timeInterval];
+                                    } else {
+                                        pd = m_query.getMinimumDistance(*box);
+                                        parts->m_computedDist[timeInterval] = pd;
+                                    }
+                                } else {
+                                    pd = m_query.getMinimumDistance(*box);
+                                    parts->m_computedDist[timeInterval] = pd;
                                 }
-                                else{
-                                    pd=m_query.getMinimumDistance(*box);
-                                    parts->m_computedDist[timeInterval]=pd;
-                                }
-                            }else{
-                                pd=m_query.getMinimumDistance(*box);
-                                parts->m_computedDist[timeInterval]=pd;
-                            }
-                            sum+=pd;
-                            computedTime+=timeInterval.second-timeInterval.first;
-                            //the gap
-                            if(box->m_startTime!=parts->m_mbcs.front()->m_startTime){
-                                if(prev->m_pHigh[m_dimension]<box->m_pLow[m_dimension]){
-                                    timeInterval=std::make_pair(prev->m_pHigh[m_dimension],box->m_pLow[m_dimension]);
-                                    if(parts->m_computedDist.count(timeInterval)>0){
-                                        sum+=std::fabs(parts->m_computedDist[timeInterval]);
-                                    }else{
-                                        pd=m_query.getMidIED(*prev,*box,m_ts->m_maxVelocity);
-                                        parts->m_computedDist[timeInterval]=-pd;
-                                        sum+=pd;
+                                sum += pd;
+                                computedTime += timeInterval.second - timeInterval.first;
+                                //the gap
+                                if (box->m_startTime != parts->m_mbcs.front()->m_startTime) {
+                                    if (prev->m_pHigh[m_dimension] < box->m_pLow[m_dimension]) {
+                                        timeInterval = std::make_pair(prev->m_pHigh[m_dimension],
+                                                                      box->m_pLow[m_dimension]);
+                                        if (parts->m_computedDist.count(timeInterval) > 0) {
+                                            sum += std::fabs(parts->m_computedDist[timeInterval]);
+                                        } else {
+                                            pd = m_query.getMidIED(*prev, *box, m_ts->m_maxVelocity);
+                                            parts->m_computedDist[timeInterval] = -pd;
+                                            sum += pd;
+                                        }
                                     }
                                 }
+                                prev = box.get();
                             }
-                            prev=box.get();
-                        }
-                        //backdist
-                        if(parts->m_maxtime<m_query.m_endTime()){
-                            timeInterval=std::make_pair(parts->m_maxtime,m_query.m_endTime());
-                            if(parts->m_computedDist.count(timeInterval)>0){
-                                sum+=std::fabs(parts->m_computedDist[timeInterval]);
-                            }else{
-                                if(parts->m_hasNext){
-                                    pd=m_query.getFrontIED(parts->m_mbcs.back()->m_pHigh[0],parts->m_mbcs.back()->m_pHigh[1],
-                                                            parts->m_mbcs.back()->m_endTime,m_ts->m_maxVelocity);
-                                    parts->m_computedDist[timeInterval]=-pd;
-                                }else{
-                                    pd=m_query.getStaticIED(parts->m_mbcs.back()->m_pHigh[0],parts->m_mbcs.back()->m_pHigh[1]
-                                            ,parts->m_maxtime,m_query.m_endTime());
-                                    parts->m_computedDist[timeInterval]=pd;
-                                    computedTime+=timeInterval.second-timeInterval.first;
+                            //backdist
+                            if (parts->m_maxtime < m_query.m_endTime()) {
+                                timeInterval = std::make_pair(parts->m_maxtime, m_query.m_endTime());
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    sum += std::fabs(parts->m_computedDist[timeInterval]);
+                                } else {
+                                    if (parts->m_hasNext) {
+                                        pd = m_query.getFrontIED(parts->m_mbcs.back()->m_pHigh[0],
+                                                                 parts->m_mbcs.back()->m_pHigh[1],
+                                                                 parts->m_mbcs.back()->m_endTime, m_ts->m_maxVelocity);
+                                        parts->m_computedDist[timeInterval] = -pd;
+                                    } else {
+                                        pd = m_query.getStaticIED(parts->m_mbcs.back()->m_pHigh[0],
+                                                                  parts->m_mbcs.back()->m_pHigh[1], parts->m_maxtime,
+                                                                  m_query.m_endTime());
+                                        parts->m_computedDist[timeInterval] = pd;
+                                        computedTime += timeInterval.second - timeInterval.first;
+                                    }
+                                    sum += pd;
                                 }
-                                sum+=pd;
                             }
                         }
+                        parts->m_calcMin = sum;
+                        parts->m_computedTime = computedTime;
+                        int type = 2;
+                        if (parts->m_missingLeaf.empty()) type = 3;
+                        sum = std::max(0.0, sum - m_error);
+                        if (m_handlers.count(id) == 0) {
+                            auto handle = m_mpq.push(new NNEntry(id, sum, type));
+                            m_handlers[id] = handle;
+                        } else {
+                            m_mpq.update(m_handlers[id], id, sum, type);
+                        }
+                        return sum;
                     }
-                    parts->m_calcMin=sum;
-                    parts->m_computedTime=computedTime;
-                    int type=2;
-                    if(parts->m_missingLeaf.empty()) type=3;
-                    sum=std::max(0.0,sum-m_error);
-                    if(m_handlers.count(id)==0){
-                        auto handle=m_mpq.push(new NNEntry(id,sum,type));
-                        m_handlers[id]=handle;
-                    }else{
-                        m_mpq.update(m_handlers[id],id,sum,type);
+                    else if(disttype==1){
+                        double max=0;
+                        if(m_useMBR){
+                            for(const auto &box:parts->m_mbrs){
+                                timeInterval = std::make_pair(box->m_pLow[m_dimension], box->m_pHigh[m_dimension]);
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    pd = parts->m_computedDist[timeInterval];
+                                } else {
+                                    pd = m_query.getMinimumDistance(*box);
+                                    parts->m_computedDist[timeInterval] = pd;
+                                }
+                                max=std::max(max,pd);
+                            }
+                        }else{
+                            for(const auto &box:parts->m_mbcs){
+                                timeInterval = std::make_pair(box->m_startTime, box->m_endTime);
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    pd = parts->m_computedDist[timeInterval];
+                                } else {
+                                    pd = m_query.getMinimumDistance(*box);
+                                    parts->m_computedDist[timeInterval] = pd;
+                                }
+                                max=std::max(max,pd);
+                            }
+                        }
+                        parts->m_calcMin = max;
+                        parts->m_computedTime = computedTime;
+                        int type = 2;
+                        if (parts->m_missingLeaf.empty()) type = 3;
+                        max = std::max(0.0, max - m_error);
+                        if (m_handlers.count(id) == 0) {
+                            auto handle = m_mpq.push(new NNEntry(id, max, type));
+                            m_handlers[id] = handle;
+                        } else {
+                            m_mpq.update(m_handlers[id], id, max, type);
+                        }
+                        return max;
                     }
-                    return sum;
+                    else throw Tools::IllegalStateException("");
                 }
 
             public:
 			    bool isLoaded(id_type id){ return loadedLeaf.count(id)>0;}
 			    void loadLeaf(Node &n){
+                    std::cerr<<"load leaf"<<n.m_nodeMBR<<"\n";
 			        loadedLeaf.insert(n.m_identifier);
                     std::vector<id_type > relatedIds;
                     for(int i=0;i<n.m_children;i++){
@@ -560,7 +611,7 @@ namespace SpatialIndex
                     Trajectory tmpTraj;
                     for(const auto &pair:m_parts[id].m_entries){
                         auto e=pair.second;
-                        m_ts->m_trajIO++;
+                        m_ts->m_trajIO+=std::ceil(e.m_len/4096.0);
                         uint32_t len=e.m_off+e.m_len;
                         uint8_t *load = new uint8_t[len];
                         m_ts->loadByteArray(e.m_page,len,&load);
