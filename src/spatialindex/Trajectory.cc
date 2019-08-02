@@ -12,7 +12,7 @@
 double calcuTime[2]={0,0};
 int testPhase=0;
 
-int disttype = 1;
+int disttype = 0;
 //0 for IED, 1 for MaxSED
 
 using namespace SpatialIndex;
@@ -1270,6 +1270,9 @@ double getInterTime(const STPoint &ps, const STPoint &pe,Region &r,double t_o, d
     //vmax could be positive or negative
     int sr = getRealm(r, ps, pe);
     if (sr > 0) {
+        if(sr==5){
+            std::cout<<",...";
+        }
         assert(sr!=5);//should be handled previously
         if(sr%2==0){
             double d1=ps.getMinimumDistance(r)-(ps.m_time-t_o)*vmax;
@@ -1345,6 +1348,20 @@ double Trajectory::getInferredNodeMinimumIED(const SpatialIndex::Region &in, dou
                 h2 = (t3 - t2) * vmax;//smaller
         double ds1=m_points[i].getMinimumDistance(mbr2d),
                 ds2=m_points[i+1].getMinimumDistance(mbr2d);
+        if(t1<tmid&&tmid<t2){
+            double x,y;
+            x=makemidmacro(m_points[i].m_pCoords[0],m_points[i].m_time,
+                           m_points[i+1].m_pCoords[0],m_points[i+1].m_time,tmid);
+            y=makemidmacro(m_points[i].m_pCoords[1],m_points[i].m_time,
+                           m_points[i+1].m_pCoords[1],m_points[i+1].m_time,tmid);
+            STPoint pt(x,y,tmid);
+            double dm=pt.getMinimumDistance(mbr2d)-vmax*(te-ts)/2;
+            if(dm<=0) return 0;
+            else{
+                if(ds1-h1<=0) inter1=getInterTime(m_points[i],pt,mbr2d,t3,-vmax);
+                if(ds2-l2<=0) inter2=getInterTime(pt,m_points[i+1],mbr2d,t0,vmax);
+            }
+        }
         if(t2>tmid){// inter2 might be updated
             if(ds2-l2<=0&&ds1-l1>=0){
                 inter2=getInterTime(m_points[i],m_points[i+1],mbr2d,t0,vmax);
@@ -1378,8 +1395,18 @@ double Trajectory::getInferredNodeMinimumIED(const SpatialIndex::Region &in, dou
 
 double Trajectory::getNodeMinimumDistance(const SpatialIndex::Region &in,double MaxVelocity) const {
     if(m_startTime()>=in.m_pHigh[in.m_dimension-1]||m_endTime()<=in.m_pLow[in.m_dimension-1]) return 1e300;
-    if(disttype==0)
-        return getInferredNodeMinimumIED(in, MaxVelocity);
+    if(disttype==0){
+        Region copy(in);
+        copy.m_pLow[copy.m_dimension-1]=m_startTime();
+        copy.m_pHigh[copy.m_dimension-1]=m_endTime();
+        double min=1e300;
+        for (int i = 0; i < m_points.size()-1; i++) {
+            double pd = line2MBRMinSED(m_points[i],m_points[i+1],copy);
+            min=std::min(min,pd);
+        }
+        return min*(m_endTime()-m_startTime());
+//        return std::max(min*(m_endTime()-m_startTime()),getInferredNodeMinimumIED(in,MaxVelocity));
+    }
 //        return std::max(getMinimumDistance(in), getInferredNodeMinimumIED(in, MaxVelocity));
     else
         return getMinimumDistance(in);

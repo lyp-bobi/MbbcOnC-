@@ -24,7 +24,7 @@
 //#define sourceFile "D://t1000.txt"
 #define sourceFile "D://t500n200se.txt"
 #define maxLinesToRead 1e10
-#define testtime 1
+#define testtime 100
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
@@ -328,8 +328,8 @@ int main(){
                 Trajectory* concate= new Trajectory();
                 double ts=ori->m_startTime(),te=ori->m_endTime();
 //                concate=ori;
-                ori->getPartialTrajectory(0.75*ts+0.25*te,0.25*te+0.75*te,*concate);
-//                ori->getPartialTrajectory((i%5)*100,(i%5)*100+100,*concate);
+//                ori->getPartialTrajectory(0.75*ts+0.25*te,0.25*te+0.75*te,*concate);
+                ori->getPartialTrajectory((i%5)*100,(i%5)*100+100,*concate);
                 queries.emplace_back(concate);
             }
         }

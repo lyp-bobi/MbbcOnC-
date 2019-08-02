@@ -551,7 +551,7 @@ namespace SpatialIndex
             public:
 			    bool isLoaded(id_type id){ return loadedLeaf.count(id)>0;}
 			    void loadLeaf(Node &n){
-                    std::cerr<<"load leaf"<<n.m_nodeMBR<<"\n";
+//                    std::cerr<<"load leaf"<<n.m_nodeMBR<<"\n";
 			        loadedLeaf.insert(n.m_identifier);
                     std::vector<id_type > relatedIds;
                     for(int i=0;i<n.m_children;i++){
