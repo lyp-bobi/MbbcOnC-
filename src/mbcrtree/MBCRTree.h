@@ -348,19 +348,26 @@ namespace SpatialIndex
                             if (parts->m_mintime > m_query.m_startTime()) {
                                 timeInterval = std::make_pair(m_query.m_startTime(), parts->m_mintime);
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    sum += std::fabs(parts->m_computedDist[timeInterval]);
+                                    if(parts->m_computedDist[timeInterval]>=0)
+                                        pd= parts->m_computedDist[timeInterval];
+                                    else{
+                                        pd = -parts->m_computedDist[timeInterval]-1;
+                                    }
                                 } else {
                                     if (parts->m_hasPrev) {
                                         pd = m_query.getFrontIED(*parts->m_mbrs.front(), m_ts->m_maxVelocity);
-                                        parts->m_computedDist[timeInterval] = -pd;
+                                        parts->m_computedDist[timeInterval] = -pd-1;
                                     } else {
                                         pd = m_query.getStaticIED(*parts->m_mbrs.front(), m_query.m_startTime(),
                                                                   parts->m_mintime);
                                         parts->m_computedDist[timeInterval] = pd;
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
-                                    sum += pd;
                                 }
+                                if(parts->m_computedDist[timeInterval]<0)
+                                    pd=std::max(pd,m_mpq.top()->m_minDist*
+                                                   (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
+                                sum += pd;
                             }
                             //mid dist
                             Region *prev;
@@ -386,12 +393,19 @@ namespace SpatialIndex
                                         timeInterval = std::make_pair(prev->m_pHigh[m_dimension],
                                                                       box->m_pLow[m_dimension]);
                                         if (parts->m_computedDist.count(timeInterval) > 0) {
-                                            sum += std::fabs(parts->m_computedDist[timeInterval]);
+                                            if(parts->m_computedDist[timeInterval]>=0)
+                                                pd= parts->m_computedDist[timeInterval];
+                                            else{
+                                                pd = -parts->m_computedDist[timeInterval]-1;
+                                            }
                                         } else {
                                             pd = m_query.getMidIED(*prev, *box, m_ts->m_maxVelocity);
-                                            parts->m_computedDist[timeInterval] = -pd;
-                                            sum += pd;
+                                            parts->m_computedDist[timeInterval] = -pd-1;
                                         }
+                                        if(parts->m_computedDist[timeInterval]<0)
+                                            pd=std::max(pd,m_mpq.top()->m_minDist*
+                                                           (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
+                                        sum+=pd;
                                     }
                                 }
                                 prev = box.get();
@@ -400,19 +414,26 @@ namespace SpatialIndex
                             if (parts->m_maxtime < m_query.m_endTime()) {
                                 timeInterval = std::make_pair(parts->m_maxtime, m_query.m_endTime());
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    sum += std::fabs(parts->m_computedDist[timeInterval]);
+                                    if(parts->m_computedDist[timeInterval]>=0)
+                                        pd= parts->m_computedDist[timeInterval];
+                                    else{
+                                        pd = -parts->m_computedDist[timeInterval]-1;
+                                    }
                                 } else {
                                     if (parts->m_hasNext) {
                                         pd = m_query.getFrontIED(*parts->m_mbrs.back(), m_ts->m_maxVelocity);
-                                        parts->m_computedDist[timeInterval] = -pd;
+                                        parts->m_computedDist[timeInterval] = -pd-1;
                                     } else {
                                         pd = m_query.getStaticIED(*parts->m_mbrs.back(), parts->m_maxtime,
                                                                   m_query.m_endTime());
                                         parts->m_computedDist[timeInterval] = pd;
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
-                                    sum += pd;
                                 }
+                                if(parts->m_computedDist[timeInterval]<0)
+                                    pd=std::max(pd,m_mpq.top()->m_minDist*
+                                                   (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
+                                sum+=pd;
                             }
                         } else {
                             //inferred distance(front dist, back dist and mid dist) should be stored as negative values
@@ -420,14 +441,18 @@ namespace SpatialIndex
                             if (parts->m_mintime > m_query.m_startTime()) {
                                 timeInterval = std::make_pair(m_query.m_startTime(), parts->m_mintime);
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    sum += std::fabs(parts->m_computedDist[timeInterval]);
+                                    if(parts->m_computedDist[timeInterval]>=0)
+                                        pd= parts->m_computedDist[timeInterval];
+                                    else{
+                                        pd = -parts->m_computedDist[timeInterval]-1;
+                                    }
                                 } else {
                                     if (parts->m_hasPrev) {
                                         pd = m_query.getFrontIED(parts->m_mbcs.front()->m_pLow[0],
                                                                  parts->m_mbcs.front()->m_pLow[1],
                                                                  parts->m_mbcs.front()->m_startTime,
                                                                  m_ts->m_maxVelocity);
-                                        parts->m_computedDist[timeInterval] = -pd;
+                                        parts->m_computedDist[timeInterval] = -pd-1;
                                     } else {
                                         pd = m_query.getStaticIED(parts->m_mbcs.front()->m_pLow[0],
                                                                   parts->m_mbcs.front()->m_pLow[1],
@@ -435,8 +460,11 @@ namespace SpatialIndex
                                         parts->m_computedDist[timeInterval] = pd;
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
-                                    sum += pd;
                                 }
+                                if(parts->m_computedDist[timeInterval]<0)
+                                    pd=std::max(pd,m_mpq.top()->m_minDist*
+                                                   (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
+                                sum+=pd;
                             }
                             //mid dist
                             MBC *prev;
@@ -462,12 +490,19 @@ namespace SpatialIndex
                                         timeInterval = std::make_pair(prev->m_pHigh[m_dimension],
                                                                       box->m_pLow[m_dimension]);
                                         if (parts->m_computedDist.count(timeInterval) > 0) {
-                                            sum += std::fabs(parts->m_computedDist[timeInterval]);
+                                            if(parts->m_computedDist[timeInterval]>=0)
+                                                pd= parts->m_computedDist[timeInterval];
+                                            else{
+                                                pd = -parts->m_computedDist[timeInterval]-1;
+                                            }
                                         } else {
                                             pd = m_query.getMidIED(*prev, *box, m_ts->m_maxVelocity);
-                                            parts->m_computedDist[timeInterval] = -pd;
-                                            sum += pd;
+                                            parts->m_computedDist[timeInterval] = -pd-1;
                                         }
+                                        if(parts->m_computedDist[timeInterval]<0)
+                                            pd=std::max(pd,m_mpq.top()->m_minDist*
+                                                           (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
+                                        sum+=pd;
                                     }
                                 }
                                 prev = box.get();
@@ -476,13 +511,17 @@ namespace SpatialIndex
                             if (parts->m_maxtime < m_query.m_endTime()) {
                                 timeInterval = std::make_pair(parts->m_maxtime, m_query.m_endTime());
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    sum += std::fabs(parts->m_computedDist[timeInterval]);
+                                    if(parts->m_computedDist[timeInterval]>=0)
+                                        pd= parts->m_computedDist[timeInterval];
+                                    else{
+                                        pd = -parts->m_computedDist[timeInterval]-1;
+                                    }
                                 } else {
                                     if (parts->m_hasNext) {
                                         pd = m_query.getFrontIED(parts->m_mbcs.back()->m_pHigh[0],
                                                                  parts->m_mbcs.back()->m_pHigh[1],
                                                                  parts->m_mbcs.back()->m_endTime, m_ts->m_maxVelocity);
-                                        parts->m_computedDist[timeInterval] = -pd;
+                                        parts->m_computedDist[timeInterval] = -pd-1;
                                     } else {
                                         pd = m_query.getStaticIED(parts->m_mbcs.back()->m_pHigh[0],
                                                                   parts->m_mbcs.back()->m_pHigh[1], parts->m_maxtime,
@@ -490,8 +529,11 @@ namespace SpatialIndex
                                         parts->m_computedDist[timeInterval] = pd;
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
-                                    sum += pd;
                                 }
+                                if(parts->m_computedDist[timeInterval]<0)
+                                    pd=std::max(pd,m_mpq.top()->m_minDist*
+                                                   (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
+                                sum+=pd;
                             }
                         }
                         parts->m_calcMin = sum;

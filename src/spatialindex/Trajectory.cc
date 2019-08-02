@@ -634,21 +634,7 @@ double Trajectory::line2MBCDistance(const SpatialIndex::STPoint &ps, const Spati
         if (ps.getMinimumDistance(p2s) > mbcr1 && pe.getMinimumDistance(p2e) > mbcr2) return s - sm;
         else return 0;
     }else if(disttype==1){
-        double t1=r.m_startTime+r.m_rd/r.m_rv,t2=r.m_endTime-r.m_rd/r.m_rv;
-        double ma=0;
-        if(t1>ps.m_time&&t1<pe.m_time){
-            double x=makemidmacro(ps.m_pCoords[0],ps.m_time,pe.m_pCoords[0],pe.m_time,t1);
-            double y=makemidmacro(ps.m_pCoords[1],ps.m_time,pe.m_pCoords[1],pe.m_time,t1);
-            double coord[2]={x,y};
-            ma=r.getMinimumDistance(STPoint(coord,t1,2));
-        }
-        if(t2>ps.m_time&&t2<pe.m_time){
-            double x=makemidmacro(ps.m_pCoords[0],ps.m_time,pe.m_pCoords[0],pe.m_time,t2);
-            double y=makemidmacro(ps.m_pCoords[1],ps.m_time,pe.m_pCoords[1],pe.m_time,t2);
-            double coord[2]={x,y};
-            ma=r.getMinimumDistance(STPoint(coord,t2,2));
-        }
-        return std::max(ma,std::max(r.getMinimumDistance(ps),r.getMinimumDistance(pe)));
+        return std::max(r.getMinimumDistance(ps),r.getMinimumDistance(pe));
     }
     else{throw Tools::NotSupportedException("Wrong distance");}
 
@@ -723,9 +709,6 @@ double Trajectory::getMaxSED(const SpatialIndex::Region &in) const {
 }
 
 double Trajectory::getMinimumDistance(const SpatialIndex::MBC &in) const {
-    if(m_dimension!=in.m_dimension){
-        cout<<"?";
-    }
     assert(m_dimension==in.m_dimension);
     double tstart, tend;
     tstart = std::max(m_startTime(), in.m_startTime);
