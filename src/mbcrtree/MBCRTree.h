@@ -180,6 +180,14 @@ namespace SpatialIndex
 				    : m_id(id), m_minDist(f),m_type(type) {
 				}
 				~NNEntry() {}
+                struct ascending : public std::binary_function<NNEntry*, NNEntry*, bool>
+                {
+                    bool operator()(const NNEntry* __x, const NNEntry* __y) const {
+                        if(std::isinf(__x->m_minDist)||std::isnan(__x->m_minDist)) return true;
+                        if(std::isinf(__y->m_minDist)||std::isnan(__y->m_minDist)) return true;
+                        return __x->m_minDist > __y->m_minDist;
+                    }
+                };
 			}; // NNEntry
 
 			class NNComparator : public INearestNeighborComparator
@@ -218,9 +226,7 @@ namespace SpatialIndex
 			    EntryMPQ()
 			        :MutablePriorityQueue<NNEntry*>(
 			                [](NNEntry* &a, NNEntry* &b) {
-			                    if(a->m_minDist < b->m_minDist) return true;
-			                    if(a->m_minDist==b->m_minDist) return a->m_type>b->m_type;
-			                    return false;
+			                    return std::tie(a->m_minDist,b->m_type, a->m_id) < std::tie(b->m_minDist, a->m_type, b->m_id);
 			                }
 			                ){}
                 void update(const MutablePriorityQueue<NNEntry*>::handle_type &handle,id_type id, double minDist,int type)
@@ -316,6 +322,7 @@ namespace SpatialIndex
 
                 std::map<id_type ,MutablePriorityQueue<NNEntry>::handle_type > m_handlers;
                 EntryMPQ m_mpq;
+                EntryMPQ m_nodespq;
                 bool m_useMBR=false;
                 Trajectory m_query;
                 double m_error;
@@ -341,6 +348,9 @@ namespace SpatialIndex
                     double computedTime = 0;
                     double pd, sum = 0;
                     std::pair<double, double> timeInterval;
+//                    if(id==31){
+//                        std::cout<<"stop";
+//                    }
                     if (disttype == 0) {
                         if (m_useMBR) {
                             //inferred distance(front dist, back dist and mid dist) should be stored as negative values
@@ -364,8 +374,8 @@ namespace SpatialIndex
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
                                 }
-                                if(parts->m_computedDist[timeInterval]<0)
-                                    pd=std::max(pd,m_mpq.top()->m_minDist*
+                                if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
+                                    pd=std::max(pd,m_nodespq.top()->m_minDist*
                                                    (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
                                 sum += pd;
                             }
@@ -402,8 +412,8 @@ namespace SpatialIndex
                                             pd = m_query.getMidIED(*prev, *box, m_ts->m_maxVelocity);
                                             parts->m_computedDist[timeInterval] = -pd-1;
                                         }
-                                        if(parts->m_computedDist[timeInterval]<0)
-                                            pd=std::max(pd,m_mpq.top()->m_minDist*
+                                        if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
+                                            pd=std::max(pd,m_nodespq.top()->m_minDist*
                                                            (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
                                         sum+=pd;
                                     }
@@ -430,8 +440,8 @@ namespace SpatialIndex
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
                                 }
-                                if(parts->m_computedDist[timeInterval]<0)
-                                    pd=std::max(pd,m_mpq.top()->m_minDist*
+                                if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
+                                    pd=std::max(pd,m_nodespq.top()->m_minDist*
                                                    (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
                                 sum+=pd;
                             }
@@ -461,8 +471,8 @@ namespace SpatialIndex
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
                                 }
-                                if(parts->m_computedDist[timeInterval]<0)
-                                    pd=std::max(pd,m_mpq.top()->m_minDist*
+                                if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
+                                    pd=std::max(pd,m_nodespq.top()->m_minDist*
                                                    (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
                                 sum+=pd;
                             }
@@ -499,8 +509,8 @@ namespace SpatialIndex
                                             pd = m_query.getMidIED(*prev, *box, m_ts->m_maxVelocity);
                                             parts->m_computedDist[timeInterval] = -pd-1;
                                         }
-                                        if(parts->m_computedDist[timeInterval]<0)
-                                            pd=std::max(pd,m_mpq.top()->m_minDist*
+                                        if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
+                                            pd=std::max(pd,m_nodespq.top()->m_minDist*
                                                            (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
                                         sum+=pd;
                                     }
@@ -530,14 +540,17 @@ namespace SpatialIndex
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
                                 }
-                                if(parts->m_computedDist[timeInterval]<0)
-                                    pd=std::max(pd,m_mpq.top()->m_minDist*
+                                if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
+                                    pd=std::max(pd,m_nodespq.top()->m_minDist*
                                                    (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
                                 sum+=pd;
                             }
                         }
                         parts->m_calcMin = sum;
                         parts->m_computedTime = computedTime;
+//                        if(id==31){
+//                            std::cout<<"stop";
+//                        }
                         int type = 2;
                         if (parts->m_missingLeaf.empty()) type = 3;
                         sum = std::max(0.0, sum - m_error);
@@ -593,7 +606,6 @@ namespace SpatialIndex
             public:
 			    bool isLoaded(id_type id){ return loadedLeaf.count(id)>0;}
 			    void loadLeaf(Node &n){
-//                    std::cerr<<"load leaf"<<n.m_nodeMBR<<"\n";
 			        loadedLeaf.insert(n.m_identifier);
                     std::vector<id_type > relatedIds;
                     for(int i=0;i<n.m_children;i++){
@@ -634,10 +646,34 @@ namespace SpatialIndex
                         update(rid);
                     }
                 }
-                auto top(){return m_mpq.top();}
-                auto pop(){return m_mpq.pop();}
-                auto push(NNEntry* e){return m_mpq.push(e);}
-                auto empty(){return m_mpq.empty();}
+                auto top(){
+                    if(!m_mpq.empty()&&m_mpq.top()->m_type==2){
+                        id_type lastid=m_mpq.top()->m_id;
+                        update(lastid);
+                        while(m_mpq.top()->m_type==2&&m_mpq.top()->m_id!=lastid){
+                            lastid=m_mpq.top()->m_id;
+                            update(lastid);
+                        }
+                    }
+                    if(!m_mpq.empty()&&(m_nodespq.empty()||m_mpq.top()->m_minDist<m_nodespq.top()->m_minDist))
+                        return m_mpq.top();
+                    else
+                        return m_nodespq.top();
+                }
+                auto pop(){
+                    if(!m_mpq.empty()&&(m_nodespq.empty()||m_mpq.top()->m_minDist<m_nodespq.top()->m_minDist))
+                        return m_mpq.pop();
+                    else
+                        return m_nodespq.pop();
+                }
+                auto push(NNEntry* e){
+                    if(e->m_type==0||e->m_type==1){
+                        return m_nodespq.push(e);
+                    }else{
+                        return m_mpq.push(e);
+                    }
+                }
+                auto empty(){return m_mpq.empty()&&m_nodespq.empty();}
                 id_type getOneMissingPart(id_type id) {
                     if(m_parts[id].m_missingLeaf.empty()){
                         throw Tools::IllegalStateException("wrong NNEntry Type");

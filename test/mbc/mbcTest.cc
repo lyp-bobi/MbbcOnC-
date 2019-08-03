@@ -281,7 +281,7 @@ int TreeQuery(ISpatialIndex* tree,IShape* query,TrajStore *ts= nullptr){
         tree->intersectsWithQuery(*query,vis);
     }else if(QueryType==2){
         vis.m_query=query;
-        tree->nearestNeighborQuery(25,*query,vis);
+        tree->nearestNeighborQuery(5,*query,vis);
     }
     end=clock();
     if(QueryType==1){
@@ -403,15 +403,15 @@ int main(){
 
 //        double aa,bb,oo;
 ////        for(int j=0;j<queries.size();j++){
-//        for(int j=2;j<3;j++){
+//        for(int j=6;j<7;j++){
 //            auto q=queries[j];
 ////            oo=TreeQuery(real,q);
-////            aa=TreeQuery(r,q,&ts1);
+//            aa=TreeQuery(r,q,&ts1);
 //            bb=TreeQuery(rc,q,&ts2);
 //            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
 //            if(aa!=bb){
 //                cerr<<"error"<<j<<endl;
-//                cerr<<aa<<endl<<bb<<endl<<oo<<endl;
+//                cerr<<aa<<" "<<bb<<" "<<oo<<endl;
 //                cerr<<*qtraj<<endl;
 //            }
 //        }

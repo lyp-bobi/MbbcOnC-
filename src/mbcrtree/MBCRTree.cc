@@ -540,7 +540,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                 v.visitNode(*n);
                 for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
                     double pd = std::max(0.0, simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),
-                                                                                m_ts->m_maxVelocity) - delta);
+                            m_ts->m_maxVelocity) - delta);
                     if(pd<1e300) {
                         if (n->m_level == 1)
                             ps.push(new NNEntry(n->m_pIdentifier[cChild], pd, 1));
@@ -548,7 +548,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                             ps.push(new NNEntry(n->m_pIdentifier[cChild], pd, 0));
                     }
                 }
-                delete pFirst;
+//                delete pFirst;
                 break;
             }
             case 1: {//leaf node
@@ -558,7 +558,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                     v.visitNode(*n);
                     ps.loadLeaf(*n);
                 }
-                delete pFirst;
+//                delete pFirst;
                 break;
             }
             case 2: {//incomplete bounding
@@ -573,7 +573,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                 Trajectory traj=ps.getTraj(pFirst->m_id);
 //                Trajectory traj = m_ts->getTrajByTime(pFirst->m_id, queryTraj->m_startTime(), queryTraj->m_endTime());
                 ps.push(new NNEntry(pFirst->m_id, queryTraj->getMinimumDistance(traj), 4));
-                delete pFirst;
+//                delete pFirst;
                 break;
             }
             case 4: {//exact traj
@@ -583,18 +583,18 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                 knearest = pFirst->m_minDist;
                 simpleData d(pFirst->m_id,pFirst->m_minDist);
                 v.visitData(d);
-                delete pFirst;
+//                delete pFirst;
                 break;
             }
             default:
                 throw Tools::IllegalStateException("illegal NNEntry state");
         }
     }
-	while (! ps.empty())
-	{
-		NNEntry* e = ps.top(); ps.pop();
-		delete e;
-	}
+//	while (! ps.empty())
+//	{
+//		NNEntry* e = ps.top(); ps.pop();
+//		delete e;
+//	}
 //    std::cout<<"knearest is"<<knearest<<std::endl;
 //    std::cerr<<"iternum is "<<iternum<<"\n";
     m_stats.m_doubleExactQueryResults+=knearest;
