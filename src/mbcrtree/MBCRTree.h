@@ -180,14 +180,6 @@ namespace SpatialIndex
 				    : m_id(id), m_minDist(f),m_type(type) {
 				}
 				~NNEntry() {}
-                struct ascending : public std::binary_function<NNEntry*, NNEntry*, bool>
-                {
-                    bool operator()(const NNEntry* __x, const NNEntry* __y) const {
-                        if(std::isinf(__x->m_minDist)||std::isnan(__x->m_minDist)) return true;
-                        if(std::isinf(__y->m_minDist)||std::isnan(__y->m_minDist)) return true;
-                        return __x->m_minDist > __y->m_minDist;
-                    }
-                };
 			}; // NNEntry
 
 			class NNComparator : public INearestNeighborComparator
@@ -348,15 +340,13 @@ namespace SpatialIndex
                     double computedTime = 0;
                     double pd, sum = 0;
                     std::pair<double, double> timeInterval;
-//                    if(id==31){
-//                        std::cout<<"stop";
-//                    }
                     if (disttype == 0) {
                         if (m_useMBR) {
                             //inferred distance(front dist, back dist and mid dist) should be stored as negative values
                             //front dist
                             if (parts->m_mintime > m_query.m_startTime()) {
-                                timeInterval = std::make_pair(m_query.m_startTime(), parts->m_mintime);
+                                timeInterval.first=m_query.m_startTime();
+                                timeInterval.second=parts->m_mintime;
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
                                     if(parts->m_computedDist[timeInterval]>=0)
                                         pd= parts->m_computedDist[timeInterval];
@@ -380,10 +370,11 @@ namespace SpatialIndex
                                 sum += pd;
                             }
                             //mid dist
-                            Region *prev;
+                            Region *prev= nullptr;
                             for (const auto &box:parts->m_mbrs) {
                                 //this box
-                                timeInterval = std::make_pair(box->m_pLow[m_dimension], box->m_pHigh[m_dimension]);
+                                timeInterval.first=box->m_pLow[m_dimension];
+                                timeInterval.second=box->m_pHigh[m_dimension];
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
                                     if (parts->m_computedDist[timeInterval] > 0) {
                                         pd = parts->m_computedDist[timeInterval];
@@ -400,8 +391,8 @@ namespace SpatialIndex
                                 //the gap
                                 if (box->m_pLow[m_dimension] != parts->m_mbrs.front()->m_pLow[m_dimension]) {
                                     if (prev->m_pHigh[m_dimension] < box->m_pLow[m_dimension]) {
-                                        timeInterval = std::make_pair(prev->m_pHigh[m_dimension],
-                                                                      box->m_pLow[m_dimension]);
+                                        timeInterval.first=prev->m_pHigh[m_dimension];
+                                        timeInterval.second=box->m_pLow[m_dimension];
                                         if (parts->m_computedDist.count(timeInterval) > 0) {
                                             if(parts->m_computedDist[timeInterval]>=0)
                                                 pd= parts->m_computedDist[timeInterval];
@@ -422,7 +413,8 @@ namespace SpatialIndex
                             }
                             //backdist
                             if (parts->m_maxtime < m_query.m_endTime()) {
-                                timeInterval = std::make_pair(parts->m_maxtime, m_query.m_endTime());
+                                timeInterval.first=parts->m_maxtime;
+                                timeInterval.second=m_query.m_endTime();
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
                                     if(parts->m_computedDist[timeInterval]>=0)
                                         pd= parts->m_computedDist[timeInterval];
@@ -449,7 +441,8 @@ namespace SpatialIndex
                             //inferred distance(front dist, back dist and mid dist) should be stored as negative values
                             //front dist
                             if (parts->m_mintime > m_query.m_startTime()) {
-                                timeInterval = std::make_pair(m_query.m_startTime(), parts->m_mintime);
+                                timeInterval.first=m_query.m_startTime();
+                                timeInterval.second=parts->m_mintime;
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
                                     if(parts->m_computedDist[timeInterval]>=0)
                                         pd= parts->m_computedDist[timeInterval];
@@ -477,10 +470,11 @@ namespace SpatialIndex
                                 sum+=pd;
                             }
                             //mid dist
-                            MBC *prev;
+                            MBC *prev= nullptr;
                             for (const auto &box:parts->m_mbcs) {
                                 //this box
-                                timeInterval = std::make_pair(box->m_startTime, box->m_endTime);
+                                timeInterval.first=box->m_startTime;
+                                timeInterval.second=box->m_endTime;
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
                                     if (parts->m_computedDist[timeInterval] > 0) {
                                         pd = parts->m_computedDist[timeInterval];
@@ -495,10 +489,10 @@ namespace SpatialIndex
                                 sum += pd;
                                 computedTime += timeInterval.second - timeInterval.first;
                                 //the gap
-                                if (box->m_startTime != parts->m_mbcs.front()->m_startTime) {
-                                    if (prev->m_pHigh[m_dimension] < box->m_pLow[m_dimension]) {
-                                        timeInterval = std::make_pair(prev->m_pHigh[m_dimension],
-                                                                      box->m_pLow[m_dimension]);
+                                if (box->m_startTime != parts->m_mbcs.front()->m_startTime) {//not first
+                                    if (prev->m_endTime < box->m_startTime) {
+                                        timeInterval.first=prev->m_endTime;
+                                        timeInterval.second=box->m_startTime;
                                         if (parts->m_computedDist.count(timeInterval) > 0) {
                                             if(parts->m_computedDist[timeInterval]>=0)
                                                 pd= parts->m_computedDist[timeInterval];
@@ -519,7 +513,8 @@ namespace SpatialIndex
                             }
                             //backdist
                             if (parts->m_maxtime < m_query.m_endTime()) {
-                                timeInterval = std::make_pair(parts->m_maxtime, m_query.m_endTime());
+                                timeInterval.first=parts->m_maxtime;
+                                timeInterval.second=m_query.m_endTime();
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
                                     if(parts->m_computedDist[timeInterval]>=0)
                                         pd= parts->m_computedDist[timeInterval];
@@ -548,9 +543,6 @@ namespace SpatialIndex
                         }
                         parts->m_calcMin = sum;
                         parts->m_computedTime = computedTime;
-//                        if(id==31){
-//                            std::cout<<"stop";
-//                        }
                         int type = 2;
                         if (parts->m_missingLeaf.empty()) type = 3;
                         sum = std::max(0.0, sum - m_error);
