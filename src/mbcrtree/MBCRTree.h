@@ -562,7 +562,7 @@ namespace SpatialIndex
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
                                     pd = parts->m_computedDist[timeInterval];
                                 } else {
-                                    pd = m_query.getMinimumDistance(*box);
+                                    pd = m_query.getMaxSED(*box);
                                     parts->m_computedDist[timeInterval] = pd;
                                 }
                                 max=std::max(max,pd);
@@ -573,7 +573,7 @@ namespace SpatialIndex
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
                                     pd = parts->m_computedDist[timeInterval];
                                 } else {
-                                    pd = m_query.getMinimumDistance(*box);
+                                    pd = m_query.getMaxSED(*box);
                                     parts->m_computedDist[timeInterval] = pd;
                                 }
                                 max=std::max(max,pd);

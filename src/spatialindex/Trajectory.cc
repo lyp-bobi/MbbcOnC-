@@ -695,15 +695,44 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Region &in) const {
 
 double Trajectory::getMaxSED(const SpatialIndex::Region &in) const {
     //used for single trajectory
+    Region mbr2d(in.m_pLow,in.m_pHigh,in.m_dimension-1);
     double tstart, tend;
     tstart = std::max(m_startTime(), in.m_pLow[in.m_dimension - 1]);
     tend = std::min(m_endTime(), in.m_pHigh[in.m_dimension - 1]);
-    if(tstart>=tend) return 1e300;
-    fakeTpVector timedTraj(&m_points,tstart,tend);
-    double max=0;
-    for (int i = 0; i < timedTraj.m_size-1; i++) {
-        double pd = line2MBRMaxSED(timedTraj[i],timedTraj[i+1],in);
-            max=std::max(max,pd);
+    if (tstart >= tend) return 1e300;
+    fakeTpVector timedTraj(&m_points, tstart, tend);
+    double max = 0,pd;
+    for (int i = 0; i < timedTraj.m_size; i++) {
+        pd = timedTraj[i].getMinimumDistance(mbr2d);
+        max = std::max(max, pd);
+    }
+    return max;
+}
+
+double Trajectory::getMaxSED(const SpatialIndex::MBC &in) const {
+    //used for single trajectory
+    double tstart, tend;
+    tstart = std::max(m_startTime(), in.m_startTime);
+    tend = std::min(m_endTime(), in.m_endTime);
+    if (tstart >= tend) return 1e300;
+    fakeTpVector timedTraj(&m_points, tstart, tend);
+    double max = 0,pd;
+    for (int i = 0; i < timedTraj.m_size; i++) {
+        pd = in.getMinimumDistance(timedTraj[i]);
+        max = std::max(max, pd);
+    }
+    STPoint tmpp;
+    double tmpt=in.m_startTime+in.m_rd/in.m_rv;
+    if(tmpt>m_startTime()&&tmpt<m_endTime()){
+        tmpp=getPointAtTime(tmpt);
+        pd = in.getMinimumDistance(tmpp);
+        max = std::max(max, pd);
+    }
+    tmpt=in.m_endTime-in.m_rd/in.m_rv;
+    if(tmpt>m_startTime()&&tmpt<m_endTime()){
+        tmpp=getPointAtTime(tmpt);
+        pd = in.getMinimumDistance(tmpp);
+        max = std::max(max, pd);
     }
     return max;
 }
@@ -724,12 +753,7 @@ double Trajectory::getMinimumDistance(const SpatialIndex::MBC &in) const {
         return sum;
     }
     else if(disttype==1){
-        double max=0;
-        for (int i = 0; i < timedTraj.m_size - 1; i++) {
-            double pd = line2MBCDistance(timedTraj[i], timedTraj[i + 1], in);
-            max=std::max(max,pd);
-        }
-        return max;
+        return getMaxSED(in);
     }
     else{throw Tools::NotSupportedException("Wrong distance");}
 }
@@ -1467,7 +1491,7 @@ double Trajectory::getLeafMinimumDistance(const SpatialIndex::MBC &in, double Ma
         return sum;
     }
     else if(disttype==1) {
-        double min=getMinimumDistance(in);
+        double min=getMaxSED(in);
         return min;
     }
     else
