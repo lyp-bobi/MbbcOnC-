@@ -67,6 +67,7 @@ namespace SpatialIndex
 //        virtual void getCombinedMBC(MBC& out, const MBC& in) const;;
         virtual int getOrient() const;
 
+        virtual bool prevalidate(const Region& in) const;
 
         double m_startTime;
         double m_endTime;

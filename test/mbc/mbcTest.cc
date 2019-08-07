@@ -296,7 +296,8 @@ int TreeQuery(ISpatialIndex* tree,IShape* query,TrajStore *ts= nullptr){
 int main(){
     try {
         calcuTime[0]=0;
-        srand((int) time(NULL));
+//        srand((int) time(NULL));
+        srand(21);
         vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, Trajectory> > empty1;
@@ -319,7 +320,7 @@ int main(){
             if (QueryType == 1) {
                 double t = int(random(0, 1000));
                 double pLow[3] = {random(0, 25000), random(0, 30000), t};
-                double pHigh[3] = {pLow[0] + random(500, 2000), pLow[1] + random(500, 2000), t};
+                double pHigh[3] = {pLow[0] + random(500, 2000), pLow[1] + random(500, 2000), t+20};
                 Region *rg = new Region(pLow, pHigh, 3);
                 queries.emplace_back(rg);
             }
@@ -403,16 +404,16 @@ int main(){
 
 //        double aa,bb,oo;
 ////        for(int j=0;j<queries.size();j++){
-//        for(int j=6;j<7;j++){
+//        for(int j=73;j<74;j++){
 //            auto q=queries[j];
 ////            oo=TreeQuery(real,q);
 //            aa=TreeQuery(r,q,&ts1);
 //            bb=TreeQuery(rc,q,&ts2);
-//            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
+////            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
 //            if(aa!=bb){
 //                cerr<<"error"<<j<<endl;
 //                cerr<<aa<<" "<<bb<<" "<<oo<<endl;
-//                cerr<<*qtraj<<endl;
+////                cerr<<*qtraj<<endl;
 //            }
 //        }
 

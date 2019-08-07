@@ -157,6 +157,7 @@ namespace SpatialIndex
         virtual void combineTrajectory(const Trajectory& in);
         virtual bool containsTrajectory(const Trajectory& in);
         virtual void getCombinedTrajectory(Trajectory& out, const Trajectory& in) const;
+        double getInterTime(const STPoint &ps, const STPoint &pe,Region &r,double t_o, double vmax) const;
 
         virtual void getMBC(MBC& out) const;
         virtual void getMBRfull(Region& out) const;
@@ -172,6 +173,9 @@ namespace SpatialIndex
 
         void loadFromString(std::string s);
 
+        static int getPhase(const SpatialIndex::Region &r,const Point &p1,const Point &p2);
+        static std::vector<std::pair<STPoint,STPoint>> cutByPhase(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
+                                                                  const SpatialIndex::Region &r);
 
         std::vector<STPoint> m_points;
 

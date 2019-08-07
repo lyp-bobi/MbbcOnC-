@@ -92,4 +92,11 @@ int main(int argc, char** argv) {
 //    cout<<*query<<endl<<bra<<endl<<bca<<endl;
 //    query->intersectsShape(bra);
 //    query->intersectsShape(bca);
+//    double rlow[3]={11790.8,20103.8,79};
+//    double rhigh[3]={12863.3,21411.3,99};
+//    double clow[2]={16521.4,21944.1};
+//    double chigh[2]={12213.8,18130.7};
+//    Region br(rlow,rhigh,3);
+//    MBC bc(clow,chigh,54,106,2,1330.78,119.552);
+//    std::cerr<<bc.intersectsRegion(br);
 }

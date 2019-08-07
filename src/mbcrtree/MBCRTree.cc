@@ -1412,7 +1412,16 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
 #ifdef HAVE_PTHREAD_H
     Tools::LockGuard lock(&m_lock);
 #endif
-
+    const Region *querybr= dynamic_cast<const Region*>(&query);
+    if(querybr== nullptr){
+        std::cerr<<"sorry, only mbr query box supported\n";
+        return;
+    }
+    bool isSlice;
+    if(querybr->m_pLow[querybr->m_dimension-1]==querybr->m_pHigh[querybr->m_dimension-1])
+        isSlice=true;
+    else
+        isSlice=false;
     std::stack<NodePtr> st;
     NodePtr root = readNode(m_rootID);
 
@@ -1429,35 +1438,102 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
             for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
             {
                 bool b;
-                if (type == ContainmentQuery) b = n->m_ptrMBC[cChild]->containsShape(query);
-                else b = n->m_ptrMBC[cChild]->intersectsShape(query);
+//                if(n->m_pIdentifier[cChild]==1502){
+//                    std::cerr<<"here.\n";
+//                    if(m_bUsingMBR) std::cerr<<*querybr<<"\n"<<*n->m_ptrMBR[cChild]<<"\n";
+//                    else std::cerr<<*querybr<<"\n"<<*n->m_ptrMBC[cChild]<<"\n";
+//                    uint32_t len=n->m_dataLen[cChild]+n->m_pageOff[cChild];
+//                    uint8_t *load = new uint8_t[len];
+//                    m_ts->loadByteArray(n->m_pageNum[cChild],len,&load);
+//                    uint8_t *ldata = load+n->m_pageOff[cChild];
+//                    Trajectory partTraj;
+//                    partTraj.loadFromByteArray(ldata);
+//                    std::cerr<<partTraj<<"\n";
+//                    delete[](load);
+//                }
+                if(m_bUsingMBR==true){
+                    if (type == ContainmentQuery) b = n->m_ptrMBR[cChild]->containsShape(query);
+                    else b = n->m_ptrMBR[cChild]->intersectsShape(query);
+                }else {
+                    if (type == ContainmentQuery) b = n->m_ptrMBC[cChild]->containsShape(query);
+                    else b = n->m_ptrMBC[cChild]->intersectsShape(query);
+                }
                 if (b)
                 {
-                    Data data = Data(0, 0, *(n->m_ptrMBC[cChild]), n->m_pIdentifier[cChild]);
+                    simpleData data = simpleData(n->m_pIdentifier[cChild],0);
                     ++(m_stats.m_u64QueryResults);
                     if(m_DataType==TrajectoryType){
                         //check if the timed slice is included in query
-                        const Region *querybr= dynamic_cast<const Region*>(&query);
                         Region spatialbr(querybr->m_pLow,querybr->m_pHigh,2);
-                        Region bcbr;
-                        data.m_mbc.getMBRAtTime(querybr->m_pLow[2],bcbr);
-                        if(spatialbr.containsRegion(bcbr)){
-                            m_stats.m_doubleExactQueryResults += 1;
-                            v.visitData(data);
-                        }else {
-                            if (m_bUsingTrajStore == true) {
-                                Trajectory segtraj = m_ts->getTraj(n->m_pIdentifier[cChild]);
-                                if (query.intersectsShape(segtraj)) {
-                                    m_stats.m_doubleExactQueryResults += 1;
-                                    v.visitData(data);
-                                }
+                        Region timedbr;
+                        if(isSlice) {
+                            if (m_bUsingMBR)
+                                timedbr = Region((n->m_ptrMBR[cChild])->m_pLow, (n->m_ptrMBR[cChild])->m_pHigh, (n->m_ptrMBR[cChild])->m_dimension - 1);
+                            else
+                                (n->m_ptrMBC[cChild])->getMBRAtTime(querybr->m_pLow[2], timedbr);
+                            if (spatialbr.containsRegion(timedbr)) {
+                                m_stats.m_doubleExactQueryResults += 1;
+                                v.visitData(data);
                             } else {
-                                Trajectory traj;
-                                traj.loadFromByteArray(data.m_pData);
-//                            v.visitData(data);
-                                if (traj.intersectsShape(query)) {
-                                    m_stats.m_doubleExactQueryResults += 1;
-                                    v.visitData(data);
+                                if (m_bUsingTrajStore == true) {
+                                    m_ts->m_trajIO+=std::ceil(n->m_dataLen[cChild]/4096.0);
+                                    uint32_t len=n->m_dataLen[cChild]+n->m_pageOff[cChild];
+                                    uint8_t *load = new uint8_t[len];
+                                    m_ts->loadByteArray(n->m_pageNum[cChild],len,&load);
+                                    uint8_t *ldata = load+n->m_pageOff[cChild];
+                                    Trajectory partTraj;
+                                    partTraj.loadFromByteArray(ldata);
+                                    delete[](load);
+                                    if (partTraj.intersectsRegion(*querybr)) {
+                                        m_stats.m_doubleExactQueryResults += 1;
+                                        v.visitData(data);
+                                    }
+                                } else {
+                                    //not used code
+//                                    Trajectory traj;
+//                                    traj.loadFromByteArray(data.m_pData);
+////                            v.visitData(data);
+//                                    if (traj.intersectsShape(query)) {
+//                                        m_stats.m_doubleExactQueryResults += 1;
+//                                        v.visitData(data);
+//                                    }
+                                }
+                            }
+                        }else{
+                            //time-period range query
+                            bool bb;
+                            if (m_bUsingMBR){
+                                timedbr = Region((n->m_ptrMBR[cChild])->m_pLow, (n->m_ptrMBR[cChild])->m_pHigh,(n->m_ptrMBR[cChild])->m_dimension - 1);
+                                bb=spatialbr.containsRegion(timedbr);
+                            }else{
+                                bb=n->m_ptrMBC[cChild]->prevalidate(*querybr);
+                            }
+                            if (bb) {
+                                m_stats.m_doubleExactQueryResults += 1;
+                                v.visitData(data);
+                            } else {
+                                if (m_bUsingTrajStore == true) {
+                                    m_ts->m_trajIO+=std::ceil(n->m_dataLen[cChild]/4096.0);
+                                    uint32_t len=n->m_dataLen[cChild]+n->m_pageOff[cChild];
+                                    uint8_t *load = new uint8_t[len];
+                                    m_ts->loadByteArray(n->m_pageNum[cChild],len,&load);
+                                    uint8_t *ldata = load+n->m_pageOff[cChild];
+                                    Trajectory partTraj;
+                                    partTraj.loadFromByteArray(ldata);
+                                    delete[](load);
+                                    if (partTraj.intersectsRegion(*querybr)) {
+                                        m_stats.m_doubleExactQueryResults += 1;
+                                        v.visitData(data);
+                                    }
+                                } else {
+//                                    //not used code
+//                                    Trajectory traj;
+//                                    traj.loadFromByteArray(data.m_pData);
+////                            v.visitData(data);
+//                                    if (traj.intersectsShape(query)) {
+//                                        m_stats.m_doubleExactQueryResults += 1;
+//                                        v.visitData(data);
+//                                    }
                                 }
                             }
                         }

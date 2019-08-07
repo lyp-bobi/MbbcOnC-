@@ -150,12 +150,26 @@ bool Trajectory::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const 
 }
 bool Trajectory::intersectsRegion(const Region& in) const{
     if(m_dimension==in.m_dimension-1){
-        Region spatial(in.m_pLow,in.m_pHigh,m_dimension);
-        if(in.m_pHigh[m_dimension]<m_points.front().m_time||in.m_pLow[m_dimension]>m_points.back().m_time){
-            return false;
+        double ts=std::max(m_startTime(),in.m_pLow[in.m_dimension-1]),
+                te=std::min(m_endTime(),in.m_pHigh[in.m_dimension-1]);
+        if(ts>te) return false;
+        if(ts==te){
+            Region mbr2d(in.m_pLow,in.m_pHigh,in.m_dimension-1);
+            return mbr2d.containsPoint(getPointAtTime(ts));
         }
-        STPoint tp=getPointAtTime(in.m_pLow[m_dimension]);
-        return tp.intersectsShape(spatial);
+        fakeTpVector timedTraj(&m_points,ts,te);
+        for(int i=0;i<timedTraj.m_size-1;i++){
+            if(line2MBRMinSED(timedTraj[i],timedTraj[i+1],in)<1e-7){
+                return true;
+            }
+        }
+        return false;
+//        Region spatial(in.m_pLow,in.m_pHigh,m_dimension);
+//        if(in.m_pHigh[m_dimension]<m_points.front().m_time||in.m_pLow[m_dimension]>m_points.back().m_time){
+//            return false;
+//        }
+//        STPoint tp=getPointAtTime(in.m_pLow[m_dimension]);
+//        return tp.intersectsShape(spatial);
     }
     else if(m_dimension==in.m_dimension) {
         for (int i = 0; i < m_points.size(); i++) {
@@ -383,7 +397,7 @@ double Trajectory::line2lineMinSED(const SpatialIndex::STPoint &p1s, const Spati
     if(c1==0){
         return std::sqrt(sq(dxs)+sq(dys));
     }else{
-        double middle=c2/c1/2;
+        double middle=-c2/c1/2;
         if(middle>ts&&middle<te){
             return sqrt((4*c1*c3-c2*c2)/4/c1)/c4;
         }
@@ -393,12 +407,12 @@ double Trajectory::line2lineMinSED(const SpatialIndex::STPoint &p1s, const Spati
     }
 }
 
-int getRealm(const SpatialIndex::Region &r,const Point &p1,const Point &p2){
+int Trajectory::getPhase(const SpatialIndex::Region &r,const Point &p1,const Point &p2){
     // 7 8 9
     // 4 5 6
     // 1 2 3
     if(p1.m_dimension!=2)
-        throw Tools::NotSupportedException("Trajectory::getRealm:only for dimension 2");
+        throw Tools::NotSupportedException("Trajectory::getPhase:only for dimension 2");
     double xd1=r.m_pLow[0],xd2=r.m_pHigh[0],yd1=r.m_pLow[1],yd2=r.m_pHigh[1];
     int res=0;
     if(p1.m_pCoords[0]<=xd2+1e-7&&p2.m_pCoords[0]<=xd2+1e-7&&p1.m_pCoords[0]>=xd1-1e-7&&p2.m_pCoords[0]>=xd1-1e-7)
@@ -438,20 +452,36 @@ STPoint* cutByLine(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint 
             xyt[1]=value;
             xyt[2]=d2 * ps.m_time + d1 * pe.m_time;
         }
+//        Tools::SmartPointer<STPoint> sp(new STPoint(xyt, xyt[2], 2));
         return new STPoint(xyt, xyt[2], 2);
+//        return sp.get();
     }
 }
-std::vector<std::pair<STPoint,STPoint>> cutByRealm(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
+std::vector<std::pair<STPoint,STPoint>> Trajectory::cutByPhase(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                                      const SpatialIndex::Region &r){
     double xd1=r.m_pLow[0],xd2=r.m_pHigh[0],yd1=r.m_pLow[1],yd2=r.m_pHigh[1];
     std::vector<std::pair<STPoint,STPoint>> res;
     std::vector<std::pair<STPoint,STPoint>> tmp;
     res.emplace_back(std::make_pair(ps,pe));
     for(const auto &line:res){
-        STPoint *tp=cutByLine(line.first,line.second,xd1,0);
-        if(tp!= nullptr){
-            tmp.emplace_back(std::make_pair(line.first,*tp));
-            tmp.emplace_back(std::make_pair(*tp,line.second));
+        STPoint *stp=cutByLine(line.first,line.second,xd1,0);
+        if(stp!= nullptr){
+            STPoint tp=*stp;
+            tmp.emplace_back(std::make_pair(line.first,tp));
+            tmp.emplace_back(std::make_pair(tp,line.second));
+        }
+        else{
+            tmp.push_back(line);
+        }
+        delete(stp);
+    }
+    res=tmp;tmp.clear();
+    for(const auto &line:res){
+        STPoint *stp=cutByLine(line.first,line.second,xd2,0);
+        if(stp!= nullptr){
+            STPoint tp=*stp;
+            tmp.emplace_back(std::make_pair(line.first,tp));
+            tmp.emplace_back(std::make_pair(tp,line.second));
         }
         else{
             tmp.push_back(line);
@@ -459,10 +489,11 @@ std::vector<std::pair<STPoint,STPoint>> cutByRealm(const SpatialIndex::STPoint &
     }
     res=tmp;tmp.clear();
     for(const auto &line:res){
-        STPoint *tp=cutByLine(line.first,line.second,xd2,0);
-        if(tp!= nullptr){
-            tmp.emplace_back(std::make_pair(line.first,*tp));
-            tmp.emplace_back(std::make_pair(*tp,line.second));
+        STPoint *stp=cutByLine(line.first,line.second,yd1,1);
+        if(stp!= nullptr){
+            STPoint tp=*stp;
+            tmp.emplace_back(std::make_pair(line.first,tp));
+            tmp.emplace_back(std::make_pair(tp,line.second));
         }
         else{
             tmp.push_back(line);
@@ -470,21 +501,11 @@ std::vector<std::pair<STPoint,STPoint>> cutByRealm(const SpatialIndex::STPoint &
     }
     res=tmp;tmp.clear();
     for(const auto &line:res){
-        STPoint *tp=cutByLine(line.first,line.second,yd1,1);
-        if(tp!= nullptr){
-            tmp.emplace_back(std::make_pair(line.first,*tp));
-            tmp.emplace_back(std::make_pair(*tp,line.second));
-        }
-        else{
-            tmp.push_back(line);
-        }
-    }
-    res=tmp;tmp.clear();
-    for(const auto &line:res){
-        STPoint *tp=cutByLine(line.first,line.second,yd2,1);
-        if(tp!= nullptr){
-            tmp.emplace_back(std::make_pair(line.first,*tp));
-            tmp.emplace_back(std::make_pair(*tp,line.second));
+        STPoint *stp=cutByLine(line.first,line.second,yd2,1);
+        if(stp!= nullptr){
+            STPoint tp=*stp;
+            tmp.emplace_back(std::make_pair(line.first,tp));
+            tmp.emplace_back(std::make_pair(tp,line.second));
         }
         else{
             tmp.push_back(line);
@@ -500,7 +521,7 @@ std::vector<std::pair<STPoint,STPoint>> cutByRealm(const SpatialIndex::STPoint &
 double Trajectory::line2MBRMinSED_impl(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                        const SpatialIndex::Region &r, int sr) {
     double ts = ps.m_time, te = pe.m_time;
-    if(std::fabs(te-ts)<1e-7) return 0;
+//    if(std::fabs(te-ts)<1e-7) return 0;
     Region r_2d=Region(r.m_pLow,r.m_pHigh,2);
     double res;
     if (sr == 5) return 0;
@@ -522,14 +543,14 @@ double Trajectory::line2MBRMinSED(const SpatialIndex::STPoint &ps, const Spatial
                                   const SpatialIndex::Region &r) {
     assert(r.m_pLow[m_dimension]<=ps.m_time);
     assert(r.m_pHigh[m_dimension]>=pe.m_time);
-    int sr = getRealm(r, ps, pe);
+    int sr = getPhase(r, ps, pe);
     if (sr > 0) {
         return line2MBRMinSED_impl(ps, pe, r, sr);
     } else {
         double min = 1e300;
-        auto part = cutByRealm(ps, pe, r);
+        auto part = cutByPhase(ps, pe, r);
         for (const auto &p:part) {
-            int tmpsr = getRealm(r, p.first, p.second);
+            int tmpsr = getPhase(r, p.first, p.second);
             double tmpres = line2MBRMinSED_impl(p.first, p.second, r, tmpsr);
 //            cout<<tmpsr<<" "<<tmpres<<"\n";
             min=std::min(min,tmpres);
@@ -574,14 +595,14 @@ double Trajectory::line2MBRDistance(const SpatialIndex::STPoint &ps, const Spati
     assert(r.m_pHigh[m_dimension]>=pe.m_time);
     //check if need cutting
     if(disttype==0) {
-        int sr = getRealm(r, ps, pe);
+        int sr = getPhase(r, ps, pe);
         if (sr > 0) {
             return line2MBRIED_impl(ps, pe, r, sr);
         } else {
             double sum = 0;
-            auto part = cutByRealm(ps, pe, r);
+            auto part = cutByPhase(ps, pe, r);
             for (const auto &p:part) {
-                int tmpsr = getRealm(r, p.first, p.second);
+                int tmpsr = getPhase(r, p.first, p.second);
                 double tmpres = line2MBRIED_impl(p.first, p.second, r, tmpsr);
 //            cout<<tmpsr<<" "<<tmpres<<"\n";
                 sum += tmpres;
@@ -1273,9 +1294,9 @@ double Trajectory::getStaticIED(const SpatialIndex::Region in,double ints, doubl
     return sum;
 }
 #define sign(x) (x>0?1.0:-1.0)
-double getInterTime(const STPoint &ps, const STPoint &pe,Region &r,double t_o, double vmax){
+double Trajectory::getInterTime(const STPoint &ps, const STPoint &pe,Region &r,double t_o, double vmax) const {
     //vmax could be positive or negative
-    int sr = getRealm(r, ps, pe);
+    int sr = getPhase(r, ps, pe);
     if (sr > 0) {
         if(sr==5){
             std::cout<<",...";
@@ -1309,7 +1330,7 @@ double getInterTime(const STPoint &ps, const STPoint &pe,Region &r,double t_o, d
             return t;
         }
     }else {
-        auto part = cutByRealm(ps, pe, r);
+        auto part = cutByPhase(ps, pe, r);
         for (const auto &p:part) {
             double d1=p.first.getMinimumDistance(r)-(p.first.m_time-t_o)*vmax;
             double d2=p.second.getMinimumDistance(r)-(p.second.m_time-t_o)*vmax;
