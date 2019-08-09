@@ -23,7 +23,7 @@
 #include "../../src/mbcrtree/MBCRTree.h"
 //#define sourceFile "D://t1000.txt"
 #define genFile "D://t500n200se.txt"
-#define GLFile "/root/geolifeConverted.csv"
+#define GLFile "/root/GLBeijing.csv"
 #define maxLinesToRead 1e10
 #define testtime 100
 #define dimension 2
@@ -257,6 +257,7 @@ vector<pair<id_type ,Trajectory> >  loadGLToTrajs(){
     vector<pair<id_type ,Trajectory> > res;
     int curLine=0;
     double minx=1e300,maxx=-1e300,miny=1e300,maxy=-1e300;
+    getline(inFile, lineStr);
     while (getline(inFile, lineStr)&&curLine<maxLinesToRead){
         try {
             string str;
@@ -274,6 +275,7 @@ vector<pair<id_type ,Trajectory> >  loadGLToTrajs(){
             if (x < minx) minx = x;
             if (y > maxy) maxy = y;
             if (y < miny) miny = y;
+
             ids.insert(id);
             trajs.insert(make_pair(id, p));
             curLine++;
@@ -369,7 +371,7 @@ int main(){
         int totallen=0,totalseg=0;
         for(auto &traj:trajs){
             totallen+=traj.second.m_points.size();
-            auto seg= traj.second.getSegments(0.5);
+            auto seg= traj.second.getSegments(0.01);
             totalseg+= seg.size();
             segs.push_back(make_pair(traj.first,seg));
         }
@@ -394,14 +396,14 @@ int main(){
                 Trajectory* concate= new Trajectory();
                 double ts=ori->m_startTime(),te=ori->m_endTime();
 //                concate=ori;
-//                ori->getPartialTrajectory(0.75*ts+0.25*te,0.25*te+0.75*te,*concate);
-                ori->getPartialTrajectory((i%5)*100,(i%5)*100+100,*concate);
+                ori->getPartialTrajectory(0.75*ts+0.25*te,0.25*te+0.75*te,*concate);
+//                ori->getPartialTrajectory((i%5)*100,(i%5)*100+100,*concate);
                 queries.emplace_back(concate);
             }
         }
 
         cerr<<"queries generated\n";
-//        trajs.swap(empty1);
+        trajs.swap(empty1);
         string name0 = "name0", name1 = "name1", name2 = "name2";
         id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
         IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
@@ -412,14 +414,25 @@ int main(){
                 *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                 *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
-        StorageManager::DiskStorageManager *dsm1,*dsm2;
-        dsm1= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile1);
-        dsm2= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile2);
+//        StorageManager::DiskStorageManager *dsm1,*dsm2;
+//        dsm1= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile1);
+//        dsm2= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile2);
 
         TrajStore ts1(file1,4096);
         ts1.loadSegments(segs);
+
+        ISpatialIndex *r=MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,40,3,indexIdentifier1);
+        TreeQueryBatch(r, queries,&ts1);
+        delete &ts1;
+        delete r;
+
         TrajStore ts2(file2,4096);
         ts2.loadSegments(segs);
+        segs.clear();
+        ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,40,3,indexIdentifier2);
+        TreeQueryBatch(rc, queries,&ts2);
+        delete &ts2;
+        delete r;
 
 
 //        TrajMbrStream ds1;
@@ -459,13 +472,11 @@ int main(){
 
 
 
-        ISpatialIndex *r=MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(&ts1,40,3,indexIdentifier1);
-        ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(&ts2,40,3,indexIdentifier2);
+
         cerr << "start query!" << endl << endl << endl;
 
 //        TreeQueryBatch(real,queries);
-        TreeQueryBatch(r, queries,&ts1);
-        TreeQueryBatch(rc, queries,&ts2);
+
 
 //        double aa,bb,oo;
 ////        for(int j=0;j<queries.size();j++){

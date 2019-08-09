@@ -313,6 +313,7 @@ std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::STPoint> m
     vector<Trajectory> res;
     if(mask.size()==2){
         res.push_back(*this);
+        return res;
     }
     auto iter1=m_points.begin();
     auto iter2=mask.begin();
@@ -326,6 +327,13 @@ std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::STPoint> m
             iter1++;
         }
         if(seg.size()>=2) {
+            if(!res.empty()){
+                if(seg.front().m_time!=res.back().m_endTime()){
+                    std::cerr<<"heelo\n";
+                    for(const auto &t:mask) std::cerr<<t<<"\n";
+                    std::cerr<<*this<<"\n";
+                }
+            }
             res.emplace_back(Trajectory(seg));
             iter1--;
 //            std::cerr<<iter1->m_startTime<<" "<<iter2->m_startTime;
