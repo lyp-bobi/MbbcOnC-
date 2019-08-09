@@ -311,6 +311,9 @@ std::vector<SpatialIndex::STPoint> Trajectory::simplifyWithRDP(const std::vector
 std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::STPoint> mask){
     vector<STPoint> seg;
     vector<Trajectory> res;
+    if(mask.size()==2){
+        res.push_back(*this);
+    }
     auto iter1=m_points.begin();
     auto iter2=mask.begin();
     assert(m_points[0]==mask[0]);
@@ -322,7 +325,7 @@ std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::STPoint> m
             seg.emplace_back(*iter1);
             iter1++;
         }
-        if(!seg.empty()) {
+        if(seg.size()>=2) {
             res.emplace_back(Trajectory(seg));
             iter1--;
 //            std::cerr<<iter1->m_startTime<<" "<<iter2->m_startTime;

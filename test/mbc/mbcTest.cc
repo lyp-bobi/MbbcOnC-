@@ -23,7 +23,7 @@
 #include "../../src/mbcrtree/MBCRTree.h"
 //#define sourceFile "D://t1000.txt"
 #define genFile "D://t500n200se.txt"
-#define GLFile "D://geolifeConverted.csv"
+#define GLFile "/root/geolifeConverted.csv"
 #define maxLinesToRead 1e10
 #define testtime 100
 #define dimension 2
@@ -369,7 +369,7 @@ int main(){
         int totallen=0,totalseg=0;
         for(auto &traj:trajs){
             totallen+=traj.second.m_points.size();
-            auto seg= traj.second.getSegments(0.05);
+            auto seg= traj.second.getSegments(0.5);
             totalseg+= seg.size();
             segs.push_back(make_pair(traj.first,seg));
         }
