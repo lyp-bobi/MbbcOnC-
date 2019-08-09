@@ -672,9 +672,6 @@ double Trajectory::getMinimumDistance(const IShape& s) const{
     const MBC* pmbc= dynamic_cast<const MBC*>(&s);
     if(pmbc!=nullptr) return getMinimumDistance(*pmbc);
 
-    const SBR* psbr= dynamic_cast<const SBR*>(&s);
-    if(psbr!=nullptr) return getMinimumDistance(*psbr);
-
     const Region* pr = dynamic_cast<const Region*>(&s);
     if (pr != nullptr) return getMinimumDistance(*pr);
 
@@ -777,23 +774,6 @@ double Trajectory::getMinimumDistance(const SpatialIndex::MBC &in) const {
         return getMaxSED(in);
     }
     else{throw Tools::NotSupportedException("Wrong distance");}
-}
-[[deprecated]]
-double Trajectory::getMinimumDistance(const SpatialIndex::SBR &in) const {
-    double tstart, tend;
-    tstart = std::max(m_startTime(), in.m_startTime);
-    tend = std::min(m_endTime(), in.m_endTime);
-    if(tstart>=tend) return 1e300;
-    fakeTpVector timedTraj(&m_points,tstart,tend);
-    double sum = 0;
-    Region rg1,rg2;
-    for (int i = 0; i < timedTraj.m_size-1; i++) {
-        in.getMBRAtTime(timedTraj[i].m_time,rg1);
-        in.getMBRAtTime(timedTraj[i+1].m_time,rg2);
-        double pd = 0.5*(timedTraj[i].getMinimumDistance(rg1)+timedTraj[i+1].getMinimumDistance(rg2));
-        sum+=pd;
-    }
-    return sum;
 }
 
 double Trajectory::getMinimumDistance(const SpatialIndex::STPoint &in) const {

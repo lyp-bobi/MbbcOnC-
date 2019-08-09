@@ -119,7 +119,6 @@ namespace SpatialIndex
         virtual double getMaxSED(const Region& in) const;
         virtual double getMaxSED(const MBC& in) const;
         virtual double getMinimumDistance(const MBC& in) const;
-        virtual double getMinimumDistance(const SBR& in) const;
         virtual double getMinimumDistance(const Trajectory& in) const;
         virtual double getMinimumDistance(const ShapeList& in,bool hasPrev=false,bool hasNext=false,double MaxVelocity=1e300) const;
 

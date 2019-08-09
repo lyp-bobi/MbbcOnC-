@@ -3,7 +3,7 @@
 //
 
 #include <spatialindex/SpatialIndex.h>
-#include "Rtree.h"
+#include "RTree.h"
 #include "storagemanager/TrajStore.h"
 
 class rtreeSegmentStream:public baseSegmentStream{

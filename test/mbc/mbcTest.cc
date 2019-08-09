@@ -22,7 +22,8 @@
 #include "../../src/storagemanager/DiskStorageManager.h"
 #include "../../src/mbcrtree/MBCRTree.h"
 //#define sourceFile "D://t1000.txt"
-#define sourceFile "D://t500n200se.txt"
+#define genFile "D://t500n200se.txt"
+#define GLFile "D://geolifeConverted.csv"
 #define maxLinesToRead 1e10
 #define testtime 100
 #define dimension 2
@@ -182,7 +183,7 @@ vector<pair<id_type ,Trajectory> >  loadGTToTrajs(){
     //second level: vector of segments in the time period
     cerr<<"loading generated trajectories from txt to trajectories"<<endl;
 
-    ifstream inFile(sourceFile, ios::in);
+    ifstream inFile(genFile, ios::in);
     string lineStr;
     set<id_type> ids;
     multimap<id_type,xyt> trajs;
@@ -244,6 +245,69 @@ vector<pair<id_type ,Trajectory> >  loadGTToTrajs(){
     return res;
 }
 
+vector<pair<id_type ,Trajectory> >  loadGLToTrajs(){
+    //first level: vector of time period
+    //second level: vector of segments in the time period
+    cerr<<"loading geolife trajectories from txt to trajectories"<<endl;
+
+    ifstream inFile(GLFile, ios::in);
+    string lineStr;
+    set<id_type> ids;
+    multimap<id_type,xyt> trajs;
+    vector<pair<id_type ,Trajectory> > res;
+    int curLine=0;
+    double minx=1e300,maxx=-1e300,miny=1e300,maxy=-1e300;
+    while (getline(inFile, lineStr)&&curLine<maxLinesToRead){
+        try {
+            string str;
+            stringstream ss(lineStr);
+            getline(ss, str, ',');
+            int id= stringToNum<int>(str);
+            getline(ss, str, ',');
+            double x= stringToNum<double>(str);
+            getline(ss, str, ',');
+            double y= stringToNum<double>(str);
+            getline(ss, str, ',');
+            double t= stringToNum<double>(str);
+            xyt p = {x, y, t};
+            if (x > maxx) maxx = x;
+            if (x < minx) minx = x;
+            if (y > maxy) maxy = y;
+            if (y < miny) miny = y;
+            ids.insert(id);
+            trajs.insert(make_pair(id, p));
+            curLine++;
+        }
+        catch(...) {
+            break;
+        }
+    }
+    cerr<<curLine<<" "<<minx<<" "<<maxx<<" "<<miny<<" "<<maxy<<endl;
+    for(auto id:ids){
+        multimap<id_type ,xyt>::iterator beg,end,iter;
+        vector<xyt> traj;
+        beg = trajs.lower_bound(id);
+        end = trajs.upper_bound(id);
+        for(iter=beg;iter!=end;iter++){
+            traj.emplace_back(iter->second);
+        }
+        trajs.erase(id);
+        if(traj.size()>=10){
+            vector<STPoint> tps;
+            for(auto p:traj){
+                double xy[]={p.x,p.y};
+                tps.emplace_back(STPoint(xy, p.t, dimension));
+            }
+            if(!tps.empty()){
+                res.emplace_back(make_pair(id,Trajectory(tps)));
+            }
+        }
+    }
+    std::cerr<<"load data finished\n";
+    return res;
+}
+
+
 void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr){
     MyVisitor vis;
     vis.ts=ts;
@@ -296,15 +360,16 @@ int TreeQuery(ISpatialIndex* tree,IShape* query,TrajStore *ts= nullptr){
 int main(){
     try {
         calcuTime[0]=0;
-//        srand((int) time(NULL));
-        srand(21);
-        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
+        srand((int) time(NULL));
+//        srand(21);
+//        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, Trajectory> > empty1;
         int totallen=0,totalseg=0;
         for(auto &traj:trajs){
             totallen+=traj.second.m_points.size();
-            auto seg= traj.second.getSegments(3000);
+            auto seg= traj.second.getSegments(0.05);
             totalseg+= seg.size();
             segs.push_back(make_pair(traj.first,seg));
         }

@@ -4,6 +4,7 @@
 
 #include "storagemanager/TrajStore.h"
 #include <cmath>
+#include <cstring>
 //
 // tsExternalSorter::Record
 //

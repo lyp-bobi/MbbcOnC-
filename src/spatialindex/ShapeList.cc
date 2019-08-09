@@ -2,6 +2,7 @@
 // Created by Chuang on 2019/6/13.
 //
 #include <spatialindex/SpatialIndex.h>
+#include <cstring>
 
 using namespace SpatialIndex;
 
