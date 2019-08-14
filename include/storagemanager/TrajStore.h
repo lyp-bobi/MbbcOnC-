@@ -99,6 +99,7 @@ namespace SpatialIndex
 
         class SIDX_DLL TrajStore:public IStorageManager{
         public:
+            ~TrajStore();
             TrajStore(IStorageManager *store,uint32_t pageSize);
             void flush(){m_pStorageManager->flush();}
             void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
@@ -115,6 +116,13 @@ namespace SpatialIndex
             void deleteByteArray(const id_type page){
                 m_pStorageManager->deleteByteArray(page);
             }//should not be used in bulkload mode i guess
+            void releaseTmp(){
+                for(const auto e:m_entries) delete e.second;
+                m_entries.clear();
+                m_entryMbcs.clear();
+                m_entryMbrs.clear();
+                m_part2node.clear();
+            };
             class Entry{
             public:
                 id_type m_page;

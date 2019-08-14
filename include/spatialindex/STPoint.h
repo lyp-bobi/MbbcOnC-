@@ -61,7 +61,7 @@ namespace SpatialIndex
 
 	public:
 		double m_time;
-        static STPoint* makemid(const STPoint &tp1,const STPoint &tp2,double t);
+        static STPoint makemid(const STPoint &tp1,const STPoint &tp2,double t);
 		friend SIDX_DLL std::ostream& operator<<(std::ostream& os, const STPoint& pt);
 	}; // STPoint
 

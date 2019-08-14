@@ -597,7 +597,8 @@ namespace SpatialIndex
 
             public:
 			    bool isLoaded(id_type id){ return loadedLeaf.count(id)>0;}
-			    void loadLeaf(Node &n){
+			    void loadLeaf(const Node &n){
+//                    std::cerr<<"load leaf"<<n.m_identifier<<"\n";
 			        loadedLeaf.insert(n.m_identifier);
                     std::vector<id_type > relatedIds;
                     for(int i=0;i<n.m_children;i++){
@@ -638,6 +639,7 @@ namespace SpatialIndex
                         update(rid);
                     }
                 }
+
                 auto top(){
                     if(!m_mpq.empty()&&m_mpq.top()->m_type==2){
                         id_type lastid=m_mpq.top()->m_id;
@@ -652,12 +654,14 @@ namespace SpatialIndex
                     else
                         return m_nodespq.top();
                 }
+
                 auto pop(){
                     if(!m_mpq.empty()&&(m_nodespq.empty()||m_mpq.top()->m_minDist<m_nodespq.top()->m_minDist))
                         return m_mpq.pop();
                     else
                         return m_nodespq.pop();
                 }
+
                 auto push(NNEntry* e){
                     if(e->m_type==0||e->m_type==1){
                         return m_nodespq.push(e);
@@ -665,6 +669,7 @@ namespace SpatialIndex
                         return m_mpq.push(e);
                     }
                 }
+
                 auto empty(){return m_mpq.empty()&&m_nodespq.empty();}
                 id_type getOneMissingPart(id_type id) {
                     if(m_parts[id].m_missingLeaf.empty()){
@@ -673,6 +678,7 @@ namespace SpatialIndex
                     return (*m_parts[id].m_missingLeaf.begin());
                 }
                 auto getMissingPart(id_type id){return m_parts[id].m_missingLeaf;}
+
                 PartsStore(Trajectory &traj,double error,TrajStore* ts,bool useMBR)
                 :m_query(traj),m_error(error),m_useMBR(useMBR),m_ts(ts){}
                 ~PartsStore(){}
@@ -683,11 +689,11 @@ namespace SpatialIndex
                         auto e=pair.second;
                         m_ts->m_trajIO+=std::ceil(e.m_len/4096.0);
                         uint32_t len=e.m_off+e.m_len;
-                        uint8_t *load = new uint8_t[len];
+                        uint8_t *load;
                         m_ts->loadByteArray(e.m_page,len,&load);
                         uint8_t *data = load+e.m_off;
                         tmpTraj.loadFromByteArray(data);
-                        delete[](load);
+                        delete[] load;
                         if(traj.m_points.empty()){
                             traj=tmpTraj;
                         }else{

@@ -447,7 +447,7 @@ void BulkLoader::createLevel(
                 else if(level==1&&pTree->m_bUsingTrajStore){
                     //linking the bounding boxes
                     for(int i=0;i<n->m_children;i++){
-                        auto child=pTree->readNode(n->m_pIdentifier[i]);
+                        NodePtr child=pTree->readNode(n->m_pIdentifier[i]);
                         for(int j=0;j<child->m_children;j++){
                             id_type id=child->m_pIdentifier[j];
                             auto entry=pTree->m_ts->m_entries[id];
@@ -495,7 +495,7 @@ void BulkLoader::createLevel(
             else if(level==1&&pTree->m_bUsingTrajStore){
                 //linking the bounding boxes
                 for(int i=0;i<n->m_children;i++){
-                    auto child=pTree->readNode(n->m_pIdentifier[i]);
+                    NodePtr child=pTree->readNode(n->m_pIdentifier[i]);
                     for(int j=0;j<child->m_children;j++){
                         id_type id=child->m_pIdentifier[j];
                         auto entry=pTree->m_ts->m_entries[id];

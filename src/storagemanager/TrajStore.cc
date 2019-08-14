@@ -375,6 +375,11 @@ inline uint64_t tsExternalSorter::getTotalEntries() const
 TrajStore::Entry::Entry(id_type page, uint32_t start, uint32_t len, id_type pvId, id_type ntId)
     :m_page(page),m_start(start),m_len(len),m_pvId(pvId),m_ntId(ntId){}
 
+
+TrajStore::~TrajStore() {
+    releaseTmp();
+}
+
 TrajStore::TrajStore(IStorageManager *store,uint32_t pageSize)
     :m_pStorageManager(store),m_pageSize(pageSize){}
 
@@ -501,6 +506,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
             currentLen+=len;
             spaceRem-=len;
         }
+        delete r;
     }
     delete[] pageData;
 }
@@ -523,8 +529,7 @@ const Trajectory TrajStore::getTraj(id_type &id) {
     return traj;
 }
 [[deprecated]]
-const Trajectory TrajStore::getTrajByTime(id_type &tid, double tstart, double tend) {
-    id_type id=getSegId(tid,0);
+const Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double tend) {
     auto it=m_entries.find(id);
     assert(it!=m_entries.end());
     Entry e=*(it->second);

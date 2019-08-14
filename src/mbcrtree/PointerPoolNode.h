@@ -92,11 +92,9 @@ namespace Tools
 			{
 				if (m_pool.size() < m_capacity)
 				{
-
 					p->m_level = 0;
 					p->m_identifier = -1;
 					p->m_children = 0;
-
 					m_pool.push(p);
 				}
 				else

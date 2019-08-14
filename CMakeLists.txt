@@ -170,7 +170,7 @@ else()
         set(SIDX_COMPILER_GCC 1)
 
     elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER}" MATCHES "clang")
-        set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} ${SIDX_COMMON_CXX_FLAGS}")
+        set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS} ${SIDX_COMMON_CXX_FLAGS}")
         set(SIDX_COMPILER_CLANG 1)
     endif()
 endif(WIN32)

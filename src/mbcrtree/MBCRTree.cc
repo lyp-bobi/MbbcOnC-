@@ -548,7 +548,8 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                             ps.push(new NNEntry(n->m_pIdentifier[cChild], pd, 0));
                     }
                 }
-//                delete pFirst;
+                delete pFirst;
+//                n.relinquish();
                 break;
             }
             case 1: {//leaf node
@@ -557,8 +558,9 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                     NodePtr n = readNode(pFirst->m_id);
                     v.visitNode(*n);
                     ps.loadLeaf(*n);
+//                    n.relinquish();
                 }
-//                delete pFirst;
+                delete pFirst;
                 break;
             }
             case 2: {//incomplete bounding
@@ -566,6 +568,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                 NodePtr n = readNode(missing);
                 v.visitNode(*n);
                 ps.loadLeaf(*n);
+//                n.relinquish();
                 break;
             }
             case 3: {//complete bounding
@@ -573,7 +576,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                 Trajectory traj=ps.getTraj(pFirst->m_id);
 //                Trajectory traj = m_ts->getTrajByTime(pFirst->m_id, queryTraj->m_startTime(), queryTraj->m_endTime());
                 ps.push(new NNEntry(pFirst->m_id, queryTraj->getMinimumDistance(traj), 4));
-//                delete pFirst;
+                delete pFirst;
                 break;
             }
             case 4: {//exact traj
@@ -583,18 +586,18 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                 knearest = pFirst->m_minDist;
                 simpleData d(pFirst->m_id,pFirst->m_minDist);
                 v.visitData(d);
-//                delete pFirst;
+                delete pFirst;
                 break;
             }
             default:
                 throw Tools::IllegalStateException("illegal NNEntry state");
         }
     }
-//	while (! ps.empty())
-//	{
-//		NNEntry* e = ps.top(); ps.pop();
-//		delete e;
-//	}
+	while (! ps.empty())
+	{
+		NNEntry* e = ps.top(); ps.pop();
+		delete e;
+	}
 //    std::cout<<"knearest is"<<knearest<<std::endl;
 //    std::cerr<<"iternum is "<<iternum<<"\n";
     m_stats.m_doubleExactQueryResults+=knearest;
@@ -1286,8 +1289,6 @@ SpatialIndex::id_type SpatialIndex::MBCRTree::MBCRTree::writeNode(Node* n)
 	uint32_t dataLength;
 	n->storeToByteArray(&buffer, dataLength);
 
-	Leaf *leaf=new Leaf(n->m_pTree,-1);
-
 	id_type page;
 	if (n->m_identifier < 0) page = StorageManager::NewPage;
 	else page = n->m_identifier;
@@ -1359,13 +1360,13 @@ SpatialIndex::MBCRTree::NodePtr SpatialIndex::MBCRTree::MBCRTree::readNode(id_ty
 		else if (level==0) n = m_leafPool.acquire();
 		else throw Tools::IllegalStateException("readNode: failed reading the correct node type information");
 
-		if (n.get() == 0)
+		if (n.get() == nullptr)
 		{
 			if (level>0) n = NodePtr(new Index(this, -1, 0), &m_indexPool);
 			else if (level == 0) n = NodePtr(new Leaf(this, -1), &m_leafPool);
 		}
 
-		n->m_pTree = this;
+//		n->m_pTree = this;
 		n->m_identifier = page;
 		n->loadFromByteArray(buffer);
 

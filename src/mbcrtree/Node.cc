@@ -81,18 +81,18 @@ void Node::loadFromByteArray(const uint8_t* ptr)
     memcpy(&m_children, ptr, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
 
-    m_pIdentifier=new id_type[m_children+1];
-    if(m_level>0||m_pTree->m_bUsingMBR)
-        m_ptrMBR = new RegionPtr[m_children + 1];
-    else
-        m_ptrMBC = new MBCPtr[m_children + 1];
-    if(m_level==0){
-        m_prevNode=new id_type[m_children+1];
-        m_nextNode=new id_type[m_children+1];
-        m_pageNum=new id_type[m_children+1];
-        m_pageOff = new uint32_t[m_children+1];
-        m_dataLen=new uint32_t[m_children+1];
-    }
+//    m_pIdentifier=new id_type[m_children+1];
+//    if(m_level>0||m_pTree->m_bUsingMBR)
+//        m_ptrMBR = new RegionPtr[m_children + 1];
+//    else
+//        m_ptrMBC = new MBCPtr[m_children + 1];
+//    if(m_level==0){
+//        m_prevNode=new id_type[m_children+1];
+//        m_nextNode=new id_type[m_children+1];
+//        m_pageNum=new id_type[m_children+1];
+//        m_pageOff = new uint32_t[m_children+1];
+//        m_dataLen=new uint32_t[m_children+1];
+//    }
 
     for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
         memcpy(&(m_pIdentifier[u32Child]), ptr, sizeof(id_type));
@@ -276,10 +276,14 @@ Node::Node(SpatialIndex::MBCRTree::MBCRTree* pTree, id_type id, uint32_t level, 
 
 	try
 	{
-		if(m_level>0||m_pTree->m_bUsingMBR)
-            m_ptrMBR = new RegionPtr[m_capacity + 1];
-		else
+//		if(m_level>0||m_pTree->m_bUsingMBR)
+//            m_ptrMBR = new RegionPtr[m_capacity + 1];
+//		else
+//            m_ptrMBC = new MBCPtr[m_capacity + 1];
+        m_ptrMBR = new RegionPtr[m_capacity + 1];
+        if(!m_pTree->m_bUsingMBR){
             m_ptrMBC = new MBCPtr[m_capacity + 1];
+        }
 		if(m_level==0){
 		    m_prevNode=new id_type[m_capacity+1];
 		    m_nextNode=new id_type[m_capacity+1];
@@ -479,6 +483,11 @@ bool Node::insertData(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type 
 
 		delete[] m_ptrMBR;
 		delete[] m_pIdentifier;
+        delete[] m_prevNode;
+        delete[] m_nextNode;
+        delete[] m_pageNum;
+        delete[] m_pageOff;
+        delete[] m_dataLen;
 
 		m_ptrMBR = keepmbr;
 		m_pIdentifier = keepid;

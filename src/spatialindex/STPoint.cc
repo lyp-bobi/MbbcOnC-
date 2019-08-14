@@ -278,10 +278,10 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const STPoint& pt)
 	return os;
 }
 
-STPoint* STPoint::makemid(const STPoint &p1, const STPoint &p2, double t){
+STPoint STPoint::makemid(const STPoint &p1, const STPoint &p2, double t){
     assert(p1.m_dimension==p2.m_dimension);
     if(p1.m_time==p2.m_time)
-        return new STPoint(p1);
+        return STPoint(p1);
     int dim=p1.m_dimension;
     double* p1c=new double[dim];
     double* p2c=new double[dim];
@@ -294,12 +294,12 @@ STPoint* STPoint::makemid(const STPoint &p1, const STPoint &p2, double t){
     double h1= (t-t1)/(t2-t1);
     double h2= (t2-t)/(t2-t1);
     double* p3c=new double[dim];
-    Tools::SmartPointer<double> p3cs(p3c);
     for(int i=0;i<dim;i++){
         p3c[i]=h2*p1c[i]+h1*p2c[i];
     }
     delete[](p1c);
     delete[](p2c);
-
-    return new STPoint(p3c,t,dim);
+    auto res=STPoint(p3c,t,dim);
+    delete[](p3c);
+    return res;
 }

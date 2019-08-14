@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <string>
 
+
 #include <spatialindex/SpatialIndex.h>
 double calcuTime[2]={0,0};
 int testPhase=0;
@@ -87,6 +88,7 @@ void Trajectory::storeToByteArray(uint8_t **data, uint32_t &len) {
     for(int i=0;i<size;i++){
         m_points[i].storeToByteArray(&tmpb,tmplen);
         memcpy(ptr, tmpb, tmplen);
+        delete[] tmpb;
         if(i!=size-1){
             ptr += tmplen;
         }
@@ -237,7 +239,7 @@ void Trajectory::getMBC(SpatialIndex::MBC &out) const {
             prv=std::sqrt((vx-avx)*(vx-avx)+(vy-avy)*(vy-avy));
             if(prv>rv) rv=prv;
         }
-        prd=m_points[i].getMinimumDistance(*STPoint::makemid(p1,p2,ptime));
+        prd=m_points[i].getMinimumDistance(STPoint::makemid(p1,p2,ptime));
         if(prd>rd) rd=prd;
     }
     out=MBC(p1.m_pCoords,p2.m_pCoords,startt,endt,m_dimension,rd,rv);
@@ -272,7 +274,7 @@ const std::pair<int, double> findMaximumDistance(const vector<SpatialIndex::STPo
 
     //distance calculation
     for(int i=1;i<points.size()-1;i++){ //traverse through second point to second last point
-        double Dist=SpatialIndex::STPoint::makemid(firstpoint,lastpoint,points[i].m_time)->getMinimumDistance(points[i]);
+        double Dist=SpatialIndex::STPoint::makemid(firstpoint,lastpoint,points[i].m_time).getMinimumDistance(points[i]);
         if (Dist>Mdist){
             Mdist=Dist;
             index=i;
@@ -464,7 +466,8 @@ STPoint* cutByLine(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint 
             xyt[2]=d2 * ps.m_time + d1 * pe.m_time;
         }
 //        Tools::SmartPointer<STPoint> sp(new STPoint(xyt, xyt[2], 2));
-        return new STPoint(xyt, xyt[2], 2);
+        auto res=new STPoint(xyt, xyt[2], 2);
+        return res;
 //        return sp.get();
     }
 }
@@ -475,24 +478,23 @@ std::vector<std::pair<STPoint,STPoint>> Trajectory::cutByPhase(const SpatialInde
     std::vector<std::pair<STPoint,STPoint>> tmp;
     res.emplace_back(std::make_pair(ps,pe));
     for(const auto &line:res){
-        STPoint *stp=cutByLine(line.first,line.second,xd1,0);
+        STPoint* stp=cutByLine(line.first,line.second,xd1,0);
         if(stp!= nullptr){
-            STPoint tp=*stp;
-            tmp.emplace_back(std::make_pair(line.first,tp));
-            tmp.emplace_back(std::make_pair(tp,line.second));
+            tmp.emplace_back(std::make_pair(line.first,*stp));
+            tmp.emplace_back(std::make_pair(*stp,line.second));
+            delete stp;
         }
         else{
             tmp.push_back(line);
         }
-        delete(stp);
     }
     res=tmp;tmp.clear();
     for(const auto &line:res){
         STPoint *stp=cutByLine(line.first,line.second,xd2,0);
         if(stp!= nullptr){
-            STPoint tp=*stp;
-            tmp.emplace_back(std::make_pair(line.first,tp));
-            tmp.emplace_back(std::make_pair(tp,line.second));
+            tmp.emplace_back(std::make_pair(line.first,*stp));
+            tmp.emplace_back(std::make_pair(*stp,line.second));
+            delete stp;
         }
         else{
             tmp.push_back(line);
@@ -502,9 +504,9 @@ std::vector<std::pair<STPoint,STPoint>> Trajectory::cutByPhase(const SpatialInde
     for(const auto &line:res){
         STPoint *stp=cutByLine(line.first,line.second,yd1,1);
         if(stp!= nullptr){
-            STPoint tp=*stp;
-            tmp.emplace_back(std::make_pair(line.first,tp));
-            tmp.emplace_back(std::make_pair(tp,line.second));
+            tmp.emplace_back(std::make_pair(line.first,*stp));
+            tmp.emplace_back(std::make_pair(*stp,line.second));
+            delete stp;
         }
         else{
             tmp.push_back(line);
@@ -514,9 +516,9 @@ std::vector<std::pair<STPoint,STPoint>> Trajectory::cutByPhase(const SpatialInde
     for(const auto &line:res){
         STPoint *stp=cutByLine(line.first,line.second,yd2,1);
         if(stp!= nullptr){
-            STPoint tp=*stp;
-            tmp.emplace_back(std::make_pair(line.first,tp));
-            tmp.emplace_back(std::make_pair(tp,line.second));
+            tmp.emplace_back(std::make_pair(line.first,*stp));
+            tmp.emplace_back(std::make_pair(*stp,line.second));
+            delete stp;
         }
         else{
             tmp.push_back(line);
@@ -790,7 +792,7 @@ double Trajectory::getMinimumDistance(const SpatialIndex::MBC &in) const {
 double Trajectory::getMinimumDistance(const SpatialIndex::STPoint &in) const {
     int last;
     for(last=1;m_points[last].m_time<in.m_time;last++);
-    return STPoint::makemid(m_points[last-1],m_points[last],in.m_time)->getMinimumDistance(in);
+    return STPoint::makemid(m_points[last-1],m_points[last],in.m_time).getMinimumDistance(in);
 }
 
 double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const {

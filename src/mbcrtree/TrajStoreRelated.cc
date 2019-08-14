@@ -22,10 +22,9 @@ ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore
     TrajStore *ts= static_cast<TrajStore*>(tsm);
     auto dataStream=new mbcrtreeSegmentStream(ts);
     ISpatialIndex* tree= createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,indexCapacity,dimension,SpatialIndex::MBCRTree::RV_RSTAR,indexIdentifier);
+    delete dataStream;
     MBCRTree* r= static_cast<MBCRTree*>(tree);
-    ts->m_entries.clear();
-    ts->m_entryMbcs.clear();
-    ts->m_entryMbrs.clear();
+    ts->releaseTmp();
     return r;
 }
 
@@ -35,9 +34,8 @@ ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(IS
     TrajStore *ts= static_cast<TrajStore*>(tsm);
     auto dataStream=new mbcrtreeSegmentStream(ts);
     ISpatialIndex* tree= createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,indexCapacity,dimension,SpatialIndex::MBCRTree::RV_RSTAR,indexIdentifier,true);
+    delete dataStream;
     MBCRTree* r= static_cast<MBCRTree*>(tree);
-    ts->m_entries.clear();
-    ts->m_entryMbcs.clear();
-    ts->m_entryMbrs.clear();
+    ts->releaseTmp();
     return r;
 }
