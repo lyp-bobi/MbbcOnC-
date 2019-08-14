@@ -380,8 +380,8 @@ TrajStore::~TrajStore() {
     releaseTmp();
 }
 
-TrajStore::TrajStore(IStorageManager *store,uint32_t pageSize)
-    :m_pStorageManager(store),m_pageSize(pageSize){}
+TrajStore::TrajStore(IStorageManager *store,uint32_t pageSize,int maxseg)
+    :m_pStorageManager(store),m_pageSize(pageSize),m_maxTrajSegs(maxseg){}
 
 void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs){
 

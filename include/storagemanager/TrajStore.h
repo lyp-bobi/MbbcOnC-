@@ -100,7 +100,7 @@ namespace SpatialIndex
         class SIDX_DLL TrajStore:public IStorageManager{
         public:
             ~TrajStore();
-            TrajStore(IStorageManager *store,uint32_t pageSize);
+            TrajStore(IStorageManager *store,uint32_t pageSize,int maxseg=100);
             void flush(){m_pStorageManager->flush();}
             void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
                 auto start = std::chrono::system_clock::now();

@@ -369,10 +369,12 @@ int main(){
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, Trajectory> > empty1;
         int totallen=0,totalseg=0;
+        unsigned long long maxseg=0;
         for(auto &traj:trajs){
             totallen+=traj.second.m_points.size();
             auto seg= traj.second.getSegments(3000);
             totalseg+= seg.size();
+            maxseg=std::max(seg.size(),maxseg);
             segs.push_back(make_pair(traj.first,seg));
         }
         std::cerr<<"segments' average length is "<<totallen*1.0/totalseg<<"\n";
@@ -418,7 +420,7 @@ int main(){
 //        dsm1= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile1);
 //        dsm2= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile2);
 
-        TrajStore* ts1=new TrajStore(file1,4096);
+        TrajStore* ts1=new TrajStore(file1,4096,maxseg);
         ts1->loadSegments(segs);
 
         ISpatialIndex *r=MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1,40,3,indexIdentifier1);
@@ -428,7 +430,7 @@ int main(){
         delete ts1;
 
 
-        TrajStore* ts2=new TrajStore(file2,4096);
+        TrajStore* ts2=new TrajStore(file2,4096,maxseg);
         ts2->loadSegments(segs);
         ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2,40,3,indexIdentifier2);
         TreeQueryBatch(rc, queries,ts2);

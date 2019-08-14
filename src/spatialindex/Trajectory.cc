@@ -1417,12 +1417,15 @@ double Trajectory::getInferredNodeMinimumIED(const SpatialIndex::Region &in, dou
 double Trajectory::getNodeMinimumDistance(const SpatialIndex::Region &in,double MaxVelocity) const {
     if(m_startTime()>=in.m_pHigh[in.m_dimension-1]||m_endTime()<=in.m_pLow[in.m_dimension-1]) return 1e300;
     if(disttype==0){
+        double ints=std::max(m_startTime(),in.m_pLow[in.m_dimension-1]),
+                inte=std::min(m_endTime(),in.m_pHigh[in.m_dimension-1]);
         Region copy(in);
-        copy.m_pLow[copy.m_dimension-1]=m_startTime();
-        copy.m_pHigh[copy.m_dimension-1]=m_endTime();
+        copy.m_pLow[copy.m_dimension-1]=ints;
+        copy.m_pHigh[copy.m_dimension-1]=inte;
         double min=1e300;
-        for (int i = 0; i < m_points.size()-1; i++) {
-            double pd = line2MBRMinSED(m_points[i],m_points[i+1],copy);
+        fakeTpVector timedTraj(&m_points,ints,inte);
+        for (int i = 0; i < timedTraj.m_size-1; i++) {
+            double pd = line2MBRMinSED(timedTraj[i],timedTraj[i+1],copy);
             min=std::min(min,pd);
         }
         return min*(m_endTime()-m_startTime());
