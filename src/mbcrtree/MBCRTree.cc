@@ -226,8 +226,8 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
         r->m_ts=ts;
     }
     r->m_bUsingMBR=useMBR;
-	uint32_t bindex = static_cast<uint32_t>(std::floor(static_cast<double>(indexCapacity * fillFactor)));
-	uint32_t bleaf = static_cast<uint32_t>(std::floor(static_cast<double>(leafCapacity * fillFactor)));
+	uint32_t bindex = static_cast<uint32_t>(std::floor(static_cast<double>(indexCapacity)));
+	uint32_t bleaf = static_cast<uint32_t>(std::floor(static_cast<double>(leafCapacity)));
 
 	SpatialIndex::MBCRTree::BulkLoader bl;
 

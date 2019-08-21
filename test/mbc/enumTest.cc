@@ -1,4 +1,8 @@
 //
+// Created by Chuang on 2019/8/19.
+//
+
+//
 // Created by Chuang on 2019/5/21.
 //
 
@@ -23,7 +27,7 @@
 #include "../../src/mbcrtree/MBCRTree.h"
 //#define sourceFile "D://t1000.txt"
 #define genFile "D://t500n200se.txt"
-#define GLFile "/root/GLCD1.csv"
+#define GLFile "/root/GLS.csv"
 #define maxLinesToRead 1e10
 #define testtime 100
 #define dimension 2
@@ -181,8 +185,9 @@ Type stringToNum(const std::string& str)
 vector<pair<id_type ,Trajectory> >  loadGTToTrajs(){
     //first level: vector of time period
     //second level: vector of segments in the time period
+#ifndef NDEBUG
     cerr<<"loading generated trajectories from txt to trajectories"<<endl;
-
+#endif
     ifstream inFile(genFile, ios::in);
     string lineStr;
     set<id_type> ids;
@@ -241,7 +246,9 @@ vector<pair<id_type ,Trajectory> >  loadGTToTrajs(){
             }
         }
     }
+#ifndef NDEBUG
     std::cerr<<"load data finished\n";
+#endif
     return res;
 }
 
@@ -305,12 +312,14 @@ vector<pair<id_type ,Trajectory> >  loadGLToTrajs(){
             }
         }
     }
+#ifndef NDEBUG
     std::cerr<<"load data finished\n";
+#endif
     return res;
 }
 
 
-void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr){
+void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr,int thennk=5){
     MyVisitor vis;
     vis.ts=ts;
     auto start = std::chrono::system_clock::now();
@@ -320,20 +329,36 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore
             tree->intersectsWithQuery(*queries[i],vis);
         }else if(QueryType==2){
             vis.m_query=queries[i];
-            tree->nearestNeighborQuery(5,*queries[i],vis);
+            tree->nearestNeighborQuery(thennk,*queries[i],vis);
 //            cerr<<"finished "<<i<<"already\n";
         }
     }
     double time;
     auto end = std::chrono::system_clock::now();auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     time=double(duration.count()) * std::chrono::microseconds::period::num/ std::chrono::microseconds::period::den;
-    cerr<< "=================\n\n";
-    cerr<<"Querying time: "<< time<<endl;
-    cerr<<"VISIT NODE "<<vis.m_indexvisited<<"\t"<<vis.m_leafvisited<<endl;
-    cerr<<"Byte loaded "<<vis.m_indexIO<<"\t"<<vis.m_leafIO<<endl;
-    cerr << *tree;
+    cerr <<"Querying time: "<< time<<endl;
+    cerr <<"VISIT NODE "<<vis.m_indexvisited<<"\t"<<vis.m_leafvisited<<endl;
     cerr <<"TrajStore Statistic"<< ts->m_indexIO<<"\t"<<ts->m_trajIO<<endl;
-    cerr << "================\n\n";
+}
+
+void kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr,int thennk=5){
+    ts->cleanStatistic();
+    int num=queries.size();
+    MyVisitor vis;
+    vis.ts=ts;
+    auto start = std::chrono::system_clock::now();
+    for(int i=0;i<queries.size();i++){
+        vis.m_query=queries[i];
+        tree->nearestNeighborQuery(thennk,*queries[i],vis);
+    }
+    double time;
+    auto end = std::chrono::system_clock::now();auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    time=double(duration.count()) * std::chrono::microseconds::period::num/ std::chrono::microseconds::period::den;
+//    cerr <<"Average Querying time: "<< time/num<<endl;
+//    cerr <<"Averaged VISIT NODE "<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<endl;
+//    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
+//    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
+    cerr <<time/num<<"\n";
 }
 
 int TreeQuery(ISpatialIndex* tree,IShape* query,TrajStore *ts= nullptr){
@@ -361,152 +386,85 @@ int TreeQuery(ISpatialIndex* tree,IShape* query,TrajStore *ts= nullptr){
 
 int main(){
     try {
-        calcuTime[0]=0;
+        calcuTime[0] = 0;
         srand((int) time(NULL));
-//        srand(21);
-//        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
-        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
         vector<pair<id_type, vector<Trajectory>>> segs;
-        vector<pair<id_type, Trajectory> > empty1;
-        int totallen=0,totalseg=0;
-        int maxseg=0;
-        for(auto &traj:trajs){
-            totallen+=traj.second.m_points.size();
-            auto seg= traj.second.getSegments(3000);
-            totalseg+= seg.size();
-            maxseg=std::max(int(seg.size()),maxseg);
-            segs.emplace_back(make_pair(traj.first,seg));
-        }
-        std::cerr<<"segments' average length is "<<totallen*1.0/totalseg<<"\n";
-        vector<IShape *> queries;
-//        double plow[3]={16083.3,16481.8,485};
-//        double pHigh[3]={17853,17749.1,485};
-//        Region* rg=new Region(plow,pHigh,3);
-//        queries.push_back(rg);
-        cerr<<"generating queries\n";
-        int realtesttime=(QueryType==2)?testtime:(100*testtime);
-        for (int i = 0; i < realtesttime; i++) {
-            if (QueryType == 1) {
-                double t = int(random(0, 1000));
-                double pLow[3] = {random(0, 25000), random(0, 30000), t};
-                double pHigh[3] = {pLow[0] + random(500, 2000), pLow[1] + random(500, 2000), t+20};
-                Region *rg = new Region(pLow, pHigh, 3);
-                queries.emplace_back(rg);
+        vector<pair<id_type, vector<Trajectory>>> emptyseg;
+        int totallen = 0, totalseg = 0;
+        int maxseg = 0;
+        double avgSegLen=100;
+        for (double segpara = 0.1; avgSegLen>10 ; segpara/=2) {
+            maxseg=0;
+            segs.clear();
+            emptyseg.clear();
+            for (auto &traj:trajs) {
+                totallen += traj.second.m_points.size();
+                auto seg = traj.second.getSegments(segpara);
+                totalseg += seg.size();
+                maxseg = std::max(int(seg.size()), maxseg);
+                segs.emplace_back(make_pair(traj.first, seg));
             }
-            else if(QueryType==2){
-                auto ori = &trajs[(0+i)%trajs.size()].second;
-                Trajectory* concate= new Trajectory();
-                double ts=ori->m_startTime(),te=ori->m_endTime();
-//                concate=ori;
-//                ori->getPartialTrajectory(0.75*ts+0.25*te,0.25*te+0.75*te,*concate);
-                ori->getPartialTrajectory((i%5)*100,(i%5)*100+100,*concate);
-                queries.emplace_back(concate);
+            avgSegLen=double(totallen)/totalseg;
+            std::cerr<<"segments' average length is "<<totallen*1.0/totalseg<<"\n";
+
+            string name0 =std::to_string(segpara)+ "name0", name1 = std::to_string(segpara)+"name1", name2 = std::to_string(segpara)+"name2";
+            id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
+            IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
+                    *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
+                    *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096);
+            // Create a new storage manager with the provided base name and a 4K page size.
+            StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 100, false),
+                    *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
+                    *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
+
+            TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
+            ts1->loadSegments(segs);
+            ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
+
+            TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
+            ts2->loadSegments(segs);
+            ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
+
+            //kNN
+            segs.swap(emptyseg);
+            vector<IShape *> queries;
+            double segattri[]={900,3600,1000000};
+            for (auto queryLen:segattri) {
+//                for(int thek=1;thek<=21;thek+=5){
+                for (int thek = 5; thek == 5; thek++) {
+                    for (int i = 0; i < 200; i++) {
+                        auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
+                        Trajectory *concate = new Trajectory();
+                        double ts = random(ori->m_startTime(), ori->m_endTime() - queryLen);
+                        ori->getPartialTrajectory(ts, ts + queryLen, *concate);
+                        if (!concate->m_points.empty())
+                            queries.emplace_back(concate);
+                    }
+//                    cerr << "=================\n\n";
+//                    std::cerr << "Querying with segmenting len " << seglen <<
+//                              ", querying len " << queryLen << ", NN's k" << thek << "\n";
+                    cerr<< segpara<<"\t"<<queryLen<<"\n";
+                    kNNQueryBatch(r, queries, ts1);
+                    kNNQueryBatch(rc, queries, ts2);
+                    cerr << "\n";
+                    for(auto &tras:queries){
+                        delete tras;
+                    }
+                    queries.clear();
+                }
             }
+            delete r;
+            delete ts1;
+            delete rc;
+            delete ts2;
+            delete file0;
+            delete file1;
+            delete file2;
+            delete diskfile0;
+            delete diskfile1;
+            delete diskfile2;
         }
-
-        cerr<<"queries generated\n";
-        trajs.swap(empty1);
-        string name0 = "name0", name1 = "name1", name2 = "name2";
-        id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
-        IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
-                *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
-                *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096);
-        // Create a new storage manager with the provided base name and a 4K page size.
-        StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 100, false),
-                *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
-                *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
-
-//        StorageManager::DiskStorageManager *dsm1,*dsm2;
-//        dsm1= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile1);
-//        dsm2= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile2);
-
-        TrajStore* ts1=new TrajStore(file1,4096,maxseg);
-        ts1->loadSegments(segs);
-
-        ISpatialIndex *r=MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1,4096,3,indexIdentifier1);
-
-        TreeQueryBatch(r, queries,ts1);
-        delete r;
-        delete ts1;
-
-
-        TrajStore* ts2=new TrajStore(file2,4096,maxseg);
-        ts2->loadSegments(segs);
-        ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2,4096,3,indexIdentifier2);
-        TreeQueryBatch(rc, queries,ts2);
-        delete rc;
-        delete ts2;
-
-        segs.clear();
-
-//        TrajMbrStream ds1;
-//        ds1.feedTraj(&trajs);
-//        ds1.rewind();
-//        ISpatialIndex* real = RTree::createAndBulkLoadNewRTree(
-//                RTree::BulkLoadMethod::BLM_STR, ds1, *file0, 0.9, 10000,100000, 3,RTree::RV_RSTAR, indexIdentifier0);
-//        real->m_DataType=TrajectoryType;
-
-
-
-
-
-//        id_type that=242800;
-//        cout<<ts1.getTraj(that);
-//        cout<<trajs[0].second;
-//        for(int i=11;i<12;i++) {
-//            id_type that = i*100;
-//            auto brs = ts1.getMBRsByTime(that,0,1000);
-//            auto bcs = ts1.getMBCsByTime(that,0,1000);
-////        cout<<trajs[10].second;
-////            cout << trajs[71].second << endl;
-////            cout << brs << endl;
-////            cout << bcs << endl;
-//            cout<< i<<endl;
-//            double a,b,c;
-//            a=queries[0]->getMinimumDistance(trajs[i].second);
-//            b=queries[0]->getMinimumDistance(brs);
-//            c=queries[0]->getMinimumDistance(bcs);
-//            cout<<a<<" "<<b<<" "<<c<<endl;
-//            if((b>a||c>a||std::isnan(b)||std::isnan(c))&&a!=std::numeric_limits<double>::max()) {
-//                cout << queries[0]->getMinimumDistance(trajs[i].second) << endl;
-//                cout << queries[0]->getMinimumDistance(brs) << endl;
-//                cout << queries[0]->getMinimumDistance(bcs) << endl;
-//            }
-//        }
-
-
-
-
-        cerr << "start query!" << endl << endl << endl;
-
-//        TreeQueryBatch(real,queries);
-
-
-//        double aa,bb,oo;
-////        for(int j=0;j<queries.size();j++){
-//        for(int j=73;j<74;j++){
-//            auto q=queries[j];
-////            oo=TreeQuery(real,q);
-//            aa=TreeQuery(r,q,&ts1);
-//            bb=TreeQuery(rc,q,&ts2);
-////            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
-//            if(aa!=bb){
-//                cerr<<"error"<<j<<endl;
-//                cerr<<aa<<" "<<bb<<" "<<oo<<endl;
-////                cerr<<*qtraj<<endl;
-//            }
-//        }
-
-
-
-//        std::cerr<<"index IO:"<<ts1.m_indexIO<<" "<<ts2.m_indexIO<<endl;
-//        std::cerr<<"traj IO:"<<ts1.m_trajIO<<" "<<ts2.m_trajIO<<endl;
-//        std::cerr<<"total IO:"<<ts1.m_indexIO+ts1.m_trajIO<<" "<<ts2.m_indexIO+ts2.m_trajIO<<endl;
-//        std::cerr<<"bounding IO:"<<ts1.m_boundingVisited<<" "<<ts2.m_boundingVisited<<endl;
-//        std::cerr<<"IO time:"<<ts1.m_IOtime<<" "<<ts2.m_IOtime<<"\n";
-        std::cerr<<"calculation time"<<calcuTime[0]<<" "<<calcuTime[1]<<"\n";
-        delete file0;delete file1;delete file2;
-        delete diskfile0;delete diskfile1;delete diskfile2;
     }
     catch (Tools::Exception& e)
     {

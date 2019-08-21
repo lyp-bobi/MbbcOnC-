@@ -17,11 +17,13 @@ public:
 
 
 ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(IStorageManager *tsm,
-                                                                           uint32_t indexCapacity, uint32_t dimension,
+                                                                           uint32_t pageSize, uint32_t dimension,
                                                                            id_type &indexIdentifier) {
     TrajStore *ts= static_cast<TrajStore*>(tsm);
     auto dataStream=new mbcrtreeSegmentStream(ts);
-    ISpatialIndex* tree= createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,indexCapacity,dimension,SpatialIndex::MBCRTree::RV_RSTAR,indexIdentifier);
+    int indexCapacity=std::floor((pageSize-56)/56);
+    int leafCapacity=std::floor((pageSize-56)/104);
+    ISpatialIndex* tree= createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,leafCapacity,dimension,SpatialIndex::MBCRTree::RV_RSTAR,indexIdentifier);
     delete dataStream;
     MBCRTree* r= static_cast<MBCRTree*>(tree);
     ts->releaseTmp();
@@ -29,11 +31,13 @@ ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore
 }
 
 ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(IStorageManager *tsm,
-                                                                                 uint32_t indexCapacity, uint32_t dimension,
+                                                                                 uint32_t pageSize, uint32_t dimension,
                                                                                  id_type &indexIdentifier) {
     TrajStore *ts= static_cast<TrajStore*>(tsm);
     auto dataStream=new mbcrtreeSegmentStream(ts);
-    ISpatialIndex* tree= createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,indexCapacity,dimension,SpatialIndex::MBCRTree::RV_RSTAR,indexIdentifier,true);
+    int indexCapacity=std::floor((pageSize-56)/56);
+    int leafCapacity=std::floor((pageSize-56)/88);
+    ISpatialIndex* tree= createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,leafCapacity,dimension,SpatialIndex::MBCRTree::RV_RSTAR,indexIdentifier,true);
     delete dataStream;
     MBCRTree* r= static_cast<MBCRTree*>(tree);
     ts->releaseTmp();

@@ -314,7 +314,7 @@ std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::STPoint> m
     vector<STPoint> seg;
     vector<Trajectory> res;
     if(mask.size()==2){
-        res.push_back(*this);
+        res.emplace_back(*this);
         return res;
     }
     auto iter1=m_points.begin();
@@ -353,6 +353,21 @@ std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::STPoint> m
 std::vector<Trajectory> Trajectory::getSegments(double threshold) {
     auto mask=simplifyWithRDP(m_points,threshold);
     return cuttraj(mask);
+}
+
+std::vector<Trajectory> Trajectory::getStaticSegments(int len) {
+    vector<STPoint> seg;
+    vector<Trajectory> res;
+    if(m_points.size()<2) return res;
+    for(int i=0;i<m_points.size();i++){
+        seg.emplace_back(m_points[i]);
+        if((i!=0&&i%len==0)||i==m_points.size()-1){
+            res.emplace_back(Trajectory(seg));
+            seg.clear();
+            seg.emplace_back(m_points[i]);
+        }
+    }
+    return res;
 }
 
 double Trajectory::getArea() const{ return 0;}
@@ -485,7 +500,7 @@ std::vector<std::pair<STPoint,STPoint>> Trajectory::cutByPhase(const SpatialInde
             delete stp;
         }
         else{
-            tmp.push_back(line);
+            tmp.emplace_back(line);
         }
     }
     res=tmp;tmp.clear();
@@ -497,7 +512,7 @@ std::vector<std::pair<STPoint,STPoint>> Trajectory::cutByPhase(const SpatialInde
             delete stp;
         }
         else{
-            tmp.push_back(line);
+            tmp.emplace_back(line);
         }
     }
     res=tmp;tmp.clear();
@@ -509,7 +524,7 @@ std::vector<std::pair<STPoint,STPoint>> Trajectory::cutByPhase(const SpatialInde
             delete stp;
         }
         else{
-            tmp.push_back(line);
+            tmp.emplace_back(line);
         }
     }
     res=tmp;tmp.clear();
@@ -521,7 +536,7 @@ std::vector<std::pair<STPoint,STPoint>> Trajectory::cutByPhase(const SpatialInde
             delete stp;
         }
         else{
-            tmp.push_back(line);
+            tmp.emplace_back(line);
         }
     }
     res=tmp;tmp.clear();

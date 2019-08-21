@@ -55,7 +55,7 @@ endforeach()
 set (DIR mbc)
 set (SOURCES
         mbcTest
-#        sbrTest
+        enumTest
         TrajStoreTest
         )
 

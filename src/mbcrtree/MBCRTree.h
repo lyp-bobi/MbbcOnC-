@@ -697,7 +697,24 @@ namespace SpatialIndex
                         if(traj.m_points.empty()){
                             traj=tmpTraj;
                         }else{
-                            traj.linkTrajectory(tmpTraj);
+                            try {
+                                traj.linkTrajectory(tmpTraj);
+                            }
+                            catch(Tools::Exception& e){
+                                for(const auto &_pair:m_parts[id].m_entries) {
+                                    auto _e = _pair.second;
+                                    m_ts->m_trajIO += std::ceil(_e.m_len / 4096.0);
+                                    uint32_t len = _e.m_off + _e.m_len;
+                                    uint8_t *load;
+                                    m_ts->loadByteArray(_e.m_page, len, &load);
+                                    uint8_t *data = load + _e.m_off;
+                                    tmpTraj.loadFromByteArray(data);
+                                    std::cerr<<tmpTraj<<std::endl;
+                                    delete[] load;
+                                }
+                            }
+
+
                         }
                     }
                     return traj;

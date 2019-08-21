@@ -123,6 +123,12 @@ namespace SpatialIndex
                 m_entryMbrs.clear();
                 m_part2node.clear();
             };
+            void cleanStatistic(){
+                m_trajIO=0,m_indexIO=0;
+                m_boundingVisited=0;
+                m_maxVelocity;
+                m_IOtime=0;
+            }
             class Entry{
             public:
                 id_type m_page;

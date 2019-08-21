@@ -119,7 +119,7 @@ int main(){
         vector<pair<id_type, Trajectory> > empty1;
         vector<pair<id_type, vector<Trajectory>>> segs;
         for(auto traj:trajs){
-            segs.push_back(make_pair(traj.first,traj.second.getSegments(2000)));
+            segs.emplace_back(make_pair(traj.first,traj.second.getSegments(2000)));
 //            vector<Trajectory> tmp(1);
 //            tmp[0]=traj.second;
 //            segs.push_back(make_pair(traj.first,tmp));

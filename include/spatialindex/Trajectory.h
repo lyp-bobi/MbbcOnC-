@@ -165,6 +165,7 @@ namespace SpatialIndex
         static std::vector<SpatialIndex::STPoint> simplifyWithRDP(const std::vector<SpatialIndex::STPoint>& Points, double threshold);
         std::vector<Trajectory> cuttraj(std::vector<SpatialIndex::STPoint>);
         std::vector<Trajectory> getSegments(double threshold);
+        std::vector<Trajectory> getStaticSegments(int len);
         void linkTrajectory(Trajectory &other);
 
         inline double m_startTime() const{return m_points.front().m_time;}

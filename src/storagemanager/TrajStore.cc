@@ -415,8 +415,8 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
             vol2+=thebc.getArea();
         }
     }
-    std::cout<<"total segment is"<<m_entryMbrs.size()<<"="<<m_entryMbcs.size()<<"\n";
-    std::cout<<"expression effectiveness "<<vol1<<" versus "<<vol2<<"\n"<<vol2/vol1<<"\n";
+    std::cerr<<"total segment is"<<m_entryMbrs.size()<<"="<<m_entryMbcs.size()<<"\n";
+    std::cerr<<"expression effectiveness "<<vol1<<" versus "<<vol2<<"\n"<<vol2/vol1<<"\n";
     //adjust the encoder
     auto encoder=XZ3Enocder::instance();
     encoder->m_xmin=maxbr.m_pLow[0];
@@ -432,7 +432,9 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
 
     //save the data into pages
     id_type thisPageId=0;
+#ifndef NDEBUG
     std::cerr<<"TrajStore:storing data into pages\n";
+#endif
     uint32_t spaceRem=m_pageSize,currentLen=0;//this two add to m_pagesize
     uint8_t *pageData=new uint8_t[m_pageSize];
     while (true) {
@@ -579,7 +581,7 @@ const ShapeList TrajStore::getMBCsByTime(id_type &id, double tstart, double tend
         id_type newid=tmpe.m_ntId;
         it=m_entries.find(newid);
         bc=&((*m_entryMbcs.find(newid)).second);
-        mbclist.push_back(bc);
+        mbclist.emplace_back(bc);
         tmpe=*(it->second);
         m_boundingVisited++;
     }
@@ -611,7 +613,7 @@ const ShapeList TrajStore::getMBRsByTime(id_type &id, double tstart, double tend
         id_type newid=tmpe.m_ntId;
         it=m_entries.find(newid);
         br=&((*m_entryMbrs.find(newid)).second);
-        mbrlist.push_back(br);
+        mbrlist.emplace_back(br);
         tmpe=*(it->second);
         m_boundingVisited++;
     }

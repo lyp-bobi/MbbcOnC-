@@ -55,15 +55,13 @@ uint32_t Node::getByteArraySize() const
     if(m_level>0||m_pTree->m_bUsingMBR)
         len=
                 (sizeof(uint32_t) +
-                 sizeof(uint32_t) +
-                 (m_children * (m_pTree->m_dimension * sizeof(double) * 2 + sizeof(id_type))) +
-                         (2 * m_pTree->m_dimension * sizeof(double)));
+                 sizeof(uint32_t) +2 * m_pTree->m_dimension * sizeof(double)+
+                 m_children * (m_pTree->m_dimension * sizeof(double) * 2 + sizeof(id_type)));
     else
         len=
                 (sizeof(uint32_t) +
-                 sizeof(uint32_t) +
-                 (m_children * (m_pTree->m_dimension * sizeof(double) * 2+ sizeof(double)*2 + sizeof(id_type))) +
-                         (2 * m_pTree->m_dimension * sizeof(double)));
+                 sizeof(uint32_t) +2 * m_pTree->m_dimension * sizeof(double)+
+                 m_children * (m_pTree->m_dimension * sizeof(double) * 2+ sizeof(double)*2 + sizeof(id_type)));
     if(m_level==0)
         len=len+m_children *(2* sizeof(id_type)+ sizeof(id_type)+ 2*sizeof(uint32_t));
 //    std::cerr<<len<<"\n";
@@ -80,19 +78,6 @@ void Node::loadFromByteArray(const uint8_t* ptr)
 
     memcpy(&m_children, ptr, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
-
-//    m_pIdentifier=new id_type[m_children+1];
-//    if(m_level>0||m_pTree->m_bUsingMBR)
-//        m_ptrMBR = new RegionPtr[m_children + 1];
-//    else
-//        m_ptrMBC = new MBCPtr[m_children + 1];
-//    if(m_level==0){
-//        m_prevNode=new id_type[m_children+1];
-//        m_nextNode=new id_type[m_children+1];
-//        m_pageNum=new id_type[m_children+1];
-//        m_pageOff = new uint32_t[m_children+1];
-//        m_dataLen=new uint32_t[m_children+1];
-//    }
 
     for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
         memcpy(&(m_pIdentifier[u32Child]), ptr, sizeof(id_type));
