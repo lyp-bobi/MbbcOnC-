@@ -1,0 +1,3 @@
+"D:\Program Files\JetBrains\CLion 2019.1.2\bin\cmake\win\bin\cmake.exe" -E remove -f CMakeFiles\test-mvrtree-Generator.dir/objects.a
+C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\ar.exe cr CMakeFiles\test-mvrtree-Generator.dir/objects.a @CMakeFiles\test-mvrtree-Generator.dir\objects1.rsp
+C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE -g   -Wl,--whole-archive CMakeFiles\test-mvrtree-Generator.dir/objects.a -Wl,--no-whole-archive  -o test-mvrtree-Generator.exe -Wl,--out-implib,libtest-mvrtree-Generator.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\test-mvrtree-Generator.dir\linklibs.rsp

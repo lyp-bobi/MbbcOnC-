@@ -1,0 +1,1569 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AnalysisUIOptions">
+    <option name="SPLITTER_PROPORTION" value="0.6044304" />
+    <option name="SCOPE_TYPE" value="8" />
+    <option name="CUSTOM_SCOPE_NAME" value="Unnamed" />
+  </component>
+  <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
+    <generated>
+      <config projectName="spatialindex" targetName="dist" />
+      <config projectName="spatialindex" targetName="test-rtree-RTreeLoad" />
+      <config projectName="spatialindex" targetName="spatialindex_c" />
+      <config projectName="spatialindex" targetName="test-mvrtree-MVRTreeQuery" />
+      <config projectName="spatialindex" targetName="test-mvrtree-Generator" />
+      <config projectName="spatialindex" targetName="spatialindex" />
+      <config projectName="spatialindex" targetName="test-rtree-Exhaustive" />
+      <config projectName="spatialindex" targetName="test-mbc-enumTest" />
+      <config projectName="spatialindex" targetName="test-tprtree-TPRTreeQuery" />
+      <config projectName="spatialindex" targetName="test-rtree-Generator" />
+      <config projectName="spatialindex" targetName="test-mvrtree-Exhaustive" />
+      <config projectName="spatialindex" targetName="test-tprtree-Generator" />
+      <config projectName="spatialindex" targetName="test-rtree-RTreeBulkLoad" />
+      <config projectName="spatialindex" targetName="test-tprtree-Exhaustive" />
+      <config projectName="spatialindex" targetName="test-mbc-TrajStoreTest" />
+      <config projectName="spatialindex" targetName="test-rtree-RTreeQuery" />
+      <config projectName="spatialindex" targetName="test-geometry-Intersection" />
+      <config projectName="spatialindex" targetName="test-tprtree-TPRTreeLoad" />
+      <config projectName="spatialindex" targetName="test-mbc-mbcTest" />
+      <config projectName="spatialindex" targetName="test-mvrtree-MVRTreeLoad" />
+    </generated>
+  </component>
+  <component name="CMakeSettings" AUTO_RELOAD="true">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="36b5b15b-c484-4023-bd99-c1ed0d11bedf" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/src/mbcrtree/MBCRTree.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/mbcrtree/MBCRTree.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/spatialindex/Trajectory.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/spatialindex/Trajectory.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/mbc/enumTest.cc" beforeDir="false" afterPath="$PROJECT_DIR$/test/mbc/enumTest.cc" afterDir="false" />
+    </list>
+    <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
+    <ignored path="$PROJECT_DIR$/test/cmake-build-debug/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="DatabaseView">
+    <option name="SHOW_INTERMEDIATE" value="true" />
+    <option name="GROUP_DATA_SOURCES" value="true" />
+    <option name="GROUP_SCHEMA" value="true" />
+    <option name="GROUP_CONTENTS" value="false" />
+    <option name="SORT_POSITIONED" value="false" />
+    <option name="SHOW_EMPTY_GROUPS" value="false" />
+    <option name="AUTO_SCROLL_FROM_SOURCE" value="false" />
+    <option name="HIDDEN_KINDS">
+      <set />
+    </option>
+    <expand />
+    <select />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/test/mbc/enumTest.cc">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="234">
+              <caret line="454" column="23" lean-forward="true" selection-start-line="454" selection-start-column="23" selection-end-line="454" selection-end-column="23" />
+              <folding>
+                <element signature="e#122#141#0" expanded="true" />
+                <element signature="e#357#395#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/INSTALL.WIN">
+          <provider selected="true" editor-type-id="text-editor" />
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/COPYING">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="256">
+              <caret line="8" column="73" selection-start-line="8" selection-start-column="73" selection-end-line="8" selection-end-column="73" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/storagemanager/TrajStore.cc">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="234">
+              <caret line="401" column="19" selection-start-line="401" selection-start-column="19" selection-end-line="401" selection-end-column="19" />
+              <folding>
+                <element signature="e#42#79#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/spatialindex/Trajectory.cc">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="334">
+              <caret line="144" column="25" selection-start-line="144" selection-start-column="25" selection-end-line="144" selection-end-column="25" />
+              <folding>
+                <element signature="e#40#58#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/include/storagemanager/TrajStore.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="32">
+              <caret line="148" column="39" selection-start-line="148" selection-start-column="39" selection-end-line="148" selection-end-column="39" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/mbcrtree/TrajStoreRelated.cc">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="736">
+              <caret line="23" column="22" selection-start-line="23" selection-start-column="22" selection-end-line="23" selection-end-column="22" />
+              <folding>
+                <element signature="e#42#80#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/include/spatialindex/Trajectory.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="5408">
+              <caret line="169" selection-start-line="169" selection-end-line="169" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/mbcrtree/Node.cc">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2112">
+              <caret line="66" column="27" selection-start-line="66" selection-start-column="27" selection-end-line="66" selection-end-column="27" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/mbcrtree/MBCRTree.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="270">
+              <caret line="674" column="46" selection-start-line="674" selection-start-column="46" selection-end-line="674" selection-end-column="46" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>create</find>
+      <find>r = es-&gt;getNextRecord();</find>
+      <find>storing data</find>
+      <find>loadLe</find>
+      <find>insert</find>
+      <find>Parts</find>
+      <find>case 2</find>
+      <find>loadLeaf</find>
+      <find>0.1</find>
+      <find>loadGT</find>
+      <find>1700</find>
+      <find>m_pI</find>
+      <find>load</find>
+      <find>push_back</find>
+      <find>push_</find>
+      <find>.cc</find>
+      <find>linkT</find>
+      <find>/100</find>
+      <find>len</find>
+      <find>std::floor</find>
+      <find>link</find>
+      <find>qu</find>
+      <find>NDEBUG</find>
+      <find>storing</find>
+      <find>building</find>
+      <find>GLToT</find>
+      <find>GLS</find>
+      <find>tostring</find>
+      <find>m_end</find>
+      <find>getTraj</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096)</replace>
+      <replace>tsExternalSorter</replace>
+      <replace>Shape</replace>
+      <replace>ShapeList</replace>
+      <replace>Trajectory::...: Not implemented yet!</replace>
+      <replace>line2lineDistance</replace>
+      <replace>emplace_back</replace>
+      <replace>&lt;double&gt;::infinity()</replace>
+      <replace>&lt;double&gt;::max</replace>
+      <replace>1e300</replace>
+      <replace>timedTraj2</replace>
+      <replace>m_sbr</replace>
+      <replace>m_sbr$1</replace>
+      <replace>m_runs</replace>
+      <replace>sbr</replace>
+      <replace>SBR</replace>
+      <replace>m_rootID</replace>
+      <replace>SBRTree</replace>
+      <replace>m_Time</replace>
+      <replace>m_time</replace>
+      <replace>STPoint</replace>
+      <replace>timedTraj</replace>
+      <replace>m_query.</replace>
+      <replace>pd,m_nodespq.top()-&gt;m_minDist*</replace>
+      <replace>if(parts-&gt;m_computedDist[timeInterval]&lt;0&amp;&amp;!m_nodespq.empty())</replace>
+      <replace>pd,m_nodespq.top().m_minDist</replace>
+      <replace>if(parts-&gt;m_computedDist[timeInterval]&lt;0&amp;&amp;!m_mpq.empty())</replace>
+      <replace>Phase</replace>
+      <replace>std::cerr&lt;&lt;sum&lt;&lt;&quot; &quot;;</replace>
+      <replace>= nullptr</replace>
+    </replaceStrings>
+    <dirStrings>
+      <dir>D:\MbbcOnC-\include\spatialindex</dir>
+      <dir>D:\MbbcOnC-\src\paartree</dir>
+      <dir>D:\MbbcOnC-\src\paar2tree</dir>
+      <dir>D:\MbbcOnC-\src\zirtree</dir>
+      <dir>D:\MbbcOnC-\src\lertree</dir>
+      <dir>D:\MbbcOnC-\src\rtree-mbc</dir>
+      <dir>D:\MbbcOnC-\src\r2tree</dir>
+      <dir>D:\MbbcOnC-\include</dir>
+      <dir>D:\MbbcOnC-\src\sbrtree</dir>
+      <dir>D:\MbbcOnC-</dir>
+      <dir>D:\MbbcOnC-\cmake-build-debug</dir>
+      <dir>D:\MbbcOnC-\src\rtree</dir>
+      <dir>D:\MbbcOnC-\src\mbcrtree</dir>
+    </dirStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="stash3" />
+      </map>
+    </option>
+    <option name="RESET_MODE" value="HARD" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/src/sbrtree/Node.h" />
+        <option value="$PROJECT_DIR$/src/sbrtree/Node.cc" />
+        <option value="$PROJECT_DIR$/src/sbrtree/TrajStoreRelated.cc" />
+        <option value="$PROJECT_DIR$/src/sbrtree/BulkLoader.cc" />
+        <option value="$PROJECT_DIR$/include/spatialindex/ShapeList.h" />
+        <option value="$PROJECT_DIR$/src/storagemanager/DiskStorageManager.h" />
+        <option value="$PROJECT_DIR$/test/rtree/RTreeQuery.cc" />
+        <option value="$PROJECT_DIR$/test/mbc/mbctest.cc" />
+        <option value="$PROJECT_DIR$/src/storagemanager/DiskStorageManager.cc" />
+        <option value="$PROJECT_DIR$/src/spatialindex/SBR.cc" />
+        <option value="$PROJECT_DIR$/include/spatialindex/SBR.h" />
+        <option value="$PROJECT_DIR$/include/spatialindex/TimePoint.h" />
+        <option value="$PROJECT_DIR$/test/mbc/sbrTest.cc" />
+        <option value="$PROJECT_DIR$/src/rtree/Leaf.h" />
+        <option value="$PROJECT_DIR$/src/rtree/Leaf.cc" />
+        <option value="$PROJECT_DIR$/src/rtree/BulkLoader.cc" />
+        <option value="$PROJECT_DIR$/src/rtree/RTree.h" />
+        <option value="$PROJECT_DIR$/src/mbcrtree/Leaf.h" />
+        <option value="$PROJECT_DIR$/src/mbcrtree/Leaf.cc" />
+        <option value="$PROJECT_DIR$/src/rtree/RTree.cc" />
+        <option value="$PROJECT_DIR$/heap/priority_queue.hpp" />
+        <option value="$PROJECT_DIR$/include/spatialindex/tools/MutablePriorityQueue.h" />
+        <option value="$PROJECT_DIR$/include/spatialindex/MBC.h" />
+        <option value="$PROJECT_DIR$/test/geometry/Intersection.cc" />
+        <option value="$PROJECT_DIR$/src/spatialindex/Region.cc" />
+        <option value="$PROJECT_DIR$/src/spatialindex/MBC.cc" />
+        <option value="$PROJECT_DIR$/src/spatialindex/ShapeList.cc" />
+        <option value="$PROJECT_DIR$/src/spatialindex/SpatialIndexImpl.cc" />
+        <option value="$PROJECT_DIR$/src/rtree/TrajStoreRelated.cc" />
+        <option value="$PROJECT_DIR$/include/spatialindex/SpatialIndex.h" />
+        <option value="$PROJECT_DIR$/src/CMakeLists.txt" />
+        <option value="$PROJECT_DIR$/include/spatialindex/STPoint.h" />
+        <option value="$PROJECT_DIR$/CMakeLists.txt" />
+        <option value="$PROJECT_DIR$/src/rtree/PointerPoolNode.h" />
+        <option value="$PROJECT_DIR$/src/mbcrtree/Node.h" />
+        <option value="$PROJECT_DIR$/src/mbcrtree/PointerPoolNode.h" />
+        <option value="$PROJECT_DIR$/src/mbcrtree/BulkLoader.cc" />
+        <option value="$PROJECT_DIR$/src/spatialindex/STPoint.cc" />
+        <option value="$PROJECT_DIR$/include/spatialindex/Trajectory.h" />
+        <option value="$PROJECT_DIR$/test/mbc/TrajStoreTest.cc" />
+        <option value="$PROJECT_DIR$/src/mbcrtree/MBCRTree.cc" />
+        <option value="$PROJECT_DIR$/include/spatialindex/MBCRTree.h" />
+        <option value="$PROJECT_DIR$/src/mbcrtree/TrajStoreRelated.cc" />
+        <option value="$PROJECT_DIR$/test/mbc/mbcTest.cc" />
+        <option value="$PROJECT_DIR$/src/mbcrtree/Node.cc" />
+        <option value="$PROJECT_DIR$/test/CMakeLists.txt" />
+        <option value="$PROJECT_DIR$/include/storagemanager/TrajStore.h" />
+        <option value="$PROJECT_DIR$/src/storagemanager/TrajStore.cc" />
+        <option value="$PROJECT_DIR$/src/spatialindex/Trajectory.cc" />
+        <option value="$PROJECT_DIR$/src/mbcrtree/MBCRTree.h" />
+        <option value="$PROJECT_DIR$/test/mbc/enumTest.cc" />
+      </list>
+    </option>
+  </component>
+  <component name="NamedScopeManager">
+    <scope name="Unnamed" pattern="file[spatialindex]:src/mbcrtree/*" />
+  </component>
+  <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="833" />
+    <option name="width" value="854" />
+    <option name="height" value="512" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="spatialindex" type="b2602c69:ProjectViewProjectNode" />
+              <item name="MbbcOnC-" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="Scope" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/rtree/Node.cc" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
+    <property name="settings.editor.selected.configurable" value="CPPToolchains" />
+    <property name="two.files.diff.last.used.file" value="$PROJECT_DIR$/src/rtree/Node.cc" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\MbbcOnC-\include\storagemanager" />
+      <recent name="D:\MbbcOnC-\include\spatialindex" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\MbbcOnC-" />
+      <recent name="D:\MbbcOnC-\src\spatialindex" />
+      <recent name="D:\MbbcOnC-\include\spatialindex" />
+      <recent name="D:\MbbcOnC-\src" />
+      <recent name="D:\MbbcOnC-\src\mbcrtree" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="CMake Application.test-mbc-enumTest">
+    <configuration name="dist" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="dist" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="spatialindex" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="spatialindex" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="spatialindex_c" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="spatialindex_c" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-geometry-Intersection" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-geometry-Intersection" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-geometry-Intersection">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-mbc-TrajStoreTest" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-mbc-TrajStoreTest" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-mbc-TrajStoreTest">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-mbc-enumTest" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-mbc-enumTest" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-mbc-enumTest">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-mbc-mbcTest" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-mbc-mbcTest" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-mbc-mbcTest">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-mvrtree-Exhaustive" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-mvrtree-Exhaustive" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-mvrtree-Exhaustive">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-mvrtree-Generator" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-mvrtree-Generator" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-mvrtree-Generator">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-mvrtree-MVRTreeLoad" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-mvrtree-MVRTreeLoad" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-mvrtree-MVRTreeLoad">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-mvrtree-MVRTreeQuery" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-mvrtree-MVRTreeQuery" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-mvrtree-MVRTreeQuery">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-rtree-Exhaustive" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-rtree-Exhaustive" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-rtree-Exhaustive">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-rtree-Generator" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-rtree-Generator" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-rtree-Generator">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-rtree-RTreeBulkLoad" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-rtree-RTreeBulkLoad" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-rtree-RTreeBulkLoad">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-rtree-RTreeLoad" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-rtree-RTreeLoad" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-rtree-RTreeLoad">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-rtree-RTreeQuery" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-rtree-RTreeQuery" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-rtree-RTreeQuery">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-tprtree-Exhaustive" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-tprtree-Exhaustive" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-tprtree-Exhaustive">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-tprtree-Generator" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-tprtree-Generator" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-tprtree-Generator">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-tprtree-TPRTreeLoad" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-tprtree-TPRTreeLoad" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-tprtree-TPRTreeLoad">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="test-tprtree-TPRTreeQuery" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="spatialindex" TARGET_NAME="test-tprtree-TPRTreeQuery" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="spatialindex" RUN_TARGET_NAME="test-tprtree-TPRTreeQuery">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="CMake Application.dist" />
+      <item itemvalue="CMake Application.spatialindex" />
+      <item itemvalue="CMake Application.spatialindex_c" />
+      <item itemvalue="CMake Application.test-geometry-Intersection" />
+      <item itemvalue="CMake Application.test-mbc-TrajStoreTest" />
+      <item itemvalue="CMake Application.test-mbc-enumTest" />
+      <item itemvalue="CMake Application.test-mbc-mbcTest" />
+      <item itemvalue="CMake Application.test-mvrtree-Exhaustive" />
+      <item itemvalue="CMake Application.test-mvrtree-Generator" />
+      <item itemvalue="CMake Application.test-mvrtree-MVRTreeLoad" />
+      <item itemvalue="CMake Application.test-mvrtree-MVRTreeQuery" />
+      <item itemvalue="CMake Application.test-rtree-Exhaustive" />
+      <item itemvalue="CMake Application.test-rtree-Generator" />
+      <item itemvalue="CMake Application.test-rtree-RTreeBulkLoad" />
+      <item itemvalue="CMake Application.test-rtree-RTreeLoad" />
+      <item itemvalue="CMake Application.test-rtree-RTreeQuery" />
+      <item itemvalue="CMake Application.test-tprtree-Exhaustive" />
+      <item itemvalue="CMake Application.test-tprtree-Generator" />
+      <item itemvalue="CMake Application.test-tprtree-TPRTreeLoad" />
+      <item itemvalue="CMake Application.test-tprtree-TPRTreeQuery" />
+    </list>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="36b5b15b-c484-4023-bd99-c1ed0d11bedf" name="Default Changelist" comment="" />
+      <created>1556274137325</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1556274137325</updated>
+      <workItem from="1556274140882" duration="884000" />
+      <workItem from="1556277066076" duration="4439000" />
+      <workItem from="1556297408636" duration="12715000" />
+      <workItem from="1556357400903" duration="14094000" />
+      <workItem from="1556412828149" duration="24566000" />
+      <workItem from="1556696797845" duration="2317000" />
+      <workItem from="1557022654718" duration="598000" />
+      <workItem from="1557038449394" duration="11557000" />
+      <workItem from="1557133247854" duration="38129000" />
+      <workItem from="1557300323168" duration="15486000" />
+      <workItem from="1557322205102" duration="65689000" />
+      <workItem from="1557739891688" duration="43268000" />
+      <workItem from="1557841844139" duration="10487000" />
+      <workItem from="1557934928614" duration="7786000" />
+      <workItem from="1557975628078" duration="3000000" />
+      <workItem from="1557978674196" duration="32393000" />
+      <workItem from="1558018855840" duration="2971000" />
+      <workItem from="1558054696919" duration="1878000" />
+      <workItem from="1558079483334" duration="8609000" />
+      <workItem from="1558315754502" duration="54321000" />
+      <workItem from="1558449858883" duration="13445000" />
+      <workItem from="1558489086316" duration="66789000" />
+      <workItem from="1558620829523" duration="20969000" />
+      <workItem from="1558675582721" duration="23482000" />
+      <workItem from="1558771762421" duration="31063000" />
+      <workItem from="1559094600172" duration="47918000" />
+      <workItem from="1559394201251" duration="8246000" />
+      <workItem from="1559524902269" duration="33441000" />
+      <workItem from="1559611124410" duration="12841000" />
+      <workItem from="1559626750954" duration="2731000" />
+      <workItem from="1559629563254" duration="38374000" />
+      <workItem from="1559711921965" duration="28156000" />
+      <workItem from="1559752778603" duration="55388000" />
+      <workItem from="1560129737967" duration="26837000" />
+      <workItem from="1560215113130" duration="19376000" />
+      <workItem from="1560242103357" duration="47445000" />
+      <workItem from="1560388626988" duration="17854000" />
+      <workItem from="1560474907577" duration="26045000" />
+      <workItem from="1560517864817" duration="433000" />
+      <workItem from="1560563847868" duration="30061000" />
+      <workItem from="1560820506559" duration="13856000" />
+      <workItem from="1560838914912" duration="22000" />
+      <workItem from="1560838956077" duration="57000" />
+      <workItem from="1560839033529" duration="36781000" />
+      <workItem from="1560913770508" duration="141000" />
+      <workItem from="1560914656603" duration="283000" />
+      <workItem from="1560916503381" duration="73746000" />
+      <workItem from="1561041162843" duration="45138000" />
+      <workItem from="1561135325212" duration="46000" />
+      <workItem from="1561135660388" duration="415000" />
+      <workItem from="1561174085895" duration="3713000" />
+      <workItem from="1561193486198" duration="21770000" />
+      <workItem from="1561338906586" duration="7817000" />
+      <workItem from="1561356611021" duration="997000" />
+      <workItem from="1561358253672" duration="1627000" />
+      <workItem from="1561360003292" duration="20972000" />
+      <workItem from="1561428053493" duration="33318000" />
+      <workItem from="1561510612180" duration="19491000" />
+      <workItem from="1561684463184" duration="5468000" />
+      <workItem from="1561690851561" duration="29793000" />
+      <workItem from="1561945824664" duration="23577000" />
+      <workItem from="1561979573302" duration="9734000" />
+      <workItem from="1562059490097" duration="6530000" />
+      <workItem from="1562116024450" duration="33779000" />
+      <workItem from="1562211910522" duration="4178000" />
+      <workItem from="1562220382239" duration="2423000" />
+      <workItem from="1562595548281" duration="246000" />
+      <workItem from="1562761567473" duration="34283000" />
+      <workItem from="1562891761355" duration="1749000" />
+      <workItem from="1562895831325" duration="37426000" />
+      <workItem from="1563152804670" duration="21981000" />
+      <workItem from="1563269387769" duration="108860000" />
+      <workItem from="1563626260556" duration="10142000" />
+      <workItem from="1563682562010" duration="37531000" />
+      <workItem from="1563853370946" duration="560000" />
+      <workItem from="1563853976576" duration="57602000" />
+      <workItem from="1563975229275" duration="10628000" />
+      <workItem from="1564018956346" duration="17907000" />
+      <workItem from="1564039382086" duration="18552000" />
+      <workItem from="1564143507046" duration="6419000" />
+      <workItem from="1564364623113" duration="19869000" />
+      <workItem from="1564452148797" duration="15443000" />
+      <workItem from="1564475347104" duration="5049000" />
+      <workItem from="1564482594307" duration="6939000" />
+      <workItem from="1564540417096" duration="3367000" />
+      <workItem from="1564628333495" duration="30541000" />
+      <workItem from="1564726227413" duration="604000" />
+      <workItem from="1564728523038" duration="74000" />
+      <workItem from="1564728616580" duration="330000" />
+      <workItem from="1564728985364" duration="12683000" />
+      <workItem from="1564798250117" duration="20182000" />
+      <workItem from="1564821813342" duration="497000" />
+      <workItem from="1564822334981" duration="19000" />
+      <workItem from="1564822388928" duration="42278000" />
+      <workItem from="1565143433463" duration="32748000" />
+      <workItem from="1565255847058" duration="7501000" />
+      <workItem from="1565313333428" duration="16980000" />
+      <workItem from="1565349063775" duration="3928000" />
+      <workItem from="1565580569607" duration="15326000" />
+      <workItem from="1565614463717" duration="45549000" />
+      <workItem from="1565832672913" duration="4672000" />
+      <workItem from="1566176465819" duration="34114000" />
+      <workItem from="1566350040655" duration="817000" />
+      <workItem from="1566354885088" duration="5614000" />
+      <workItem from="1566375694287" duration="6160000" />
+    </task>
+    <task id="LOCAL-00092" summary="MSED and debuged some calculations(not complete, should not use disttype=2 now)">
+      <created>1562889301781</created>
+      <option name="number" value="00092" />
+      <option name="presentableId" value="LOCAL-00092" />
+      <option name="project" value="LOCAL" />
+      <updated>1562889301781</updated>
+    </task>
+    <task id="LOCAL-00093" summary="MSED and debuged some calculations(not complete, should not use disttype=2 now)">
+      <created>1562891782929</created>
+      <option name="number" value="00093" />
+      <option name="presentableId" value="LOCAL-00093" />
+      <option name="project" value="LOCAL" />
+      <updated>1562891782929</updated>
+    </task>
+    <task id="LOCAL-00094" summary="Important debug on getPeriodMinimumDistance/getLeafMinimumDistance">
+      <created>1562897561122</created>
+      <option name="number" value="00094" />
+      <option name="presentableId" value="LOCAL-00094" />
+      <option name="project" value="LOCAL" />
+      <updated>1562897561122</updated>
+    </task>
+    <task id="LOCAL-00095" summary="Important debug on getPeriodMinimumDistance/getLeafMinimumDistance">
+      <created>1562897856417</created>
+      <option name="number" value="00095" />
+      <option name="presentableId" value="LOCAL-00095" />
+      <option name="project" value="LOCAL" />
+      <updated>1562897856417</updated>
+    </task>
+    <task id="LOCAL-00096" summary="Important debug on getPeriodMinimumDistance/getLeafMinimumDistance">
+      <created>1562901220831</created>
+      <option name="number" value="00096" />
+      <option name="presentableId" value="LOCAL-00096" />
+      <option name="project" value="LOCAL" />
+      <updated>1562901220831</updated>
+    </task>
+    <task id="LOCAL-00097" summary="Result of MaxSED is now true.">
+      <created>1562933985017</created>
+      <option name="number" value="00097" />
+      <option name="presentableId" value="LOCAL-00097" />
+      <option name="project" value="LOCAL" />
+      <updated>1562933985017</updated>
+    </task>
+    <task id="LOCAL-00098" summary="Result of MaxSED is now true.">
+      <created>1562934715336</created>
+      <option name="number" value="00098" />
+      <option name="presentableId" value="LOCAL-00098" />
+      <option name="project" value="LOCAL" />
+      <updated>1562934715336</updated>
+    </task>
+    <task id="LOCAL-00099" summary="minor debug on algorithm">
+      <created>1562936042006</created>
+      <option name="number" value="00099" />
+      <option name="presentableId" value="LOCAL-00099" />
+      <option name="project" value="LOCAL" />
+      <updated>1562936042006</updated>
+    </task>
+    <task id="LOCAL-00100" summary="Important debug on getLeafMinimumDistance, the start and end time is set wrong">
+      <created>1563104755345</created>
+      <option name="number" value="00100" />
+      <option name="presentableId" value="LOCAL-00100" />
+      <option name="project" value="LOCAL" />
+      <updated>1563104755345</updated>
+    </task>
+    <task id="LOCAL-00101" summary="Optimized the algorithm of Trajectory::getNodeMinimumDistance">
+      <created>1563106833201</created>
+      <option name="number" value="00101" />
+      <option name="presentableId" value="LOCAL-00101" />
+      <option name="project" value="LOCAL" />
+      <updated>1563106833201</updated>
+    </task>
+    <task id="LOCAL-00102" summary="Important Debug: fixed the wrong return value of fakeTPvector">
+      <created>1563170057889</created>
+      <option name="number" value="00102" />
+      <option name="presentableId" value="LOCAL-00102" />
+      <option name="project" value="LOCAL" />
+      <updated>1563170057890</updated>
+    </task>
+    <task id="LOCAL-00103" summary="Optimization: query simplification used here">
+      <created>1563170098327</created>
+      <option name="number" value="00103" />
+      <option name="presentableId" value="LOCAL-00103" />
+      <option name="project" value="LOCAL" />
+      <updated>1563170098328</updated>
+    </task>
+    <task id="LOCAL-00104" summary="Major Debug: another bug in fakeTpVector...">
+      <created>1563184494166</created>
+      <option name="number" value="00104" />
+      <option name="presentableId" value="LOCAL-00104" />
+      <option name="project" value="LOCAL" />
+      <updated>1563184494166</updated>
+    </task>
+    <task id="LOCAL-00105" summary="Optimize:further implement of the simplified query">
+      <created>1563184525917</created>
+      <option name="number" value="00105" />
+      <option name="presentableId" value="LOCAL-00105" />
+      <option name="project" value="LOCAL" />
+      <updated>1563184525917</updated>
+    </task>
+    <task id="LOCAL-00106" summary="Optimize:further implement of the simplified query">
+      <created>1563534812443</created>
+      <option name="number" value="00106" />
+      <option name="presentableId" value="LOCAL-00106" />
+      <option name="project" value="LOCAL" />
+      <updated>1563534812443</updated>
+    </task>
+    <task id="LOCAL-00107" summary="bug fixed...my brain was crashed">
+      <created>1563540291167</created>
+      <option name="number" value="00107" />
+      <option name="presentableId" value="LOCAL-00107" />
+      <option name="project" value="LOCAL" />
+      <updated>1563540291167</updated>
+    </task>
+    <task id="LOCAL-00108" summary="Implemented PartsStore to store the loaded leafs">
+      <created>1564038476875</created>
+      <option name="number" value="00108" />
+      <option name="presentableId" value="LOCAL-00108" />
+      <option name="project" value="LOCAL" />
+      <updated>1564038476876</updated>
+    </task>
+    <task id="LOCAL-00109" summary="debug: forget the error in partsStore">
+      <created>1564043495138</created>
+      <option name="number" value="00109" />
+      <option name="presentableId" value="LOCAL-00109" />
+      <option name="project" value="LOCAL" />
+      <updated>1564043495138</updated>
+    </task>
+    <task id="LOCAL-00110" summary="debug: forget the error in partsStore">
+      <created>1564143698870</created>
+      <option name="number" value="00110" />
+      <option name="presentableId" value="LOCAL-00110" />
+      <option name="project" value="LOCAL" />
+      <updated>1564143698870</updated>
+    </task>
+    <task id="LOCAL-00111" summary="debug: forget the error in partsStore">
+      <created>1564150593476</created>
+      <option name="number" value="00111" />
+      <option name="presentableId" value="LOCAL-00111" />
+      <option name="project" value="LOCAL" />
+      <updated>1564150593476</updated>
+    </task>
+    <task id="LOCAL-00112" summary="minor debug">
+      <created>1564366134115</created>
+      <option name="number" value="00112" />
+      <option name="presentableId" value="LOCAL-00112" />
+      <option name="project" value="LOCAL" />
+      <updated>1564366134115</updated>
+    </task>
+    <task id="LOCAL-00113" summary="minor optimization">
+      <created>1564390806567</created>
+      <option name="number" value="00113" />
+      <option name="presentableId" value="LOCAL-00113" />
+      <option name="project" value="LOCAL" />
+      <updated>1564390806567</updated>
+    </task>
+    <task id="LOCAL-00114" summary="minor optimization">
+      <created>1564392632050</created>
+      <option name="number" value="00114" />
+      <option name="presentableId" value="LOCAL-00114" />
+      <option name="project" value="LOCAL" />
+      <updated>1564392632050</updated>
+    </task>
+    <task id="LOCAL-00115" summary="minor optimization">
+      <created>1564392886459</created>
+      <option name="number" value="00115" />
+      <option name="presentableId" value="LOCAL-00115" />
+      <option name="project" value="LOCAL" />
+      <updated>1564392886459</updated>
+    </task>
+    <task id="LOCAL-00116" summary="use maxDist for MBC, give a try">
+      <created>1564406728149</created>
+      <option name="number" value="00116" />
+      <option name="presentableId" value="LOCAL-00116" />
+      <option name="project" value="LOCAL" />
+      <updated>1564406728153</updated>
+    </task>
+    <task id="LOCAL-00117" summary="hmmm, wrong result">
+      <created>1564468530939</created>
+      <option name="number" value="00117" />
+      <option name="presentableId" value="LOCAL-00117" />
+      <option name="project" value="LOCAL" />
+      <updated>1564468530940</updated>
+    </task>
+    <task id="LOCAL-00118" summary="major debug">
+      <created>1564472616157</created>
+      <option name="number" value="00118" />
+      <option name="presentableId" value="LOCAL-00118" />
+      <option name="project" value="LOCAL" />
+      <updated>1564472616157</updated>
+    </task>
+    <task id="LOCAL-00119" summary="hmmm MBCRTree is not enough for IED.">
+      <created>1564711257394</created>
+      <option name="number" value="00119" />
+      <option name="presentableId" value="LOCAL-00119" />
+      <option name="project" value="LOCAL" />
+      <updated>1564711257395</updated>
+    </task>
+    <task id="LOCAL-00120" summary="Redesigned the Minimum calculation for IED, now works fine i think">
+      <created>1564729542423</created>
+      <option name="number" value="00120" />
+      <option name="presentableId" value="LOCAL-00120" />
+      <option name="project" value="LOCAL" />
+      <updated>1564729542423</updated>
+    </task>
+    <task id="LOCAL-00121" summary="implement Priority Queue Based lower bound">
+      <created>1564750168673</created>
+      <option name="number" value="00121" />
+      <option name="presentableId" value="LOCAL-00121" />
+      <option name="project" value="LOCAL" />
+      <updated>1564750168674</updated>
+    </task>
+    <task id="LOCAL-00122" summary="try to implement nodepq, failed">
+      <created>1564818258633</created>
+      <option name="number" value="00122" />
+      <option name="presentableId" value="LOCAL-00122" />
+      <option name="project" value="LOCAL" />
+      <updated>1564818258634</updated>
+    </task>
+    <task id="LOCAL-00123" summary="a little improvement">
+      <created>1564819702829</created>
+      <option name="number" value="00123" />
+      <option name="presentableId" value="LOCAL-00123" />
+      <option name="project" value="LOCAL" />
+      <updated>1564819702829</updated>
+    </task>
+    <task id="LOCAL-00124" summary="try to implement nodepq, failed">
+      <created>1564820853715</created>
+      <option name="number" value="00124" />
+      <option name="presentableId" value="LOCAL-00124" />
+      <option name="project" value="LOCAL" />
+      <updated>1564820853715</updated>
+    </task>
+    <task id="LOCAL-00125" summary="a little improvement">
+      <created>1564822069096</created>
+      <option name="number" value="00125" />
+      <option name="presentableId" value="LOCAL-00125" />
+      <option name="project" value="LOCAL" />
+      <updated>1564822069096</updated>
+    </task>
+    <task id="LOCAL-00126" summary="till this is save">
+      <created>1564824367592</created>
+      <option name="number" value="00126" />
+      <option name="presentableId" value="LOCAL-00126" />
+      <option name="project" value="LOCAL" />
+      <updated>1564824367592</updated>
+    </task>
+    <task id="LOCAL-00127" summary="till this is save">
+      <created>1564824485429</created>
+      <option name="number" value="00127" />
+      <option name="presentableId" value="LOCAL-00127" />
+      <option name="project" value="LOCAL" />
+      <updated>1564824485429</updated>
+    </task>
+    <task id="LOCAL-00128" summary="stash">
+      <created>1564835003990</created>
+      <option name="number" value="00128" />
+      <option name="presentableId" value="LOCAL-00128" />
+      <option name="project" value="LOCAL" />
+      <updated>1564835003990</updated>
+    </task>
+    <task id="LOCAL-00129" summary="Finally I find the bug... should find a way to detect array out of bound...">
+      <created>1564835584116</created>
+      <option name="number" value="00129" />
+      <option name="presentableId" value="LOCAL-00129" />
+      <option name="project" value="LOCAL" />
+      <updated>1564835584116</updated>
+    </task>
+    <task id="LOCAL-00130" summary="Debugs on MaxSED calculation...The trajectory class is sort of messed up....">
+      <created>1564937364550</created>
+      <option name="number" value="00130" />
+      <option name="presentableId" value="LOCAL-00130" />
+      <option name="project" value="LOCAL" />
+      <updated>1564937364550</updated>
+    </task>
+    <task id="LOCAL-00131" summary="Debugs on MaxSED calculation...The trajectory class is sort of messed up....">
+      <created>1564937445833</created>
+      <option name="number" value="00131" />
+      <option name="presentableId" value="LOCAL-00131" />
+      <option name="project" value="LOCAL" />
+      <updated>1564937445833</updated>
+    </task>
+    <task id="LOCAL-00132" summary="Debugs on MaxSED calculation...The trajectory class is sort of messed up....">
+      <created>1564937786109</created>
+      <option name="number" value="00132" />
+      <option name="presentableId" value="LOCAL-00132" />
+      <option name="project" value="LOCAL" />
+      <updated>1564937786109</updated>
+    </task>
+    <task id="LOCAL-00133" summary="debug on MinSED, debug on intersect with period 0, implement time-period range, the efficiency is not too good">
+      <created>1565182752992</created>
+      <option name="number" value="00133" />
+      <option name="presentableId" value="LOCAL-00133" />
+      <option name="project" value="LOCAL" />
+      <updated>1565182752993</updated>
+    </task>
+    <task id="LOCAL-00134" summary="debug on MinSED, debug on intersect with period 0, implement time-period range, the efficiency is not too good">
+      <created>1565262246725</created>
+      <option name="number" value="00134" />
+      <option name="presentableId" value="LOCAL-00134" />
+      <option name="project" value="LOCAL" />
+      <updated>1565262246728</updated>
+    </task>
+    <task id="LOCAL-00135" summary="remove SBR Tree, debugs the inability to build in linux...Clion is a bit weird">
+      <created>1565314435499</created>
+      <option name="number" value="00135" />
+      <option name="presentableId" value="LOCAL-00135" />
+      <option name="project" value="LOCAL" />
+      <updated>1565314435500</updated>
+    </task>
+    <task id="LOCAL-00136" summary="debug on cuttraj">
+      <created>1565329758263</created>
+      <option name="number" value="00136" />
+      <option name="presentableId" value="LOCAL-00136" />
+      <option name="project" value="LOCAL" />
+      <updated>1565329758264</updated>
+    </task>
+    <task id="LOCAL-00137" summary="handling the geolife data">
+      <created>1565343129465</created>
+      <option name="number" value="00137" />
+      <option name="presentableId" value="LOCAL-00137" />
+      <option name="project" value="LOCAL" />
+      <updated>1565343129465</updated>
+    </task>
+    <task id="LOCAL-00138" summary="solved the memory leaks">
+      <created>1565755210973</created>
+      <option name="number" value="00138" />
+      <option name="presentableId" value="LOCAL-00138" />
+      <option name="project" value="LOCAL" />
+      <updated>1565755210975</updated>
+    </task>
+    <task id="LOCAL-00139" summary="debug on Node Distance Computation, and set maxseg">
+      <created>1565787222067</created>
+      <option name="number" value="00139" />
+      <option name="presentableId" value="LOCAL-00139" />
+      <option name="project" value="LOCAL" />
+      <updated>1565787222068</updated>
+    </task>
+    <task id="LOCAL-00140" summary="start testing">
+      <created>1566359737486</created>
+      <option name="number" value="00140" />
+      <option name="presentableId" value="LOCAL-00140" />
+      <option name="project" value="LOCAL" />
+      <updated>1566359737487</updated>
+    </task>
+    <option name="localTasksCounter" value="141" />
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="1996923000" />
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-8" y="-8" width="1696" height="1026" extended-state="6" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.8355263" visible="true" weight="0.27933985" />
+      <window_info id="Structure" order="1" sideWeight="0.16447368" side_tool="true" weight="0.26832956" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.23015873" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.21087533" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.28923768" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.32735425" />
+      <window_info anchor="bottom" id="Database Changes" order="7" />
+      <window_info anchor="bottom" id="Terminal" order="8" weight="0.32735425" />
+      <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
+      <window_info anchor="bottom" id="Version Control" order="10" weight="0.514574" />
+      <window_info anchor="bottom" id="CMake" order="11" weight="0.3867713" />
+      <window_info anchor="bottom" id="Messages" order="12" weight="0.85089684" />
+      <window_info anchor="bottom" id="Inspection Results" order="13" weight="0.36659193" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Database" order="3" />
+    </layout>
+    <layout-to-restore>
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.8355263" visible="true" weight="0.2176039" />
+      <window_info id="Structure" order="1" sideWeight="0.16447368" side_tool="true" weight="0.26832956" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.23318386" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.2831257" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.32891247" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.32735425" />
+      <window_info anchor="bottom" id="Database Changes" order="7" />
+      <window_info anchor="bottom" id="Terminal" order="8" weight="0.32735425" />
+      <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
+      <window_info anchor="bottom" id="Version Control" order="10" weight="0.514574" />
+      <window_info anchor="bottom" id="CMake" order="11" weight="0.3867713" />
+      <window_info anchor="bottom" id="Messages" order="12" visible="true" weight="0.27690583" />
+      <window_info anchor="bottom" id="Inspection Results" order="13" weight="0.36659193" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Database" order="3" />
+    </layout-to-restore>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ORDER">
+      <list>
+        <option value="0" />
+        <option value="2" />
+        <option value="3" />
+        <option value="1" />
+      </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="RECENTLY_FILTERED_USER_GROUPS">
+                <collection />
+              </option>
+              <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+                <collection />
+              </option>
+              <option name="COLUMN_ORDER">
+                <list>
+                  <option value="0" />
+                  <option value="1" />
+                  <option value="2" />
+                  <option value="3" />
+                </list>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list />
+          </value>
+        </entry>
+        <entry key="User">
+          <value>
+            <list />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
+    <option name="CHECK_NEW_TODO" value="false" />
+    <MESSAGE value="bug..." />
+    <MESSAGE value="bug fixed...my brain was crashed" />
+    <MESSAGE value="Implemented PartsStore to store the loaded leafs" />
+    <MESSAGE value="put pointers to the data back to the leaf nodes" />
+    <MESSAGE value="minor debug" />
+    <MESSAGE value="minor optimization" />
+    <MESSAGE value="use maxDist for MBC, give a try" />
+    <MESSAGE value="hmmm, wrong result" />
+    <MESSAGE value="major debug" />
+    <MESSAGE value="hmmm MBCRTree is not enough for IED." />
+    <MESSAGE value="Redesigned the Minimum calculation for IED, now works fine i think" />
+    <MESSAGE value="implement Priority Queue Based lower bound" />
+    <MESSAGE value="try to implement nodepq, failed" />
+    <MESSAGE value="a little improvement" />
+    <MESSAGE value="till this is save" />
+    <MESSAGE value="stash" />
+    <MESSAGE value="Finally I find the bug... should find a way to detect array out of bound..." />
+    <MESSAGE value="Debugs on MaxSED calculation...The trajectory class is sort of messed up...." />
+    <MESSAGE value="debug on MinSED, debug on intersect with period 0, implement time-period range, the efficiency is not too good" />
+    <MESSAGE value="remove SBR Tree, debugs the inability to build in linux...Clion is a bit weird" />
+    <MESSAGE value="debug on cuttraj" />
+    <MESSAGE value="handling the geolife data" />
+    <MESSAGE value="solved the memory leaks" />
+    <MESSAGE value="debug on Node Distance Computation, and set maxseg" />
+    <MESSAGE value="start testing" />
+    <option name="LAST_COMMIT_MESSAGE" value="start testing" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/spatialindex/SpatialIndexImpl.cc</url>
+          <line>36</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/spatialindex/Trajectory.cc</url>
+          <line>120</line>
+          <option name="timeStamp" value="28" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/rtree/RTree.cc</url>
+          <line>561</line>
+          <option name="timeStamp" value="56" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/rtree/RTree.cc</url>
+          <line>604</line>
+          <option name="timeStamp" value="62" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/rtree/PointerPoolNode.h</url>
+          <line>110</line>
+          <option name="timeStamp" value="65" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/include/spatialindex/tools/PoolPointer.h</url>
+          <line>46</line>
+          <option name="timeStamp" value="67" />
+        </line-breakpoint>
+      </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="CidrExceptionBreakpoint">
+          <dependency master-id="0" />
+          <properties caught="ANY_EXCEPTION">
+            <option name="whenCaught" value="ANY_EXCEPTION" />
+          </properties>
+        </breakpoint>
+        <breakpoint enabled="true" type="python-exception">
+          <dependency id="0" />
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/test/geometry/Intersection.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2848">
+          <caret line="89" column="28" selection-start-line="89" selection-start-column="28" selection-end-line="89" selection-end-column="28" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/spatialindex/MBC.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1472">
+          <caret line="46" column="31" selection-start-line="46" selection-start-column="31" selection-end-line="46" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test/mbc/sbrTest.cc" />
+    <entry file="file://$PROJECT_DIR$/src/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5728">
+          <caret line="179" column="40" selection-start-line="179" selection-start-column="40" selection-end-line="179" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/spatialindex/ShapeList.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="2" selection-start-column="2" selection-end-column="2" />
+          <folding>
+            <element signature="e#41#79#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/spatialindex/STPoint.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1920">
+          <caret line="60" selection-start-line="60" selection-end-line="60" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/bits/stl_pair.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="227">
+          <caret line="518" column="4" selection-start-line="518" selection-start-column="4" selection-end-line="518" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/rtree/TrajStoreRelated.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="252">
+          <caret line="18" column="36" selection-start-line="18" selection-start-column="36" selection-end-line="18" selection-end-column="36" />
+          <folding>
+            <element signature="e#42#80#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/rtree/Leaf.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="379">
+          <caret line="126" column="16" selection-start-line="126" selection-start-column="16" selection-end-line="126" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/bits/stl_stack.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="152">
+          <caret line="185" selection-start-line="185" selection-end-line="185" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/rtree/BulkLoader.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="144">
+          <caret line="334" selection-start-line="334" selection-end-line="334" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/rtree/PointerPoolNode.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="133">
+          <caret line="110" selection-start-line="110" selection-end-line="110" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/rtree/RTree.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="196">
+          <caret line="79" column="75" selection-start-line="79" selection-start-column="75" selection-end-line="79" selection-end-column="75" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/rtree/Node.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-340">
+          <caret line="72" column="19" selection-start-line="72" selection-start-column="11" selection-end-line="72" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/rtree/Node.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="183">
+          <caret line="38" column="30" selection-start-line="38" selection-start-column="30" selection-end-line="38" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/spatialindex/STPoint.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="116" column="1" selection-start-line="116" selection-start-column="1" selection-end-line="116" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/spatialindex/Region.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="282">
+          <caret line="577" column="29" lean-forward="true" selection-start-line="577" selection-start-column="29" selection-end-line="577" selection-end-column="29" />
+          <folding>
+            <element signature="e#1512#1550#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/spatialindex/MBC.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="215">
+          <caret line="554" column="42" lean-forward="true" selection-start-line="554" selection-start-column="42" selection-end-line="554" selection-end-column="42" />
+          <folding>
+            <element signature="e#68#86#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/spatialindex/tools/PointerPool.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-842">
+          <caret line="33" column="29" selection-start-line="33" selection-start-column="29" selection-end-line="33" selection-end-column="29" />
+          <folding>
+            <element signature="e#1580#1589#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/spatialindex/tools/PoolPointer.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="46" selection-start-line="46" selection-end-line="46" />
+          <folding>
+            <element signature="e#1580#1589#0" expanded="true" />
+            <element signature="e#1620#1629#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/bits/stl_set.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="247">
+          <caret line="508" column="6" selection-start-line="508" selection-start-column="6" selection-end-line="508" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/spatialindex/Region.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1376">
+          <caret line="43" selection-start-line="43" selection-end-line="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mbcrtree/BulkLoader.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="16000">
+          <caret line="500" column="62" selection-start-line="500" selection-start-column="62" selection-end-line="500" selection-end-column="62" />
+          <folding>
+            <element signature="e#1613#1651#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mbcrtree/BulkLoader.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3652">
+          <caret line="5" column="2" selection-start-line="5" selection-start-column="2" selection-end-line="5" selection-end-column="2" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mbcrtree/Index.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="252">
+          <caret line="367" selection-start-line="367" selection-end-line="367" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mbcrtree/Leaf.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-73">
+          <caret line="118" column="23" lean-forward="true" selection-start-line="118" selection-start-column="23" selection-end-line="118" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mbcrtree/Statistics.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-5206" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/spatialindex/tools/MutablePriorityQueue.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="288">
+          <caret line="47" column="22" selection-start-line="47" selection-start-column="22" selection-end-line="47" selection-end-column="22" />
+          <folding>
+            <element signature="e#123#144#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/spatialindex/SpatialIndexImpl.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="376">
+          <caret line="51" column="12" selection-start-line="51" selection-start-column="12" selection-end-line="51" selection-end-column="12" />
+          <folding>
+            <element signature="e#1511#1549#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/rtree/RTree.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="224">
+          <caret line="1592" column="1" selection-start-line="1592" selection-start-column="1" selection-end-line="1592" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mbcrtree/Node.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="234">
+          <caret line="38" column="26" lean-forward="true" selection-start-line="38" selection-start-column="26" selection-end-line="38" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/spatialindex/MBCRTree.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="352">
+          <caret line="111" column="34" selection-start-line="111" selection-start-column="34" selection-end-line="111" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mbcrtree/MBCRTree.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="315">
+          <caret line="235" column="17" selection-start-line="235" selection-start-column="17" selection-end-line="235" selection-end-column="17" />
+          <folding>
+            <element signature="e#1511#1529#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/bits/ios_base.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="1025" column="2" selection-start-line="1025" selection-start-column="2" selection-end-line="1025" selection-end-column="2" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="192">
+          <caret line="58" column="21" selection-start-line="58" selection-start-column="21" selection-end-line="58" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="32">
+          <caret line="36" column="54" selection-start-line="36" selection-start-column="54" selection-end-line="36" selection-end-column="54" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/x86_64-w64-mingw32/include/time.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="247">
+          <caret line="224" column="15" selection-start-line="224" selection-start-column="15" selection-end-line="224" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/AUTHORS" />
+    <entry file="file://$PROJECT_DIR$/src/mbcrtree/PointerPoolNode.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2016">
+          <caret line="63" column="9" selection-start-line="63" selection-start-column="9" selection-end-line="63" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ChangeLog" />
+    <entry file="file://$PROJECT_DIR$/test/mbc/mbcTest.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="12128">
+          <caret line="379" column="8" selection-start-line="379" selection-start-column="8" selection-end-line="379" selection-end-column="79" />
+          <folding>
+            <element signature="e#80#99#0" expanded="true" />
+            <element signature="e#315#353#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/INSTALL.WIN">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/COPYING">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="256">
+          <caret line="8" column="73" selection-start-line="8" selection-start-column="73" selection-end-line="8" selection-end-column="73" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mbcrtree/TrajStoreRelated.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="736">
+          <caret line="23" column="22" selection-start-line="23" selection-start-column="22" selection-end-line="23" selection-end-column="22" />
+          <folding>
+            <element signature="e#42#80#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/spatialindex/Trajectory.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5408">
+          <caret line="169" selection-start-line="169" selection-end-line="169" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mbcrtree/Node.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2112">
+          <caret line="66" column="27" selection-start-line="66" selection-start-column="27" selection-end-line="66" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/storagemanager/TrajStore.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="234">
+          <caret line="401" column="19" selection-start-line="401" selection-start-column="19" selection-end-line="401" selection-end-column="19" />
+          <folding>
+            <element signature="e#42#79#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/spatialindex/Trajectory.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="334">
+          <caret line="144" column="25" selection-start-line="144" selection-start-column="25" selection-end-line="144" selection-end-column="25" />
+          <folding>
+            <element signature="e#40#58#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/storagemanager/TrajStore.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="32">
+          <caret line="148" column="39" selection-start-line="148" selection-start-column="39" selection-end-line="148" selection-end-column="39" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mbcrtree/MBCRTree.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="674" column="46" selection-start-line="674" selection-start-column="46" selection-end-line="674" selection-end-column="46" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test/mbc/enumTest.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="234">
+          <caret line="454" column="23" lean-forward="true" selection-start-line="454" selection-start-column="23" selection-end-line="454" selection-end-column="23" />
+          <folding>
+            <element signature="e#122#141#0" expanded="true" />
+            <element signature="e#357#395#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ScopeChooserConfigurable.UI">
+        <settings>
+          <last-edited>Unnamed</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+          <order>
+            <scope name="Unnamed" />
+          </order>
+        </settings>
+      </state>
+    </states>
+  </component>
+</project>

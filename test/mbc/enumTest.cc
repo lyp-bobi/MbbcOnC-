@@ -27,7 +27,7 @@
 #include "../../src/mbcrtree/MBCRTree.h"
 //#define sourceFile "D://t1000.txt"
 #define genFile "D://t500n200se.txt"
-#define GLFile "/root/GLS.csv"
+#define GLFile "/root/GLSC.csv"
 #define maxLinesToRead 1e10
 #define testtime 100
 #define dimension 2
@@ -357,8 +357,8 @@ void kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore 
 //    cerr <<"Average Querying time: "<< time/num<<endl;
 //    cerr <<"Averaged VISIT NODE "<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<endl;
 //    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
-//    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
-    cerr <<time/num<<"\n";
+    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
+//    cerr <<time/num<<"\n";
 }
 
 int TreeQuery(ISpatialIndex* tree,IShape* query,TrajStore *ts= nullptr){
@@ -394,13 +394,14 @@ int main(){
         int totallen = 0, totalseg = 0;
         int maxseg = 0;
         double avgSegLen=100;
-        for (double segpara = 0.1; avgSegLen>10 ; segpara/=2) {
+//        for (double segpara = 0.1; avgSegLen>10 ; segpara/=2) {
+        for (double segpara = 10; segpara<1000 ; segpara+=50) {
             maxseg=0;
             segs.clear();
             emptyseg.clear();
             for (auto &traj:trajs) {
                 totallen += traj.second.m_points.size();
-                auto seg = traj.second.getSegments(segpara);
+                auto seg = traj.second.getStaticSegments(segpara);
                 totalseg += seg.size();
                 maxseg = std::max(int(seg.size()), maxseg);
                 segs.emplace_back(make_pair(traj.first, seg));
@@ -408,7 +409,7 @@ int main(){
             avgSegLen=double(totallen)/totalseg;
             std::cerr<<"segments' average length is "<<totallen*1.0/totalseg<<"\n";
 
-            string name0 =std::to_string(segpara)+ "name0", name1 = std::to_string(segpara)+"name1", name2 = std::to_string(segpara)+"name2";
+            string name0 ="name0", name1 ="name1", name2 = "name2";
             id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
             IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
                     *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
@@ -436,7 +437,7 @@ int main(){
                     for (int i = 0; i < 200; i++) {
                         auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
                         Trajectory *concate = new Trajectory();
-                        double ts = random(ori->m_startTime(), ori->m_endTime() - queryLen);
+                        double ts = std::max(ori->m_startTime(),random(ori->m_startTime(), ori->m_endTime() - queryLen));
                         ori->getPartialTrajectory(ts, ts + queryLen, *concate);
                         if (!concate->m_points.empty())
                             queries.emplace_back(concate);

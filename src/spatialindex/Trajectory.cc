@@ -220,6 +220,7 @@ void Trajectory::getMBC(SpatialIndex::MBC &out) const {
     double startx=m_points[0].m_pCoords[0],starty=m_points[0].m_pCoords[1],startt=m_points[0].m_time;
     double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_time;
     double avx=(endx-startx)/(endt-startt),avy=(endy-starty)/(endt-startt);
+
     STPoint p1=*m_points.begin(),p2=m_points.back();
     double rd=0,rv=0;
     double vx,vy;
