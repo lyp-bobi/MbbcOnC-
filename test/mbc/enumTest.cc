@@ -399,6 +399,7 @@ int main(){
             maxseg=0;
             segs.clear();
             emptyseg.clear();
+            int totallen = 0, totalseg = 0;
             for (auto &traj:trajs) {
                 totallen += traj.second.m_points.size();
                 auto seg = traj.second.getStaticSegments(segpara);
