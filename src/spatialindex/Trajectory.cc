@@ -311,6 +311,40 @@ std::vector<SpatialIndex::STPoint> Trajectory::simplifyWithRDP(const std::vector
     }
 }
 
+std::vector<std::vector<SpatialIndex::STPoint>> Trajectory::simplifyWithRDPN(const std::vector<SpatialIndex::STPoint> &Points,
+                                                               int numPart){
+    if(Points.size()<numPart+1){  //base case 1
+        throw Tools::IllegalStateException("simplifyWithRDPN:Error");
+    }
+    std::pair<int, double> maxDistance=findMaximumDistance(Points);
+    vector<vector<SpatialIndex::STPoint>> paths;
+    paths.emplace_back(Points);
+    while(paths.size()<numPart){
+        int pathIndex=0;
+        std::pair<int, double> md={0,0};
+        for(int i=0;i<paths.size();i++){
+            maxDistance=findMaximumDistance(paths[i]);
+            if(maxDistance.second>md.second){
+                pathIndex=i;
+                md=maxDistance;
+            }
+        }
+        int placeIndex=md.first;
+        vector<SpatialIndex::STPoint> *p=&paths[pathIndex];
+        vector<SpatialIndex::STPoint>::const_iterator it1=p->begin();
+        vector<SpatialIndex::STPoint>::const_iterator it2=p->end();
+        auto indexIt=paths.begin()+pathIndex;
+        vector<SpatialIndex::STPoint> path1(it1,it1+placeIndex+1); //new path l1 from 0 to index
+        vector<SpatialIndex::STPoint> path2(it1+placeIndex,it2); // new path l2 from index to last
+        paths.insert(indexIt+1,path2);
+        indexIt=paths.begin()+pathIndex;
+        paths.insert(indexIt+1,path1);
+        indexIt=paths.begin()+pathIndex;
+        paths.erase(indexIt);
+    }
+    return paths;
+}
+
 std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::STPoint> mask){
     vector<STPoint> seg;
     vector<Trajectory> res;
@@ -351,21 +385,29 @@ std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::STPoint> m
     return res;
 }
 
-std::vector<Trajectory> Trajectory::getSegments(double threshold) {
-    auto mask=simplifyWithRDP(m_points,threshold);
-    return cuttraj(mask);
+std::vector<Trajectory> Trajectory::getSegments(double len) const {
+    int segNum=std::ceil((m_endTime()-m_startTime())/len);
+    std::vector<Trajectory> res;
+    auto m=simplifyWithRDPN(m_points,std::min(int(std::sqrt(m_points.size()-1)),int(std::sqrt(segNum))));
+    for(auto &pts:m){
+        auto seg=Trajectory(pts).getStaticSegments(len);
+        res.insert(res.end(),seg.begin(),seg.end());
+    }
+    return res;
 }
 
-std::vector<Trajectory> Trajectory::getStaticSegments(int len) {
+std::vector<Trajectory> Trajectory::getStaticSegments(double len) const{
     vector<STPoint> seg;
     vector<Trajectory> res;
     if(m_points.size()<2) return res;
+    double segStart=m_startTime();
     for(int i=0;i<m_points.size();i++){
         seg.emplace_back(m_points[i]);
-        if((i!=0&&i%len==0)||i==m_points.size()-1){
+        if(m_points[i+1].m_time-segStart>=len||i==m_points.size()-1){
             res.emplace_back(Trajectory(seg));
             seg.clear();
             seg.emplace_back(m_points[i]);
+            segStart=m_points[i].m_time;
         }
     }
     return res;

@@ -388,21 +388,21 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
+        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int totallen = 0, totalseg = 0;
         int maxseg = 0;
         double avgSegLen=100;
 //        for (double segpara = 0.1; avgSegLen>10 ; segpara/=2) {
-        for (double segpara = 10; segpara<1000 ; segpara+=50) {
+        for (double segpara = 50; segpara<2000 ; segpara+=50) {
             maxseg=0;
             segs.clear();
             emptyseg.clear();
             int totallen = 0, totalseg = 0;
             for (auto &traj:trajs) {
                 totallen += traj.second.m_points.size();
-                auto seg = traj.second.getStaticSegments(segpara);
+                auto seg = traj.second.getSegments(segpara);
                 totalseg += seg.size();
                 maxseg = std::max(int(seg.size()), maxseg);
                 segs.emplace_back(make_pair(traj.first, seg));

@@ -33,6 +33,8 @@
 #include "storagemanager/TrajStore.h"
 #include <cmath>
 
+extern bool simpli;
+
 namespace SpatialIndex
 {
 	namespace MBCRTree

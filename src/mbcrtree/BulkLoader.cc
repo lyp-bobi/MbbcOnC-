@@ -418,9 +418,21 @@ void BulkLoader::createLevel(
 	uint64_t b = (level == 0) ? bleaf : bindex;
     uint64_t P = static_cast<uint64_t>(std::ceil(static_cast<double>(es->getTotalEntries()) / static_cast<double>(b)));
     int remainDim;
-    remainDim=pTree->m_dimension-dimension;
-    uint64_t S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P),1.0/remainDim)));
-
+    remainDim = pTree->m_dimension - dimension;
+    uint64_t S;
+    if(level==0){
+        double dx=pTree->m_ts->Dx,dy=pTree->m_ts->Dy,dt=pTree->m_ts->Dt;
+        double v=pTree->m_ts->m_avgVelo;
+        int nt=pow(static_cast<double>(P)*v*v*dt*dt/dx/dy,1.0/3);
+        if(remainDim==1) {
+            S=P;
+        }else{
+            S = ceil(std::sqrt(P / nt));
+        }
+    }
+    else {
+        S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P), 1.0 / remainDim)));
+    }
 	if (S == 1 || remainDim==1 || S * b == es->getTotalEntries())
 	{
 		std::vector<ExternalSorter::Record*> node;

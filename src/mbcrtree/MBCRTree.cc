@@ -37,6 +37,8 @@
 #include "MBCRTree.h"
 
 
+bool simpli=true;
+
 using namespace SpatialIndex::MBCRTree;
 using namespace SpatialIndex;
 
@@ -507,13 +509,22 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
             return;
         }
     }
-    MBC queryBC;
-    queryTraj->getMBC(queryBC);
-    //todo: design a better function
-    double thres=(queryBC.m_endTime-queryBC.m_startTime)*queryBC.m_rv*0.05;
-    auto simpleTrajPoint=Trajectory::simplifyWithRDP(queryTraj->m_points,thres);
-    Trajectory simpleTraj(simpleTrajPoint);
-    double delta=queryTraj->getMinimumDistance(simpleTraj);
+    Trajectory simpleTraj;
+    double delta=0;
+    if(simpli==true) {
+        int segnum = (queryTraj->m_endTime() - queryTraj->m_startTime()) / m_ts->m_avgSeglen;
+        auto simpseg = Trajectory::simplifyWithRDPN(queryTraj->m_points,
+                                                    std::min(segnum, int(std::sqrt(queryTraj->m_points.size()))));
+        vector<STPoint> simpp;
+        for (const auto &s:simpseg) {
+            simpp.emplace_back(s.front());
+        }
+        simpp.emplace_back(simpseg.back().back());
+        simpleTraj=Trajectory(simpp);
+        delta = queryTraj->getMinimumDistance(simpleTraj);
+    }else{
+        simpleTraj=*queryTraj;
+    }
 
 #ifdef HAVE_PTHREAD_H
 	Tools::LockGuard lock(&m_lock);

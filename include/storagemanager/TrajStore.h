@@ -156,6 +156,8 @@ namespace SpatialIndex
             uint32_t m_maxTrajSegs=100;
             uint32_t m_trajIO=0,m_indexIO=0;
             uint32_t m_boundingVisited=0;
+            double m_avgSeglen=-1,m_avgVelo=-1;
+            double Dx,Dy,Dt;
             double m_maxVelocity;
             double m_IOtime=0;
         };

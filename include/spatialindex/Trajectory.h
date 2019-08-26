@@ -162,10 +162,11 @@ namespace SpatialIndex
         virtual void getMBRfull(Region& out) const;
         virtual void getTimeMBR(TimeRegion& out) const;
         STPoint getPointAtTime(double time) const;
+        static std::vector<std::vector<SpatialIndex::STPoint>> simplifyWithRDPN(const std::vector<SpatialIndex::STPoint>& Points, int numPart);
         static std::vector<SpatialIndex::STPoint> simplifyWithRDP(const std::vector<SpatialIndex::STPoint>& Points, double threshold);
         std::vector<Trajectory> cuttraj(std::vector<SpatialIndex::STPoint>);
-        std::vector<Trajectory> getSegments(double threshold);
-        std::vector<Trajectory> getStaticSegments(int len);
+        std::vector<Trajectory> getSegments(double len) const;
+        std::vector<Trajectory> getStaticSegments(double len) const;
         void linkTrajectory(Trajectory &other);
 
         inline double m_startTime() const{return m_points.front().m_time;}
