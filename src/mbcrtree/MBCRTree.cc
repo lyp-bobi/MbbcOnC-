@@ -512,7 +512,8 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
     Trajectory simpleTraj;
     double delta=0;
     if(simpli==true) {
-        int segnum = (queryTraj->m_endTime() - queryTraj->m_startTime()) / m_ts->m_avgSeglen;
+        auto stat=trajStat::instance();
+        int segnum = (queryTraj->m_endTime() - queryTraj->m_startTime()) / stat->v;
         auto simpseg = Trajectory::simplifyWithRDPN(queryTraj->m_points,
                                                     std::min(segnum, int(std::sqrt(queryTraj->m_points.size()))));
         vector<STPoint> simpp;

@@ -1,4 +1,8 @@
 //
+// Created by Chuang on 2019/8/27.
+//
+
+//
 // Created by Chuang on 2019/8/19.
 //
 
@@ -368,7 +372,7 @@ double knncost(double bt,int k,double qt,int f,bool useMBR){
     double leafnum=stat->M/bt/f;
     double interleafnum=leafnum*lt/stat->Dt;
     double hc=1.1*(1+qt/lt)*sq(2*rk+lx)*interleafnum/stat->Dx/stat->Dy,
-            lc=k*(1+qt/bt)*lmd*std::ceil(bt/stat->tl/160);
+        lc=k*(1+qt/bt)*lmd*std::ceil(bt/stat->tl/160);
     std::cerr<<bt<<"\t"<<hc<<"\t"<<lc<<"\n";
     return hc+lc;
 }
@@ -474,26 +478,27 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
-        vector<pair<id_type, vector<Trajectory>>> segs;
+        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
+        vector<pair<id_type, vector<Trajectory>>> segs1,segs2;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
-        double avgSegLen=100;
-//        for (double segpara = 0.1; avgSegLen>10 ; segpara/=2) {
-        for (double segpara = 50; segpara<2000 ; segpara+=50) {
+        for (double queryLen=50;queryLen<6000;queryLen+=50) {
             maxseg=0;
-            segs.clear();
+            segs1.clear();
+            segs2.clear();
             emptyseg.clear();
-            int totallen = 0, totalseg = 0;
+            double segpara1=biSearchMax(5,queryLen,40,true);
             for (auto &traj:trajs) {
-                totallen += traj.second.m_points.size();
-                auto seg = traj.second.getSegments(segpara);
-                totalseg += seg.size();
+                auto seg = traj.second.getSegments(segpara1);
                 maxseg = std::max(int(seg.size()), maxseg);
-                segs.emplace_back(make_pair(traj.first, seg));
+                segs1.emplace_back(make_pair(traj.first, seg));
             }
-            avgSegLen=double(totallen)/totalseg;
-            std::cerr<<"segments' average length is "<<totallen*1.0/totalseg<<"\n";
+            double segpara2=biSearchMax(5,queryLen,40,true);
+            for (auto &traj:trajs) {
+                auto seg = traj.second.getSegments(segpara2);
+                maxseg = std::max(int(seg.size()), maxseg);
+                segs2.emplace_back(make_pair(traj.first, seg));
+            }
 
             string name0 ="name0", name1 ="name1", name2 = "name2";
             id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
@@ -506,41 +511,34 @@ int main(){
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
             TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
-            ts1->loadSegments(segs);
+            ts1->loadSegments(segs1);
             ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
             TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
-            ts2->loadSegments(segs);
+            ts2->loadSegments(segs2);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
             //kNN
-            segs.swap(emptyseg);
+            segs1.swap(emptyseg);
+            emptyseg.clear();
+            segs2.swap(emptyseg);
+            emptyseg.clear();
             vector<IShape *> queries;
-            double segattri[]={900};
-            for (auto queryLen:segattri) {
-//                for(int thek=1;thek<=21;thek+=5){
-                for (int thek = 5; thek == 5; thek++) {
-                    for (int i = 0; i < 200; i++) {
-                        auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
-                        Trajectory *concate = new Trajectory();
-                        double ts = std::max(ori->m_startTime(),random(ori->m_startTime(), ori->m_endTime() - queryLen));
-                        ori->getPartialTrajectory(ts, ts + queryLen, *concate);
-                        if (!concate->m_points.empty())
-                            queries.emplace_back(concate);
-                    }
-//                    cerr << "=================\n\n";
-//                    std::cerr << "Querying with segmenting len " << seglen <<
-//                              ", querying len " << queryLen << ", NN's k" << thek << "\n";
-                    cerr<< segpara<<"\t"<<queryLen<<"\n";
-                    kNNQueryBatch(r, queries, ts1);
-                    kNNQueryBatch(rc, queries, ts2);
-                    cerr << "\n";
-                    for(auto &tras:queries){
-                        delete tras;
-                    }
-                    queries.clear();
-                }
+            for (int i = 0; i < 200; i++) {
+                auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
+                Trajectory *concate = new Trajectory();
+                double ts = std::max(ori->m_startTime(),random(ori->m_startTime(), ori->m_endTime() - queryLen));
+                ori->getPartialTrajectory(ts, ts + queryLen, *concate);
+                if (!concate->m_points.empty())
+                    queries.emplace_back(concate);
             }
+            kNNQueryBatch(r, queries, ts1);
+            kNNQueryBatch(rc, queries, ts2);
+            cerr << "\n";
+            for(auto &tras:queries){
+                delete tras;
+            }
+            queries.clear();
             delete r;
             delete ts1;
             delete rc;

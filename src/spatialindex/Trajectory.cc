@@ -399,9 +399,12 @@ std::vector<Trajectory> Trajectory::getSegments(double len) const {
 std::vector<Trajectory> Trajectory::getStaticSegments(double len) const{
     vector<STPoint> seg;
     vector<Trajectory> res;
-    if(m_points.size()<2) return res;
+    if(m_points.size()<2) {
+        throw Tools::IllegalStateException("seg with 0 or 1 point");
+    }
     double segStart=m_startTime();
-    for(int i=0;i<m_points.size();i++){
+    seg.emplace_back(m_points[0]);
+    for(int i=1;i<m_points.size();i++){
         seg.emplace_back(m_points[i]);
         if(m_points[i+1].m_time-segStart>=len||i==m_points.size()-1){
             res.emplace_back(Trajectory(seg));
@@ -1608,6 +1611,8 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const Trajectory& r) {
     os<<s;
     return os;
 }
+
+
 std::vector<std::string> split(const std::string strtem,char a)
 {
     std::vector<std::string> strvec;

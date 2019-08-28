@@ -57,6 +57,7 @@ set (SOURCES
         mbcTest
         enumTest
         TrajStoreTest
+        optimizedTest
         )
 
 foreach (test ${SOURCES})

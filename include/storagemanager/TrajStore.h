@@ -12,6 +12,26 @@ using std::vector;
 
 namespace SpatialIndex
 {
+    class trajStat{
+    private:
+        trajStat(){};
+        static trajStat* singleton;
+    public:
+        double M=0;//total time
+        long lineCount=0;
+        long trajCount=0;
+        double tl=0;//time len of a segment
+        double jt=0;
+        double v=0;
+        double Dx=0,Dy=0,Dt=0;
+        static trajStat* instance();
+        void clear(){
+            M=lineCount=trajCount=jt=tl=Dx=Dy=Dt=0;
+        }
+        friend SIDX_DLL std::ostream& operator<<(std::ostream& os,const trajStat &r);
+    };
+    SIDX_DLL std::ostream& operator<<(std::ostream& os, const Trajectory& r);
+
     class SIDX_DLL XZ3Enocder{
     private:
         XZ3Enocder();
@@ -126,7 +146,7 @@ namespace SpatialIndex
             void cleanStatistic(){
                 m_trajIO=0,m_indexIO=0;
                 m_boundingVisited=0;
-                m_maxVelocity;
+                m_maxVelocity=0;
                 m_IOtime=0;
             }
             class Entry{
@@ -156,8 +176,7 @@ namespace SpatialIndex
             uint32_t m_maxTrajSegs=100;
             uint32_t m_trajIO=0,m_indexIO=0;
             uint32_t m_boundingVisited=0;
-            double m_avgSeglen=-1,m_avgVelo=-1;
-            double Dx,Dy,Dt;
+
             double m_maxVelocity;
             double m_IOtime=0;
         };

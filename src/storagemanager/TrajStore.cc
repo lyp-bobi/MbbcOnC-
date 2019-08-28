@@ -16,7 +16,25 @@ XZ3Enocder* XZ3Enocder::instance() {
     }
     return singleton;
 }
-
+trajStat* trajStat::singleton=nullptr;
+trajStat* trajStat::instance() {
+    if (singleton == nullptr)
+    {
+        singleton = new trajStat();
+    }
+    return singleton;
+}
+SIDX_DLL std::ostream& SpatialIndex::operator<<(std::ostream& os, const trajStat& r) {
+    os<<"Trajectory Statistics:\n";
+    os<<"\ttotal time: "<<r.M<<"\n";
+    os<<"\tline count: "<<r.lineCount<<"\n";
+    os<<"\ttraj count: "<<r.trajCount<<"\n";
+    os<<"\tline length: "<<r.tl<<"\n";
+    os<<"\ttraj length: "<<r.jt<<"\n";
+    os<<"\taverage speed: "<<r.v<<"\n";
+    os<<"\texpanding:"<<r.Dx<<"\t"<<r.Dy<<"\t"<<r.Dt<<"\n";
+    return os;
+}
 XZ3Enocder::XZ3Enocder()
     :m_xmin(0),m_xmax(1),m_ymin(0),m_ymax(1),m_zmin(0),m_zmax(1),m_length(8)
     {}
@@ -391,15 +409,11 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     maxbr.makeInfinite(3);
     double vol1=0,vol2=0;
     m_maxVelocity=-1;
-    m_avgSeglen=0;
-    m_avgVelo=0;
-    int segcount=0;
+    long linecount=0;
     for(auto &traj:trajs){
         for(int j=0;j<traj.second.size();j++){//segment
             Trajectory seg=traj.second[j];
-            m_avgSeglen+=seg.m_endTime()-seg.m_startTime();
-            m_avgVelo+=seg.m_points.back().getMinimumDistance(seg.m_points.front())/(seg.m_endTime()-seg.m_startTime());
-            segcount+=1;
+            linecount+=seg.m_points.size()-1;
             uint8_t *data;
             uint32_t len;
             seg.storeToByteArray(&data,len);
@@ -420,8 +434,6 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
             vol2+=thebc.getArea();
         }
     }
-    m_avgSeglen/=segcount;
-    m_avgVelo/=segcount;
     std::cerr<<"total segment is"<<m_entryMbrs.size()<<"="<<m_entryMbcs.size()<<"\n";
     std::cerr<<"expression effectiveness "<<vol1<<" versus "<<vol2<<"\n"<<vol2/vol1<<"\n";
     //adjust the encoder
@@ -432,11 +444,6 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     encoder->m_ymax=maxbr.m_pHigh[1];
     encoder->m_zmin=maxbr.m_pLow[2];
     encoder->m_zmax=maxbr.m_pHigh[2];
-
-     Dx=maxbr.m_pHigh[0]-maxbr.m_pLow[0],
-        Dy=maxbr.m_pHigh[1]-maxbr.m_pLow[1],
-        Dt=maxbr.m_pHigh[2]-maxbr.m_pLow[2];
-
 
     //sort the data
     std::cerr<<"TrajStore:sorting using XZ3 curve\n";

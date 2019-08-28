@@ -420,9 +420,10 @@ void BulkLoader::createLevel(
     int remainDim;
     remainDim = pTree->m_dimension - dimension;
     uint64_t S;
+    auto stat=trajStat::instance();
     if(level==0){
-        double dx=pTree->m_ts->Dx,dy=pTree->m_ts->Dy,dt=pTree->m_ts->Dt;
-        double v=pTree->m_ts->m_avgVelo;
+        double dx=stat->Dx,dy=stat->Dy,dt=stat->Dt;
+        double v=stat->v;
         int nt=pow(static_cast<double>(P)*v*v*dt*dt/dx/dy,1.0/3);
         if(remainDim==1) {
             S=P;
