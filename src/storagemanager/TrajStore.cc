@@ -408,11 +408,12 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     Region maxbr;
     maxbr.makeInfinite(3);
     double vol1=0,vol2=0;
-    m_maxVelocity=-1;
     long linecount=0;
     for(auto &traj:trajs){
         for(int j=0;j<traj.second.size();j++){//segment
             Trajectory seg=traj.second[j];
+            m_segCount++;
+            m_timeCount+=seg.m_endTime()-seg.m_startTime();
             linecount+=seg.m_points.size()-1;
             uint8_t *data;
             uint32_t len;
@@ -450,7 +451,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     es->sort();
 
     //save the data into pages
-    id_type thisPageId=0;
+    id_type thisPageId=m_pStorageManager->nextPage();
 #ifndef NDEBUG
     std::cerr<<"TrajStore:storing data into pages\n";
 #endif
@@ -503,8 +504,8 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
             if(currentLen>0){
                 id_type newPage=StorageManager::NewPage;
                 m_pStorageManager->storeByteArray(newPage,currentLen,pageData);
-                assert(newPage==thisPageId);
-//                if(newPage!=thisPageId) std::cerr<<newPage<<" "<<thisPageId<<"\n";
+//                assert(newPage==thisPageId);
+                if(newPage!=thisPageId) std::cerr<<newPage<<" "<<thisPageId<<"\n";
                 thisPageId++;
                 spaceRem=m_pageSize;
                 currentLen=0;
@@ -532,7 +533,6 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
     delete[] pageData;
 }
 
-[[deprecated]]
 const Trajectory TrajStore::getTraj(id_type &id) {
     auto it=m_entries.find(id);
     assert(it!=m_entries.end());
@@ -549,9 +549,12 @@ const Trajectory TrajStore::getTraj(id_type &id) {
     delete[](load);
     return traj;
 }
-[[deprecated]]
+
 const Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double tend) {
     auto it=m_entries.find(id);
+    if(it==m_entries.end()){
+        std::cerr<<id<<"\n";
+    }
     assert(it!=m_entries.end());
     Entry e=*(it->second);
 //    uint32_t len=e.m_start+e.m_len;

@@ -69,7 +69,7 @@ bool ExternalSorter::Record::operator<(const Record& r) const
     if (m_s != r.m_s)
         throw Tools::IllegalStateException("ExternalSorter::Record::operator<: Incompatible sorting dimensions.");
 
-    if (m_r.m_pHigh[m_s] + m_r.m_pLow[m_s] < r.m_r.m_pHigh[m_s] + r.m_r.m_pLow[m_s])
+    if (m_r.m_pHigh[r.m_r.m_dimension-1-m_s] + m_r.m_pLow[r.m_r.m_dimension-1-m_s] < r.m_r.m_pHigh[r.m_r.m_dimension-1-m_s] + r.m_r.m_pLow[r.m_r.m_dimension-1-m_s])
         return true;
     else
         return false;
@@ -421,19 +421,17 @@ void BulkLoader::createLevel(
     remainDim = pTree->m_dimension - dimension;
     uint64_t S;
     auto stat=trajStat::instance();
-    if(level==0){
+    if(level==0&&dimension==0){
         double dx=stat->Dx,dy=stat->Dy,dt=stat->Dt;
         double v=stat->v;
         int nt=pow(static_cast<double>(P)*v*v*dt*dt/dx/dy,1.0/3);
-        if(remainDim==1) {
-            S=P;
-        }else{
-            S = ceil(std::sqrt(P / nt));
-        }
+        S = nt;
+        if(S>P) S=1;
     }
     else {
         S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P), 1.0 / remainDim)));
     }
+//    std::cerr<<"crtlvl at "<<level<<"\t"<<dimension<<"\t"<<P<<"\t"<<S<<"\n";
 	if (S == 1 || remainDim==1 || S * b == es->getTotalEntries())
 	{
 		std::vector<ExternalSorter::Record*> node;
@@ -548,7 +546,7 @@ void BulkLoader::createLevel(
 			ExternalSorter::Record* pR;
 			Tools::SmartPointer<ExternalSorter> es3 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
 
-			for (uint64_t i = 0; i < b*floor(1.0*P/S); ++i)
+			for (uint64_t i = 0; i < b*ceil(1.0*P/S); ++i)
 //            for (uint64_t i = 0; i < S*b; ++i)
 			{
 				try { pR = es->getNextRecord(); }

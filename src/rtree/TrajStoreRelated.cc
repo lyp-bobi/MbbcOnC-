@@ -17,12 +17,14 @@ public:
 
 
 ISpatialIndex* SpatialIndex::RTree::createAndBulkLoadNewRTreeWithTrajStore(IStorageManager *tsm,
-                                                                           uint32_t indexCapacity, uint32_t dimension,
+                                                                           uint32_t pageSize, uint32_t dimension,
                                                                            id_type &indexIdentifier) {
     TrajStore *ts= static_cast<TrajStore*>(tsm);
     assert(ts!= nullptr);
     auto dataStream=new rtreeSegmentStream(ts);
-    ISpatialIndex* tree= createAndBulkLoadNewRTree(SpatialIndex::RTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,indexCapacity,dimension,SpatialIndex::RTree::RV_RSTAR,indexIdentifier);
+    int indexCapacity=std::floor((pageSize-56)/56);
+    int leafCapacity=std::floor((pageSize-56)/88);
+    ISpatialIndex* tree= createAndBulkLoadNewRTree(SpatialIndex::RTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,leafCapacity,dimension,SpatialIndex::RTree::RV_RSTAR,indexIdentifier);
     RTree* r= static_cast<RTree*>(tree);
     r->m_DataType=TrajectoryType;
     r->m_bUsingTrajStore=true;

@@ -61,6 +61,7 @@ namespace SpatialIndex
 			uint8_t* m_buffer;
         public:
 			double iotime=0;
+			id_type nextPage() override {return m_nextPage;}
 		}; // DiskStorageManager
 	}
 }

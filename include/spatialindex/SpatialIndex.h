@@ -165,6 +165,7 @@ namespace SpatialIndex
 		virtual void loadByteArray(const id_type id, uint32_t& len, uint8_t** data) = 0;
 		virtual void storeByteArray(id_type& id, const uint32_t len, const uint8_t* const data) = 0;
 		virtual void deleteByteArray(const id_type id) = 0;
+		virtual id_type nextPage(){return 0;}
 		virtual void flush() = 0;
 		virtual ~IStorageManager() {}
 	}; // IStorageManager

@@ -26,7 +26,7 @@ ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore
     ISpatialIndex* tree= createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,leafCapacity,dimension,SpatialIndex::MBCRTree::RV_RSTAR,indexIdentifier);
     delete dataStream;
     MBCRTree* r= static_cast<MBCRTree*>(tree);
-    ts->releaseTmp();
+//    ts->releaseTmp();
     return r;
 }
 
@@ -40,6 +40,6 @@ ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(IS
     ISpatialIndex* tree= createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,leafCapacity,dimension,SpatialIndex::MBCRTree::RV_RSTAR,indexIdentifier,true);
     delete dataStream;
     MBCRTree* r= static_cast<MBCRTree*>(tree);
-    ts->releaseTmp();
+//    ts->releaseTmp();
     return r;
 }

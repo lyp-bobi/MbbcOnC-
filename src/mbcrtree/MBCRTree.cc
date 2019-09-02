@@ -512,10 +512,17 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
     Trajectory simpleTraj;
     double delta=0;
     if(simpli==true) {
-        auto stat=trajStat::instance();
-        int segnum = (queryTraj->m_endTime() - queryTraj->m_startTime()) / stat->v;
-        auto simpseg = Trajectory::simplifyWithRDPN(queryTraj->m_points,
-                                                    std::min(segnum, int(std::sqrt(queryTraj->m_points.size()))));
+//        auto stat=trajStat::instance();
+        int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (m_ts->m_timeCount/m_ts->m_segCount));
+        segnum=std::max(segnum,10);
+        vector<vector<STPoint>> simpseg;
+        try {
+            simpseg = Trajectory::simplifyWithRDPN(queryTraj->m_points,
+                    std::min(segnum,int(std::sqrt(queryTraj->m_points.size()))));
+        }
+        catch (...){
+            std::cerr<<"RDPN query has some problem with\n"<< queryTraj<<"with"<<std::min(segnum,int(std::sqrt(queryTraj->m_points.size())))<<"\n";
+        }
         vector<STPoint> simpp;
         for (const auto &s:simpseg) {
             simpp.emplace_back(s.front());
@@ -544,7 +551,10 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
 
         // report all nearest neighbors with equal greatest distances.
         // (neighbors can be more than k, if many happen to have the same greatest distance).
-        if (count >= k && pFirst->m_minDist > knearest) break;
+        if (count >= k && pFirst->m_minDist > knearest) {
+//            std::cerr<<"find minDist"<<knearest<<"\n";
+            break;
+        }
         switch (pFirst->m_type) {
             case 0: {//inner node
                 ps.pop();
@@ -586,6 +596,8 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
             case 3: {//complete bounding
                 ps.pop();
                 Trajectory traj=ps.getTraj(pFirst->m_id);
+//                std::cerr<<"trajIO"<<m_ts->m_trajIO<<"\n";
+//                std::cerr<<"getTraj"<<traj<<"\n";
 //                Trajectory traj = m_ts->getTrajByTime(pFirst->m_id, queryTraj->m_startTime(), queryTraj->m_endTime());
                 ps.push(new NNEntry(pFirst->m_id, queryTraj->getMinimumDistance(traj), 4));
                 delete pFirst;

@@ -125,10 +125,10 @@ STPoint Trajectory::getPointAtTime(const double time) const {
         return m_points[0];
     }
     auto pre =m_points.begin(),next=m_points.begin();
-    while(next->m_time-pre->m_time<0.01) next++;
+    while(next->m_time-pre->m_time<1e-7&&next!=m_points.end()) next++;
     while(next->m_time<time&&next!=m_points.end()){
         pre=next;
-        while(next->m_time-pre->m_time<0.01) next++;
+        while(next->m_time-pre->m_time<1e-7&&next!=m_points.end()) next++;
     }
     double h1= (time-pre->m_time)/(next->m_time-pre->m_time);
     double h2= (next->m_time-time)/(next->m_time-pre->m_time);
@@ -390,6 +390,10 @@ std::vector<Trajectory> Trajectory::getSegments(double len) const {
     std::vector<Trajectory> res;
     auto m=simplifyWithRDPN(m_points,std::min(int(std::sqrt(m_points.size()-1)),int(std::sqrt(segNum))));
     for(auto &pts:m){
+        if(pts.size()<2){
+            std::cerr<<"error on getting segments with "<<len<<"and \n"<<*this;
+            throw Tools::IllegalStateException("bad RDPN");
+        }
         auto seg=Trajectory(pts).getStaticSegments(len);
         res.insert(res.end(),seg.begin(),seg.end());
     }
@@ -400,13 +404,18 @@ std::vector<Trajectory> Trajectory::getStaticSegments(double len) const{
     vector<STPoint> seg;
     vector<Trajectory> res;
     if(m_points.size()<2) {
-        throw Tools::IllegalStateException("seg with 0 or 1 point");
+        throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
     }
     double segStart=m_startTime();
     seg.emplace_back(m_points[0]);
     for(int i=1;i<m_points.size();i++){
         seg.emplace_back(m_points[i]);
-        if(m_points[i+1].m_time-segStart>=len||i==m_points.size()-1){
+        if(i==m_points.size()-1){
+            res.emplace_back(Trajectory(seg));
+            seg.clear();
+            break;
+        }
+        if(m_points[i+1].m_time-segStart>=len){
             res.emplace_back(Trajectory(seg));
             seg.clear();
             seg.emplace_back(m_points[i]);
@@ -415,6 +424,32 @@ std::vector<Trajectory> Trajectory::getStaticSegments(double len) const{
     }
     return res;
 }
+
+
+
+std::vector<Trajectory> Trajectory::getFixedSegments(int len) const {
+    vector<STPoint> seg;
+    vector<Trajectory> res;
+    if(m_points.size()<2) {
+        throw Tools::IllegalStateException("getFixed:seg with 0 or 1 point");
+    }
+    for(int i=0;i<m_points.size();i++){
+        seg.emplace_back(m_points[i]);
+        if(i==m_points.size()-1){
+            res.emplace_back(Trajectory(seg));
+            seg.clear();
+            break;
+        }
+        if(seg.size()>=len){
+            res.emplace_back(Trajectory(seg));
+            seg.clear();
+            seg.emplace_back(m_points[i]);
+        }
+    }
+    return res;
+}
+
+
 
 double Trajectory::getArea() const{ return 0;}
 
@@ -1321,10 +1356,9 @@ double Trajectory::getStaticIED(double x, double y, double t1, double t2) const 
     tend = std::min(m_endTime(), t2);
     if(tstart>=tend) return 1e300;
     fakeTpVector timedTraj(&m_points,tstart,tend);
-    double sum = 0,max=0;
+    double sum = 0;
     double xy[2]={x,y};
     STPoint ps(xy,0,2),pe(xy,0,2);
-    max=timedTraj[0].getMinimumDistance(ps);
     for (int i = 0; i < timedTraj.m_size-1; i++) {
             ps.m_time=timedTraj[i].m_time;
             pe.m_time=timedTraj[i+1].m_time;
@@ -1347,6 +1381,35 @@ double Trajectory::getStaticIED(const SpatialIndex::Region in,double ints, doubl
     }
     return sum;
 }
+double Trajectory::getStaticMaxSED(double x, double y, double t1, double t2) const {
+    double tstart, tend;
+    tstart = std::max(m_startTime(), t1);
+    tend = std::min(m_endTime(), t2);
+    if(tstart>=tend) return 1e300;
+    double max=0;
+    fakeTpVector timedTraj(&m_points,tstart,tend);
+    STPoint p(x,y,0);
+    for(int i=0;i<timedTraj.m_size;i++){
+        double pd=timedTraj[i].getMinimumDistance(p);
+        if(pd>max) max=pd;
+    }
+    return max;
+}
+
+
+double Trajectory::getStaticMaxSED(const SpatialIndex::Region in,double ints, double inte) const {
+    assert(ints>=m_startTime()&&inte<=m_endTime());
+    in.m_pLow[m_dimension]=ints;
+    in.m_pHigh[m_dimension]=inte;
+    fakeTpVector timedTraj(&m_points,ints,inte);
+    double max = 0;
+    for (int i = 0; i < timedTraj.m_size; i++) {
+        double pd = timedTraj[i].getMinimumDistance(in);
+        if(pd>max) max=pd;
+    }
+    return max;
+}
+
 #define sign(x) (x>0?1.0:-1.0)
 double Trajectory::getInterTime(const STPoint &ps, const STPoint &pe,Region &r,double t_o, double vmax) const {
     //vmax could be positive or negative

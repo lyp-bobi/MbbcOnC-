@@ -23,14 +23,16 @@ namespace SpatialIndex
         double tl=0;//time len of a segment
         double jt=0;
         double v=0;
+        double minx=1e300,maxx=-1e300,miny=1e300,maxy=-1e300,mint=1e300,maxt=-1e300;
         double Dx=0,Dy=0,Dt=0;
+        double dist=0;
         static trajStat* instance();
         void clear(){
             M=lineCount=trajCount=jt=tl=Dx=Dy=Dt=0;
         }
         friend SIDX_DLL std::ostream& operator<<(std::ostream& os,const trajStat &r);
     };
-    SIDX_DLL std::ostream& operator<<(std::ostream& os, const Trajectory& r);
+    SIDX_DLL std::ostream& operator<<(std::ostream& os, const trajStat& r);
 
     class SIDX_DLL XZ3Enocder{
     private:
@@ -176,8 +178,9 @@ namespace SpatialIndex
             uint32_t m_maxTrajSegs=100;
             uint32_t m_trajIO=0,m_indexIO=0;
             uint32_t m_boundingVisited=0;
-
-            double m_maxVelocity;
+            uint32_t m_segCount=0;
+            double m_timeCount=0;
+            double m_maxVelocity=-1;
             double m_IOtime=0;
         };
     }//namespace StorageManager

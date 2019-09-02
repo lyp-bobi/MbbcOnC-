@@ -35,6 +35,7 @@
 #include "Index.h"
 #include "BulkLoader.h"
 #include "RTree.h"
+#include "../mbcrtree/MBCRTree.h"
 
 using namespace SpatialIndex::RTree;
 using namespace SpatialIndex;
@@ -528,13 +529,30 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
             return;
         }
     }
-    MBC queryBC;
-    queryTraj->getMBC(queryBC);
-    //todo: design a better function
-    double thres=(queryBC.m_endTime-queryBC.m_startTime)*queryBC.m_rv*0.05;
-    auto simpleTrajPoint=Trajectory::simplifyWithRDP(queryTraj->m_points,thres);
-    Trajectory simpleTraj(simpleTrajPoint);
-    double delta=queryTraj->getMinimumDistance(simpleTraj);
+    Trajectory simpleTraj;
+    double delta=0;
+    if(simpli==true) {
+//        auto stat=trajStat::instance();
+        int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (m_ts->m_timeCount/m_ts->m_segCount));
+        segnum=std::max(segnum,10);
+        vector<vector<STPoint>> simpseg;
+        try {
+            simpseg = Trajectory::simplifyWithRDPN(queryTraj->m_points,
+                                                   std::min(segnum,int(std::sqrt(queryTraj->m_points.size()))));
+        }
+        catch (...){
+            std::cerr<<"RDPN query has some problem with\n"<< queryTraj<<"with"<<std::min(segnum,int(std::sqrt(queryTraj->m_points.size())))<<"\n";
+        }
+        vector<STPoint> simpp;
+        for (const auto &s:simpseg) {
+            simpp.emplace_back(s.front());
+        }
+        simpp.emplace_back(simpseg.back().back());
+        simpleTraj=Trajectory(simpp);
+        delta = queryTraj->getMinimumDistance(simpleTraj);
+    }else{
+        simpleTraj=*queryTraj;
+    }
 
 #ifdef HAVE_PTHREAD_H
 	Tools::LockGuard lock(&m_lock);

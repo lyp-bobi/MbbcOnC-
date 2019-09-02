@@ -141,6 +141,8 @@ namespace SpatialIndex
 
         virtual double getStaticIED(double x, double y, double t1, double t2) const;
         virtual double getStaticIED(const Region in,double ints, double inte) const;
+        virtual double getStaticMaxSED(double x, double y, double t1, double t2) const;
+        virtual double getStaticMaxSED(const Region in,double ints, double inte) const;
 
         virtual double getInferredNodeMinimumIED(const Region &in, double MaxVelocity,double queryMaxVelocity=0) const;
 
@@ -167,6 +169,7 @@ namespace SpatialIndex
         std::vector<Trajectory> cuttraj(std::vector<SpatialIndex::STPoint>);
         std::vector<Trajectory> getSegments(double len) const;
         std::vector<Trajectory> getStaticSegments(double len) const;
+        std::vector<Trajectory> getFixedSegments(int len=170) const;
         void linkTrajectory(Trajectory &other);
 
         inline double m_startTime() const{return m_points.front().m_time;}

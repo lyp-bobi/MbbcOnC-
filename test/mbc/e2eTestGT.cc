@@ -1,28 +1,54 @@
+//
+// Created by Chuang on 2019/9/2.
+//
+
+//
+// Created by Chuang on 2019/9/1.
+//
+
 #include "testFuncs.h"
 
 
 int main(){
     try {
+        vector<string> files;
+        struct dirent *ptr;
+        DIR *dir;
+        string PATH = fileFolder;
+        dir=opendir(PATH.c_str());
+        while((ptr=readdir(dir))!=NULL)
+        {
+            if(ptr->d_name[0] == '.')
+                continue;
+            //cout << ptr->d_name << endl;
+            files.emplace_back(PATH+ptr->d_name);
+        }
+//        files.emplace_back("D://00.txt");
+//        files.emplace_back("D://01.txt");
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
+        vector<pair<id_type, Trajectory> > trajs;
+        for(const auto &f:files){
+            auto tmptj=loadGTToTrajs(f);
+            trajs.insert(trajs.end(),tmptj.begin(),tmptj.end());
+        }
         vector<pair<id_type, vector<Trajectory>>> segs1,segs2;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
-        for (double queryLen=50;queryLen<200;queryLen+=50) {
+        for (double queryLen=10;queryLen<=200;queryLen+=10) {
             maxseg=0;
             segs1.clear();
             segs2.clear();
             emptyseg.clear();
-            double segpara1=biSearchMax(5,queryLen,40,true);
             for (auto &traj:trajs) {
-                auto seg = traj.second.getSegments(segpara1);
+                auto seg = traj.second.getFixedSegments();
                 maxseg = std::max(int(seg.size()), maxseg);
                 segs1.emplace_back(make_pair(traj.first, seg));
             }
-            double segpara2=biSearchMax(5,queryLen,40,false);
+            double segpara1=biSearchMax(5,queryLen,40,false,0.012);
+            std::cerr<<"query len:"<<queryLen<<",partial traj len:"<<segpara1<<"\n";
             for (auto &traj:trajs) {
-                auto seg = traj.second.getSegments(segpara2);
+                auto seg = traj.second.getSegments(segpara1);
                 maxseg = std::max(int(seg.size()), maxseg);
                 segs2.emplace_back(make_pair(traj.first, seg));
             }
@@ -39,15 +65,16 @@ int main(){
 
             TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
             ts1->loadSegments(segs1);
-            ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
+            ISpatialIndex *r = RTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
             TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
             ts2->loadSegments(segs2);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
             //kNN
+            segs1.clear();
             segs1.swap(emptyseg);
-            emptyseg.clear();
+            segs2.clear();
             segs2.swap(emptyseg);
             emptyseg.clear();
             vector<IShape *> queries;

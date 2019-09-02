@@ -1,3 +1,7 @@
+//
+// Created by Chuang on 2019/9/1.
+//
+
 #include "testFuncs.h"
 
 
@@ -5,24 +9,24 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
         vector<pair<id_type, vector<Trajectory>>> segs1,segs2;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
-        for (double queryLen=50;queryLen<200;queryLen+=50) {
+        for (double queryLen=100;queryLen<=3600;queryLen+=100) {
             maxseg=0;
             segs1.clear();
             segs2.clear();
             emptyseg.clear();
-            double segpara1=biSearchMax(5,queryLen,40,true);
             for (auto &traj:trajs) {
-                auto seg = traj.second.getSegments(segpara1);
+                auto seg = traj.second.getFixedSegments();
                 maxseg = std::max(int(seg.size()), maxseg);
                 segs1.emplace_back(make_pair(traj.first, seg));
             }
-            double segpara2=biSearchMax(5,queryLen,40,false);
+            double segpara1=biSearchMax(5,queryLen,40,false,0.012);
+            std::cerr<<"query len:"<<queryLen<<",partial traj len:"<<segpara1<<"\n";
             for (auto &traj:trajs) {
-                auto seg = traj.second.getSegments(segpara2);
+                auto seg = traj.second.getSegments(segpara1);
                 maxseg = std::max(int(seg.size()), maxseg);
                 segs2.emplace_back(make_pair(traj.first, seg));
             }
@@ -39,15 +43,16 @@ int main(){
 
             TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
             ts1->loadSegments(segs1);
-            ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
+            ISpatialIndex *r = RTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
             TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
             ts2->loadSegments(segs2);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
             //kNN
+            segs1.clear();
             segs1.swap(emptyseg);
-            emptyseg.clear();
+            segs2.clear();
             segs2.swap(emptyseg);
             emptyseg.clear();
             vector<IShape *> queries;

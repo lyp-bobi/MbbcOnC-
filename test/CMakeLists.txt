@@ -56,8 +56,12 @@ set (DIR mbc)
 set (SOURCES
         mbcTest
         enumTest
+        densityTest
         TrajStoreTest
         optimizedTest
+        tb3drTest
+        e2eTest
+        e2eTestGT
         )
 
 foreach (test ${SOURCES})

@@ -569,6 +569,30 @@ namespace SpatialIndex
                                 }
                                 max=std::max(max,pd);
                             }
+                            if(!parts->m_hasPrev){
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    pd = parts->m_computedDist[timeInterval];
+                                    max=std::max(max,pd);
+                                } else {
+                                    pd = m_query.getStaticIED(*parts->m_mbrs.front(), m_query.m_startTime(),
+                                                              parts->m_mintime);
+                                    parts->m_computedDist[timeInterval] = pd;
+                                    computedTime += timeInterval.second - timeInterval.first;
+                                    max=std::max(max,pd);
+                                }
+                            }
+                            if(!parts->m_hasNext){
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    pd = parts->m_computedDist[timeInterval];
+                                    max=std::max(max,pd);
+                                } else {
+                                    pd = m_query.getStaticMaxSED(*parts->m_mbrs.back(), parts->m_maxtime,
+                                                              m_query.m_endTime());
+                                    parts->m_computedDist[timeInterval] = pd;
+                                    computedTime += timeInterval.second - timeInterval.first;
+                                    max=std::max(max,pd);
+                                }
+                            }
                         }else{
                             for(const auto &box:parts->m_mbcs){
                                 timeInterval = std::make_pair(box->m_startTime, box->m_endTime);
@@ -579,6 +603,32 @@ namespace SpatialIndex
                                     parts->m_computedDist[timeInterval] = pd;
                                 }
                                 max=std::max(max,pd);
+                            }
+                            if(!parts->m_hasPrev){
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    pd = parts->m_computedDist[timeInterval];
+                                    max=std::max(max,pd);
+                                } else {
+                                    pd = m_query.getStaticMaxSED(parts->m_mbcs.front()->m_pLow[0],
+                                                              parts->m_mbcs.front()->m_pLow[1],
+                                                              m_query.m_startTime(), parts->m_mintime);
+                                    parts->m_computedDist[timeInterval] = pd;
+                                    computedTime += timeInterval.second - timeInterval.first;
+                                    max=std::max(max,pd);
+                                }
+                            }
+                            if(!parts->m_hasNext){
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    pd = parts->m_computedDist[timeInterval];
+                                    max=std::max(max,pd);
+                                } else {
+                                    pd = m_query.getStaticMaxSED(parts->m_mbcs.back()->m_pHigh[0],
+                                                              parts->m_mbcs.back()->m_pHigh[1], parts->m_maxtime,
+                                                              m_query.m_endTime());
+                                    parts->m_computedDist[timeInterval] = pd;
+                                    computedTime += timeInterval.second - timeInterval.first;
+                                    max=std::max(max,pd);
+                                }
                             }
                         }
                         parts->m_calcMin = max;
