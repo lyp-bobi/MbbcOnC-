@@ -13,6 +13,8 @@ int main(){
         vector<pair<id_type, vector<Trajectory>>> segs1,segs2;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
+        rsimpli=false;
+        simpli=true;
         for (double queryLen=100;queryLen<=3600;queryLen+=100) {
             maxseg=0;
             segs1.clear();
@@ -64,6 +66,7 @@ int main(){
                 if (!concate->m_points.empty())
                     queries.emplace_back(concate);
             }
+
             kNNQueryBatch(r, queries, ts1);
             kNNQueryBatch(rc, queries, ts2);
             cerr << "\n";

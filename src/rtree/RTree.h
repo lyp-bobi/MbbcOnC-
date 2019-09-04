@@ -32,7 +32,7 @@
 #include "PointerPoolNode.h"
 #include "storagemanager/TrajStore.h"
 #include <cmath>
-
+extern bool rsimpli;
 namespace SpatialIndex
 {
 	namespace RTree

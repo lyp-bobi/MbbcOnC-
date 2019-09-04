@@ -329,6 +329,7 @@ std::vector<std::vector<SpatialIndex::STPoint>> Trajectory::simplifyWithRDPN(con
                 md=maxDistance;
             }
         }
+        if(md.second==0) break;
         int placeIndex=md.first;
         vector<SpatialIndex::STPoint> *p=&paths[pathIndex];
         vector<SpatialIndex::STPoint>::const_iterator it1=p->begin();
@@ -1663,15 +1664,17 @@ void Trajectory::getCombinedTrajectory(Trajectory& out, const Trajectory& in) co
     out.combineTrajectory(in);
 }
 std::ostream& SpatialIndex::operator<<(std::ostream& os, const Trajectory& r) {
-    std::string s;
-    s = "Trajectory length:" + std::to_string(r.m_points.size()) + "\n" +
-        "m_points are" + "\n";
-    for (const auto &p:r.m_points) {
-        s += std::to_string(p.m_pCoords[0]) + "," + std::to_string(p.m_pCoords[1]) +
-             "," + std::to_string(p.m_time) + " ";
-    }
-    s += "\n";
-    os<<s;
+//    std::string s;
+//    s = "Trajectory length:" + std::to_string(r.m_points.size()) + "\n" +
+//        "m_points are" + "\n";
+//    for (const auto &p:r.m_points) {
+//        s += std::to_string(p.m_pCoords[0]) + "," + std::to_string(p.m_pCoords[1]) +
+//             "," + std::to_string(p.m_time) + " ";
+//    }
+//    s += "\n";
+//    os<<s;
+
+    os<<"Trajectory length:"<<r.m_points.size()<<"\n"<<"m_points are"<< "\n"<<r.m_points.front()<<r.m_points.back()<<endl;
     return os;
 }
 

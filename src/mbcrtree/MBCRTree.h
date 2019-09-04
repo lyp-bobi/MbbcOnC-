@@ -737,6 +737,11 @@ namespace SpatialIndex
                 Trajectory getTraj(id_type id){
                     Trajectory traj;
                     Trajectory tmpTraj;
+                    m_ts->m_loadedTraj+=1;
+//                    std::cerr<<"start getting traj\n";
+//                    for(auto &bc:m_parts[id].m_mbcs){
+//                        std::cerr<<*bc<<"\n";
+//                    }
                     for(const auto &pair:m_parts[id].m_entries){
                         auto e=pair.second;
                         m_ts->m_trajIO+=std::ceil(e.m_len/4096.0);

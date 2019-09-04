@@ -35,10 +35,11 @@
 #include "Index.h"
 #include "BulkLoader.h"
 #include "RTree.h"
-#include "../mbcrtree/MBCRTree.h"
 
 using namespace SpatialIndex::RTree;
 using namespace SpatialIndex;
+
+bool rsimpli=true;
 
 SpatialIndex::RTree::Data::Data(uint32_t len, uint8_t* pData, Region& r, id_type id)
 	: m_id(id), m_region(r), m_pData(0), m_dataLength(len)
@@ -531,7 +532,7 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
     }
     Trajectory simpleTraj;
     double delta=0;
-    if(simpli==true) {
+    if(rsimpli==true) {
 //        auto stat=trajStat::instance();
         int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (m_ts->m_timeCount/m_ts->m_segCount));
         segnum=std::max(segnum,10);

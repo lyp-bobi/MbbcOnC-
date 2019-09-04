@@ -47,7 +47,7 @@ int main(){
             auto stat=trajStat::instance();
             long count=ts1->m_entries.size();
             ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
-            ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier1);
+            ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
             vector<IShape*> queries;
             for (int i = 0; i < 200; i++) {
                 id_type randId=long(random(0,count-1));

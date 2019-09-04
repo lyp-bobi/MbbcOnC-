@@ -21,6 +21,7 @@
 #include "storagemanager/TrajStore.h"
 #include "../../src/storagemanager/DiskStorageManager.h"
 #include "../../src/mbcrtree/MBCRTree.h"
+#include "../../src/rtree/RTree.h"
 //#define sourceFile "D://t1000.txt"
 #define genFile "D://00.txt"
 #define GLFile "/root/GLSC.csv"
@@ -236,7 +237,7 @@ vector<pair<id_type ,Trajectory> >  loadGTToTrajs(string filename=genFile){
             traj.emplace_back(iter->second);
         }
         trajs.erase(id);
-        if(traj.size()>=10){
+        if(traj.size()>=2){
             vector<STPoint> tps;
             xyt lastpoint;
             for(int l=0;l<traj.size();l++){
@@ -316,7 +317,7 @@ vector<pair<id_type ,Trajectory> >  loadGLToTrajs(string filename=GLFile){
             traj.emplace_back(iter->second);
         }
         trajs.erase(id);
-        if(traj.size()>=10){
+        if(traj.size()>=2){
             vector<STPoint> tps;
             xyt lastpoint;
             for(int l=0;l<traj.size();l++){
@@ -378,12 +379,13 @@ double biSearchMax(int k,double qt,int f,bool useMBR, double rk=-1){
     vhigh=knncost(high,k,qt,f,useMBR,rk);
     st.push(d4(low,high,vlow,vhigh));
     d4 first(0,0,0,0);
+    auto stat=trajStat::instance();
     while(!st.empty()){
         first=st.top();
         st.pop();
         double mid=(first.low+first.high)/2;
         if(first.high-first.low<1){
-            return mid;
+            return std::max(mid,stat->tl);
         }
         double vmid=knncost(mid,k,qt,f,useMBR,rk);
         bool rising=knncost(mid+0.1,k,qt,f,useMBR,rk)>vmid;
@@ -435,7 +437,7 @@ void kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore 
 //    cerr <<"Average Querying time: "<< time/num<<endl;
 //    cerr <<"Averaged VISIT NODE "<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<endl;
 //    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
-    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
+    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<"\t"<<1.0*ts->m_loadedTraj/num<<endl;
 //    cerr <<time/num<<"\n";
 }
 void rangeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr,int thennk=5){
