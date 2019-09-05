@@ -8,8 +8,8 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
-//        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs("D://00.txt");
+//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
+        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs("D://00.txt");
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
@@ -40,11 +40,11 @@ int main(){
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
             TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
-            ts1->loadSegments(segs);
+            ts1->loadSegments(segs, true);
             ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
             TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
-            ts2->loadSegments(segs);
+            ts2->loadSegments(segs,true);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
             //kNN

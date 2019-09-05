@@ -243,6 +243,9 @@ namespace SpatialIndex
                 bool operator <( const storeEntry& y) const{
                     return std::tie(m_page, m_off, m_len) < std::tie(y.m_page, y.m_off, y.m_len);
                 }
+                bool operator==(const storeEntry& y) const{
+                    return std::tie(m_page, m_off, m_len) == std::tie(y.m_page, y.m_off, y.m_len);
+                }
             };
 			class PartsStore{
             protected:
@@ -742,19 +745,23 @@ namespace SpatialIndex
 //                    for(auto &bc:m_parts[id].m_mbcs){
 //                        std::cerr<<*bc<<"\n";
 //                    }
+                    std::set<storeEntry> loaded;
                     for(const auto &pair:m_parts[id].m_entries){
                         auto e=pair.second;
-                        m_ts->m_trajIO+=std::ceil(e.m_len/4096.0);
-                        uint32_t len=e.m_off+e.m_len;
-                        uint8_t *load;
-                        m_ts->loadByteArray(e.m_page,len,&load);
-                        uint8_t *data = load+e.m_off;
-                        tmpTraj.loadFromByteArray(data);
-                        delete[] load;
-                        if(traj.m_points.empty()){
-                            traj=tmpTraj;
-                        }else{
-                            traj.linkTrajectory(tmpTraj);
+                        if(loaded.count(e)==0) {
+                            loaded.insert(e);
+                            m_ts->m_trajIO += std::ceil(e.m_len / 4096.0);
+                            uint32_t len = e.m_off + e.m_len;
+                            uint8_t *load;
+                            m_ts->loadByteArray(e.m_page, len, &load);
+                            uint8_t *data = load + e.m_off;
+                            tmpTraj.loadFromByteArray(data);
+                            delete[] load;
+                            if (traj.m_points.empty()) {
+                                traj = tmpTraj;
+                            } else {
+                                traj.linkTrajectory(tmpTraj);
+                            }
                         }
                     }
                     return traj;

@@ -163,7 +163,7 @@ namespace SpatialIndex
             };
             id_type getTrajId(id_type id){return id/m_maxTrajSegs;}
             id_type getSegId(id_type id,uint32_t segnum){return id*m_maxTrajSegs+segnum;}
-            void loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs);
+            void loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs,bool idFirst=false);
             const Trajectory getTraj(id_type &id);
             const Trajectory getTrajByTime(id_type &id,double tstart,double tend);
             const ShapeList getMBRsByTime(id_type &id,double tstart,double tend);
