@@ -81,8 +81,8 @@ public:
 //        cout << *s << endl;
 
         m_lastResult=d.getIdentifier();
-//        auto mou=dynamic_cast<const MBCRTree::MBCRTree::simpleData*>(&d);
-//        cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
+        auto mou=dynamic_cast<const MBCRTree::MBCRTree::simpleData*>(&d);
+        cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
 //        //id of the data
 //        if(ts== nullptr)
 //            cerr << d.getIdentifier() << endl;

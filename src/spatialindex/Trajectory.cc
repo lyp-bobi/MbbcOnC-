@@ -471,7 +471,7 @@ double Trajectory::getArea() const{ return 0;}
 inline double theF(double c1,double c2,double c3,double c4,double t){
     //the c4 should be the length of that time period
     double delta=4*c1*c3-c2*c2;
-    if(delta<=1e-3){
+    if(delta<=1e-7){
         return (2*c1*t+c2)*sqrt(std::max(0.0,c1*t*t+c2*t+c3))/4/c1/c4;
     }
     else {
@@ -498,8 +498,8 @@ double Trajectory::line2lineIED(const SpatialIndex::STPoint &p1s, const SpatialI
             c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
             c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
             c4=te-ts;
-    if(c1==0){
-        return std::sqrt(sq(dxs)+sq(dys));
+    if(c1<1e-7){
+        return std::sqrt(sq(dxs)+sq(dys))*c4;
     }else{
             return (theF(c1,c2,c3,c4,te)-theF(c1,c2,c3,c4,ts));
     }
@@ -782,7 +782,6 @@ double Trajectory::line2MBCDistance(const SpatialIndex::STPoint &ps, const Spati
         return std::max(r.getMinimumDistance(ps),r.getMinimumDistance(pe));
     }
     else{throw Tools::NotSupportedException("Wrong distance");}
-
 }
 
 double Trajectory::getMinimumDistance(const IShape& s) const{
@@ -967,6 +966,7 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
             lasttime = newtime;
             if(disttype==0) {
                 double pd = line2lineIED(lastp1, newp1, lastp2, newp2);
+//                std::cerr<<"distance\n"<<lastp1<<"\t"<<newp1<<"\n"<<lastp2<<"\t"<<newp2<<"\n"<<pd<<"\n";
                 sum += pd;
             }
             else if(disttype==1){
@@ -1678,17 +1678,17 @@ void Trajectory::getCombinedTrajectory(Trajectory& out, const Trajectory& in) co
     out.combineTrajectory(in);
 }
 std::ostream& SpatialIndex::operator<<(std::ostream& os, const Trajectory& r) {
-//    std::string s;
-//    s = "Trajectory length:" + std::to_string(r.m_points.size()) + "\n" +
-//        "m_points are" + "\n";
-//    for (const auto &p:r.m_points) {
-//        s += std::to_string(p.m_pCoords[0]) + "," + std::to_string(p.m_pCoords[1]) +
-//             "," + std::to_string(p.m_time) + " ";
-//    }
-//    s += "\n";
-//    os<<s;
+    std::string s;
+    s = "Trajectory length:" + std::to_string(r.m_points.size()) + "\n" +
+        "m_points are" + "\n";
+    for (const auto &p:r.m_points) {
+        s += std::to_string(p.m_pCoords[0]) + "," + std::to_string(p.m_pCoords[1]) +
+             "," + std::to_string(p.m_time) + " ";
+    }
+    s += "\n";
+    os<<s;
 
-    os<<"Trajectory length:"<<r.m_points.size()<<"\n"<<"m_points are"<< "\n"<<r.m_points.front()<<r.m_points.back()<<endl;
+//    os<<"Trajectory length:"<<r.m_points.size()<<"\n"<<"m_points are"<< "\n"<<r.m_points.front()<<r.m_points.back()<<endl;
     return os;
 }
 

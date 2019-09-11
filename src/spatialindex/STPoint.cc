@@ -273,7 +273,7 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const STPoint& pt)
 		os << pt.m_pCoords[i] << " ";
 	}
 
-	os << ", Start: " << pt.m_time << ", End: " << pt.m_time;
+	os << ", " << pt.m_time;
 
 	return os;
 }

@@ -6,7 +6,7 @@ int main(){
         srand((int) time(NULL));
 //        srand(21);
 //        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
-        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, Trajectory> > empty1;
         int totallen=0,totalseg=0;
@@ -20,30 +20,29 @@ int main(){
         }
         std::cerr<<"segments' average length is "<<totallen*1.0/totalseg<<"\n";
         vector<IShape *> queries;
-//        double plow[3]={16083.3,16481.8,485};
-//        double pHigh[3]={17853,17749.1,485};
-//        Region* rg=new Region(plow,pHigh,3);
-//        queries.push_back(rg);
         cerr<<"generating queries\n";
         int realtesttime=(QueryType==2)?testtime:(100*testtime);
-        for (int i = 0; i < realtesttime; i++) {
-            if (QueryType == 1) {
-                double t = int(random(0, 1000));
-                double pLow[3] = {random(0, 25000), random(0, 30000), t};
-                double pHigh[3] = {pLow[0] + random(500, 2000), pLow[1] + random(500, 2000), t+20};
-                Region *rg = new Region(pLow, pHigh, 3);
-                queries.emplace_back(rg);
-            }
-            else if(QueryType==2){
-                auto ori = &trajs[(0+i)%trajs.size()].second;
-                Trajectory* concate= new Trajectory();
-                double ts=ori->m_startTime(),te=ori->m_endTime();
-//                concate=ori;
-//                ori->getPartialTrajectory(0.75*ts+0.25*te,0.25*te+0.75*te,*concate);
-                ori->getPartialTrajectory((i%5)*100,(i%5)*100+100,*concate);
-                queries.emplace_back(concate);
-            }
-        }
+        double queryLen=300;
+        Trajectory q;
+        q.loadFromString("39.961386,116.397554,70335.790399 39.961386,116.397554,70635.790399");
+        queries.emplace_back(&q);
+//        for (int i = 0; i < realtesttime; i++) {
+//            if (QueryType == 1) {
+//                double t = int(random(0, 1000));
+//                double pLow[3] = {random(0, 25000), random(0, 30000), t};
+//                double pHigh[3] = {pLow[0] + random(500, 2000), pLow[1] + random(500, 2000), t+20};
+//                Region *rg = new Region(pLow, pHigh, 3);
+//                queries.emplace_back(rg);
+//            }
+//            else if(QueryType==2){
+//                auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
+//                Trajectory *concate = new Trajectory();
+//                double ts = std::max(ori->m_startTime(),random(ori->m_startTime(), ori->m_endTime() - queryLen));
+//                ori->getPartialTrajectory(ts, ts + queryLen, *concate);
+//                if (!concate->m_points.empty())
+//                    queries.emplace_back(concate);
+//            }
+//        }
 
         cerr<<"queries generated\n";
         trajs.swap(empty1);
@@ -66,17 +65,17 @@ int main(){
 
         ISpatialIndex *r=MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1,4096,3,indexIdentifier1);
 
-        TreeQueryBatch(r, queries,ts1);
-        delete r;
-        delete ts1;
+//        TreeQueryBatch(r, queries,ts1);
+//        delete r;
+//        delete ts1;
 
 
         TrajStore* ts2=new TrajStore(file2,4096,maxseg);
         ts2->loadSegments(segs);
         ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2,4096,3,indexIdentifier2);
-        TreeQueryBatch(rc, queries,ts2);
-        delete rc;
-        delete ts2;
+//        TreeQueryBatch(rc, queries,ts2);
+//        delete rc;
+//        delete ts2;
 
         segs.clear();
 
@@ -122,21 +121,21 @@ int main(){
 
 //        TreeQueryBatch(real,queries);
 
-
-//        double aa,bb,oo;
-////        for(int j=0;j<queries.size();j++){
-//        for(int j=73;j<74;j++){
-//            auto q=queries[j];
-////            oo=TreeQuery(real,q);
-//            aa=TreeQuery(r,q,&ts1);
-//            bb=TreeQuery(rc,q,&ts2);
-////            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
-//            if(aa!=bb){
-//                cerr<<"error"<<j<<endl;
-//                cerr<<aa<<" "<<bb<<" "<<oo<<endl;
-////                cerr<<*qtraj<<endl;
-//            }
-//        }
+        cerr.precision(20);
+        double aa,bb,oo;
+//        for(int j=0;j<queries.size();j++){
+        for(int j=0;j<queries.size();j++){
+            auto q=queries[j];
+//            oo=TreeQuery(real,q);
+            aa=TreeQuery(r,q,ts1);
+            bb=TreeQuery(rc,q,ts2);
+            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
+            if(aa!=bb){
+                cerr<<"error"<<j<<endl;
+                cerr<<aa<<" "<<bb<<" "<<oo<<endl;
+                cerr<<*qtraj<<endl;
+            }
+        }
 
 
 
