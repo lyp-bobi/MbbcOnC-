@@ -146,7 +146,7 @@ void MBC::storeToByteArray(uint8_t **data, uint32_t &len) {
     memcpy(ptr, &m_rd, sizeof(double));
     ptr += sizeof(double);
     memcpy(ptr, &m_rv, sizeof(double));
-    ptr += sizeof(double);
+//    ptr += sizeof(double);
     //ptr += m_dimension * sizeof(double);
 }
 
@@ -242,6 +242,9 @@ bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
         return timed.first.getMinimumDistance(Region(in.m_pLow,in.m_pHigh,m_dimension))<=timed.second+1e-10;
     }else{
         double t0=m_startTime,t1=m_startTime+m_rd/m_rv,t2=m_endTime-m_rd/m_rv,t3=m_endTime;
+        if(m_rv<1e-7){
+            t1=t2=(m_endTime+m_startTime)/2;
+        }
         double tlow=in.m_pLow[in.m_dimension-1],thigh=in.m_pHigh[in.m_dimension-1];
         double ints=std::max(t0,tlow),inte=std::min(t3,thigh);
         auto a=getCenterRdAtTime(ints),b=getCenterRdAtTime(inte);
@@ -395,6 +398,9 @@ std::pair<double,double> getIntersectPeriod(
 bool MBC::prevalidate(const SpatialIndex::Region &in) const {
     Region mbr2d(in.m_pLow,in.m_pHigh,in.m_dimension-1);
     double t0=m_startTime,t1=m_startTime+m_rd/m_rv,t2=m_endTime-m_rd/m_rv,t3=m_endTime;
+    if(m_rv<1e-7){
+        t1=t2=(m_endTime+m_startTime)/2;
+    }
     Region rs,re,rc;
     double xlow=in.m_pLow[0],ylow=in.m_pLow[1],tlow=in.m_pLow[2],
             xhigh=in.m_pHigh[0],yhigh=in.m_pHigh[1],thigh=in.m_pHigh[2];
@@ -514,6 +520,9 @@ void MBC::getMBR(Region& out) const{
 double MBC::getArea() const{
     if(m_rv==0) return 0;
     double dt=m_rd/m_rv;
+    if(m_rv<1e-7){
+        dt=(m_endTime-m_startTime)/2;
+    }
     double res=M_PI*sq(m_rd)*(m_endTime-m_startTime-2*dt)+2.0/3*M_PI*sq(m_rd);
     return res;
 }

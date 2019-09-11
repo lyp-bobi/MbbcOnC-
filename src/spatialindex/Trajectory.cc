@@ -386,6 +386,20 @@ std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::STPoint> m
     return res;
 }
 
+std::vector<Trajectory> Trajectory::getRDPSegments(double len) const {
+    int segNum=std::ceil((m_endTime()-m_startTime())/len);
+    std::vector<Trajectory> res;
+    auto m=simplifyWithRDPN(m_points,std::min(int(std::sqrt(m_points.size()-1)),segNum));
+    for(auto &pts:m){
+        if(pts.size()<2){
+            std::cerr<<"error on getting segments with "<<len<<"and \n"<<*this;
+            throw Tools::IllegalStateException("bad RDPN");
+        }
+        res.emplace_back(Trajectory(pts));
+    }
+    return res;
+}
+
 std::vector<Trajectory> Trajectory::getSegments(double len) const {
     int segNum=std::ceil((m_endTime()-m_startTime())/len);
     std::vector<Trajectory> res;

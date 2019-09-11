@@ -8,14 +8,15 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
-        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs("D://00.txt");
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
+//        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs("D://00.txt");
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
         double avgSegLen=100;
 //        for (double segpara = 0.1; avgSegLen>10 ; segpara/=2) {
-        for (double segpara = 100; segpara<=2000 ; segpara+=100) {
+        double para[]={500,1000,1500,2000,2500,3000,4000,5000,8000,10000};
+        for (double segpara:para) {
             maxseg=0;
             segs.clear();
             int totallen = 0, totalseg = 0;

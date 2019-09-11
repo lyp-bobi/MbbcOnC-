@@ -413,6 +413,8 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
         id_type thisPageId = m_pStorageManager->nextPage();
         int linecount=0;
         double vol1=0,vol2=0;
+        uint8_t *data;
+        uint32_t len;
         for (auto &traj:trajs) {
             auto it=traj.second.begin();
             id_type segid;
@@ -457,8 +459,6 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
                 m_segCount++;
                 m_timeCount += seg.m_endTime() - seg.m_startTime();
                 linecount += seg.m_points.size() - 1;
-                uint8_t *data;
-                uint32_t len;
                 seg.storeToByteArray(&data, len);
                 for(const auto &s:ids){
                     Entry *sege = new Entry(thisPageId, 0, len, s.m_pvId,s.m_ntId);
@@ -470,8 +470,28 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
                 pvId=segid;
                 thisPageId+=std::ceil(double(len)/m_pageSize);
                 it++;
+                delete[](data);
             }
         }
+        double radius1=0,radius2=0;
+        double ratio=0;
+        for(const auto &br: m_entryMbrs){
+            radius1+=sqrt(sq(br.second.m_pHigh[0]-br.second.m_pLow[0])+
+                    sq(br.second.m_pHigh[1]-br.second.m_pLow[1]));
+        }
+        for(const auto &bc: m_entryMbcs){
+            double dt=bc.second.m_rd/bc.second.m_rv;
+            if(bc.second.m_rv<1e-7){
+                dt=(bc.second.m_endTime-bc.second.m_startTime)/2;
+            }
+            double t=bc.second.m_endTime-bc.second.m_startTime;
+            ratio+=dt/t;
+            radius2+=(t-dt)/t*bc.second.m_rd;
+        }
+        radius1/=m_entryMbrs.size();
+        radius2/=m_entryMbrs.size();
+        ratio/=m_entryMbrs.size();
+        std::cerr <<"radius MBR is "<<radius1<<",radius MBC is "<<radius2<<", ratio is"<<ratio<<"\n";
         std::cerr << "total segment is" << m_entryMbrs.size() << "=" << m_entryMbcs.size() << "\n";
         std::cerr << "expression effectiveness " << vol1 << " versus " << vol2 << "\n" << vol2 / vol1 << "\n";
     }else{//group by spatial

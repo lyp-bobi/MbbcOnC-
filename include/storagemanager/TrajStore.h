@@ -146,7 +146,8 @@ namespace SpatialIndex
                 m_part2node.clear();
             };
             void cleanStatistic(){
-                m_trajIO=0,m_indexIO=0;
+                m_trajIO=0;m_indexIO=0;
+                m_leaf1=0;m_leaf2=0;
                 m_loadedTraj=0;
                 m_boundingVisited=0;
                 m_maxVelocity=0;
@@ -177,6 +178,7 @@ namespace SpatialIndex
             IStorageManager* m_pStorageManager;
             uint32_t m_pageSize;
             uint32_t m_maxTrajSegs=100;
+            uint32_t m_leaf1=0,m_leaf2=0;
             uint32_t m_trajIO=0,m_indexIO=0;
             uint32_t m_loadedTraj=0;
             uint32_t m_boundingVisited=0;

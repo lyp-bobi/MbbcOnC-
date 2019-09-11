@@ -578,6 +578,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                 ps.pop();
                 if(!ps.isLoaded(pFirst->m_id)) {
                     NodePtr n = readNode(pFirst->m_id);
+                    m_ts->m_leaf1+=1;
                     v.visitNode(*n);
                     ps.loadLeaf(*n);
 //                    n.relinquish();
@@ -590,6 +591,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                 NodePtr n = readNode(missing);
                 v.visitNode(*n);
                 ps.loadLeaf(*n);
+                m_ts->m_leaf2+=1;
 //                n.relinquish();
                 break;
             }
