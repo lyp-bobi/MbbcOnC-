@@ -63,6 +63,7 @@ set (SOURCES
         e2eTest
         e2eTestGT
         splitTest
+        radiusEstimator
         )
 
 foreach (test ${SOURCES})

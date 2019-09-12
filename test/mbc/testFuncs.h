@@ -46,6 +46,7 @@ public:
     size_t m_leafvisited;
     size_t m_resultGet;
     id_type m_lastResult;
+    double m_lastDist=0;
     IShape *m_query;
     TrajStore *ts=nullptr;
 
@@ -82,7 +83,10 @@ public:
 
         m_lastResult=d.getIdentifier();
         auto mou=dynamic_cast<const MBCRTree::MBCRTree::simpleData*>(&d);
-        cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
+//        cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
+        if(mou!=nullptr){
+            m_lastDist=mou->m_dist;
+        }
 //        //id of the data
 //        if(ts== nullptr)
 //            cerr << d.getIdentifier() << endl;
@@ -421,16 +425,19 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore
     cerr <<"TrajStore Statistic"<< ts->m_indexIO<<"\t"<<ts->m_trajIO<<endl;
 }
 
-void kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr,int thennk=5){
+double kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr,int thennk=5){
     ts->cleanStatistic();
     int num=queries.size();
     MyVisitor vis;
     vis.ts=ts;
     auto start = std::chrono::system_clock::now();
+    double rad=0;
     for(int i=0;i<queries.size();i++){
         vis.m_query=queries[i];
         tree->nearestNeighborQuery(thennk,*queries[i],vis);
+        rad+=vis.m_lastDist;
     }
+    rad/=queries.size();
     double time;
     auto end = std::chrono::system_clock::now();auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     time=double(duration.count()) * std::chrono::microseconds::period::num/ std::chrono::microseconds::period::den;
@@ -439,6 +446,7 @@ void kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore 
 //    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
     cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<<1.0*ts->m_leaf1/num<<"\t"<<1.0*ts->m_leaf2/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<"\t"<<1.0*ts->m_loadedTraj/num<<endl;
 //    cerr <<time/num<<"\n";
+    return rad;
 }
 void rangeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr,int thennk=5){
     ts->cleanStatistic();
