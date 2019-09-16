@@ -236,7 +236,7 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
 	switch (m)
 	{
 	case BLM_STR:
-		bl.bulkLoadUsingSTR(static_cast<MBCRTree*>(tree), stream, bindex, bleaf, 10000, 100);
+		bl.bulkLoadUsingSTR(static_cast<MBCRTree*>(tree), stream, bindex, bleaf, 10000, 10000);
 		break;
 	default:
 		throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Unknown bulk load method.");

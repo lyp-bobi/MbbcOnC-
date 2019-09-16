@@ -77,7 +77,7 @@ int main(){
 //                    simpli=true;
                     disttype=0;
 //                    kNNQueryBatch(r, queries, ts1);
-                    std::cerr<<kNNQueryBatch(rc, queries, ts2);
+                    std::cerr<<kNNQueryBatch(rc, queries, ts2,thek);
 ////                    simpli= false;
 //                    disttype=1;
 //                    kNNQueryBatch(r, queries, ts1);

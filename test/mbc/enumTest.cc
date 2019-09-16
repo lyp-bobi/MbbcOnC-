@@ -15,7 +15,7 @@ int main(){
         int maxseg = 0;
         double avgSegLen=100;
 //        for (double segpara = 0.1; avgSegLen>10 ; segpara/=2) {
-        double para[]={500,1000,1500,2000,2500,3000,4000,5000,8000,10000};
+        double para[]={300,500,800,1000,1500,2000,2500,3000};
         for (double segpara:para) {
             maxseg=0;
             segs.clear();
@@ -53,7 +53,7 @@ int main(){
             segs.swap(emptyseg);
             vector<IShape *> queries;
 //            double segattri[]={900,3600,1000000};
-            double segattri[]={900,3600,100000};
+            double segattri[]={900,3600,18000};
             auto stat=trajStat::instance();
             for (auto queryLen:segattri) {
 //                for(int thek=1;thek<=21;thek+=5){

@@ -653,6 +653,7 @@ namespace SpatialIndex
             public:
 			    bool isLoaded(id_type id){ return loadedLeaf.count(id)>0;}
 			    void loadLeaf(const Node &n){
+//                    std::cerr<<"leaf dist"<<m_query.getNodeMinimumDistance(n.m_nodeMBR,100)/(m_query.m_endTime()-m_query.m_startTime())<<"\n";
 //                    std::cerr<<"load leaf"<<n.m_identifier<<"\n";
 			        loadedLeaf.insert(n.m_identifier);
                     std::vector<id_type > relatedIds;

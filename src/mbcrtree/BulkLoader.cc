@@ -420,11 +420,15 @@ void BulkLoader::createLevel(
     int remainDim;
     remainDim = pTree->m_dimension - dimension;
     uint64_t S;
+    double ltc;
     auto stat=trajStat::instance();
     if(level==0&&dimension==0){
         double dx=stat->Dx,dy=stat->Dy,dt=stat->Dt;
         double v=stat->v;
-        int nt=pow(static_cast<double>(P)*v*v*dt*dt/dx/dy,1.0/3);
+        ltc=pow(dx*dy*dt/v/v/P/450,1.0/3);
+        std::cerr<<"ltc is "<<ltc<<"\n";
+        double nt=dt/ltc;
+//        int nt=pow(static_cast<double>(P)*v*v*dt*dt/dx/dy,1.0/3);
         S = nt;
         if(S>P) S=1;
     }
@@ -539,23 +543,55 @@ void BulkLoader::createLevel(
 	}
 	else
 	{
+	    auto stat=trajStat::instance();
+	    double curt=stat->mint+ltc;
 		bool bMore = true;
-
+//        int count1=0;
 		while (bMore)
 		{
+		    double last=0;
 			ExternalSorter::Record* pR;
 			Tools::SmartPointer<ExternalSorter> es3 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
-
-			for (uint64_t i = 0; i < b*ceil(1.0*P/S); ++i)
+            if(level==0&&dimension==0) {
+                while(true){
+                    try { pR = es->getNextRecord();
+//                    double the=pR->m_r.m_pLow[2] + pR->m_r.m_pHigh[2];
+//                    if(the>=last){last=the;}
+//                    else std::cerr<<"warn\n";
+//                    std::cerr<<count1++<<" "<<pR->m_r.m_pLow[2] + pR->m_r.m_pHigh[2]<<"\n";
+                    }
+                    catch (Tools::EndOfStreamException) {
+//                        std::cerr<<"end\n";
+                        bMore = false;
+                        break;
+                    }
+                    pR->m_s = dimension + 1;
+                    es3->insert(pR);
+                    if(pR->m_r.m_pLow[2] + pR->m_r.m_pHigh[2] > 2 * curt){
+                        curt+=ltc;
+                        break;
+                    }
+                }
+            }else {
+                for (uint64_t i = 0; i < b * ceil(1.0 * P / S); ++i)
 //            for (uint64_t i = 0; i < S*b; ++i)
-			{
-				try { pR = es->getNextRecord(); }
-				catch (Tools::EndOfStreamException) { bMore = false; break; }
-				pR->m_s = dimension + 1;
-				es3->insert(pR);
-			}
-			es3->sort();
-			createLevel(pTree, es3, dimension + 1, bleaf, bindex, level, es2, pageSize, numberOfPages);
+                {
+                    try { pR = es->getNextRecord(); }
+                    catch (Tools::EndOfStreamException) {
+                        bMore = false;
+                        break;
+                    }
+                    pR->m_s = dimension + 1;
+                    es3->insert(pR);
+                }
+            }
+            if(es3->getTotalEntries()>0) {
+//                if(level==0&&dimension==0) {
+//                    std::cerr << "entries is"<<es3->getTotalEntries()<<"\n";
+//                }
+                es3->sort();
+                createLevel(pTree, es3, dimension + 1, bleaf, bindex, level, es2, pageSize, numberOfPages);
+            }
 		}
 	}
 }
@@ -573,6 +609,9 @@ Node* BulkLoader::createNode(SpatialIndex::MBCRTree::MBCRTree* pTree, std::vecto
 	    e[cChild]->m_pData = 0;
 		delete e[cChild];
 	}
-
+    if(level==0){
+        calcuTime[0]+=n->m_nodeMBR.m_pHigh[2]-n->m_nodeMBR.m_pLow[2];
+        calcuTime[1]+=1;
+    }
 	return n;
 }

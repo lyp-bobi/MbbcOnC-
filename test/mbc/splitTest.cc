@@ -12,12 +12,12 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
 //        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs("D://00.txt");
         vector<pair<id_type, vector<Trajectory>>> segs1,segs2,segs3,segs4;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
-        for (double segpara = 100; segpara<=2000 ; segpara+=100) {
+        for (double segpara = 100; segpara<=2000 ; segpara+=300) {
             maxseg=100;
             segs1.clear();segs2.clear();segs3.clear();segs4.clear();
             segs1.swap(emptyseg);segs2.swap(emptyseg);segs3.swap(emptyseg);segs4.swap(emptyseg);
