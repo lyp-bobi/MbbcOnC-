@@ -217,6 +217,9 @@ void Trajectory::getMBC(SpatialIndex::MBC &out) const {
         out.makeInfinite(m_dimension+1);
         return;
     }
+    if(std::fabs(m_endTime()-m_startTime())<1e-7){
+        std::cerr<<"probably wrong segment at"<<*this<<"\n";
+    }
     double startx=m_points[0].m_pCoords[0],starty=m_points[0].m_pCoords[1],startt=m_points[0].m_time;
     double endx=m_points.back().m_pCoords[0],endy=m_points.back().m_pCoords[1],endt=m_points.back().m_time;
     double avx=(endx-startx)/(endt-startt),avy=(endy-starty)/(endt-startt);
@@ -403,16 +406,17 @@ std::vector<Trajectory> Trajectory::getRDPSegments(double len) const {
 std::vector<Trajectory> Trajectory::getSegments(double len) const {
     int segNum=std::ceil((m_endTime()-m_startTime())/len);
     std::vector<Trajectory> res;
-//    auto m=simplifyWithRDPN(m_points,std::min(int(std::sqrt(m_points.size()-1)),int(std::sqrt(segNum))));
-//    for(auto &pts:m){
-//        if(pts.size()<2){
-//            std::cerr<<"error on getting segments with "<<len<<"and \n"<<*this;
-//            throw Tools::IllegalStateException("bad RDPN");
-//        }
-//        auto seg=Trajectory(pts).getStaticSegments(len);
-//        res.insert(res.end(),seg.begin(),seg.end());
-//    }
-//    return res;
+    if(segNum==1) {res.emplace_back(*this);return res;}
+    auto m=simplifyWithRDPN(m_points,std::min(int(std::sqrt(m_points.size()-1)),int(std::sqrt(segNum))));
+    for(auto &pts:m){
+        if(pts.size()<2){
+            std::cerr<<"error on getting segments with "<<len<<"and \n"<<*this;
+            throw Tools::IllegalStateException("bad RDPN");
+        }
+        auto seg=Trajectory(pts).getStaticSegmentsCut(len);
+        res.insert(res.end(),seg.begin(),seg.end());
+    }
+    return res;
 
 //    auto m=getStaticSegments(len*sqrt(double(segNum)));
 //    for(auto &traj:m){
@@ -421,7 +425,43 @@ std::vector<Trajectory> Trajectory::getSegments(double len) const {
 //    }
 //    return res;
 
-    return getStaticSegments(len);
+//    return getStaticSegmentsCut(len);
+}
+
+std::vector<Trajectory> Trajectory::getStaticSegmentsCut(double len) const{
+    vector<STPoint> seg;
+    vector<Trajectory> res;
+    if(m_points.size()<2) {
+        throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
+    }
+    double segStart=m_startTime();
+    seg.emplace_back(m_points[0]);
+    for(int i=1;i<m_points.size();i++){
+        if(m_points[i].m_time<segStart+len){
+            seg.emplace_back(m_points[i]);
+        }
+        else if(m_points[i].m_time==segStart+len){
+            seg.emplace_back(m_points[i]);
+            res.emplace_back(Trajectory(seg));
+            seg.clear();
+            seg.emplace_back(m_points[i]);
+            segStart=m_points[i].m_time;
+        }
+        else{
+            STPoint mid=STPoint::makemid(m_points[i-1],m_points[i],segStart+len);
+            seg.emplace_back(mid);
+            res.emplace_back(Trajectory(seg));
+            seg.clear();
+            seg.emplace_back(mid);
+            segStart=mid.m_time;
+            i--;
+        }
+    }
+    if(seg.size()>1){
+        res.emplace_back(Trajectory(seg));
+        seg.clear();
+    }
+    return res;
 }
 
 std::vector<Trajectory> Trajectory::getStaticSegments(double len) const{

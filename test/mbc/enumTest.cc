@@ -17,7 +17,7 @@ int main(){
 //        for (double segpara = 0.1; avgSegLen>10 ; segpara/=2) {
         double para[]={300,500,800,1000,1500,2000,2500,3000};
         for (double segpara:para) {
-            maxseg=0;
+            maxseg=300;
             segs.clear();
             int totallen = 0, totalseg = 0;
             for (const auto &traj:trajs) {
@@ -53,12 +53,12 @@ int main(){
             segs.swap(emptyseg);
             vector<IShape *> queries;
 //            double segattri[]={900,3600,1000000};
-            double segattri[]={900,3600,18000};
+            double segattri[]={900,3600};
             auto stat=trajStat::instance();
             for (auto queryLen:segattri) {
 //                for(int thek=1;thek<=21;thek+=5){
                 for (int thek = 5; thek == 5; thek++) {
-                    for (int i = 0; i < 200; i++) {
+                    for (int i = 0; i < 100; i++) {
                         auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
                         Trajectory *concate = new Trajectory();
                         double ts = std::max(ori->m_startTime(),random(ori->m_startTime(), ori->m_endTime() - queryLen));

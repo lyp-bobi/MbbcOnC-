@@ -13,35 +13,14 @@ int main(){
         calcuTime[0] = 0;
         srand((int) time(NULL));
         vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
+//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
 //        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs("D://00.txt");
         vector<pair<id_type, vector<Trajectory>>> segs1,segs2,segs3,segs4;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
-        for (double segpara = 100; segpara<=2000 ; segpara+=300) {
-            maxseg=100;
-            segs1.clear();segs2.clear();segs3.clear();segs4.clear();
-            segs1.swap(emptyseg);segs2.swap(emptyseg);segs3.swap(emptyseg);segs4.swap(emptyseg);
-            std::cerr<<segpara<<"\n";
-            for (const auto &traj:trajs) {
-                auto seg = traj.second.getSegments(segpara);
-                maxseg = std::max(int(seg.size()), maxseg);
-                segs1.emplace_back(make_pair(traj.first, seg));
-            }
-            for (const auto &traj:trajs) {
-                auto seg = traj.second.getStaticSegments(segpara);
-                maxseg = std::max(int(seg.size()), maxseg);
-                segs2.emplace_back(make_pair(traj.first, seg));
-            }
-            for (const auto &traj:trajs) {
-                auto seg = traj.second.getFixedSegments(segpara/5);
-                maxseg = std::max(int(seg.size()), maxseg);
-                segs3.emplace_back(make_pair(traj.first, seg));
-            }
-            for (const auto &traj:trajs) {
-                auto seg = traj.second.getRDPSegments(segpara);
-                maxseg = std::max(int(seg.size()), maxseg);
-                segs4.emplace_back(make_pair(traj.first, seg));
-            }
+        double para[]={3000,2700,2400,2100,1800,1500,1200,900,600};
+        for (double segpara:para) {
+            maxseg=300;
             string name0 ="name0", name1 ="name1", name2 = "name2",name3="name3",name4="name4";
             id_type indexIdentifier0, indexIdentifier1, indexIdentifier2,indexIdentifier3,indexIdentifier4;
             IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
@@ -56,27 +35,61 @@ int main(){
                     *file3 = StorageManager::createNewRandomEvictionsBuffer(*diskfile3, 10, false),
                     *file4 = StorageManager::createNewRandomEvictionsBuffer(*diskfile4, 10, false);
 
+            segs1.clear();segs2.clear();segs3.clear();segs4.clear();
+            segs1.swap(emptyseg);segs2.swap(emptyseg);segs3.swap(emptyseg);segs4.swap(emptyseg);
+            std::cerr<<segpara<<"\n";
+            std::cerr<<"start splitting\n";
+            for (const auto &traj:trajs) {
+                auto seg = traj.second.getSegments(segpara);
+                maxseg = std::max(int(seg.size()), maxseg);
+                segs1.emplace_back(make_pair(traj.first, seg));
+            }
             TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
             ts1->loadSegments(segs1,true);
-            ISpatialIndex *r1 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
+            segs1.clear();segs1.swap(emptyseg);
+            std::cerr<<"1\n";
 
+            for (const auto &traj:trajs) {
+                auto seg = traj.second.getStaticSegmentsCut(segpara);
+                maxseg = std::max(int(seg.size()), maxseg);
+                segs2.emplace_back(make_pair(traj.first, seg));
+            }
             TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
             ts2->loadSegments(segs2,true);
-            ISpatialIndex *r2 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
+            segs2.clear();segs2.swap(emptyseg);
+            std::cerr<<"2\n";
 
+            for (const auto &traj:trajs) {
+                auto seg = traj.second.getFixedSegments(segpara/5);
+                maxseg = std::max(int(seg.size()), maxseg);
+                segs3.emplace_back(make_pair(traj.first, seg));
+            }
             TrajStore *ts3 = new TrajStore(file3, 4096, maxseg+1);
             ts3->loadSegments(segs3,true);
-            ISpatialIndex *r3 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts3, 4096, 3, indexIdentifier3);
-
+            segs3.clear();segs3.swap(emptyseg);
+            std::cerr<<"3\n";
+            for (const auto &traj:trajs) {
+                auto seg = traj.second.getRDPSegments(segpara);
+                maxseg = std::max(int(seg.size()), maxseg);
+                segs4.emplace_back(make_pair(traj.first, seg));
+            }
             TrajStore *ts4 = new TrajStore(file4, 4096, maxseg+1);
             ts4->loadSegments(segs4,true);
+            segs4.clear();segs4.swap(emptyseg);
+            std::cerr<<"4\n";
+            std::cerr<<"split finished\n";
+
+
+            ISpatialIndex *r1 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
+
+            ISpatialIndex *r2 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
+
+            ISpatialIndex *r3 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts3, 4096, 3, indexIdentifier3);
+
             ISpatialIndex *r4 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts4, 4096, 3, indexIdentifier4);
 
             std::cerr<<"traj Store Loaded\n";
             //kNN
-            segs1.clear();segs2.clear();segs3.clear();segs4.clear();
-            segs1.swap(emptyseg);segs2.swap(emptyseg);segs3.swap(emptyseg);segs4.swap(emptyseg);
-
             vector<IShape *> queries;
 //            double segattri[]={900,3600,1000000};
             double segattri[]={3600};
