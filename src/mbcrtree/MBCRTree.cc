@@ -1458,26 +1458,12 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
     {
 
         NodePtr n = st.top(); st.pop();
-
         if (n->m_level == 0)
         {
             v.visitNode(*n);
             for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
             {
                 bool b;
-//                if(n->m_pIdentifier[cChild]==1502){
-//                    std::cerr<<"here.\n";
-//                    if(m_bUsingMBR) std::cerr<<*querybr<<"\n"<<*n->m_ptrMBR[cChild]<<"\n";
-//                    else std::cerr<<*querybr<<"\n"<<*n->m_ptrMBC[cChild]<<"\n";
-//                    uint32_t len=n->m_dataLen[cChild]+n->m_pageOff[cChild];
-//                    uint8_t *load = new uint8_t[len];
-//                    m_ts->loadByteArray(n->m_pageNum[cChild],len,&load);
-//                    uint8_t *ldata = load+n->m_pageOff[cChild];
-//                    Trajectory partTraj;
-//                    partTraj.loadFromByteArray(ldata);
-//                    std::cerr<<partTraj<<"\n";
-//                    delete[](load);
-//                }
                 if(m_bUsingMBR==true){
                     if (type == ContainmentQuery) b = n->m_ptrMBR[cChild]->containsShape(query);
                     else b = n->m_ptrMBR[cChild]->intersectsShape(query);

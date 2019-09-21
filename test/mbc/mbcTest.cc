@@ -144,7 +144,7 @@ int main(){
 //        std::cerr<<"total IO:"<<ts1.m_indexIO+ts1.m_trajIO<<" "<<ts2.m_indexIO+ts2.m_trajIO<<endl;
 //        std::cerr<<"bounding IO:"<<ts1.m_boundingVisited<<" "<<ts2.m_boundingVisited<<endl;
 //        std::cerr<<"IO time:"<<ts1.m_IOtime<<" "<<ts2.m_IOtime<<"\n";
-        std::cerr<<"calculation time"<<calcuTime[0]<<" "<<calcuTime[1]<<"\n";
+//        std::cerr<<"calculation time"<<calcuTime[0]<<" "<<calcuTime[1]<<"\n";
         delete file0;delete file1;delete file2;
         delete diskfile0;delete diskfile1;delete diskfile2;
     }

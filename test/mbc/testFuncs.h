@@ -347,6 +347,29 @@ vector<pair<id_type ,Trajectory> >  loadGLToTrajs(string filename=GLFile){
     stat->jt=stat->M/stat->trajCount;
     stat->v=stat->dist/stat->M;
     std::cerr<<*stat;
+    stat->Dx/=15;
+    stat->Dy/=15;
+    return res;
+}
+
+vector<pair<id_type ,Trajectory> >  loadGTFolder(int num=10,string folder=fileFolder) {
+    vector<pair<id_type ,Trajectory> > res;
+    vector<string> files;
+    struct dirent *ptr;
+    DIR *dir;
+    string PATH = fileFolder;
+    dir=opendir(PATH.c_str());
+    while((ptr=readdir(dir))!=NULL&&files.size()<num)
+    {
+        if(ptr->d_name[0] == '.')
+            continue;
+        //cout << ptr->d_name << endl;
+        files.emplace_back(PATH+ptr->d_name);
+    }
+    for(auto file:files){
+        vector<pair<id_type, Trajectory> > tmptrajs = loadGTToTrajs(file);
+        res.insert(res.begin(),tmptrajs.begin(),tmptrajs.end());
+    }
     return res;
 }
 
@@ -425,7 +448,7 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore
     cerr <<"TrajStore Statistic"<< ts->m_indexIO<<"\t"<<ts->m_trajIO<<endl;
 }
 
-double kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr,int thennk=5){
+double kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr,int thennk=5,bool reportEnd=false){
     ts->cleanStatistic();
     int num=queries.size();
     MyVisitor vis;
@@ -436,6 +459,7 @@ double kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStor
         vis.m_query=queries[i];
         tree->nearestNeighborQuery(thennk,*queries[i],vis);
         rad+=vis.m_lastDist;
+        if(reportEnd) std::cerr<<"end\n";
     }
     rad/=queries.size();
     double time;

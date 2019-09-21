@@ -55,7 +55,7 @@ endforeach()
 set (DIR mbc)
 set (SOURCES
         mbcTest
-        enumTest
+        knnTest
         densityTest
         TrajStoreTest
         optimizedTest
@@ -64,6 +64,8 @@ set (SOURCES
         e2eTestGT
         splitTest
         radiusEstimator
+        splitQueryTest
+        rangeTest
         )
 
 foreach (test ${SOURCES})

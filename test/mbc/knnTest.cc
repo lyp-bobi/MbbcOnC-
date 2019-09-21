@@ -9,20 +9,40 @@ int main(){
         calcuTime[0] = 0;
         srand((int) time(NULL));
         vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
-//        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs("D://00.txt");
+//        vector<pair<id_type, Trajectory> > trajs = loadGTFolder();
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
+        auto stat=trajStat::instance();
         int maxseg = 0;
         double avgSegLen=100;
-//        for (double segpara = 0.1; avgSegLen>10 ; segpara/=2) {
-        double para[]={300,500,800,1000,1500,2000,2500,3000};
-        for (double segpara:para) {
-            maxseg=300;
-            segs.clear();
-            int totallen = 0, totalseg = 0;
+        double segLenParas[]={300,500,800,1000,1500,2000,2500,3000};
+        double queryLenParas[]={900,3600,18000};
+        std::cerr<<"Starting knn test\n"<<"Segmentation lengths are:";
+        for(auto p:segLenParas) std::cerr<<p<<"\t";
+        std::cerr<<"\nQuery lengths are:";
+        for(auto p:queryLenParas) std::cerr<<p<<"\t";
+        std::cerr<<"\n";
+        vector<vector<IShape *>> querySet;
+        for (auto queryLen:queryLenParas) {
+            vector<IShape *> queries;
+            for (int i = 0; i < 100; i++) {
+                auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
+                Trajectory *concate = new Trajectory();
+                double ts = std::max(ori->m_startTime(), random(ori->m_startTime(), ori->m_endTime() - queryLen));
+                ori->getPartialTrajectory(ts, ts + queryLen, *concate);
+                if (!concate->m_points.empty())
+                    queries.emplace_back(concate);
+            }
+            querySet.emplace_back(queries);
+            queries.clear();
+        }
+        for (double segLen:segLenParas) {
+                maxseg=300;
+                segs.clear();
+                int totallen = 0, totalseg = 0;
             for (const auto &traj:trajs) {
                 totallen += traj.second.m_points.size();
-                auto seg = traj.second.getSegments(segpara);
+                auto seg = traj.second.getSegments(segLen);
                 totalseg += seg.size();
                 maxseg = std::max(int(seg.size()), maxseg);
                 segs.emplace_back(make_pair(traj.first, seg));
@@ -51,51 +71,18 @@ int main(){
             //kNN
             segs.clear();
             segs.swap(emptyseg);
-            vector<IShape *> queries;
-//            double segattri[]={900,3600,1000000};
-            double segattri[]={900,3600};
-            auto stat=trajStat::instance();
-            for (auto queryLen:segattri) {
-//                for(int thek=1;thek<=21;thek+=5){
-                for (int thek = 5; thek == 5; thek++) {
-                    for (int i = 0; i < 100; i++) {
-                        auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
-                        Trajectory *concate = new Trajectory();
-                        double ts = std::max(ori->m_startTime(),random(ori->m_startTime(), ori->m_endTime() - queryLen));
-                        ori->getPartialTrajectory(ts, ts + queryLen, *concate);
-                        if (!concate->m_points.empty())
-                            queries.emplace_back(concate);
-                    }
-//                    cerr << "=================\n\n";
-//                    std::cerr << "Querying with segmenting len " << seglen <<
-//                              ", querying len " << queryLen << ", NN's k" << thek << "\n";
-                    cerr<< segpara<<"\t"<<queryLen<<"\n";
-//                    simpli=true;
-                    disttype=0;
-                    kNNQueryBatch(r, queries, ts1);
-                    kNNQueryBatch(rc, queries, ts2);
+            disttype=0;
+            std::cerr<<"Seg len:"<<segLen<<"\n";
+            for(const auto &qs:querySet) {
+                kNNQueryBatch(r, qs, ts1);
+                kNNQueryBatch(rc, qs, ts2);
+            }
 ////                    simpli= false;
 //                    disttype=1;
 //                    kNNQueryBatch(r, queries, ts1);
 //                    kNNQueryBatch(rc, queries, ts2);
 
-                    cerr << "\n";
-                    for(auto &tras:queries){
-                        delete tras;
-                    }
-                    queries.clear();
-//                    for(int i=0;i<200;i++){
-//                        double t = int(random(stat->mint, stat->maxt));
-//                        double pLow[3] = {random(stat->minx, stat->maxx), random(stat->miny, stat->maxy), t};
-//                        double pHigh[3] = {pLow[0] + random(stat->Dx/40,stat->Dx*3/40), pLow[1] + random(stat->Dy/40,stat->Dy*3/40), t};
-//                        Region *rg = new Region(pLow, pHigh, 3);
-//                        queries.emplace_back(rg);
-//                    }
-//                    rangeQueryBatch(r,queries,ts1);
-//                    rangeQueryBatch(rc,queries,ts2);
-//                    queries.clear();
-                }
-            }
+
             delete r;
             delete ts1;
             delete rc;
@@ -106,6 +93,11 @@ int main(){
             delete diskfile0;
             delete diskfile1;
             delete diskfile2;
+        }
+        for(auto &qs:querySet){
+            for(auto &shape:qs){
+                delete(shape);
+            }
         }
     }
     catch (Tools::Exception& e)

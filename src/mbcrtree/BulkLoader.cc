@@ -425,7 +425,7 @@ void BulkLoader::createLevel(
     if(level==0&&dimension==0){
         double dx=stat->Dx,dy=stat->Dy,dt=stat->Dt;
         double v=stat->v;
-        ltc=pow(dx*dy*dt/v/v/P/450,1.0/3);
+        ltc=pow(dx*dy*dt/v/v/P,1.0/3);
         std::cerr<<"ltc is "<<ltc<<"\n";
         double nt=dt/ltc;
 //        int nt=pow(static_cast<double>(P)*v*v*dt*dt/dx/dy,1.0/3);
@@ -552,7 +552,7 @@ void BulkLoader::createLevel(
 		    double last=0;
 			ExternalSorter::Record* pR;
 			Tools::SmartPointer<ExternalSorter> es3 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
-            if(level==0&&dimension==0) {
+            if(false&&level==0&&dimension==0) {
                 while(true){
                     try { pR = es->getNextRecord();
 //                    double the=pR->m_r.m_pLow[2] + pR->m_r.m_pHigh[2];
@@ -609,9 +609,9 @@ Node* BulkLoader::createNode(SpatialIndex::MBCRTree::MBCRTree* pTree, std::vecto
 	    e[cChild]->m_pData = 0;
 		delete e[cChild];
 	}
-    if(level==0){
-        calcuTime[0]+=n->m_nodeMBR.m_pHigh[2]-n->m_nodeMBR.m_pLow[2];
-        calcuTime[1]+=1;
-    }
+//    if(level==0){
+//        calcuTime[0]+=n->m_nodeMBR.m_pHigh[2]-n->m_nodeMBR.m_pLow[2];
+//        calcuTime[1]+=1;
+//    }
 	return n;
 }
