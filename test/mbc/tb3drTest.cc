@@ -36,7 +36,7 @@ int main(){
             ISpatialIndex *r = RTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
             TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
-            ts2->loadSegments(segs1);
+            ts2->loadSegments(segs1,true);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
             //kNN
@@ -44,7 +44,7 @@ int main(){
             segs1.swap(emptyseg);
             emptyseg.clear();
             vector<IShape *> queries;
-            for (int i = 0; i < 200; i++) {
+            for (int i = 0; i < 500; i++) {
                 auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
                 Trajectory *concate = new Trajectory();
                 double ts = std::max(ori->m_startTime(),random(ori->m_startTime(), ori->m_endTime() - queryLen));

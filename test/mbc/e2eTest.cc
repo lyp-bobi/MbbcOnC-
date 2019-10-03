@@ -48,7 +48,7 @@ int main(){
             ISpatialIndex *r = RTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
             TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
-            ts2->loadSegments(segs2);
+            ts2->loadSegments(segs2,true);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
             //kNN

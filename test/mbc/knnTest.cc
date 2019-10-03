@@ -15,8 +15,8 @@ int main(){
         auto stat=trajStat::instance();
         int maxseg = 0;
         double avgSegLen=100;
-        double segLenParas[]={300,500,800,1000,1500,2000,2500,3000};
-        double queryLenParas[]={900,3600,18000};
+        double segLenParas[]={300};
+        double queryLenParas[]={900,3600};
         std::cerr<<"Starting knn test\n"<<"Segmentation lengths are:";
         for(auto p:segLenParas) std::cerr<<p<<"\t";
         std::cerr<<"\nQuery lengths are:";
@@ -25,7 +25,7 @@ int main(){
         vector<vector<IShape *>> querySet;
         for (auto queryLen:queryLenParas) {
             vector<IShape *> queries;
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 200; i++) {
                 auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
                 Trajectory *concate = new Trajectory();
                 double ts = std::max(ori->m_startTime(), random(ori->m_startTime(), ori->m_endTime() - queryLen));
@@ -36,7 +36,8 @@ int main(){
             querySet.emplace_back(queries);
             queries.clear();
         }
-        for (double segLen:segLenParas) {
+        //for (double segLen:segLenParas) {
+        for (double segLen=300;segLen<3000;segLen+=200) {
                 maxseg=300;
                 segs.clear();
                 int totallen = 0, totalseg = 0;

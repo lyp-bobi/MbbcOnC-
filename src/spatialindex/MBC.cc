@@ -396,80 +396,91 @@ std::pair<double,double> getIntersectPeriod(
 }
 
 bool MBC::prevalidate(const SpatialIndex::Region &in) const {
-    Region mbr2d(in.m_pLow,in.m_pHigh,in.m_dimension-1);
-    double t0=m_startTime,t1=m_startTime+m_rd/m_rv,t2=m_endTime-m_rd/m_rv,t3=m_endTime;
-    if(m_rv<1e-7){
-        t1=t2=(m_endTime+m_startTime)/2;
-    }
-    Region rs,re,rc;
-    double xlow=in.m_pLow[0],ylow=in.m_pLow[1],tlow=in.m_pLow[2],
-            xhigh=in.m_pHigh[0],yhigh=in.m_pHigh[1],thigh=in.m_pHigh[2];
-    double ts,te;
-    //cylinder part
-    ts=std::max(t1,tlow);te=std::min(t2,thigh);
-    if(ts<=te&&xhigh-xlow>=2*m_rd&&yhigh-ylow>=2*m_rd){
-        getMBRAtTime(ts,rs);
-        getMBRAtTime(te,re);
-        rs.combineRegion(re);
-        if(rs.intersectsRegion(mbr2d)) {
-            double plow[3] = {xlow + m_rd, ylow + m_rd, ts},
-                    phigh[3] = {xhigh - m_rd, yhigh - m_rd, te};
-            Region shrank(plow, phigh, 3);
-            auto a = getCenterRdAtTime(ts), b = getCenterRdAtTime(te);
-            if (Trajectory::line2MBRMinSED(a.first, b.first, shrank) == 0) return true;
-        }
-    }
-    //top part
-    ts=std::max(t2,tlow);te=std::min(t3,thigh);
-    if(ts<=te){
-        getMBRAtTime(ts,rs);
-        getMBRAtTime(te,re);
-        if(mbr2d.containsRegion(rs)) return true;
-        if(mbr2d.containsRegion(re)) return true;
-        rs.getCombinedRegion(rc,re);
-        if(rc.intersectsRegion(mbr2d)){
-            double x1s=rs.m_pLow[0],x2s=rs.m_pHigh[0],
-                x1e=re.m_pLow[0],x2e=re.m_pHigh[0],
-                y1s=rs.m_pLow[1],y2s=rs.m_pHigh[1],
-                y1e=re.m_pLow[1],y2e=re.m_pHigh[1];
-            if((x1s<xlow&&x1e<xlow)||(x2s>xhigh&&x2e>xhigh)||(y1s<ylow&&y1e<ylow)||(y2s>yhigh&&y2e>yhigh)){}
-            else{
-                auto prd1=getIntersectPeriod(x1s,x1e,ts,te,xlow,xhigh);
-                auto prd2=getIntersectPeriod(x2s,x2e,ts,te,xlow,xhigh);
-                auto prd3=getIntersectPeriod(y1s,y1e,ts,te,ylow,yhigh);
-                auto prd4=getIntersectPeriod(y2s,y2e,ts,te,ylow,yhigh);
-                double low=std::max(std::max(prd1.first,prd2.first),std::max(prd3.first,prd4.first)),
-                        high=std::min(std::min(prd1.second,prd2.second),std::min(prd3.second,prd4.second));
-                if(low<=high) return true;
-            }
-        }
-    }
-    //bottom part
-    ts=std::max(t0,tlow);te=std::min(t1,thigh);
-    if(ts<=te){
-        getMBRAtTime(ts,rs);
-        getMBRAtTime(te,re);
-        if(mbr2d.containsRegion(rs)) return true;
-        if(mbr2d.containsRegion(re)) return true;
-        rs.getCombinedRegion(rc,re);
-        if(rc.intersectsRegion(mbr2d)){
-            double x1s=rs.m_pLow[0],x2s=rs.m_pHigh[0],
-                    x1e=re.m_pLow[0],x2e=re.m_pHigh[0],
-                    y1s=rs.m_pLow[1],y2s=rs.m_pHigh[1],
-                    y1e=re.m_pLow[1],y2e=re.m_pHigh[1];
-            if((x1s<xlow&&x1e<xlow)||(x2s>xhigh&&x2e>xhigh)||(y1s<ylow&&y1e<ylow)||(y2s>yhigh&&y2e>yhigh)){}
-            else{
-                auto prd1=getIntersectPeriod(x1s,x1e,ts,te,xlow,xhigh);
-                auto prd2=getIntersectPeriod(x2s,x2e,ts,te,xlow,xhigh);
-                auto prd3=getIntersectPeriod(y1s,y1e,ts,te,ylow,yhigh);
-                auto prd4=getIntersectPeriod(y2s,y2e,ts,te,ylow,yhigh);
-                double low=std::max(std::max(prd1.first,prd2.first),std::max(prd3.first,prd4.first)),
-                        high=std::min(std::min(prd1.second,prd2.second),std::min(prd3.second,prd4.second));
-                if(low<=high) return true;
-            }
-        }
-    }
-    return false;
+    //simple
+    if(2*m_rd>in.m_pHigh[0]-in.m_pLow[0]||2*m_rd>in.m_pHigh[1]-in.m_pLow[1]) return false;
+    Region shrank=in;
+    shrank.m_pHigh[0]-=m_rd;shrank.m_pHigh[1]-=m_rd;
+    shrank.m_pLow[0]+=m_rd;shrank.m_pLow[1]+=m_rd;
+    double ts=std::max(in.m_pLow[2],m_startTime),te=std::min(in.m_pHigh[2],m_endTime);
+    auto ps=getCenterRdAtTime(ts),pe=getCenterRdAtTime(te);
+    double d=Trajectory::line2MBRMinSED(ps.first,pe.first,shrank);
+    return d==0;
+
+
+//    Region mbr2d(in.m_pLow,in.m_pHigh,in.m_dimension-1);
+//    double t0=m_startTime,t1=m_startTime+m_rd/m_rv,t2=m_endTime-m_rd/m_rv,t3=m_endTime;
+//    if(m_rv<1e-7){
+//        t1=t2=(m_endTime+m_startTime)/2;
+//    }
+//    Region rs,re,rc;
+//    double xlow=in.m_pLow[0],ylow=in.m_pLow[1],tlow=in.m_pLow[2],
+//            xhigh=in.m_pHigh[0],yhigh=in.m_pHigh[1],thigh=in.m_pHigh[2];
+//    double ts,te;
+//    //cylinder part
+//    ts=std::max(t1,tlow);te=std::min(t2,thigh);
+//    if(ts<=te&&xhigh-xlow>=2*m_rd&&yhigh-ylow>=2*m_rd){
+//        getMBRAtTime(ts,rs);
+//        getMBRAtTime(te,re);
+//        rs.combineRegion(re);
+//        if(rs.intersectsRegion(mbr2d)) {
+//            double plow[3] = {xlow + m_rd, ylow + m_rd, ts},
+//                    phigh[3] = {xhigh - m_rd, yhigh - m_rd, te};
+//            Region shrank(plow, phigh, 3);
+//            auto a = getCenterRdAtTime(ts), b = getCenterRdAtTime(te);
+//            if (Trajectory::line2MBRMinSED(a.first, b.first, shrank) == 0) return true;
+//        }
+//    }
+//    //top part
+//    ts=std::max(t2,tlow);te=std::min(t3,thigh);
+//    if(ts<=te){
+//        getMBRAtTime(ts,rs);
+//        getMBRAtTime(te,re);
+//        if(mbr2d.containsRegion(rs)) return true;
+//        if(mbr2d.containsRegion(re)) return true;
+//        rs.getCombinedRegion(rc,re);
+//        if(rc.intersectsRegion(mbr2d)){
+//            double x1s=rs.m_pLow[0],x2s=rs.m_pHigh[0],
+//                x1e=re.m_pLow[0],x2e=re.m_pHigh[0],
+//                y1s=rs.m_pLow[1],y2s=rs.m_pHigh[1],
+//                y1e=re.m_pLow[1],y2e=re.m_pHigh[1];
+//            if((x1s<xlow&&x1e<xlow)||(x2s>xhigh&&x2e>xhigh)||(y1s<ylow&&y1e<ylow)||(y2s>yhigh&&y2e>yhigh)){}
+//            else{
+//                auto prd1=getIntersectPeriod(x1s,x1e,ts,te,xlow,xhigh);
+//                auto prd2=getIntersectPeriod(x2s,x2e,ts,te,xlow,xhigh);
+//                auto prd3=getIntersectPeriod(y1s,y1e,ts,te,ylow,yhigh);
+//                auto prd4=getIntersectPeriod(y2s,y2e,ts,te,ylow,yhigh);
+//                double low=std::max(std::max(prd1.first,prd2.first),std::max(prd3.first,prd4.first)),
+//                        high=std::min(std::min(prd1.second,prd2.second),std::min(prd3.second,prd4.second));
+//                if(low<=high) return true;
+//            }
+//        }
+//    }
+//    //bottom part
+//    ts=std::max(t0,tlow);te=std::min(t1,thigh);
+//    if(ts<=te){
+//        getMBRAtTime(ts,rs);
+//        getMBRAtTime(te,re);
+//        if(mbr2d.containsRegion(rs)) return true;
+//        if(mbr2d.containsRegion(re)) return true;
+//        rs.getCombinedRegion(rc,re);
+//        if(rc.intersectsRegion(mbr2d)){
+//            double x1s=rs.m_pLow[0],x2s=rs.m_pHigh[0],
+//                    x1e=re.m_pLow[0],x2e=re.m_pHigh[0],
+//                    y1s=rs.m_pLow[1],y2s=rs.m_pHigh[1],
+//                    y1e=re.m_pLow[1],y2e=re.m_pHigh[1];
+//            if((x1s<xlow&&x1e<xlow)||(x2s>xhigh&&x2e>xhigh)||(y1s<ylow&&y1e<ylow)||(y2s>yhigh&&y2e>yhigh)){}
+//            else{
+//                auto prd1=getIntersectPeriod(x1s,x1e,ts,te,xlow,xhigh);
+//                auto prd2=getIntersectPeriod(x2s,x2e,ts,te,xlow,xhigh);
+//                auto prd3=getIntersectPeriod(y1s,y1e,ts,te,ylow,yhigh);
+//                auto prd4=getIntersectPeriod(y2s,y2e,ts,te,ylow,yhigh);
+//                double low=std::max(std::max(prd1.first,prd2.first),std::max(prd3.first,prd4.first)),
+//                        high=std::min(std::min(prd1.second,prd2.second),std::min(prd3.second,prd4.second));
+//                if(low<=high) return true;
+//            }
+//        }
+//    }
+//    return false;
 }
 
 bool MBC::containsShape(const SpatialIndex::IShape& in) const{return false;}

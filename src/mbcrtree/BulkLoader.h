@@ -128,7 +128,6 @@ namespace SpatialIndex
 				uint32_t pageSize,
 				uint32_t numberOfPages
 			);
-
 			Node* createNode(
 				MBCRTree* pTree,
 				std::vector<ExternalSorter::Record*>& e,

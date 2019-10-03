@@ -422,7 +422,7 @@ void BulkLoader::createLevel(
     uint64_t S;
     double ltc;
     auto stat=trajStat::instance();
-    if(level==0&&dimension==0){
+    if(dimension==0){
         double dx=stat->Dx,dy=stat->Dy,dt=stat->Dt;
         double v=stat->v;
         ltc=pow(dx*dy*dt/v/v/P,1.0/3);
@@ -430,6 +430,7 @@ void BulkLoader::createLevel(
         double nt=dt/ltc;
 //        int nt=pow(static_cast<double>(P)*v*v*dt*dt/dx/dy,1.0/3);
         S = nt;
+
         if(S>P) S=1;
     }
     else {
@@ -547,44 +548,42 @@ void BulkLoader::createLevel(
 	    double curt=stat->mint+ltc;
 		bool bMore = true;
 //        int count1=0;
+        ExternalSorter::Record* pR;
+        try { pR = es->getNextRecord(); }
+        catch (Tools::EndOfStreamException) {
+            bMore = false;
+        }
 		while (bMore)
 		{
-		    double last=0;
-			ExternalSorter::Record* pR;
+		    double lastTime;
 			Tools::SmartPointer<ExternalSorter> es3 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
-            if(false&&level==0&&dimension==0) {
-                while(true){
-                    try { pR = es->getNextRecord();
-//                    double the=pR->m_r.m_pLow[2] + pR->m_r.m_pHigh[2];
-//                    if(the>=last){last=the;}
-//                    else std::cerr<<"warn\n";
-//                    std::cerr<<count1++<<" "<<pR->m_r.m_pLow[2] + pR->m_r.m_pHigh[2]<<"\n";
-                    }
-                    catch (Tools::EndOfStreamException) {
-//                        std::cerr<<"end\n";
-                        bMore = false;
-                        break;
-                    }
-                    pR->m_s = dimension + 1;
-                    es3->insert(pR);
-                    if(pR->m_r.m_pLow[2] + pR->m_r.m_pHigh[2] > 2 * curt){
-                        curt+=ltc;
-                        break;
-                    }
+            pR->m_s = dimension + 1;
+            es3->insert(pR);
+			for (uint64_t i = 1; i < b * ceil(1.0 * P / S); ++i)
+            {
+                try { pR = es->getNextRecord(); }
+                catch (Tools::EndOfStreamException) {
+                    bMore = false;
+                    break;
                 }
-            }else {
-                for (uint64_t i = 0; i < b * ceil(1.0 * P / S); ++i)
-//            for (uint64_t i = 0; i < S*b; ++i)
-                {
-                    try { pR = es->getNextRecord(); }
-                    catch (Tools::EndOfStreamException) {
-                        bMore = false;
-                        break;
-                    }
-                    pR->m_s = dimension + 1;
-                    es3->insert(pR);
-                }
+                pR->m_s = dimension + 1;
+                lastTime=(pR->m_r.m_pLow[2]+pR->m_r.m_pHigh[2])/2;
+                es3->insert(pR);
             }
+            try { pR = es->getNextRecord(); }
+            catch (Tools::EndOfStreamException) {
+                bMore = false;
+            }
+//            while(bMore&&(pR->m_r.m_pLow[2]+pR->m_r.m_pHigh[2])/2==lastTime){
+//                pR->m_s = dimension + 1;
+//                es3->insert(pR);
+//                try { pR = es->getNextRecord(); }
+//                catch (Tools::EndOfStreamException) {
+//                    bMore = false;
+//                    break;
+//                }
+//            }
+
             if(es3->getTotalEntries()>0) {
 //                if(level==0&&dimension==0) {
 //                    std::cerr << "entries is"<<es3->getTotalEntries()<<"\n";
@@ -592,6 +591,7 @@ void BulkLoader::createLevel(
                 es3->sort();
                 createLevel(pTree, es3, dimension + 1, bleaf, bindex, level, es2, pageSize, numberOfPages);
             }
+
 		}
 	}
 }

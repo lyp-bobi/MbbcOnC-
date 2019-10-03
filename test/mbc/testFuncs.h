@@ -472,7 +472,7 @@ double kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStor
 //    cerr <<time/num<<"\n";
     return rad;
 }
-void rangeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr,int thennk=5){
+void rangeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr){
     ts->cleanStatistic();
     int num=queries.size();
     MyVisitor vis;

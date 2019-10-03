@@ -172,6 +172,7 @@ namespace SpatialIndex
         std::vector<Trajectory> getStaticSegments(double len) const;
         std::vector<Trajectory> getStaticSegmentsCut(double len) const;
         std::vector<Trajectory> getFixedSegments(int len=170) const;
+        std::vector<Trajectory> getGlobalSegmentsCut(double len) const;
         void linkTrajectory(Trajectory &other);
 
         inline double m_startTime() const{return m_points.front().m_time;}

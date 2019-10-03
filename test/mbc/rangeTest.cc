@@ -8,15 +8,16 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
+//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
 //        vector<pair<id_type, Trajectory> > trajs = loadGTFolder();
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         auto stat=trajStat::instance();
         int maxseg = 0;
         double avgSegLen=100;
-        double segLenParas[]={300,500,800,1000,1500,2000,2500,3000};
-        double queryLenParas[]={0,3600};
+        double segLenParas[]={10,20,50,100,300,500,1000,1500,2000,2500,3000};
+        double queryLenParas[]={0};
         std::cerr<<"Starting range test\n"<<"Segmentation lengths are:";
         for(auto p:segLenParas) std::cerr<<p<<"\t";
         std::cerr<<"\nQuery lengths are:";
@@ -25,11 +26,11 @@ int main(){
         vector<vector<IShape *>> querySet;
         for(auto queryLen:queryLenParas) {
             vector<IShape *> queries;
-            for (int i = 0; i < 1000; i++) {
+            for (int i = 0; i < 10000; i++) {
                 double t = int(random(stat->mint, stat->maxt - queryLen));
                 double pLow[3] = {random(stat->minx, stat->maxx), random(stat->miny, stat->maxy), t};
-                double pHigh[3] = {pLow[0] + random(stat->Dx / 40, stat->Dx * 3 / 40),
-                                   pLow[1] + random(stat->Dy / 40, stat->Dy * 3 / 40), t + queryLen};
+                double pHigh[3] = {pLow[0] + random(stat->Dx*1/40, stat->Dx * 3/40),
+                                   pLow[1] + random(stat->Dy*1/40, stat->Dy * 3/40), t + queryLen};
                 Region *rg = new Region(pLow, pHigh, 3);
                 queries.emplace_back(rg);
             }
@@ -75,6 +76,7 @@ int main(){
                 rangeQueryBatch(r, qs, ts1);
                 rangeQueryBatch(rc, qs, ts2);
             }
+//            std:cerr<<*r<<*rc<<endl;
 
             delete r;
             delete ts1;

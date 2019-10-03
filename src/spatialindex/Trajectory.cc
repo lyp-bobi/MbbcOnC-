@@ -10,6 +10,8 @@
 
 
 #include <spatialindex/SpatialIndex.h>
+#include <storagemanager/TrajStore.h>
+
 double calcuTime[2]={0,0};
 int testPhase=0;
 
@@ -392,7 +394,7 @@ std::vector<Trajectory> Trajectory::cuttraj(std::vector<SpatialIndex::STPoint> m
 std::vector<Trajectory> Trajectory::getRDPSegments(double len) const {
     int segNum=std::ceil((m_endTime()-m_startTime())/len);
     std::vector<Trajectory> res;
-    auto m=simplifyWithRDPN(m_points,std::min(int(std::sqrt(m_points.size()-1)),segNum));
+    auto m=simplifyWithRDPN(m_points,std::min(int(m_points.size()-1),segNum));
     for(auto &pts:m){
         if(pts.size()<2){
             std::cerr<<"error on getting segments with "<<len<<"and \n"<<*this;
@@ -404,20 +406,20 @@ std::vector<Trajectory> Trajectory::getRDPSegments(double len) const {
 }
 
 std::vector<Trajectory> Trajectory::getSegments(double len) const {
-    int segNum=std::ceil((m_endTime()-m_startTime())/len);
-    std::vector<Trajectory> res;
-    if(segNum==1) {res.emplace_back(*this);return res;}
-    auto m=simplifyWithRDPN(m_points,std::min(int(std::sqrt(m_points.size()-1)),int(std::sqrt(segNum))));
-    for(auto &pts:m){
-        if(pts.size()<2){
-            std::cerr<<"error on getting segments with "<<len<<"and \n"<<*this;
-            throw Tools::IllegalStateException("bad RDPN");
-        }
-        auto seg=Trajectory(pts).getStaticSegmentsCut(len);
-        res.insert(res.end(),seg.begin(),seg.end());
-    }
-    return res;
-
+//    int segNum=std::ceil((m_endTime()-m_startTime())/len);
+//    std::vector<Trajectory> res;
+//    if(segNum==1) {res.emplace_back(*this);return res;}
+//    auto m=simplifyWithRDPN(m_points,std::min(int(std::sqrt(m_points.size()-1)),int(std::sqrt(segNum))));
+//    for(auto &pts:m){
+//        if(pts.size()<2){
+//            std::cerr<<"error on getting segments with "<<len<<"and \n"<<*this;
+//            throw Tools::IllegalStateException("bad RDPN");
+//        }
+//        auto seg=Trajectory(pts).getStaticSegmentsCut(len);
+//        res.insert(res.end(),seg.begin(),seg.end());
+//    }
+//    return res;
+//    return getGlobalSegmentsCut(len);
 //    auto m=getStaticSegments(len*sqrt(double(segNum)));
 //    for(auto &traj:m){
 //        auto seg=traj.getRDPSegments(len);
@@ -425,7 +427,7 @@ std::vector<Trajectory> Trajectory::getSegments(double len) const {
 //    }
 //    return res;
 
-//    return getStaticSegmentsCut(len);
+    return getStaticSegmentsCut(len);
 }
 
 std::vector<Trajectory> Trajectory::getStaticSegmentsCut(double len) const{
@@ -463,6 +465,45 @@ std::vector<Trajectory> Trajectory::getStaticSegmentsCut(double len) const{
     }
     return res;
 }
+
+std::vector<Trajectory> Trajectory::getGlobalSegmentsCut(double len) const {
+    vector<STPoint> seg;
+    vector<Trajectory> res;
+    if(m_points.size()<2) {
+        throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
+    }
+    auto stat=trajStat::instance();
+    double segStart=stat->minx;
+    seg.emplace_back(m_points[0]);
+    while(segStart+len<m_points[0].m_time) segStart+=len;
+    for(int i=1;i<m_points.size();i++){
+        if(m_points[i].m_time<segStart+len){
+            seg.emplace_back(m_points[i]);
+        }
+        else if(m_points[i].m_time==segStart+len){
+            seg.emplace_back(m_points[i]);
+            res.emplace_back(Trajectory(seg));
+            seg.clear();
+            seg.emplace_back(m_points[i]);
+            segStart=m_points[i].m_time;
+        }
+        else{
+            STPoint mid=STPoint::makemid(m_points[i-1],m_points[i],segStart+len);
+            seg.emplace_back(mid);
+            res.emplace_back(Trajectory(seg));
+            seg.clear();
+            seg.emplace_back(mid);
+            segStart=mid.m_time;
+            i--;
+        }
+    }
+    if(seg.size()>1){
+        res.emplace_back(Trajectory(seg));
+        seg.clear();
+    }
+    return res;
+}
+
 
 std::vector<Trajectory> Trajectory::getStaticSegments(double len) const{
     vector<STPoint> seg;
@@ -1613,11 +1654,15 @@ double Trajectory::getNodeMinimumDistance(const SpatialIndex::Region &in,double 
         copy.m_pHigh[copy.m_dimension-1]=inte;
         double min=1e300;
         fakeTpVector timedTraj(&m_points,ints,inte);
-        for (int i = 0; i < timedTraj.m_size-1; i++) {
+        double min1=min,min2=min;
+        for (int i = 0; i < (timedTraj.m_size-1)/2; i++) {
             double pd = line2MBRMinSED(timedTraj[i],timedTraj[i+1],copy);
-            min=std::min(min,pd);
+            min1=std::min(min1,pd);
+        }for (int i = (timedTraj.m_size-1)/2; i < timedTraj.m_size-1; i++) {
+            double pd = line2MBRMinSED(timedTraj[i],timedTraj[i+1],copy);
+            min2=std::min(min2,pd);
         }
-        return min*(m_endTime()-m_startTime());
+        return std::min(min1,min2)*(m_endTime()-m_startTime());
 //        return std::max(min*(m_endTime()-m_startTime()),getInferredNodeMinimumIED(in,MaxVelocity));
     }
 //        return std::max(getMinimumDistance(in), getInferredNodeMinimumIED(in, MaxVelocity));
