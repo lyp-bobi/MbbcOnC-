@@ -79,6 +79,7 @@ void Trajectory::loadFromByteArray(const uint8_t* ptr) {
 }
 
 void Trajectory::storeToByteArray(uint8_t **data, uint32_t &len) {
+    //todo: don't store the dimensions!!!!!
     len = getByteArraySize();
     *data = new uint8_t[len];
     uint8_t* ptr = *data;

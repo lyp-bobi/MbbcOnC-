@@ -171,7 +171,7 @@ namespace SpatialIndex
         std::vector<Trajectory> getRDPSegments(double len) const;
         std::vector<Trajectory> getStaticSegments(double len) const;
         std::vector<Trajectory> getStaticSegmentsCut(double len) const;
-        std::vector<Trajectory> getFixedSegments(int len=170) const;
+        std::vector<Trajectory> getFixedSegments(int len=140) const;
         std::vector<Trajectory> getGlobalSegmentsCut(double len) const;
         void linkTrajectory(Trajectory &other);
 

@@ -437,7 +437,8 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
                 double v = (Point(thebc.m_pLow, 2).getMinimumDistance(Point(thebc.m_pHigh, 2))) /
                            (thebc.m_endTime - thebc.m_startTime) + thebc.m_rv;
                 if (v > m_maxVelocity) m_maxVelocity = v;
-                while((it+1)!=traj.second.end()&&seg.m_points.size()-(seg.m_points.size()/170)*170+(it+1)->m_points.size()<170){
+                //todo: calculate the 140 from somewhere
+                while((it+1)!=traj.second.end()&&seg.m_points.size()-(seg.m_points.size()/140)*140+(it+1)->m_points.size()<170){
                     it++;
                     seg.linkTrajectory(*it);
                     segid=getSegId(traj.first,it-traj.second.begin());
