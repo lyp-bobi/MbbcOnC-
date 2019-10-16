@@ -1869,6 +1869,7 @@ void Trajectory::linkTrajectory(SpatialIndex::Trajectory &other) {
         }
     }
     else{
+//        std::cerr<<*this<<other<<"\n";
         std::cerr<<m_points.back()<<" "<<other.m_points.front()<<"\n"
             <<other.m_points.back()<<" "<<m_points.front();
         throw Tools::IllegalStateException("Trajectory::linkTrajectory: the two trajectories to be linked should have a common point.");

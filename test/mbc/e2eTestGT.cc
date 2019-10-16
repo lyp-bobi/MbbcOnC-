@@ -12,18 +12,18 @@
 int main(){
     try {
         vector<string> files;
-        struct dirent *ptr;
-        DIR *dir;
-        string PATH = fileFolder;
-        dir=opendir(PATH.c_str());
-        while((ptr=readdir(dir))!=NULL&&files.size()<20)
-        {
-            if(ptr->d_name[0] == '.')
-                continue;
-            //cout << ptr->d_name << endl;
-            files.emplace_back(PATH+ptr->d_name);
-        }
-//        files.emplace_back("D://00.txt");
+//        struct dirent *ptr;
+//        DIR *dir;
+//        string PATH = fileFolder;
+//        dir=opendir(PATH.c_str());
+//        while((ptr=readdir(dir))!=NULL&&files.size()<20)
+//        {
+//            if(ptr->d_name[0] == '.')
+//                continue;
+//            //cout << ptr->d_name << endl;
+//            files.emplace_back(PATH+ptr->d_name);
+//        }
+        files.emplace_back("D://00.txt");
 //        files.emplace_back("D://01.txt");
         calcuTime[0] = 0;
         srand((int) time(NULL));
@@ -38,8 +38,8 @@ int main(){
         StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
                 *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                 *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
-        TrajStore *ts1 = new TrajStore(file1, 4096, 300);
-        TrajStore *ts2 = new TrajStore(file2, 4096, 300);
+        TrajStore *ts1 = new TrajStore(file1, 4096, 500);
+        TrajStore *ts2 = new TrajStore(file2, 4096, 500);
         vector<pair<id_type, Trajectory> > trajs;
         for(int dataSize=1;dataSize<=20;dataSize++){
             vector<pair<id_type, Trajectory> > tmptrajs = loadGTToTrajs(files[dataSize-1]);
@@ -57,8 +57,8 @@ int main(){
                 auto seg = traj.second.getSegments(segpara1);
                 segs2.emplace_back(make_pair(traj.first, seg));
             }
-            ts1->loadSegments(segs1);
-            ts2->loadSegments(segs2);
+            ts1->loadSegments(segs1,true);
+            ts2->loadSegments(segs2,true);
             segs1.clear();
             segs2.clear();
             auto stat=trajStat::instance();
