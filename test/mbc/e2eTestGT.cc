@@ -35,13 +35,13 @@ int main(){
                 *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
                 *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096);
         // Create a new storage manager with the provided base name and a 4K page size.
-        StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 100, false),
+        StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
                 *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                 *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
         TrajStore *ts1 = new TrajStore(file1, 4096, 300);
         TrajStore *ts2 = new TrajStore(file2, 4096, 300);
         vector<pair<id_type, Trajectory> > trajs;
-        for(int dataSize=1;dataSize<=files.size();dataSize++){
+        for(int dataSize=1;dataSize<=20;dataSize++){
             vector<pair<id_type, Trajectory> > tmptrajs = loadGTToTrajs(files[dataSize-1]);
             trajs.insert(trajs.begin(),tmptrajs.begin(),tmptrajs.end());
             vector<pair<id_type, vector<Trajectory>>> segs1;
@@ -51,6 +51,7 @@ int main(){
                 segs1.emplace_back(make_pair(traj.first, seg));
             }
             double segpara1=biSearchMax(5,177,40,false);
+            segpara1=std::max(segpara1,20.0);
             std::cerr<<"query len:"<<177<<",partial traj len:"<<segpara1<<"\n";
             for (auto &traj:trajs) {
                 auto seg = traj.second.getSegments(segpara1);

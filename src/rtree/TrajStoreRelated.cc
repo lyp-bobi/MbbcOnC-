@@ -25,6 +25,7 @@ ISpatialIndex* SpatialIndex::RTree::createAndBulkLoadNewRTreeWithTrajStore(IStor
     int indexCapacity=std::floor((pageSize-56)/56);
     int leafCapacity=std::floor((pageSize-56)/88);
     ISpatialIndex* tree= createAndBulkLoadNewRTree(SpatialIndex::RTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,leafCapacity,dimension,SpatialIndex::RTree::RV_RSTAR,indexIdentifier);
+    delete dataStream;
     RTree* r= static_cast<RTree*>(tree);
     r->m_DataType=TrajectoryType;
     r->m_bUsingTrajStore=true;

@@ -15,8 +15,19 @@
 #include<time.h>
 #include <cmath>
 #include <dirent.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <strings.h>
+#if !WIN32
+    #include <sys/mman.h>
+#endif
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
 #define random(x,y) (((double)rand()/RAND_MAX)*(y-x)+x)
 #include <spatialindex/SpatialIndex.h>
+
 
 #include "storagemanager/TrajStore.h"
 #include "../../src/storagemanager/DiskStorageManager.h"
@@ -36,6 +47,25 @@
 
 using namespace std;
 using namespace SpatialIndex;
+int  drop_cache(int drop)
+{
+    int ret = 0;
+#if !WIN32
+    int fd = 0;
+	fd = open("/proc/sys/vm/drop_caches", O_RDWR);
+	if(fd < 0)
+	{
+		return -1;
+	}
+	char dropData[32] = { 0 };
+	int  dropSize     = snprintf(dropData,sizeof(dropData),"%d",drop);
+
+	ret = write(fd,dropData,dropSize);
+	close(fd);
+#endif
+    return ret;
+
+}
 
 class MyVisitor : public IVisitor
 {
@@ -267,6 +297,7 @@ vector<pair<id_type ,Trajectory> >  loadGTToTrajs(string filename=genFile){
     stat->jt=stat->M/stat->trajCount;
     stat->v=stat->dist/stat->M;
     std::cerr<<*stat;
+    drop_cache(3);
     return res;
 }
 
@@ -349,6 +380,7 @@ vector<pair<id_type ,Trajectory> >  loadGLToTrajs(string filename=GLFile){
     std::cerr<<*stat;
     stat->Dx/=15;
     stat->Dy/=15;
+    drop_cache(3);
     return res;
 }
 
@@ -370,27 +402,31 @@ vector<pair<id_type ,Trajectory> >  loadGTFolder(int num=10,string folder=fileFo
         vector<pair<id_type, Trajectory> > tmptrajs = loadGTToTrajs(file);
         res.insert(res.begin(),tmptrajs.begin(),tmptrajs.end());
     }
+    drop_cache(3);
     return res;
 }
 
 double knncost(double bt,int k,double qt,int f,bool useMBR,double _rk){
     auto stat=trajStat::instance();
     double nq=std::min(double(stat->trajCount),stat->M/stat->jt*(qt+2*stat->jt)/stat->Dt);
+    nq=std::min(double(stat->trajCount),nq);
+//    double nq=10000;
     double rk=sqrt(k*stat->Dx*stat->Dy/M_PI/nq);
     if(_rk>0) rk=_rk;
     double d=bt*stat->v;
-    double lmd;
-    if(useMBR) lmd=1+4*d/M_PI/M_PI/rk+d*d/rk/rk/M_PI/M_PI;
-    else lmd=sq(1+0.15*d/rk);
+//    double lmd;
+//    if(useMBR) lmd=1+4*d/M_PI/M_PI/rk+d*d/rk/rk/M_PI/M_PI;
+//    else lmd=sq(1+0.15*d/rk);
     double ltc=pow(stat->Dx*stat->Dy*stat->Dt/stat->M*bt*f/stat->v/stat->v,1.0/3);
     double lt=ltc+bt;
     double lx=lt*stat->v;
     double leafnum=stat->M/bt/f;
     double interleafnum=leafnum*lt/stat->Dt;
-    double hc=1.1*(1+qt/lt)*sq(2*rk+lx)*interleafnum/stat->Dx/stat->Dy,
-            lc=k*(1+qt/bt)*lmd*std::ceil(bt/stat->tl/160);
+//    double hc=1.1*(1+qt/lt)*sq(2*rk+lx)*interleafnum/stat->Dx/stat->Dy,
+//            lc=k*(1+qt/bt)*lmd*std::ceil(bt/stat->tl/160);
     //std::cerr<<bt<<"\t"<<hc<<"\t"<<lc<<"\n";
-    return hc+lc;
+    double hc=1.1*(1+qt/bt)*sq(1+(lx+rk+bt*stat->v)/stat->v/ltc)*(1+lt/ltc);
+    return hc;
 }
 struct d4{
     d4(double _low,double _high,double _vlow,double _vhigh){
@@ -430,7 +466,9 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore
     MyVisitor vis;
     vis.ts=ts;
     auto start = std::chrono::system_clock::now();
+    drop_cache(3);
     for(int i=0;i<queries.size();i++){
+        drop_cache(3);
 //        cerr<<"Query is "<<queries.at(i)->toString();
         if(QueryType==1){
             tree->intersectsWithQuery(*queries[i],vis);

@@ -426,7 +426,7 @@ void BulkLoader::createLevel(
         double dx=stat->Dx,dy=stat->Dy,dt=stat->Dt;
         double v=stat->v;
         ltc=pow(dx*dy*dt/v/v/P,1.0/3);
-        std::cerr<<"ltc is "<<ltc<<"\n";
+//        std::cerr<<"ltc is "<<ltc<<"\n";
         double nt=dt/ltc;
 //        int nt=pow(static_cast<double>(P)*v*v*dt*dt/dx/dy,1.0/3);
         S = nt;

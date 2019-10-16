@@ -75,6 +75,7 @@ namespace SpatialIndex
         };
         Trajectory();
         explicit Trajectory(std::vector<STPoint> &in);
+        explicit Trajectory(bool fakehead,bool fakeback,std::vector<STPoint> &in);
         Trajectory(const Trajectory& in);
         Trajectory &operator=(const Trajectory &r);
 
@@ -168,6 +169,7 @@ namespace SpatialIndex
         static std::vector<SpatialIndex::STPoint> simplifyWithRDP(const std::vector<SpatialIndex::STPoint>& Points, double threshold);
         std::vector<Trajectory> cuttraj(std::vector<SpatialIndex::STPoint>);
         std::vector<Trajectory> getSegments(double len) const;
+        std::vector<Trajectory> getHybridSegments(double len) const;
         std::vector<Trajectory> getRDPSegments(double len) const;
         std::vector<Trajectory> getStaticSegments(double len) const;
         std::vector<Trajectory> getStaticSegmentsCut(double len) const;
@@ -185,6 +187,7 @@ namespace SpatialIndex
                                                                   const SpatialIndex::Region &r);
 
         std::vector<STPoint> m_points;
+        bool m_fakehead=false,m_fakeback=false;
 
         friend SIDX_DLL std::ostream& operator<<(std::ostream& os,const Trajectory &r);
 

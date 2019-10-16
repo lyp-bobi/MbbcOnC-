@@ -5,15 +5,17 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
+//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
         vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
         vector<pair<id_type, vector<Trajectory>>> segs1;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
-        for (double queryLen=100;queryLen<=3600;queryLen+=100) {
+//        double queryLenParas[]={3600,18000,86400};
+        for (double queryLen=100;queryLen<=3600;queryLen+=200) {
             maxseg=0;
             segs1.clear();
             emptyseg.clear();
-            double segpara1=biSearchMax(5,queryLen,40,true,0.012);
+            double segpara1=biSearchMax(5,queryLen,40,true,0.008);
             std::cerr<<"query len:"<<queryLen<<",partial traj len:"<<segpara1<<"\n";
             for (auto &traj:trajs) {
                 auto seg = traj.second.getSegments(segpara1);
@@ -27,7 +29,7 @@ int main(){
                     *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
                     *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096);
             // Create a new storage manager with the provided base name and a 4K page size.
-            StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 100, false),
+            StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
                     *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
@@ -44,7 +46,7 @@ int main(){
             segs1.swap(emptyseg);
             emptyseg.clear();
             vector<IShape *> queries;
-            for (int i = 0; i < 500; i++) {
+            for (int i = 0; i < 200; i++) {
                 auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
                 Trajectory *concate = new Trajectory();
                 double ts = std::max(ori->m_startTime(),random(ori->m_startTime(), ori->m_endTime() - queryLen));

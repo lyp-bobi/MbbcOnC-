@@ -25,13 +25,23 @@ using std::endl;
 using std::sqrt;
 
 Trajectory::Trajectory() {
+
 }
-Trajectory::Trajectory(std::vector<SpatialIndex::STPoint>& in) {
+Trajectory::Trajectory(std::vector<SpatialIndex::STPoint>& in)
+{
     m_points=in;
+}
+
+Trajectory::Trajectory(bool fakehead, bool fakeback,std::vector<SpatialIndex::STPoint> &in) {
+    m_points=in;
+    m_fakehead=fakehead;
+    m_fakeback=fakeback;
 }
 
 Trajectory::Trajectory(const SpatialIndex::Trajectory &in) {
     m_points=in.m_points;
+    m_fakehead=in.m_fakehead;
+    m_fakeback=in.m_fakeback;
 }
 
 Trajectory& Trajectory::operator=(const Trajectory& r)
@@ -60,10 +70,14 @@ Trajectory* Trajectory::clone() {
 //
 uint32_t Trajectory::getByteArraySize() const {
     if(m_points.size()<=0) throw Tools::IllegalStateException("traj with length 0!");
-    return sizeof(unsigned long)+m_points[0].getByteArraySize()*m_points.size();
+    return 2* sizeof(bool)+sizeof(unsigned long)+m_points[0].getByteArraySize()*m_points.size();
 }
 
 void Trajectory::loadFromByteArray(const uint8_t* ptr) {
+    memcpy(&m_fakehead, ptr, sizeof(bool));
+    ptr += sizeof(bool);
+    memcpy(&m_fakeback, ptr, sizeof(bool));
+    ptr += sizeof(bool);
     unsigned long size;
     memcpy(&size, ptr, sizeof(unsigned long));
     ptr += sizeof(unsigned long);
@@ -85,6 +99,10 @@ void Trajectory::storeToByteArray(uint8_t **data, uint32_t &len) {
     uint8_t* ptr = *data;
     uint8_t* tmpb;
     uint32_t tmplen;
+    memcpy(ptr, &m_fakehead, sizeof(bool));
+    ptr += sizeof(bool);
+    memcpy(ptr, &m_fakeback, sizeof(bool));
+    ptr += sizeof(bool);
     unsigned long size=m_points.size();
     memcpy(ptr, &size, sizeof(unsigned long));
     ptr += sizeof(unsigned long);
@@ -407,20 +425,7 @@ std::vector<Trajectory> Trajectory::getRDPSegments(double len) const {
 }
 
 std::vector<Trajectory> Trajectory::getSegments(double len) const {
-//    int segNum=std::ceil((m_endTime()-m_startTime())/len);
-//    std::vector<Trajectory> res;
-//    if(segNum==1) {res.emplace_back(*this);return res;}
-//    auto m=simplifyWithRDPN(m_points,std::min(int(std::sqrt(m_points.size()-1)),int(std::sqrt(segNum))));
-//    for(auto &pts:m){
-//        if(pts.size()<2){
-//            std::cerr<<"error on getting segments with "<<len<<"and \n"<<*this;
-//            throw Tools::IllegalStateException("bad RDPN");
-//        }
-//        auto seg=Trajectory(pts).getStaticSegmentsCut(len);
-//        res.insert(res.end(),seg.begin(),seg.end());
-//    }
-//    return res;
-//    return getGlobalSegmentsCut(len);
+    return getGlobalSegmentsCut(len);
 //    auto m=getStaticSegments(len*sqrt(double(segNum)));
 //    for(auto &traj:m){
 //        auto seg=traj.getRDPSegments(len);
@@ -428,12 +433,29 @@ std::vector<Trajectory> Trajectory::getSegments(double len) const {
 //    }
 //    return res;
 
-    return getStaticSegmentsCut(len);
+//    return getStaticSegmentsCut(len);
+}
+
+std::vector<Trajectory> Trajectory::getHybridSegments(double len) const {
+    int segNum=std::ceil((m_endTime()-m_startTime())/len);
+    std::vector<Trajectory> res;
+    if(segNum==1) {res.emplace_back(*this);return res;}
+    auto m=simplifyWithRDPN(m_points,std::min(int(std::sqrt(m_points.size()-1)),2));
+    for(auto &pts:m){
+        if(pts.size()<2){
+            std::cerr<<"error on getting segments with "<<len<<"and \n"<<*this;
+            throw Tools::IllegalStateException("bad RDPN");
+        }
+        auto seg=Trajectory(pts).getGlobalSegmentsCut(len);
+        res.insert(res.end(),seg.begin(),seg.end());
+    }
+    return res;
 }
 
 std::vector<Trajectory> Trajectory::getStaticSegmentsCut(double len) const{
     vector<STPoint> seg;
     vector<Trajectory> res;
+    bool fakehead=false,fakeback=false;
     if(m_points.size()<2) {
         throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
     }
@@ -444,16 +466,20 @@ std::vector<Trajectory> Trajectory::getStaticSegmentsCut(double len) const{
             seg.emplace_back(m_points[i]);
         }
         else if(m_points[i].m_time==segStart+len){
+            fakeback=false;
             seg.emplace_back(m_points[i]);
-            res.emplace_back(Trajectory(seg));
+            res.emplace_back(Trajectory(fakehead,fakeback,seg));
+            fakehead=false;
             seg.clear();
             seg.emplace_back(m_points[i]);
             segStart=m_points[i].m_time;
         }
         else{
             STPoint mid=STPoint::makemid(m_points[i-1],m_points[i],segStart+len);
+            fakeback=true;
             seg.emplace_back(mid);
-            res.emplace_back(Trajectory(seg));
+            res.emplace_back(Trajectory(fakehead,fakeback,seg));
+            fakehead=true;
             seg.clear();
             seg.emplace_back(mid);
             segStart=mid.m_time;
@@ -470,6 +496,7 @@ std::vector<Trajectory> Trajectory::getStaticSegmentsCut(double len) const{
 std::vector<Trajectory> Trajectory::getGlobalSegmentsCut(double len) const {
     vector<STPoint> seg;
     vector<Trajectory> res;
+    bool fakehead=false,fakeback=false;
     if(m_points.size()<2) {
         throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
     }
@@ -482,16 +509,20 @@ std::vector<Trajectory> Trajectory::getGlobalSegmentsCut(double len) const {
             seg.emplace_back(m_points[i]);
         }
         else if(m_points[i].m_time==segStart+len){
+            fakeback=false;
             seg.emplace_back(m_points[i]);
-            res.emplace_back(Trajectory(seg));
+            res.emplace_back(Trajectory(fakehead,fakeback,seg));
+            fakehead=false;
             seg.clear();
             seg.emplace_back(m_points[i]);
             segStart=m_points[i].m_time;
         }
         else{
             STPoint mid=STPoint::makemid(m_points[i-1],m_points[i],segStart+len);
+            fakeback=true;
             seg.emplace_back(mid);
-            res.emplace_back(Trajectory(seg));
+            res.emplace_back(Trajectory(fakehead,fakeback,seg));
+            fakehead=true;
             seg.clear();
             seg.emplace_back(mid);
             segStart=mid.m_time;
@@ -1819,10 +1850,23 @@ void Trajectory::loadFromString(std::string str) {
 
 void Trajectory::linkTrajectory(SpatialIndex::Trajectory &other) {
     if(m_points.back().m_time==other.m_points.front().m_time){
-        m_points.insert(m_points.end(),++other.m_points.begin(),other.m_points.end());
+        if(m_fakeback) {
+            m_points.pop_back();
+            m_points.insert(m_points.end(),++other.m_points.begin(),other.m_points.end());
+            m_fakeback=other.m_fakeback;
+        }
+        else {
+            m_points.insert(m_points.end(), ++other.m_points.begin(), other.m_points.end());
+        }
     }
     else if (other.m_points.back().m_time==m_points.front().m_time){
-        m_points.insert(m_points.begin(),other.m_points.begin(),other.m_points.end()-1);
+        if(m_fakehead) {
+            m_points.erase(m_points.begin());
+            m_points.insert(m_points.begin(), other.m_points.begin(), other.m_points.end() - 1);
+            m_fakehead=other.m_fakehead;
+        } else {
+            m_points.insert(m_points.begin(), other.m_points.begin(), other.m_points.end() - 1);
+        }
     }
     else{
         std::cerr<<m_points.back()<<" "<<other.m_points.front()<<"\n"

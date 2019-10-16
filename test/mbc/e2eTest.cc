@@ -9,13 +9,13 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
         vector<pair<id_type, vector<Trajectory>>> segs1,segs2;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
         rsimpli=false;
         simpli=true;
-        for (double queryLen=100;queryLen<=3600;queryLen+=100) {
+        for (double queryLen=100;queryLen<=3600;queryLen+=200) {
             maxseg=0;
             segs1.clear();
             segs2.clear();
@@ -39,23 +39,23 @@ int main(){
                     *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
                     *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096);
             // Create a new storage manager with the provided base name and a 4K page size.
-            StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 100, false),
+            StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
                     *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
             TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
             ts1->loadSegments(segs1);
+            segs1.clear();
+            segs1.swap(emptyseg);
             ISpatialIndex *r = RTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
             TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
             ts2->loadSegments(segs2,true);
+            segs2.clear();
+            segs2.swap(emptyseg);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
             //kNN
-            segs1.clear();
-            segs1.swap(emptyseg);
-            segs2.clear();
-            segs2.swap(emptyseg);
             emptyseg.clear();
             vector<IShape *> queries;
             for (int i = 0; i < 200; i++) {

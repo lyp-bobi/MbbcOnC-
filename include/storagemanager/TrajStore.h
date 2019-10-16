@@ -15,6 +15,7 @@ namespace SpatialIndex
     class trajStat{
     private:
         trajStat(){};
+        ~trajStat(){delete singleton;}
         static trajStat* singleton;
     public:
         double M=0;//total time
@@ -37,6 +38,7 @@ namespace SpatialIndex
     class SIDX_DLL XZ3Enocder{
     private:
         XZ3Enocder();
+        ~XZ3Enocder(){delete singleton;}
         static XZ3Enocder* singleton;
     public:
         long encode(double x,double y,double z);
@@ -164,7 +166,8 @@ namespace SpatialIndex
             };
             id_type getTrajId(id_type id){return id/m_maxTrajSegs;}
             id_type getSegId(id_type id,uint32_t segnum){return id*m_maxTrajSegs+segnum;}
-            void loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs,bool idFirst=false);
+            void loadTrajs(vector<std::pair<id_type, Trajectory> > &trajs,double segpara,bool idFirst=false,bool output=true,int method=3);
+            void loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs,bool idFirst=false,bool output=true);
             const Trajectory getTraj(id_type &id);
             const Trajectory getTrajByTime(id_type &id,double tstart,double tend);
             const ShapeList getMBRsByTime(id_type &id,double tstart,double tend);
@@ -214,6 +217,7 @@ namespace SpatialIndex
 
         virtual void rewind(){iter=m_bcs->begin();}
     };
+
     inline double triangleArea(double d,double v,double t){
         if(d<v*t){
             return d*d/v;

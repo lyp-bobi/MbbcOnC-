@@ -8,15 +8,18 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
 //        vector<pair<id_type, Trajectory> > trajs = loadGTFolder();
-        vector<pair<id_type, vector<Trajectory>>> segs;
-        vector<pair<id_type, vector<Trajectory>>> emptyseg;
         auto stat=trajStat::instance();
         int maxseg = 0;
         double avgSegLen=100;
-        double segLenParas[]={300};
-        double queryLenParas[]={900,3600};
+//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
+//        double segLenParas[]={20,50,80,100,200,300,500,700,900,1100,1300,1500
+//                              ,1700,1900,2100,2500,3000,4000,5000};
+//        double queryLenParas[]={900,3600};
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
+//        double segLenParas[]={100,300,500,700,900,1100,1300,1500,1700,1900,2100,2300,2500,2700,2900,3000,4000};
+        double segLenParas[]={1200,1500};
+        double queryLenParas[]={3600};
         std::cerr<<"Starting knn test\n"<<"Segmentation lengths are:";
         for(auto p:segLenParas) std::cerr<<p<<"\t";
         std::cerr<<"\nQuery lengths are:";
@@ -36,11 +39,13 @@ int main(){
             querySet.emplace_back(queries);
             queries.clear();
         }
-        //for (double segLen:segLenParas) {
-        for (double segLen=300;segLen<3000;segLen+=200) {
-                maxseg=300;
-                segs.clear();
-                int totallen = 0, totalseg = 0;
+        for (double segLen:segLenParas) {
+//        for (double segLen=300;segLen<3000;segLen+=200) {
+            vector<pair<id_type, vector<Trajectory>>> segs;
+            vector<pair<id_type, vector<Trajectory>>> emptyseg;
+            maxseg=300;
+            segs.clear();
+            int totallen = 0, totalseg = 0;
             for (const auto &traj:trajs) {
                 totallen += traj.second.m_points.size();
                 auto seg = traj.second.getSegments(segLen);
@@ -57,7 +62,7 @@ int main(){
                     *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
                     *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096);
             // Create a new storage manager with the provided base name and a 4K page size.
-            StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 100, false),
+            StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
                     *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
@@ -72,16 +77,19 @@ int main(){
             //kNN
             segs.clear();
             segs.swap(emptyseg);
-            disttype=0;
             std::cerr<<"Seg len:"<<segLen<<"\n";
+            disttype=0;
+            simpli=true;
             for(const auto &qs:querySet) {
                 kNNQueryBatch(r, qs, ts1);
                 kNNQueryBatch(rc, qs, ts2);
             }
-////                    simpli= false;
-//                    disttype=1;
-//                    kNNQueryBatch(r, queries, ts1);
-//                    kNNQueryBatch(rc, queries, ts2);
+//                    simpli= false;
+//            disttype=1;
+//            for(const auto &qs:querySet) {
+//                kNNQueryBatch(r, qs, ts1);
+//                kNNQueryBatch(rc, qs, ts2);
+//            }
 
 
             delete r;

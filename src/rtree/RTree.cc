@@ -622,7 +622,9 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 		    if(m_DataType==TrajectoryType&&m_bUsingTrajStore&&pFirst->m_type==0){
 		        //load ShapeList<MBR>, aka retrieve MBRs
                 id_type trajId=m_ts->getTrajId(pFirst->m_id);
-                if(insertedTrajId[trajId]==1){}
+                if(insertedTrajId[trajId]==1){
+                    delete pFirst->m_pEntry;
+                }
                 else {
                     ShapeList brs = m_ts->getMBRsByTime(pFirst->m_id, queryTraj->m_points.front().m_time,
                                                         queryTraj->m_points.back().m_time);
@@ -636,7 +638,6 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 		        //load Trajectory
                 Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_time,queryTraj->m_points.back().m_time);
                 queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, traj),2));
-
 		    }
 		    else {
 //                Data *e=static_cast<Data*>(pFirst->m_pEntry);
@@ -654,7 +655,7 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 	while (! queue.empty())
 	{
 		NNEntry* e = queue.top(); queue.pop();
-		if (e->m_pEntry != 0) delete e->m_pEntry;
+		delete e->m_pEntry;
 		delete e;
 	}
 //    std::cerr<<"iternum is "<<iternum<<"\n";

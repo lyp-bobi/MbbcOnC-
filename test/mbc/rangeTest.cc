@@ -16,8 +16,8 @@ int main(){
         auto stat=trajStat::instance();
         int maxseg = 0;
         double avgSegLen=100;
-        double segLenParas[]={10,20,50,100,300,500,1000,1500,2000,2500,3000};
-        double queryLenParas[]={0};
+        double segLenParas[]={10,20,50,80,100,200,300,400,500,750,1000};
+        double queryLenParas[]={0,3600};
         std::cerr<<"Starting range test\n"<<"Segmentation lengths are:";
         for(auto p:segLenParas) std::cerr<<p<<"\t";
         std::cerr<<"\nQuery lengths are:";
@@ -26,11 +26,11 @@ int main(){
         vector<vector<IShape *>> querySet;
         for(auto queryLen:queryLenParas) {
             vector<IShape *> queries;
-            for (int i = 0; i < 10000; i++) {
+            for (int i = 0; i < 2000; i++) {
                 double t = int(random(stat->mint, stat->maxt - queryLen));
                 double pLow[3] = {random(stat->minx, stat->maxx), random(stat->miny, stat->maxy), t};
-                double pHigh[3] = {pLow[0] + random(stat->Dx*1/40, stat->Dx * 3/40),
-                                   pLow[1] + random(stat->Dy*1/40, stat->Dy * 3/40), t + queryLen};
+                double pHigh[3] = {pLow[0] + random(0.05,0.1),
+                                   pLow[1] + random(0.05,0.1), t + queryLen};
                 Region *rg = new Region(pLow, pHigh, 3);
                 queries.emplace_back(rg);
             }
@@ -41,6 +41,18 @@ int main(){
             maxseg=300;
             segs.clear();
             int totallen = 0, totalseg = 0;
+            string name0 ="name0", name1 ="name1", name2 = "name2";
+            id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
+            IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
+                    *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
+                    *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096);
+            // Create a new storage manager with the provided base name and a 4K page size.
+            StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
+                    *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
+                    *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
+            TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
+            TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
+
             for (const auto &traj:trajs) {
                 totallen += traj.second.m_points.size();
                 auto seg = traj.second.getSegments(segLen);
@@ -51,21 +63,10 @@ int main(){
             avgSegLen=double(totallen)/totalseg;
             std::cerr<<"segments' average length is "<<totallen*1.0/totalseg<<"\n";
 
-            string name0 ="name0", name1 ="name1", name2 = "name2";
-            id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
-            IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
-                    *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
-                    *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096);
-            // Create a new storage manager with the provided base name and a 4K page size.
-            StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 100, false),
-                    *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
-                    *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
-            TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
             ts1->loadSegments(segs, false);
             ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
-            TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
             ts2->loadSegments(segs,false);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 

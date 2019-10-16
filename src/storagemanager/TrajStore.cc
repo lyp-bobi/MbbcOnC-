@@ -1,7 +1,7 @@
 //
 // Created by Chuang on 2019/6/10.
 //
-
+//#include "spatialindex/Trajectory.h"
 #include "storagemanager/TrajStore.h"
 #include <cmath>
 #include <cstring>
@@ -408,7 +408,51 @@ struct id3{
     id3(id_type id,id_type pvId,id_type ntId)
         :m_id(id),m_pvId(pvId),m_ntId(ntId){};
 };
-void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs,bool idFisrt){
+void TrajStore::loadTrajs(vector<std::pair<id_type,Trajectory>> &trajs,double segpara, bool idFirst, bool output,
+                          int method) {
+    vector<std::pair<id_type, vector<Trajectory>>> segs;
+    unsigned long count=0;
+    for (const auto &traj:trajs) {
+        std::vector<Trajectory> seg;
+        auto stat=trajStat::instance();
+        switch(method){
+            case 0:
+                seg = traj.second.getFixedSegments(int(std::ceil(segpara/stat->tl)+1));
+                break;
+            case 1:
+                seg = traj.second.getStaticSegments(segpara);
+                break;
+            case 2:
+                seg = traj.second.getStaticSegmentsCut(segpara);
+                break;
+            case 3:
+                seg = traj.second.getGlobalSegmentsCut(segpara);
+                break;
+            case 4:
+                seg = traj.second.getRDPSegments(segpara);
+                break;
+            case 5:
+                seg = traj.second.getHybridSegments(segpara);
+                break;
+            default:
+                break;
+        }
+        segs.emplace_back(make_pair(traj.first, seg));
+        count+=segs.size();
+        if(traj==trajs.back()){
+            loadSegments(segs,idFirst,output);
+            segs.clear();
+            count=0;
+        }
+        if(count>100000){
+            loadSegments(segs,idFirst,false);
+            segs.clear();
+            count=0;
+        }
+    }
+}
+
+void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs,bool idFisrt,bool output){
     if(idFisrt) {
         id_type thisPageId = m_pStorageManager->nextPage();
         int linecount=0;
@@ -437,8 +481,9 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
                 double v = (Point(thebc.m_pLow, 2).getMinimumDistance(Point(thebc.m_pHigh, 2))) /
                            (thebc.m_endTime - thebc.m_startTime) + thebc.m_rv;
                 if (v > m_maxVelocity) m_maxVelocity = v;
-                //todo: calculate the 140 from somewhere
-                while((it+1)!=traj.second.end()&&seg.m_points.size()-(seg.m_points.size()/140)*140+(it+1)->m_points.size()<170){
+                //todo: calculate the 140 from somewhere else
+                //todo: something wrong with a partial with 100page + a partial with 50bit
+                while((it+1)!=traj.second.end()&&seg.m_points.size()-(seg.m_points.size()/140)*140+(it+1)->m_points.size()<140){
                     it++;
                     seg.linkTrajectory(*it);
                     segid=getSegId(traj.first,it-traj.second.begin());
@@ -492,14 +537,18 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
         radius1/=m_entryMbrs.size();
         radius2/=m_entryMbrs.size();
         ratio/=m_entryMbrs.size();
-        std::cerr <<"radius MBR is "<<radius1<<",radius MBC is "<<radius2<<", ratio is"<<ratio<<"\n";
-        std::cerr << "total segment is" << m_entryMbrs.size() << "=" << m_entryMbcs.size() << "\n";
-        std::cerr << "expression effectiveness " << vol1 << " versus " << vol2 << "\n" << vol2 / vol1 << "\n";
+        if(output) {
+            std::cerr << "radius MBR is " << radius1 << ",radius MBC is " << radius2 << ", ratio is" << ratio << "\n";
+            std::cerr << "total segment is" << m_entryMbrs.size() << "=" << m_entryMbcs.size() << "\n";
+            std::cerr << "expression effectiveness " << vol1 << " versus " << vol2 << "\n" << vol2 / vol1 << "\n";
+        }
     }else{//group by spatial
         Tools::SmartPointer<tsExternalSorter> es = Tools::SmartPointer<tsExternalSorter>(
                 new tsExternalSorter(m_pageSize, 200));
         //load segments to sorter's record
-        std::cerr << "TrajStore:loading segments\n";
+        if(output) {
+            std::cerr << "TrajStore:loading segments\n";
+        }
         Region maxbr;
         maxbr.makeInfinite(3);
         double vol1 = 0, vol2 = 0;
@@ -531,8 +580,10 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
                 vol2 += thebc.getArea();
             }
         }
-        std::cerr << "total segment is" << m_entryMbrs.size() << "=" << m_entryMbcs.size() << "\n";
-        std::cerr << "expression effectiveness " << vol1 << " versus " << vol2 << "\n" << vol2 / vol1 << "\n";
+        if(output) {
+            std::cerr << "total segment is" << m_entryMbrs.size() << "=" << m_entryMbcs.size() << "\n";
+            std::cerr << "expression effectiveness " << vol1 << " versus " << vol2 << "\n" << vol2 / vol1 << "\n";
+        }
         //adjust the encoder
         auto encoder = XZ3Enocder::instance();
         encoder->m_xmin = maxbr.m_pLow[0];
@@ -543,7 +594,9 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
         encoder->m_zmax = maxbr.m_pHigh[2];
 
         //sort the data
-        std::cerr << "TrajStore:sorting using XZ3 curve\n";
+        if(output) {
+            std::cerr << "TrajStore:sorting using XZ3 curve\n";
+        }
         es->sort();
 
         //save the data into pages
@@ -635,7 +688,7 @@ const Trajectory TrajStore::getTraj(id_type &id) {
     assert(it!=m_entries.end());
     Entry e=*(it->second);
     uint32_t len=e.m_start+e.m_len;
-    uint8_t *load = new uint8_t[len];
+    uint8_t *load;
     m_pStorageManager->loadByteArray(e.m_page,len,&load);
     m_trajIO+=std::ceil(len/4096.0);
 //    std::cerr<<"get Traj "<<id<<" with length"<<len<<"\n";

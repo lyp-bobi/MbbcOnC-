@@ -12,17 +12,15 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
 //        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
 //        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs("D://00.txt");
-        vector<pair<id_type, vector<Trajectory>>> segs0,segs1,segs2,segs3,segs4;
-        vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
-        double para[]={300,600,900,1200,1500,2000,2500,3000};
+        double para[]={1200};
         auto stat=trajStat::instance();
         double queryLen=3600;
         vector<IShape *> queries;
-        for (int i = 0; i < 200; i++) {
+        for (int i = 0; i < 1000; i++) {
             auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
             Trajectory *concate = new Trajectory();
             double ts = std::max(ori->m_startTime(),random(ori->m_startTime(), ori->m_endTime() - queryLen));
@@ -40,91 +38,59 @@ int main(){
 //        }
         for (double segpara:para) {
             maxseg=500;
-            string name0 ="name0", name1 ="name1", name2 = "name2",name3="name3",name4="name4";
-            id_type indexIdentifier0, indexIdentifier1, indexIdentifier2,indexIdentifier3,indexIdentifier4;
-            IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
-                    *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
-                    *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096),
-                    *diskfile3 = StorageManager::createNewDiskStorageManager(name3, 4096),
-                    *diskfile4 = StorageManager::createNewDiskStorageManager(name4, 4096);
-            // Create a new storage manager with the provided base name and a 4K page size.
-            StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 100, false),
-                    *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
-                    *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false),
-                    *file3 = StorageManager::createNewRandomEvictionsBuffer(*diskfile3, 10, false),
-                    *file4 = StorageManager::createNewRandomEvictionsBuffer(*diskfile4, 10, false);
+//            string name[6]={"name1","name2","name3","name4","name5","name6"};
+//            id_type indexIdentifier[6];
+//            IStorageManager* diskfile[6];
+//            StorageManager::IBuffer* file[6];
+//            for(int i=0;i<6;i++){
+//                diskfile[i]= StorageManager::createNewDiskStorageManager(name[i], 4096);
+//                file[i] = StorageManager::createNewRandomEvictionsBuffer(*diskfile[i], 10, false),
+//            }
 
-            segs0.clear();segs1.clear();segs2.clear();segs3.clear();segs4.clear();
-            segs0.swap(emptyseg);segs1.swap(emptyseg);segs2.swap(emptyseg);segs3.swap(emptyseg);segs4.swap(emptyseg);
             std::cerr<<segpara<<"\n";
             std::cerr<<"start splitting\n";
 
-            for (const auto &traj:trajs) {
-                auto seg = traj.second.getFixedSegments(int(std::ceil(segpara/stat->tl)+2));
-                maxseg = std::max(int(seg.size()), maxseg);
-                segs3.emplace_back(make_pair(traj.first, seg));
+            for(int i=0;i<6;i++){
+                string name="name";
+                id_type id;
+                IStorageManager *diskfile = StorageManager::createNewDiskStorageManager(name, 4096);
+                StorageManager::IBuffer *file = StorageManager::createNewRandomEvictionsBuffer(*diskfile, 10, false);
+                vector<pair<id_type, vector<Trajectory>>> segs;
+                for (const auto &traj:trajs) {
+                    std::vector<Trajectory> seg;
+                    switch(i){
+                        case 0:
+                            seg = traj.second.getFixedSegments(int(std::ceil(segpara/stat->tl)+1));
+                            break;
+                        case 1:
+                            seg = traj.second.getStaticSegments(segpara);
+                            break;
+                        case 2:
+                            seg = traj.second.getStaticSegmentsCut(segpara);
+                            break;
+                        case 3:
+                            seg = traj.second.getGlobalSegmentsCut(segpara);
+                            break;
+                        case 4:
+                            seg = traj.second.getRDPSegments(segpara);
+                            break;
+                        case 5:
+                            seg = traj.second.getHybridSegments(segpara);
+                            break;
+                        default:
+                            break;
+                    }
+                    maxseg = std::max(int(seg.size()), maxseg);
+                    segs.emplace_back(make_pair(traj.first, seg));
+                }
+                TrajStore *ts = new TrajStore(file, 4096, maxseg+1);
+                ts->loadSegments(segs,true,false);
+//                drop_cache(1);
+                segs.clear();
+                ISpatialIndex *r = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts, 4096, 3, id);
+                kNNQueryBatch(r, queries, ts);
+                delete r;delete ts;delete file;delete diskfile;
             }
-            TrajStore *ts3 = new TrajStore(file3, 4096, maxseg+1);
-            ts3->loadSegments(segs3,true);
-            segs3.clear();segs3.swap(emptyseg);
-            ISpatialIndex *r3 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts3, 4096, 3, indexIdentifier3);
-            kNNQueryBatch(r3, queries, ts3);
-            delete r3;delete ts3;delete file3;delete diskfile3;
-
-            for (const auto &traj:trajs) {
-                auto seg = traj.second.getStaticSegments(segpara);
-                maxseg = std::max(int(seg.size()), maxseg);
-                segs1.emplace_back(make_pair(traj.first, seg));
-            }
-            TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
-            ts1->loadSegments(segs1,true);
-            segs1.clear();segs1.swap(emptyseg);
-            ISpatialIndex *r1 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
-            kNNQueryBatch(r1, queries, ts1);
-            delete r1;delete ts1;delete file1;delete diskfile1;
-
-
-            for (const auto &traj:trajs) {
-                auto seg = traj.second.getStaticSegmentsCut(segpara);
-                maxseg = std::max(int(seg.size()), maxseg);
-                segs2.emplace_back(make_pair(traj.first, seg));
-            }
-            TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
-            ts2->loadSegments(segs2,true);
-            segs2.clear();segs2.swap(emptyseg);
-            ISpatialIndex *r2 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
-
-            kNNQueryBatch(r2, queries, ts2);
-//            rangeQueryBatch(r2, queries, ts2);
-            delete r2;delete ts2;delete file2;delete diskfile2;
-
-            for (const auto &traj:trajs) {
-                auto seg = traj.second.getSegments(segpara);
-                maxseg = std::max(int(seg.size()), maxseg);
-                segs0.emplace_back(make_pair(traj.first, seg));
-            }
-            TrajStore *ts0 = new TrajStore(file0, 4096, maxseg+1);
-            ts0->loadSegments(segs0,true);
-            segs0.clear();segs0.swap(emptyseg);
-            ISpatialIndex *r0 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts0, 4096, 3, indexIdentifier0);
-
-            kNNQueryBatch(r0, queries, ts0);
-//            rangeQueryBatch(r0, queries, ts0);
-            delete r0;delete ts0;delete file0;delete diskfile0;
-
-
-
-            for (const auto &traj:trajs) {
-                auto seg = traj.second.getRDPSegments(segpara);
-                maxseg = std::max(int(seg.size()), maxseg);
-                segs4.emplace_back(make_pair(traj.first, seg));
-            }
-            TrajStore *ts4 = new TrajStore(file4, 4096, maxseg+1);
-            ts4->loadSegments(segs4,true);
-            segs4.clear();segs4.swap(emptyseg);
-            ISpatialIndex *r4 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts4, 4096, 3, indexIdentifier4);
-            kNNQueryBatch(r4, queries, ts4);
-            delete r4;delete ts4;delete file4;delete diskfile4;
 
             std::cerr<<"split finished\n";
 //            kNNQueryBatch(r0, queries, ts0);
