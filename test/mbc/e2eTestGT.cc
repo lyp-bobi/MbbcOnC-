@@ -12,18 +12,18 @@
 int main(){
     try {
         vector<string> files;
-//        struct dirent *ptr;
-//        DIR *dir;
-//        string PATH = fileFolder;
-//        dir=opendir(PATH.c_str());
-//        while((ptr=readdir(dir))!=NULL&&files.size()<20)
-//        {
-//            if(ptr->d_name[0] == '.')
-//                continue;
-//            //cout << ptr->d_name << endl;
-//            files.emplace_back(PATH+ptr->d_name);
-//        }
-        files.emplace_back("D://00.txt");
+        struct dirent *ptr;
+        DIR *dir;
+        string PATH = fileFolder;
+        dir=opendir(PATH.c_str());
+        while((ptr=readdir(dir))!=NULL&&files.size()<20)
+        {
+            if(ptr->d_name[0] == '.')
+                continue;
+            //cout << ptr->d_name << endl;
+            files.emplace_back(PATH+ptr->d_name);
+        }
+//        files.emplace_back("D://00.txt");
 //        files.emplace_back("D://01.txt");
         calcuTime[0] = 0;
         srand((int) time(NULL));
