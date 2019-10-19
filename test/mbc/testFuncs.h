@@ -42,8 +42,8 @@
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
-#define QueryType 2
-//1 for time-slice range, 2 for 5-NN
+#define QueryType 1
+//1 for range, 2 for 5-NN
 
 using namespace std;
 using namespace SpatialIndex;
@@ -112,6 +112,7 @@ public:
 //        cout << *s << endl;
 
         m_lastResult=d.getIdentifier();
+//        cerr << d.getIdentifier()<<std::endl;
         auto mou=dynamic_cast<const MBCRTree::MBCRTree::simpleData*>(&d);
 //        cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
         if(mou!=nullptr){
@@ -515,6 +516,7 @@ void rangeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStor
     int num=queries.size();
     MyVisitor vis;
     vis.ts=ts;
+    sb=0,sbb=0;
     auto start = std::chrono::system_clock::now();
     for(int i=0;i<queries.size();i++){
         vis.m_query=queries[i];
@@ -526,7 +528,7 @@ void rangeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStor
 //    cerr <<"Average Querying time: "<< time/num<<endl;
 //    cerr <<"Averaged VISIT NODE "<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<endl;
 //    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
-    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
+    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<"\t"<<double(sb)/sbb<<endl;
 //    cerr <<time/num<<"\n";
 }
 

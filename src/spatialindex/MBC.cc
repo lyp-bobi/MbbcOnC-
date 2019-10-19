@@ -47,6 +47,7 @@ MBC::MBC(const double *pLow, const double *pHigh,double sTime,double eTime, uint
     catch (...)
     {
         delete[] m_pLow;
+        delete[] m_pHigh;
         throw;
     }
 
@@ -125,8 +126,7 @@ void MBC::loadFromByteArray(const uint8_t* ptr) {
     memcpy(&m_rd, ptr, sizeof(double));
     ptr += sizeof(double);
     memcpy(&m_rv, ptr, sizeof(double));
-    ptr += sizeof(double);
-    //ptr += m_dimension * sizeof(double);
+//    ptr += sizeof(double);
 }
 
 void MBC::storeToByteArray(uint8_t **data, uint32_t &len) {
@@ -166,6 +166,8 @@ void MBC::getMBRAtTime(double t, SpatialIndex::Region &out) const {
 //    STPoint *tp = STPoint::makemid(STPoint(m_pLow, m_startTime, m_startTime, m_dimension),
 //                                      STPoint(m_pHigh, m_endTime, m_endTime, m_dimension), t);
 //    Point plow = *tp, phigh = *tp;
+
+//only for two dimensions
     double x=makemidmacro(m_pLow[0],m_startTime,m_pHigh[0],m_endTime,t);
     double y=makemidmacro(m_pLow[1],m_startTime,m_pHigh[1],m_endTime,t);
     double coord[2]={x,y};
@@ -187,6 +189,8 @@ void MBC::getMBRAtTime(double t, SpatialIndex::Region &out) const {
 
 
 std::pair<STPoint,double> MBC::getCenterRdAtTime(double t) const {
+    if(t<=m_startTime) return std::make_pair(STPoint(m_pLow,t,2),0);
+    if(t>=m_endTime) return std::make_pair(STPoint(m_pHigh,t,2),0);
     double x=makemidmacro(m_pLow[0],m_startTime,m_pHigh[0],m_endTime,t);
     double y=makemidmacro(m_pLow[1],m_startTime,m_pHigh[1],m_endTime,t);
     double coord[2]={x,y};
@@ -214,6 +218,9 @@ bool MBC::intersectsShape(const SpatialIndex::IShape& s) const {
     const Region* pr = dynamic_cast<const Region*>(&s);
     if (pr != 0) return intersectsRegion(*pr);
 
+    const Cylinder* pcy = dynamic_cast<const Cylinder*>(&s);
+    if (pcy != 0) return intersectsCylinder(*pcy);
+
 //    const Trajectory* ptra = dynamic_cast<const Trajectory*>(&s);
 //    if (ptra != 0) return ptra->intersectsShape(*this);
 
@@ -230,6 +237,7 @@ bool MBC::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
     return timed.first.getMinimumDistance(in)<timed.second;
 }
 bool MBC::intersectsSTPoint(const SpatialIndex::STPoint &in) const {
+    if(in.m_time<m_startTime||in.m_time>m_endTime) return false;
     auto timed=getCenterRdAtTime(in.m_time);
     return timed.first.getMinimumDistance(in)<timed.second;
 }
@@ -239,7 +247,7 @@ bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
     if(in.m_pLow[m_dimension]>m_endTime||in.m_pHigh[m_dimension]<m_startTime) return false;
     if(in.m_pLow[m_dimension]==in.m_pHigh[m_dimension]) {
         auto timed=getCenterRdAtTime(in.m_pLow[m_dimension]);
-        return timed.first.getMinimumDistance(Region(in.m_pLow,in.m_pHigh,m_dimension))<=timed.second+1e-10;
+        return timed.first.getMinimumDistance(Region(in.m_pLow,in.m_pHigh,m_dimension))<=timed.second+1e-7;
     }else{
         double t0=m_startTime,t1=m_startTime+m_rd/m_rv,t2=m_endTime-m_rd/m_rv,t3=m_endTime;
         if(m_rv<1e-7){
@@ -380,6 +388,31 @@ bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
 //        return false;
     }
 }
+bool MBC::intersectsCylinder(const SpatialIndex::Cylinder &in) const {
+    if (in.m_startTime > m_endTime || in.m_endTime < m_startTime) return false;
+    if (in.m_startTime == in.m_endTime) {
+        auto timed = getCenterRdAtTime(in.m_startTime);
+        return timed.first.getMinimumDistance(Point(in.m_p,in.m_dimension)) <= timed.second+in.m_r + 1e-7;
+    } else {
+        double t0 = m_startTime, t1 = m_startTime + m_rd / m_rv, t2 = m_endTime - m_rd / m_rv, t3 = m_endTime;
+        if (m_rv < 1e-7) {
+            t1 = t2 = (m_endTime + m_startTime) / 2;
+        }
+        double tlow = in.m_startTime, thigh = in.m_endTime;
+        double ints = std::max(t0, tlow), inte = std::min(t3, thigh);
+        auto a = getCenterRdAtTime(ints), b = getCenterRdAtTime(inte);
+        double d = Trajectory::line2lineMinSED(a.first, b.first, STPoint(in.m_p, ints, 2), STPoint(in.m_p, inte, 2));
+        if (d > m_rd + in.m_r) return false;
+        return true;
+        //cylinder
+//        double ts = std::max(t1, tlow), te = std::min(t2, thigh);
+//        if (ts <= te) {
+//            a = getCenterRdAtTime(ts), b = getCenterRdAtTime(te);
+//            d = Trajectory::line2lineMinSED(a.first, b.first, STPoint(in.m_p,ts,2),STPoint(in.m_p,te,2));
+//            if (d <= m_rd) return true;
+//        }
+    }
+}
 inline bool MBC::intersectsMBC(const MBC& in) const{throw Tools::NotSupportedException("MBC::intersectsMBC");}
 
 std::pair<double,double> getIntersectPeriod(
@@ -481,6 +514,72 @@ bool MBC::prevalidate(const SpatialIndex::Region &in) const {
 //        }
 //    }
 //    return false;
+}
+
+bool MBC::prevalidate(const SpatialIndex::Cylinder &in) const {
+    double tlow=std::max(m_startTime,in.m_startTime),thigh=std::min(m_endTime,in.m_endTime);
+    double t0=m_startTime,t1=m_startTime+m_rd/m_rv,t2=m_endTime-m_rd/m_rv,t3=m_endTime;
+    if(m_rv<1e-7){
+        t1=t2=(m_endTime+m_startTime)/2;
+    }
+    auto p1=getCenterRdAtTime(tlow),p2=getCenterRdAtTime(thigh);
+    double d=Trajectory::line2lineMinSED(STPoint(in.m_p,tlow,2),STPoint(in.m_p,thigh,2),p1.first,p2.first);
+    if(d<in.m_r-m_rd) return true;
+//    return false;
+    double ints,inte;
+    //cylinder
+//    ints=std::max(t1,tlow);inte=std::min(t2,thigh);
+//    if(ints<inte) {
+//        p1 = getCenterRdAtTime(ints), p2 = getCenterRdAtTime(inte);
+//        d = Trajectory::line2lineMinSED(STPoint(in.m_p, ints, 2), STPoint(in.m_p, inte, 2), p1.first, p2.first);
+//        if (d < in.m_r - m_rd) return true;
+//    }
+    double ts = tlow, te = thigh;
+    double dxs=in.m_p[0]-p1.first.m_pCoords[0];
+    double dys=in.m_p[1]-p1.first.m_pCoords[1];
+    double dxe=in.m_p[0]-p2.first.m_pCoords[0];
+    double dye=in.m_p[1]-p2.first.m_pCoords[1];
+    //lower cone
+    ints=std::max(t0,tlow);inte=std::min(t1,thigh);
+    if(ints<inte){
+        double c1=sq(dxs-dxe)+sq(dys-dye),
+                c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
+                c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
+                c4=te-ts;
+        c1=c1-sq(c4*m_rv);
+        c2=c2+sq(c4)*2*(in.m_r+m_rv*t0)*m_rv;
+        c3=c3-sq(c4*(in.m_r+m_rv*t0));
+        double middle=-c2/c1/2;
+        if(middle>ints&&middle<inte){
+            if(c1*middle*middle+c2*middle+c3<0){
+                return true;
+            }
+        }
+        else{
+            if(c1*ints*ints+c2*ints+c3<=0||c1*inte*inte+c2*inte+c3<=0) return true;
+        }
+    }
+    //higher cone
+    ints=std::max(t2,tlow);inte=std::min(t3,thigh);
+    if(ints<inte){
+        double c1=sq(dxs-dxe)+sq(dys-dye),
+                c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
+                c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
+                c4=te-ts;
+        c1=c1-sq(c4*m_rv);
+        c2=c2-sq(c4)*2*(in.m_r-m_rv*t3)*m_rv;
+        c3=c3-sq(c4*(in.m_r-m_rv*t3));
+        double middle=-c2/c1/2;
+        if(middle>ints&&middle<inte){
+            if(c1*middle*middle+c2*middle+c3<0){
+                return true;
+            }
+        }
+        else{
+            if(c1*ints*ints+c2*ints+c3<=0||c1*inte*inte+c2*inte+c3<=0) return true;
+        }
+    }
+    return false;
 }
 
 bool MBC::containsShape(const SpatialIndex::IShape& in) const{return false;}

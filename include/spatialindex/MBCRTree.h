@@ -26,6 +26,7 @@
 ******************************************************************************/
 
 #pragma once
+extern int sb,sbb;
 
 namespace SpatialIndex
 {

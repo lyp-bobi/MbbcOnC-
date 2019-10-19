@@ -1499,28 +1499,19 @@ void SpatialIndex::RTree::RTree::rangeQuery(RangeQueryType type, const IShape& q
 					Data data = Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBR[cChild]), n->m_pIdentifier[cChild]);
 					++(m_stats.m_u64QueryResults);
 					if(m_DataType==TrajectoryType){
-                        //check if the timed slice is included in query
-                        const Region *querybr= dynamic_cast<const Region*>(&query);
-                        Region spatialbr(querybr->m_pLow,querybr->m_pHigh,2);
-                        Region brbr(data.m_region.m_pLow,data.m_region.m_pHigh,2);
-                        if(spatialbr.containsRegion(brbr)){
-                            m_stats.m_doubleExactQueryResults += 1;
-                            v.visitData(data);
-                        }else {
-                            if (m_bUsingTrajStore == true) {
-                                Trajectory segtraj = m_ts->getTraj(n->m_pIdentifier[cChild]);
-                                if (query.intersectsShape(segtraj)) {
-                                    m_stats.m_doubleExactQueryResults += 1;
-                                    v.visitData(data);
-                                }
-                            } else {
-                                Trajectory traj;
-                                traj.loadFromByteArray(data.m_pData);
+                        if (m_bUsingTrajStore == true) {
+                            Trajectory segtraj = m_ts->getTraj(n->m_pIdentifier[cChild]);
+                            if (query.intersectsShape(segtraj)) {
+                                m_stats.m_doubleExactQueryResults += 1;
+                                v.visitData(data);
+                            }
+                        } else {
+                            Trajectory traj;
+                            traj.loadFromByteArray(data.m_pData);
 //                            v.visitData(data);
-                                if (traj.intersectsShape(query)) {
-                                    m_stats.m_doubleExactQueryResults += 1;
-                                    v.visitData(data);
-                                }
+                            if (traj.intersectsShape(query)) {
+                                m_stats.m_doubleExactQueryResults += 1;
+                                v.visitData(data);
                             }
                         }
 					}else{

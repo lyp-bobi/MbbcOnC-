@@ -60,6 +60,7 @@ namespace SpatialIndex
         virtual bool intersectsTimeRegion(const TimeRegion& in) const;
         virtual bool intersectsSTPoint(const STPoint& in) const;
         virtual bool intersectsRegion(const Region& in) const;
+        virtual bool intersectsCylinder(const Cylinder& in) const;
         virtual bool intersectsMBC(const MBC& in) const;
 
 //        virtual void combineMBC(const MBC& in);
@@ -68,6 +69,7 @@ namespace SpatialIndex
         virtual int getOrient() const;
 
         virtual bool prevalidate(const Region& in) const;
+        virtual bool prevalidate(const Cylinder& in) const;
 
         double m_startTime;
         double m_endTime;

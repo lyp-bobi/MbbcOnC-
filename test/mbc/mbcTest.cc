@@ -10,7 +10,7 @@ int main(){
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, Trajectory> > empty1;
         int totallen=0,totalseg=0;
-        int maxseg=0;
+        int maxseg=1000;
         for(auto &traj:trajs){
             totallen+=traj.second.m_points.size();
             auto seg= traj.second.getSegments(3000);
@@ -22,10 +22,20 @@ int main(){
         vector<IShape *> queries;
         cerr<<"generating queries\n";
         int realtesttime=(QueryType==2)?testtime:(100*testtime);
-        double queryLen=300;
-        Trajectory q;
-        q.loadFromString("39.961386,116.397554,70335.790399 39.961386,116.397554,70635.790399");
-        queries.emplace_back(&q);
+        double queryLen=10800;
+        auto stat=trajStat::instance();
+        double mp[2]={38.021442825891902828,114.06330331672108969};
+        Cylinder cy(mp,0.041490676595355088785,55307,66107,2);
+        queries.emplace_back(&cy);
+//        for (int i = 0; i < 10000; i++) {
+//            double t = int(random(stat->mint, stat->maxt - queryLen));
+//            double pLow[3] = {random(stat->minx, stat->maxx), random(stat->miny, stat->maxy), t};
+////                double pHigh[3] = {pLow[0] + random(0.05,0.1),
+////                                   pLow[1] + random(0.05,0.1), t + queryLen};
+////                Region *rg = new Region(pLow, pHigh, 3);
+//            Cylinder *rg = new Cylinder(pLow,random(0.025,0.05),t,t+queryLen,2);
+//            queries.emplace_back(rg);
+//        }
 //        for (int i = 0; i < realtesttime; i++) {
 //            if (QueryType == 1) {
 //                double t = int(random(0, 1000));
@@ -129,11 +139,12 @@ int main(){
 //            oo=TreeQuery(real,q);
             aa=TreeQuery(r,q,ts1);
             bb=TreeQuery(rc,q,ts2);
-            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
+//            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
             if(aa!=bb){
+                Cylinder *qcy= dynamic_cast<Cylinder*>(q);
                 cerr<<"error"<<j<<endl;
-                cerr<<aa<<" "<<bb<<" "<<oo<<endl;
-                cerr<<*qtraj<<endl;
+                cerr<<aa<<" "<<bb<<" "<<*qcy<<endl;
+//                cerr<<*qtraj<<endl;
             }
         }
 

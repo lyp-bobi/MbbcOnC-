@@ -391,7 +391,7 @@ bool Region::intersectsLineSegment(const LineSegment& in) const
 //            yt=makemidmacro(y1,t1,y2,t2,m_pLow[m_dimension]);
 //        double xy[2]={xt,yt};
 //        double mbcr=std::min(std::min(in.m_rd,(m_pLow[m_dimension]-in.m_startTime)*in.m_rv),(in.m_endTime-m_pLow[m_dimension])*in.m_rv);
-//        return Point(xy,2).getMinimumDistance(Region(in.m_pLow, in.m_pHigh, m_dimension)) <= mbcr + 1e-10;
+//        return Point(xy,2).getMinimumDistance(Region(in.m_pLow, in.m_pHigh, m_dimension)) <= mbcr + 1e-7;
 //        Region br = Region(in.m_pLow, in.m_pHigh, 2);
 //        return timed.first.getMinimumDistance(br) <= timed.second;
 //    }

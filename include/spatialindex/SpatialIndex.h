@@ -265,6 +265,7 @@ namespace SpatialIndex
 #include "TimeRegion.h"
 #include "MovingPoint.h"
 #include "MovingRegion.h"
+#include "Cylinder.h"
 #include "MBC.h"
 #include "Trajectory.h"
 #include "ShapeList.h"

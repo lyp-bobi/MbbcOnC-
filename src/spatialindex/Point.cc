@@ -212,7 +212,7 @@ double Point::getMinimumDistance(const Point& p) const
 {
 	if (m_dimension != p.m_dimension)
 		throw Tools::IllegalArgumentException(
-			"Point::getMinimumDistance: Shapes have different number of dimensions."
+			"aPoint::getMinimumDistance: Shapes have different number of dimensions."
 		);
 
 	double ret = 0.0;

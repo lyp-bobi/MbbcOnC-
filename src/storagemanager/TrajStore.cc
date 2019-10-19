@@ -483,7 +483,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
                 if (v > m_maxVelocity) m_maxVelocity = v;
                 //todo: calculate the 140 from somewhere else
                 //todo: something wrong with a partial with 100page + a partial with 50bit
-                while((it+1)!=traj.second.end()&&(std::ceil(double(seg.m_points.size()/140)))*140-seg.m_points.size()>(it+1)->m_points.size()){
+                while((it+1)!=traj.second.end()&&seg.m_points.size()%140!=0&&seg.m_points.size()-(seg.m_points.size()/140)*140-(it+1)->m_points.size()>0){
                     it++;
                     seg.linkTrajectory(*it);
                     segid=getSegId(traj.first,it-traj.second.begin());

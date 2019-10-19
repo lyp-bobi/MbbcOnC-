@@ -41,6 +41,7 @@ int main(){
         TrajStore *ts1 = new TrajStore(file1, 4096, 500);
         TrajStore *ts2 = new TrajStore(file2, 4096, 500);
         vector<pair<id_type, Trajectory> > trajs;
+        vector<IShape*> queries;
         for(int dataSize=1;dataSize<=20;dataSize++){
             vector<pair<id_type, Trajectory> > tmptrajs = loadGTToTrajs(files[dataSize-1]);
             trajs.insert(trajs.begin(),tmptrajs.begin(),tmptrajs.end());
@@ -65,26 +66,27 @@ int main(){
             long count=ts1->m_entries.size();
             ISpatialIndex *r = RTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
-            vector<IShape*> queries;
-            for (int i = 0; i < 200; i++) {
-                id_type randId=long(random(0,count-1));
-                auto it=ts1->m_entries.begin();
-                for(long j=0;j<randId;j++) it++;
-                auto segId=it->first;
-                auto ori = ts1->getTrajByTime(segId,0,5000);
-                Trajectory *concate = new Trajectory(ori);
-                queries.emplace_back(concate);
+            if(dataSize==1) {
+                for (int i = 0; i < 200; i++) {
+                    id_type randId = long(random(0, count - 1));
+                    auto it = ts1->m_entries.begin();
+                    for (long j = 0; j < randId; j++) it++;
+                    auto segId = it->first;
+                    auto ori = ts1->getTrajByTime(segId, 0, 5000);
+                    Trajectory *concate = new Trajectory(ori);
+                    queries.emplace_back(concate);
+                }
             }
             std::cerr<<dataSize<<endl;
             kNNQueryBatch(r, queries, ts1);
             kNNQueryBatch(rc, queries, ts2);
-            for(auto &tras:queries){
-                delete tras;
-            }
-            queries.clear();
             delete r;
             delete rc;
         }
+        for(auto &tras:queries){
+            delete tras;
+        }
+        queries.clear();
     }
     catch (Tools::Exception& e)
     {

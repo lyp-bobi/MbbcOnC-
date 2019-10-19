@@ -38,6 +38,7 @@
 
 
 bool simpli=true;
+int sbb=0,sb=0;
 
 using namespace SpatialIndex::MBCRTree;
 using namespace SpatialIndex;
@@ -484,8 +485,8 @@ void SpatialIndex::MBCRTree::MBCRTree::containsWhatQuery(const IShape& query, IV
 }
 void SpatialIndex::MBCRTree::MBCRTree::intersectsWithQuery(const IShape& query, IVisitor& v)
 {
-	if (query.getDimension() != m_dimension)
-	    throw Tools::IllegalArgumentException("intersectsWithQuery: Shape has the wrong number of dimensions.");
+//	if (query.getDimension() != m_dimension)
+//	    throw Tools::IllegalArgumentException("intersectsWithQuery: Shape has the wrong number of dimensions.");
 	rangeQuery(IntersectionQuery, query, v);
 }
 
@@ -1440,105 +1441,101 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
     Tools::LockGuard lock(&m_lock);
 #endif
     const Region *querybr= dynamic_cast<const Region*>(&query);
-    if(querybr== nullptr){
-        std::cerr<<"sorry, only mbr query box supported\n";
-        return;
-    }
-    bool isSlice;
-    if(querybr->m_pLow[querybr->m_dimension-1]==querybr->m_pHigh[querybr->m_dimension-1])
-        isSlice=true;
-    else
-        isSlice=false;
-    std::stack<NodePtr> st;
-    NodePtr root = readNode(m_rootID);
+    const Cylinder *querycy= dynamic_cast<const Cylinder*>(&query);
+    std::set<id_type > results;
+    if(querybr!= nullptr) {
+        bool isSlice;
+        if (querybr->m_pLow[querybr->m_dimension - 1] == querybr->m_pHigh[querybr->m_dimension - 1])
+            isSlice = true;
+        else
+            isSlice = false;
+        std::stack<NodePtr> st;
+        NodePtr root = readNode(m_rootID);
 
-    if (root->m_children > 0 && root->m_nodeMBR.intersectsShape(query)) st.push(root);
+        if (root->m_children > 0 && root->m_nodeMBR.intersectsShape(query)) st.push(root);
+        while (!st.empty()) {
 
-    while (! st.empty())
-    {
-
-        NodePtr n = st.top(); st.pop();
-        if (n->m_level == 0)
-        {
-            v.visitNode(*n);
-            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
-            {
-                bool b;
-                if(m_bUsingMBR==true){
-                    if (type == ContainmentQuery) b = n->m_ptrMBR[cChild]->containsShape(query);
-                    else b = n->m_ptrMBR[cChild]->intersectsShape(query);
-                }else {
-                    if (type == ContainmentQuery) b = n->m_ptrMBC[cChild]->containsShape(query);
-                    else b = n->m_ptrMBC[cChild]->intersectsShape(query);
-                }
-                if (b)
-                {
-                    simpleData data = simpleData(n->m_pIdentifier[cChild],0);
-                    ++(m_stats.m_u64QueryResults);
-                    if(m_DataType==TrajectoryType){
-                        //check if the timed slice is included in query
-                        Region spatialbr(querybr->m_pLow,querybr->m_pHigh,2);
-                        Region timedbr;
-                        if(isSlice) {
-                            if (m_bUsingMBR)
-                                timedbr = Region((n->m_ptrMBR[cChild])->m_pLow, (n->m_ptrMBR[cChild])->m_pHigh, (n->m_ptrMBR[cChild])->m_dimension - 1);
-                            else
-                                (n->m_ptrMBC[cChild])->getMBRAtTime(querybr->m_pLow[2], timedbr);
-                            if (spatialbr.containsRegion(timedbr)) {
-                                m_stats.m_doubleExactQueryResults += 1;
-                                v.visitData(data);
-                            } else {
-                                if (m_bUsingTrajStore == true) {
-                                    m_ts->m_trajIO+=std::ceil(n->m_dataLen[cChild]/4096.0);
-                                    uint32_t len=n->m_dataLen[cChild]+n->m_pageOff[cChild];
-                                    uint8_t *load = new uint8_t[len];
-                                    m_ts->loadByteArray(n->m_pageNum[cChild],len,&load);
-                                    uint8_t *ldata = load+n->m_pageOff[cChild];
-                                    Trajectory partTraj;
-                                    partTraj.loadFromByteArray(ldata);
-                                    delete[](load);
-                                    if (partTraj.intersectsRegion(*querybr)) {
-                                        m_stats.m_doubleExactQueryResults += 1;
-                                        v.visitData(data);
-                                    }
+            NodePtr n = st.top();
+            st.pop();
+            if (n->m_level == 0) {
+                v.visitNode(*n);
+                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+                    bool b;
+                    if(results.count(m_ts->getTrajId(n->m_pIdentifier[cChild]))>0) continue;
+                    if (m_bUsingMBR == true) {
+                        if (type == ContainmentQuery) b = n->m_ptrMBR[cChild]->containsShape(query);
+                        else b = n->m_ptrMBR[cChild]->intersectsShape(query);
+                    } else {
+                        if (type == ContainmentQuery) b = n->m_ptrMBC[cChild]->containsShape(query);
+                        else b = n->m_ptrMBC[cChild]->intersectsShape(query);
+                    }
+                    if (b) {
+                        sb+=1;
+                        simpleData data = simpleData(n->m_pIdentifier[cChild], 0);
+                        ++(m_stats.m_u64QueryResults);
+                        if (m_DataType == TrajectoryType) {
+                            //check if the timed slice is included in query
+                            Region spatialbr(querybr->m_pLow, querybr->m_pHigh, 2);
+                            Region timedbr;
+                            if (isSlice) {
+                                if (m_bUsingMBR)
+                                    timedbr = Region((n->m_ptrMBR[cChild])->m_pLow, (n->m_ptrMBR[cChild])->m_pHigh,
+                                                     (n->m_ptrMBR[cChild])->m_dimension - 1);
+                                else
+                                    (n->m_ptrMBC[cChild])->getMBRAtTime(querybr->m_pLow[2], timedbr);
+                                if (spatialbr.containsRegion(timedbr)) {
+                                    sbb+=1;
+                                    m_stats.m_doubleExactQueryResults += 1;
+                                    results.insert(m_ts->getTrajId(data.m_id));
+                                    v.visitData(data);
                                 } else {
-                                    //not used code
-//                                    Trajectory traj;
-//                                    traj.loadFromByteArray(data.m_pData);
-////                            v.visitData(data);
-//                                    if (traj.intersectsShape(query)) {
-//                                        m_stats.m_doubleExactQueryResults += 1;
-//                                        v.visitData(data);
-//                                    }
+                                    if (m_bUsingTrajStore == true) {
+                                        m_ts->m_trajIO += std::ceil(n->m_dataLen[cChild] / 4096.0);
+                                        uint32_t len = n->m_dataLen[cChild] + n->m_pageOff[cChild];
+                                        uint8_t *load = new uint8_t[len];
+                                        m_ts->loadByteArray(n->m_pageNum[cChild], len, &load);
+                                        uint8_t *ldata = load + n->m_pageOff[cChild];
+                                        Trajectory partTraj;
+                                        partTraj.loadFromByteArray(ldata);
+                                        delete[](load);
+                                        if (partTraj.intersectsRegion(*querybr)) {
+                                            m_stats.m_doubleExactQueryResults += 1;
+                                            results.insert(m_ts->getTrajId(data.m_id));
+                                            v.visitData(data);
+                                        }
+                                    }
                                 }
-                            }
-                        }else{
-                            //time-period range query
-                            bool bb;
-                            if (m_bUsingMBR){
-                                timedbr = Region((n->m_ptrMBR[cChild])->m_pLow, (n->m_ptrMBR[cChild])->m_pHigh,(n->m_ptrMBR[cChild])->m_dimension - 1);
-                                bb=spatialbr.containsRegion(timedbr);
-                            }else{
-                                bb=n->m_ptrMBC[cChild]->prevalidate(*querybr);
-                            }
-                            if (bb) {
-                                m_stats.m_doubleExactQueryResults += 1;
-                                v.visitData(data);
                             } else {
-                                if (m_bUsingTrajStore == true) {
-                                    m_ts->m_trajIO+=std::ceil(n->m_dataLen[cChild]/4096.0);
-                                    uint32_t len=n->m_dataLen[cChild]+n->m_pageOff[cChild];
-                                    uint8_t *load = new uint8_t[len];
-                                    m_ts->loadByteArray(n->m_pageNum[cChild],len,&load);
-                                    uint8_t *ldata = load+n->m_pageOff[cChild];
-                                    Trajectory partTraj;
-                                    partTraj.loadFromByteArray(ldata);
-                                    delete[](load);
-                                    if (partTraj.intersectsRegion(*querybr)) {
-                                        m_stats.m_doubleExactQueryResults += 1;
-                                        v.visitData(data);
-                                    }
+                                //time-period range query
+                                bool bb;
+                                if (m_bUsingMBR) {
+                                    timedbr = Region((n->m_ptrMBR[cChild])->m_pLow, (n->m_ptrMBR[cChild])->m_pHigh,
+                                                     (n->m_ptrMBR[cChild])->m_dimension - 1);
+                                    bb = spatialbr.containsRegion(timedbr);
                                 } else {
+                                    bb = n->m_ptrMBC[cChild]->prevalidate(*querybr);
+                                }
+                                if (bb) {
+                                    sbb+=1;
+                                    m_stats.m_doubleExactQueryResults += 1;
+                                    results.insert(m_ts->getTrajId(data.m_id));
+                                    v.visitData(data);
+                                } else {
+                                    if (m_bUsingTrajStore == true) {
+                                        m_ts->m_trajIO += std::ceil(n->m_dataLen[cChild] / 4096.0);
+                                        uint32_t len = n->m_dataLen[cChild] + n->m_pageOff[cChild];
+                                        uint8_t *load = new uint8_t[len];
+                                        m_ts->loadByteArray(n->m_pageNum[cChild], len, &load);
+                                        uint8_t *ldata = load + n->m_pageOff[cChild];
+                                        Trajectory partTraj;
+                                        partTraj.loadFromByteArray(ldata);
+                                        delete[](load);
+                                        if (partTraj.intersectsRegion(*querybr)) {
+                                            m_stats.m_doubleExactQueryResults += 1;
+                                            results.insert(data.m_id);
+                                            v.visitData(data);
+                                        }
+                                    } else {
 //                                    //not used code
 //                                    Trajectory traj;
 //                                    traj.loadFromByteArray(data.m_pData);
@@ -1547,23 +1544,151 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
 //                                        m_stats.m_doubleExactQueryResults += 1;
 //                                        v.visitData(data);
 //                                    }
+                                    }
                                 }
                             }
+                        } else {
+                            v.visitData(data);
                         }
-                    }else{
-                        v.visitData(data);
+                    }
+                }
+            } else {
+                v.visitNode(*n);
+                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+                    if (query.intersectsShape(*(n->m_ptrMBR[cChild]))) {
+                        st.push(readNode(n->m_pIdentifier[cChild]));
                     }
                 }
             }
         }
+    }
+    else if(querycy!= nullptr){
+        bool isSlice;
+        if (querycy->m_startTime==querycy->m_endTime)
+            isSlice = true;
         else
-        {
-            v.visitNode(*n);
-            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
-            {
-                if (query.intersectsShape(*(n->m_ptrMBR[cChild])))
-                {
-                    st.push(readNode(n->m_pIdentifier[cChild]));
+            isSlice = false;
+        std::stack<NodePtr> st;
+        NodePtr root = readNode(m_rootID);
+
+        if (root->m_children > 0 && root->m_nodeMBR.intersectsShape(query)) st.push(root);
+
+        while (!st.empty()) {
+            NodePtr n = st.top();
+            st.pop();
+            if (n->m_level == 0) {
+                v.visitNode(*n);
+                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+                    if(results.count(m_ts->getTrajId(n->m_pIdentifier[cChild]))>0) continue;
+                    bool b;
+                    if (m_bUsingMBR) {
+                        if (type == ContainmentQuery) b = n->m_ptrMBR[cChild]->containsShape(query);
+                        else b = n->m_ptrMBR[cChild]->intersectsShape(query);
+                    } else {
+                        if (type == ContainmentQuery) b = n->m_ptrMBC[cChild]->containsShape(query);
+                        else b = n->m_ptrMBC[cChild]->intersectsShape(query);
+                    }
+                    if (b) {
+                        sb+=1;
+                        simpleData data = simpleData(n->m_pIdentifier[cChild], 0);
+                        ++(m_stats.m_u64QueryResults);
+                        if (m_DataType == TrajectoryType) {
+                            //check if the timed slice is included in query
+                            if (isSlice) {
+                                bool bb;
+                                if (m_bUsingMBR) {
+                                    Point cent;
+                                    n->m_ptrMBR[cChild]->getCenter(cent);
+                                    Point cent2d(cent.m_pCoords,2);
+                                    double brr= sqrt(sq(n->m_ptrMBR[cChild]->m_pHigh[0]-n->m_ptrMBR[cChild]->m_pLow[0])+
+                                                     sq(n->m_ptrMBR[cChild]->m_pHigh[1]-n->m_ptrMBR[cChild]->m_pLow[1]))/2;
+                                    bb=Point(querycy->m_p,2).getMinimumDistance(cent2d)+brr<=querycy->m_r;
+                                }
+                                else{
+                                    auto cent=n->m_ptrMBC[cChild]->getCenterRdAtTime(querycy->m_startTime);
+                                    bb=Point(querycy->m_p,2).getMinimumDistance(cent.first)<=querycy->m_r-cent.second;
+                                }
+
+                                if (bb) {
+                                    m_stats.m_doubleExactQueryResults += 1;
+                                    sbb+=1;
+                                    results.insert(m_ts->getTrajId(data.m_id));
+                                    v.visitData(data);
+                                } else {
+                                    if (m_bUsingTrajStore == true) {
+                                        m_ts->m_trajIO += std::ceil(n->m_dataLen[cChild] / 4096.0);
+                                        uint32_t len = n->m_dataLen[cChild] + n->m_pageOff[cChild];
+                                        uint8_t *load = new uint8_t[len];
+                                        m_ts->loadByteArray(n->m_pageNum[cChild], len, &load);
+                                        uint8_t *ldata = load + n->m_pageOff[cChild];
+                                        Trajectory partTraj;
+                                        partTraj.loadFromByteArray(ldata);
+                                        delete[](load);
+                                        if (partTraj.intersectsCylinder(*querycy)) {
+                                            m_stats.m_doubleExactQueryResults += 1;
+                                            results.insert(m_ts->getTrajId(data.m_id));
+                                            v.visitData(data);
+                                        }
+                                    }
+                                }
+                            } else {//time-period range query
+                                bool bb;
+                                if (m_bUsingMBR) {
+                                    Point cent;
+                                    n->m_ptrMBR[cChild]->getCenter(cent);
+                                    Point cent2d(cent.m_pCoords,2);
+                                    double brr= sqrt(sq(n->m_ptrMBR[cChild]->m_pHigh[0]-n->m_ptrMBR[cChild]->m_pLow[0])+
+                                                     sq(n->m_ptrMBR[cChild]->m_pHigh[1]-n->m_ptrMBR[cChild]->m_pLow[1]))/2;
+                                    bb=Point(querycy->m_p,2).getMinimumDistance(cent2d)+brr<=querycy->m_r;
+                                } else {
+                                    bb = n->m_ptrMBC[cChild]->prevalidate(*querycy);
+                                }
+                                if (bb) {
+                                    sbb+=1;
+                                    m_stats.m_doubleExactQueryResults += 1;
+                                    results.insert(m_ts->getTrajId(data.m_id));
+                                    v.visitData(data);
+                                } else {
+                                    if (m_bUsingTrajStore == true) {
+//                                        std::cerr<<"not pruned\n"<<*n->m_ptrMBC[cChild]<<"\n"<<*querycy<<"\n";
+                                        m_ts->m_trajIO += std::ceil(n->m_dataLen[cChild] / 4096.0);
+                                        uint32_t len = n->m_dataLen[cChild] + n->m_pageOff[cChild];
+                                        uint8_t *load = new uint8_t[len];
+                                        m_ts->loadByteArray(n->m_pageNum[cChild], len, &load);
+                                        uint8_t *ldata = load + n->m_pageOff[cChild];
+                                        Trajectory partTraj;
+                                        partTraj.loadFromByteArray(ldata);
+                                        delete[](load);
+
+                                        if (partTraj.intersectsCylinder(*querycy)) {
+                                            m_stats.m_doubleExactQueryResults += 1;
+//                                            std::cerr<<"inter\n";
+                                            results.insert(m_ts->getTrajId(data.m_id));
+                                            v.visitData(data);
+                                        }
+                                    } else {
+//                                    //not used code
+//                                    Trajectory traj;
+//                                    traj.loadFromByteArray(data.m_pData);
+////                            v.visitData(data);
+//                                    if (traj.intersectsShape(query)) {
+//                                        m_stats.m_doubleExactQueryResults += 1;
+//                                        v.visitData(data);
+//                                    }
+                                    }
+                                }
+                            }
+                        } else {
+                            v.visitData(data);
+                        }
+                    }
+                }
+            } else {
+                v.visitNode(*n);
+                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+                    if (query.intersectsShape(*(n->m_ptrMBR[cChild]))) {
+                        st.push(readNode(n->m_pIdentifier[cChild]));
+                    }
                 }
             }
         }

@@ -16,7 +16,8 @@ int main(){
         auto stat=trajStat::instance();
         int maxseg = 0;
         double avgSegLen=100;
-        double segLenParas[]={10,20,50,80,100,200,300,400,500,750,1000};
+        double segLenParas[]={50,80,100,200,300,400,500,750,1000};
+//        double segLenParas[]={50};
         double queryLenParas[]={0,3600};
         std::cerr<<"Starting range test\n"<<"Segmentation lengths are:";
         for(auto p:segLenParas) std::cerr<<p<<"\t";
@@ -26,12 +27,13 @@ int main(){
         vector<vector<IShape *>> querySet;
         for(auto queryLen:queryLenParas) {
             vector<IShape *> queries;
-            for (int i = 0; i < 2000; i++) {
+            for (int i = 0; i < 1000; i++) {
                 double t = int(random(stat->mint, stat->maxt - queryLen));
                 double pLow[3] = {random(stat->minx, stat->maxx), random(stat->miny, stat->maxy), t};
-                double pHigh[3] = {pLow[0] + random(0.05,0.1),
-                                   pLow[1] + random(0.05,0.1), t + queryLen};
-                Region *rg = new Region(pLow, pHigh, 3);
+//                double pHigh[3] = {pLow[0] + random(0.05,0.1),
+//                                   pLow[1] + random(0.05,0.1), t + queryLen};
+//                Region *rg = new Region(pLow, pHigh, 3);
+                Cylinder *rg = new Cylinder(pLow,random(0.025,0.05),t,t+queryLen,2);
                 queries.emplace_back(rg);
             }
             querySet.emplace_back(queries);

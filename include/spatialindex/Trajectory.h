@@ -154,6 +154,7 @@ namespace SpatialIndex
 
         virtual bool intersectsTimeRegion(const TimeRegion& in) const;
         virtual bool intersectsRegion(const Region& in) const;
+        virtual bool intersectsCylinder(const Cylinder& in) const;
         virtual bool intersectsTrajectory(const Trajectory& in) const;
 
         virtual void combineTrajectory(const Trajectory& in);

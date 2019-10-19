@@ -132,6 +132,9 @@ bool Trajectory::intersectsShape(const SpatialIndex::IShape& s) const {
     const Region* pr = dynamic_cast<const Region*>(&s);
     if (pr != 0) return intersectsRegion(*pr);
 
+    const Cylinder* pcy = dynamic_cast<const Cylinder*>(&s);
+    if (pcy != 0) return intersectsCylinder(*pcy);
+
     throw Tools::IllegalStateException(
             "Trajectory::intersectsShape: Not implemented yet!"
     );
@@ -195,6 +198,7 @@ bool Trajectory::intersectsRegion(const Region& in) const{
 //        return tp.intersectsShape(spatial);
     }
     else if(m_dimension==in.m_dimension) {
+        std::cerr<<"this part should not be used. must something wrong\n";
         for (int i = 0; i < m_points.size(); i++) {
             if (m_points[i].intersectsShape(in)) {
                 return true;
@@ -203,7 +207,21 @@ bool Trajectory::intersectsRegion(const Region& in) const{
     }
     return false;
 }
-
+bool Trajectory::intersectsCylinder(const SpatialIndex::Cylinder &in) const {
+    double ts=std::max(m_startTime(),in.m_startTime),
+            te=std::min(m_endTime(),in.m_endTime);
+    if(ts>te) return false;
+    if(ts==te){
+        return Point(in.m_p,2).getMinimumDistance(getPointAtTime(ts))<in.m_r;
+    }
+    fakeTpVector timedTraj(&m_points,ts,te);
+    for(int i=0;i<timedTraj.m_size-1;i++){
+        if(line2lineMinSED(timedTraj[i],timedTraj[i+1],STPoint(in.m_p,timedTraj[i].m_time,2),STPoint(in.m_p,timedTraj[i+1].m_time,2))<in.m_r){
+            return true;
+        }
+    }
+    return false;
+}
 bool Trajectory::intersectsTrajectory(const Trajectory& in) const{
     throw Tools::NotSupportedException(
             "Trajectory:::getMinimumDistance Not implemented yet!"
@@ -631,7 +649,7 @@ double Trajectory::line2lineIED(const SpatialIndex::STPoint &p1s, const SpatialI
 double Trajectory::line2lineMinSED(const SpatialIndex::STPoint &p1s, const SpatialIndex::STPoint &p1e,
                                 const SpatialIndex::STPoint &p2s, const SpatialIndex::STPoint &p2e) {
     if(p1s.m_time!=p2s.m_time|p1e.m_time!=p2e.m_time)
-        throw Tools::IllegalStateException("line2lineIED: time period not the same");
+        throw Tools::IllegalStateException("line2lineMinSED: time period not the same");
     double ts = p1s.m_time, te = p1e.m_time;
     double dxs=p1s.m_pCoords[0]-p2s.m_pCoords[0];
     double dys=p1s.m_pCoords[1]-p2s.m_pCoords[1];
@@ -641,7 +659,7 @@ double Trajectory::line2lineMinSED(const SpatialIndex::STPoint &p1s, const Spati
             c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
             c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
             c4=te-ts;
-    if(c1==0){
+    if(c1<1e-7){
         return std::sqrt(sq(dxs)+sq(dys));
     }else{
         double middle=-c2/c1/2;
