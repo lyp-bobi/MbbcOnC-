@@ -66,6 +66,7 @@ set (SOURCES
         radiusEstimator
         splitQueryTest
         rangeTest
+        simpliTest
         )
 
 foreach (test ${SOURCES})

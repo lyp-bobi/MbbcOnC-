@@ -20,6 +20,7 @@
 #include <strings.h>
 #if !WIN32
     #include <sys/mman.h>
+    #include <unistd.h>
 #endif
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -52,6 +53,7 @@ int  drop_cache(int drop)
     int ret = 0;
 #if !WIN32
     int fd = 0;
+    sync();
 	fd = open("/proc/sys/vm/drop_caches", O_RDWR);
 	if(fd < 0)
 	{
@@ -298,7 +300,7 @@ vector<pair<id_type ,Trajectory> >  loadGTToTrajs(string filename=genFile){
     stat->jt=stat->M/stat->trajCount;
     stat->v=stat->dist/stat->M;
     std::cerr<<*stat;
-    drop_cache(3);
+//    drop_cache(3);
     return res;
 }
 
@@ -381,7 +383,7 @@ vector<pair<id_type ,Trajectory> >  loadGLToTrajs(string filename=GLFile){
     std::cerr<<*stat;
     stat->Dx/=15;
     stat->Dy/=15;
-    drop_cache(3);
+//    drop_cache(3);
     return res;
 }
 
@@ -403,7 +405,7 @@ vector<pair<id_type ,Trajectory> >  loadGTFolder(int num=10,string folder=fileFo
         vector<pair<id_type, Trajectory> > tmptrajs = loadGTToTrajs(file);
         res.insert(res.begin(),tmptrajs.begin(),tmptrajs.end());
     }
-    drop_cache(3);
+//    drop_cache(3);
     return res;
 }
 
@@ -467,9 +469,9 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore
     MyVisitor vis;
     vis.ts=ts;
     auto start = std::chrono::system_clock::now();
-    drop_cache(3);
+//    drop_cache(3);
     for(int i=0;i<queries.size();i++){
-        drop_cache(3);
+//        drop_cache(3);
 //        cerr<<"Query is "<<queries.at(i)->toString();
         if(QueryType==1){
             tree->intersectsWithQuery(*queries[i],vis);
@@ -517,6 +519,7 @@ void rangeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStor
     MyVisitor vis;
     vis.ts=ts;
     sb=0,sbb=0;
+//    drop_cache(3);
     auto start = std::chrono::system_clock::now();
     for(int i=0;i<queries.size();i++){
         vis.m_query=queries[i];
@@ -528,7 +531,7 @@ void rangeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStor
 //    cerr <<"Average Querying time: "<< time/num<<endl;
 //    cerr <<"Averaged VISIT NODE "<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<endl;
 //    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
-    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<"\t"<<double(sb)/sbb<<endl;
+    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<"\t"<<double(sbb)/sb<<endl;
 //    cerr <<time/num<<"\n";
 }
 

@@ -1,4 +1,7 @@
 //
+// Created by Chuang on 2019/10/24.
+//
+//
 // Created by Chuang on 2019/8/19.
 //
 
@@ -13,14 +16,12 @@ int main(){
         int maxseg = 0;
         double avgSegLen=100;
 //        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
-//        double segLenParas[]={20,50,80,100,200,300,500,700,900,1100,1300,1500
-//                              ,1700,1900,2100,2500,3000,4000,5000};
+        double segLenParas[]={20,50,80,100,200,300,500,700,900,1100,1300,1500
+                              ,1700,1900,2100,2500,3000};
 //        double queryLenParas[]={900,3600};
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
-        double segLenParas[]={100,300,500,700,900,1100,1300,1500,1700,1900,2100,2300,2500,2700,2900,3000,4000};
-//        double segLenParas[]={1200,1500};
-        double queryLenParas[]={3600};
-        std::cerr<<"Starting knn test\n"<<"Segmentation lengths are:";
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();;
+        double queryLenParas[]={900,3600};
+        std::cerr<<"Starting simpli test\n"<<"Segmentation lengths are:";
         for(auto p:segLenParas) std::cerr<<p<<"\t";
         std::cerr<<"\nQuery lengths are:";
         for(auto p:queryLenParas) std::cerr<<p<<"\t";
@@ -68,34 +69,23 @@ int main(){
 
             TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
             ts1->loadSegments(segs, true);
-            ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
-
-            TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
-            ts2->loadSegments(segs,true);
-            ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
+            ISpatialIndex *r = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
             //kNN
             segs.clear();
             segs.swap(emptyseg);
             std::cerr<<"Seg len:"<<segLen<<"\n";
             disttype=0;
-            simpli=true;
             for(const auto &qs:querySet) {
+                simpli=true;
                 kNNQueryBatch(r, qs, ts1);
-                kNNQueryBatch(rc, qs, ts2);
+                simpli=false;
+                kNNQueryBatch(r, qs, ts1);
             }
-//                    simpli= false;
-//            disttype=1;
-//            for(const auto &qs:querySet) {
-//                kNNQueryBatch(r, qs, ts1);
-//                kNNQueryBatch(rc, qs, ts2);
-//            }
 
 
             delete r;
             delete ts1;
-            delete rc;
-            delete ts2;
             delete file0;
             delete file1;
             delete file2;

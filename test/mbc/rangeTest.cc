@@ -16,8 +16,8 @@ int main(){
         auto stat=trajStat::instance();
         int maxseg = 0;
         double avgSegLen=100;
-        double segLenParas[]={50,80,100,200,300,400,500,750,1000};
-//        double segLenParas[]={50};
+        double segLenParas[]={10,20,50,80,100,200,300,400,500,750,1000,1500,2000,2500,3000};
+//        double segLenParas[]={79.9,80.1,90.1,99.9};
         double queryLenParas[]={0,3600};
         std::cerr<<"Starting range test\n"<<"Segmentation lengths are:";
         for(auto p:segLenParas) std::cerr<<p<<"\t";
@@ -52,30 +52,36 @@ int main(){
             StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
                     *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
-            TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
-            TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
 
             for (const auto &traj:trajs) {
                 totallen += traj.second.m_points.size();
+//                if(traj.second.m_endTime()-traj.second.m_startTime()<10){
+//                    std::cerr<<traj.second<<endl;
+//                }
                 auto seg = traj.second.getSegments(segLen);
                 totalseg += seg.size();
                 maxseg = std::max(int(seg.size()), maxseg);
                 segs.emplace_back(make_pair(traj.first, seg));
             }
+            std::cerr<<"seg is"<<totalseg<<"\n";
             avgSegLen=double(totallen)/totalseg;
             std::cerr<<"segments' average length is "<<totallen*1.0/totalseg<<"\n";
 
+            TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
+            TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
 
-            ts1->loadSegments(segs, false);
+            ts1->loadSegments(segs,true);
             ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
-            ts2->loadSegments(segs,false);
+            ts2->loadSegments(segs,true);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
             segs.clear();
             segs.swap(emptyseg);
             std::cerr<<"Seg len:"<<segLen<<"\n";
             for(const auto &qs:querySet) {
+                drop_cache(3);
+                sleep(10);
                 rangeQueryBatch(r, qs, ts1);
                 rangeQueryBatch(rc, qs, ts2);
             }

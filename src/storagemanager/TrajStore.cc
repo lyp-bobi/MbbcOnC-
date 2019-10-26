@@ -459,6 +459,8 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
         double vol1=0,vol2=0;
         uint8_t *data;
         uint32_t len;
+        int pointnum=(m_pageSize-2* sizeof(bool)-sizeof(unsigned long))/(3* sizeof(double));
+        if(output) std::cerr<<"A page could store "<<pointnum<<" points\n";
         for (auto &traj:trajs) {
             auto it=traj.second.begin();
             id_type segid;
@@ -481,17 +483,13 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
                 double v = (Point(thebc.m_pLow, 2).getMinimumDistance(Point(thebc.m_pHigh, 2))) /
                            (thebc.m_endTime - thebc.m_startTime) + thebc.m_rv;
                 if (v > m_maxVelocity) m_maxVelocity = v;
-                //todo: calculate the 140 from somewhere else
-                //todo: something wrong with a partial with 100page + a partial with 50bit
-                while((it+1)!=traj.second.end()&&seg.m_points.size()%140!=0&&seg.m_points.size()-(seg.m_points.size()/140)*140-(it+1)->m_points.size()>0){
+                while((it+1)!=traj.second.end()&&seg.m_points.size()+(it+1)->m_points.size()<pointnum){
                     it++;
                     seg.linkTrajectory(*it);
                     segid=getSegId(traj.first,it-traj.second.begin());
                     pvId=it==traj.second.begin()?-1:segid-1;
                     ntId=(it+1)==traj.second.end()?-1:(segid+1);
                     ids.emplace_back(id3(segid,pvId,ntId));
-                    Region thebr;
-                    MBC thebc;
                     it->getMBC(thebc);
                     it->getMBRfull(thebr);
                     m_entryMbcs[segid] = thebc;

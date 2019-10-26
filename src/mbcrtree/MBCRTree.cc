@@ -1532,7 +1532,7 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                                         delete[](load);
                                         if (partTraj.intersectsRegion(*querybr)) {
                                             m_stats.m_doubleExactQueryResults += 1;
-                                            results.insert(data.m_id);
+                                            results.insert(m_ts->getTrajId(data.m_id));
                                             v.visitData(data);
                                         }
                                     } else {
@@ -1597,12 +1597,12 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                             if (isSlice) {
                                 bool bb;
                                 if (m_bUsingMBR) {
-                                    Point cent;
-                                    n->m_ptrMBR[cChild]->getCenter(cent);
-                                    Point cent2d(cent.m_pCoords,2);
-                                    double brr= sqrt(sq(n->m_ptrMBR[cChild]->m_pHigh[0]-n->m_ptrMBR[cChild]->m_pLow[0])+
-                                                     sq(n->m_ptrMBR[cChild]->m_pHigh[1]-n->m_ptrMBR[cChild]->m_pLow[1]))/2;
-                                    bb=Point(querycy->m_p,2).getMinimumDistance(cent2d)+brr<=querycy->m_r;
+                                    double x1=n->m_ptrMBR[cChild]->m_pLow[0],x2=n->m_ptrMBR[cChild]->m_pHigh[0],
+                                            y1=n->m_ptrMBR[cChild]->m_pLow[1],y2=n->m_ptrMBR[cChild]->m_pHigh[1];
+                                    double dx=std::max(fabs(x1-querycy->m_p[0]),fabs(x2-querycy->m_p[0])),
+                                            dy=std::max(fabs(y1-querycy->m_p[1]),fabs(y2-querycy->m_p[1]));
+                                    bb=sqrt(sq(dx)+sq(dy))<=querycy->m_r;
+
                                 }
                                 else{
                                     auto cent=n->m_ptrMBC[cChild]->getCenterRdAtTime(querycy->m_startTime);
@@ -1634,12 +1634,11 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                             } else {//time-period range query
                                 bool bb;
                                 if (m_bUsingMBR) {
-                                    Point cent;
-                                    n->m_ptrMBR[cChild]->getCenter(cent);
-                                    Point cent2d(cent.m_pCoords,2);
-                                    double brr= sqrt(sq(n->m_ptrMBR[cChild]->m_pHigh[0]-n->m_ptrMBR[cChild]->m_pLow[0])+
-                                                     sq(n->m_ptrMBR[cChild]->m_pHigh[1]-n->m_ptrMBR[cChild]->m_pLow[1]))/2;
-                                    bb=Point(querycy->m_p,2).getMinimumDistance(cent2d)+brr<=querycy->m_r;
+                                    double x1=n->m_ptrMBR[cChild]->m_pLow[0],x2=n->m_ptrMBR[cChild]->m_pHigh[0],
+                                            y1=n->m_ptrMBR[cChild]->m_pLow[1],y2=n->m_ptrMBR[cChild]->m_pHigh[1];
+                                    double dx=std::max(fabs(x1-querycy->m_p[0]),fabs(x2-querycy->m_p[0])),
+                                            dy=std::max(fabs(y1-querycy->m_p[1]),fabs(y2-querycy->m_p[1]));
+                                    bb=sqrt(sq(dx)+sq(dy))<=querycy->m_r;
                                 } else {
                                     bb = n->m_ptrMBC[cChild]->prevalidate(*querycy);
                                 }

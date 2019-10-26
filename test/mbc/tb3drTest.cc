@@ -5,13 +5,13 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
+//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
         vector<pair<id_type, vector<Trajectory>>> segs1;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
 //        double queryLenParas[]={3600,18000,86400};
-        for (double queryLen=100;queryLen<=3600;queryLen+=200) {
+        for (double queryLen=3600;queryLen<=48000;queryLen+=3600) {
             maxseg=0;
             segs1.clear();
             emptyseg.clear();

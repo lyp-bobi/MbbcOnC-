@@ -33,6 +33,11 @@ Trajectory::Trajectory(std::vector<SpatialIndex::STPoint>& in)
 }
 
 Trajectory::Trajectory(bool fakehead, bool fakeback,std::vector<SpatialIndex::STPoint> &in) {
+#ifndef NDEBUG
+    if(in.front().m_time>=in.back().m_time){
+        std::cerr<<"wrong trajectory!";
+    }
+#endif
     m_points=in;
     m_fakehead=fakehead;
     m_fakeback=fakeback;
@@ -69,8 +74,7 @@ Trajectory* Trajectory::clone() {
 // ISerializable interface
 //
 uint32_t Trajectory::getByteArraySize() const {
-    if(m_points.size()<=0) throw Tools::IllegalStateException("traj with length 0!");
-    return 2* sizeof(bool)+sizeof(unsigned long)+m_points[0].getByteArraySize()*m_points.size();
+    return 2* sizeof(bool)+sizeof(unsigned long)+(m_dimension+1)* sizeof(double)*m_points.size();
 }
 
 void Trajectory::loadFromByteArray(const uint8_t* ptr) {
@@ -81,24 +85,25 @@ void Trajectory::loadFromByteArray(const uint8_t* ptr) {
     unsigned long size;
     memcpy(&size, ptr, sizeof(unsigned long));
     ptr += sizeof(unsigned long);
-    std::vector<STPoint> p(size);
+    m_points.clear();
+    STPoint p;
+    p.makeDimension(m_dimension);
     for(int i=0;i<size;i++){
-        p[i].loadFromByteArray(ptr);
+        p.makeDimension(m_dimension);
+        memcpy(&p.m_time, ptr, sizeof(double));
+        ptr += sizeof(double);
+        memcpy(p.m_pCoords, ptr, m_dimension * sizeof(double));
+        m_points.emplace_back(p);
         if(i!=size-1){
-            ptr+=p[i].getByteArraySize();
+            ptr += m_dimension * sizeof(double);
         }
     }
-    m_points.clear();
-    m_points=p;
 }
 
 void Trajectory::storeToByteArray(uint8_t **data, uint32_t &len) {
-    //todo: don't store the dimensions!!!!!
     len = getByteArraySize();
     *data = new uint8_t[len];
     uint8_t* ptr = *data;
-    uint8_t* tmpb;
-    uint32_t tmplen;
     memcpy(ptr, &m_fakehead, sizeof(bool));
     ptr += sizeof(bool);
     memcpy(ptr, &m_fakeback, sizeof(bool));
@@ -107,15 +112,13 @@ void Trajectory::storeToByteArray(uint8_t **data, uint32_t &len) {
     memcpy(ptr, &size, sizeof(unsigned long));
     ptr += sizeof(unsigned long);
     for(int i=0;i<size;i++){
-        m_points[i].storeToByteArray(&tmpb,tmplen);
-        memcpy(ptr, tmpb, tmplen);
-        delete[] tmpb;
+        memcpy(ptr, &m_points[i].m_time, sizeof(double));
+        ptr += sizeof(double);
+        memcpy(ptr, m_points[i].m_pCoords, m_dimension * sizeof(double));
         if(i!=size-1){
-            ptr += tmplen;
+            ptr += m_dimension * sizeof(double);
         }
     }
-
-    assert(len==(ptr - *data)+tmplen);
 }
 
 
@@ -519,9 +522,9 @@ std::vector<Trajectory> Trajectory::getGlobalSegmentsCut(double len) const {
         throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
     }
     auto stat=trajStat::instance();
-    double segStart=stat->minx;
+    double segStart=stat->mint;
     seg.emplace_back(m_points[0]);
-    while(segStart+len<m_points[0].m_time) segStart+=len;
+    while(segStart+len<=m_points[0].m_time) segStart+=len;
     for(int i=1;i<m_points.size();i++){
         if(m_points[i].m_time<segStart+len){
             seg.emplace_back(m_points[i]);
@@ -533,7 +536,7 @@ std::vector<Trajectory> Trajectory::getGlobalSegmentsCut(double len) const {
             fakehead=false;
             seg.clear();
             seg.emplace_back(m_points[i]);
-            segStart=m_points[i].m_time;
+            segStart+=len;
         }
         else{
             STPoint mid=STPoint::makemid(m_points[i-1],m_points[i],segStart+len);
@@ -543,12 +546,12 @@ std::vector<Trajectory> Trajectory::getGlobalSegmentsCut(double len) const {
             fakehead=true;
             seg.clear();
             seg.emplace_back(mid);
-            segStart=mid.m_time;
+            segStart+=len;
             i--;
         }
     }
     if(seg.size()>1){
-        res.emplace_back(Trajectory(seg));
+        res.emplace_back(Trajectory(fakehead,true,seg));
         seg.clear();
     }
     return res;
@@ -1704,18 +1707,12 @@ double Trajectory::getNodeMinimumDistance(const SpatialIndex::Region &in,double 
         copy.m_pHigh[copy.m_dimension-1]=inte;
         double min=1e300;
         fakeTpVector timedTraj(&m_points,ints,inte);
-        double min1=min,min2=min;
-        for (int i = 0; i < (timedTraj.m_size-1)/2; i++) {
+        for (int i = 0; i < timedTraj.m_size-1; i++) {
             double pd = line2MBRMinSED(timedTraj[i],timedTraj[i+1],copy);
-            min1=std::min(min1,pd);
-        }for (int i = (timedTraj.m_size-1)/2; i < timedTraj.m_size-1; i++) {
-            double pd = line2MBRMinSED(timedTraj[i],timedTraj[i+1],copy);
-            min2=std::min(min2,pd);
+            min=std::min(min,pd);
         }
-        return std::min(min1,min2)*(m_endTime()-m_startTime());
-//        return std::max(min*(m_endTime()-m_startTime()),getInferredNodeMinimumIED(in,MaxVelocity));
+        return min*(m_endTime()-m_startTime());
     }
-//        return std::max(getMinimumDistance(in), getInferredNodeMinimumIED(in, MaxVelocity));
     else
         return getMinimumDistance(in);
 }
@@ -1833,7 +1830,7 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const Trajectory& r) {
     s += "\n";
     os<<s;
 
-//    os<<"Trajectory length:"<<r.m_points.size()<<"\n"<<"m_points are"<< "\n"<<r.m_points.front()<<r.m_points.back()<<endl;
+//    os<<"Trajectory length:"<<r.m_points.size()<<"\n"<<"m_points are"<< "\n"<<r.m_points.front()<<"\t"<<r.m_points.back()<<endl;
     return os;
 }
 
