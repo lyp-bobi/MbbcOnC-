@@ -522,14 +522,14 @@ std::vector<Trajectory> Trajectory::getGlobalSegmentsCut(double len) const {
         throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
     }
     auto stat=trajStat::instance();
-    double segStart=stat->mint;
+    double segStart=double(int(stat->mint));
     seg.emplace_back(m_points[0]);
-    while(segStart+len<=m_points[0].m_time) segStart+=len;
+    while(segStart+len<m_points[0].m_time+1e-7) segStart+=len;
     for(int i=1;i<m_points.size();i++){
         if(m_points[i].m_time<segStart+len){
             seg.emplace_back(m_points[i]);
         }
-        else if(m_points[i].m_time==segStart+len){
+        else if(fabs(m_points[i].m_time-segStart-len)<1e-7){
             fakeback=false;
             seg.emplace_back(m_points[i]);
             res.emplace_back(Trajectory(fakehead,fakeback,seg));

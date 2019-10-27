@@ -468,6 +468,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
             while(it!=traj.second.end()){
                 Trajectory seg=*it;
                 vector<id3> ids;
+                int r=it-traj.second.begin();
                 segid=getSegId(traj.first,it-traj.second.begin());
                 pvId=it==traj.second.begin()?-1:segid-1;
                 ntId=(it+1)==traj.second.end()?-1:(segid+1);

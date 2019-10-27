@@ -17,7 +17,7 @@ int main(){
         int maxseg = 0;
         double avgSegLen=100;
         double segLenParas[]={10,20,50,80,100,200,300,400,500,750,1000,1500,2000,2500,3000};
-//        double segLenParas[]={79.9,80.1,90.1,99.9};
+//        double segLenParas[]={70.1,70.4,70.9};
         double queryLenParas[]={0,3600};
         std::cerr<<"Starting range test\n"<<"Segmentation lengths are:";
         for(auto p:segLenParas) std::cerr<<p<<"\t";
