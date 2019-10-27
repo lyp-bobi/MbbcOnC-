@@ -182,6 +182,9 @@ bool Region::intersectsShape(const IShape& s) const
     const MBC* pbc = dynamic_cast<const MBC*>(&s);
     if (pbc != 0) return pbc->intersectsRegion(*this);
 
+    const Cylinder* pcy = dynamic_cast<const Cylinder*>(&s);
+    if (pcy != 0) return pcy->intersectsRegion(*this);
+
 	const Region* pr = dynamic_cast<const Region*>(&s);
 	if (pr != 0) return intersectsRegion(*pr);
 

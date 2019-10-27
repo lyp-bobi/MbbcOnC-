@@ -519,7 +519,6 @@ void rangeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStor
     MyVisitor vis;
     vis.ts=ts;
     sb=0,sbb=0;
-//    drop_cache(3);
     auto start = std::chrono::system_clock::now();
     for(int i=0;i<queries.size();i++){
         vis.m_query=queries[i];
@@ -531,7 +530,7 @@ void rangeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStor
 //    cerr <<"Average Querying time: "<< time/num<<endl;
 //    cerr <<"Averaged VISIT NODE "<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<endl;
 //    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
-    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<"\t"<<double(sbb)/sb<<endl;
+    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<"\t"<<double(sbb)/sb<<"\t"<<sb<<"\t"<<sbb<<endl;
 //    cerr <<time/num<<"\n";
 }
 

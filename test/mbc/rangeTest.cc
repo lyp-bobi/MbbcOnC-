@@ -16,9 +16,9 @@ int main(){
         auto stat=trajStat::instance();
         int maxseg = 0;
         double avgSegLen=100;
-        double segLenParas[]={10,20,50,80,100,200,300,400,500,750,1000,1500,2000,2500,3000};
-//        double segLenParas[]={70.1,70.4,70.9};
-        double queryLenParas[]={0,3600};
+//        double segLenParas[]={10,20,50,80,100,200,300,400,500,750,1000,1500,2000,2500,3000};
+        double segLenParas[]={60,70,80,90,100,140,150,170,180,200};
+        double queryLenParas[]={3600,1};
         std::cerr<<"Starting range test\n"<<"Segmentation lengths are:";
         for(auto p:segLenParas) std::cerr<<p<<"\t";
         std::cerr<<"\nQuery lengths are:";
@@ -80,8 +80,6 @@ int main(){
             segs.swap(emptyseg);
             std::cerr<<"Seg len:"<<segLen<<"\n";
             for(const auto &qs:querySet) {
-                drop_cache(3);
-                sleep(10);
                 rangeQueryBatch(r, qs, ts1);
                 rangeQueryBatch(rc, qs, ts2);
             }

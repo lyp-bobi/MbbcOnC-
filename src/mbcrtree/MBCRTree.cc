@@ -1563,11 +1563,7 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
         }
     }
     else if(querycy!= nullptr){
-        bool isSlice;
-        if (querycy->m_startTime==querycy->m_endTime)
-            isSlice = true;
-        else
-            isSlice = false;
+        bool isSlice=(querycy->m_startTime==querycy->m_endTime);
         std::stack<NodePtr> st;
         NodePtr root = readNode(m_rootID);
 
@@ -1589,96 +1585,46 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                         else b = n->m_ptrMBC[cChild]->intersectsShape(query);
                     }
                     if (b) {
-                        sb+=1;
+                        sb += 1;
                         simpleData data = simpleData(n->m_pIdentifier[cChild], 0);
                         ++(m_stats.m_u64QueryResults);
-                        if (m_DataType == TrajectoryType) {
-                            //check if the timed slice is included in query
+                        bool bb;
+                        if (m_bUsingMBR) {
+                            double x1 = n->m_ptrMBR[cChild]->m_pLow[0], x2 = n->m_ptrMBR[cChild]->m_pHigh[0],
+                                    y1 = n->m_ptrMBR[cChild]->m_pLow[1], y2 = n->m_ptrMBR[cChild]->m_pHigh[1];
+                            double dx = std::max(fabs(x1 - querycy->m_p[0]), fabs(x2 - querycy->m_p[0])),
+                                    dy = std::max(fabs(y1 - querycy->m_p[1]), fabs(y2 - querycy->m_p[1]));
+                            bb = sqrt(sq(dx) + sq(dy)) <= querycy->m_r;
+                        } else {
                             if (isSlice) {
-                                bool bb;
-                                if (m_bUsingMBR) {
-                                    double x1=n->m_ptrMBR[cChild]->m_pLow[0],x2=n->m_ptrMBR[cChild]->m_pHigh[0],
-                                            y1=n->m_ptrMBR[cChild]->m_pLow[1],y2=n->m_ptrMBR[cChild]->m_pHigh[1];
-                                    double dx=std::max(fabs(x1-querycy->m_p[0]),fabs(x2-querycy->m_p[0])),
-                                            dy=std::max(fabs(y1-querycy->m_p[1]),fabs(y2-querycy->m_p[1]));
-                                    bb=sqrt(sq(dx)+sq(dy))<=querycy->m_r;
+                                auto cent = n->m_ptrMBC[cChild]->getCenterRdAtTime(querycy->m_startTime);
+                                bb = Point(querycy->m_p, 2).getMinimumDistance(cent.first) <=
+                                     querycy->m_r - cent.second;
+                            } else
+                                bb = n->m_ptrMBC[cChild]->prevalidate(*querycy);
+                        }
 
-                                }
-                                else{
-                                    auto cent=n->m_ptrMBC[cChild]->getCenterRdAtTime(querycy->m_startTime);
-                                    bb=Point(querycy->m_p,2).getMinimumDistance(cent.first)<=querycy->m_r-cent.second;
-                                }
-
-                                if (bb) {
-                                    m_stats.m_doubleExactQueryResults += 1;
-                                    sbb+=1;
-                                    results.insert(m_ts->getTrajId(data.m_id));
-                                    v.visitData(data);
-                                } else {
-                                    if (m_bUsingTrajStore == true) {
-                                        m_ts->m_trajIO += std::ceil(n->m_dataLen[cChild] / 4096.0);
-                                        uint32_t len = n->m_dataLen[cChild] + n->m_pageOff[cChild];
-                                        uint8_t *load = new uint8_t[len];
-                                        m_ts->loadByteArray(n->m_pageNum[cChild], len, &load);
-                                        uint8_t *ldata = load + n->m_pageOff[cChild];
-                                        Trajectory partTraj;
-                                        partTraj.loadFromByteArray(ldata);
-                                        delete[](load);
-                                        if (partTraj.intersectsCylinder(*querycy)) {
-                                            m_stats.m_doubleExactQueryResults += 1;
-                                            results.insert(m_ts->getTrajId(data.m_id));
-                                            v.visitData(data);
-                                        }
-                                    }
-                                }
-                            } else {//time-period range query
-                                bool bb;
-                                if (m_bUsingMBR) {
-                                    double x1=n->m_ptrMBR[cChild]->m_pLow[0],x2=n->m_ptrMBR[cChild]->m_pHigh[0],
-                                            y1=n->m_ptrMBR[cChild]->m_pLow[1],y2=n->m_ptrMBR[cChild]->m_pHigh[1];
-                                    double dx=std::max(fabs(x1-querycy->m_p[0]),fabs(x2-querycy->m_p[0])),
-                                            dy=std::max(fabs(y1-querycy->m_p[1]),fabs(y2-querycy->m_p[1]));
-                                    bb=sqrt(sq(dx)+sq(dy))<=querycy->m_r;
-                                } else {
-                                    bb = n->m_ptrMBC[cChild]->prevalidate(*querycy);
-                                }
-                                if (bb) {
-                                    sbb+=1;
+                        if (bb) {
+                            sbb += 1;
+                            m_stats.m_doubleExactQueryResults += 1;
+                            results.insert(m_ts->getTrajId(data.m_id));
+                            v.visitData(data);
+                        } else {
+                            if (m_bUsingTrajStore == true) {
+                                m_ts->m_trajIO += std::ceil(n->m_dataLen[cChild] / 4096.0);
+                                uint32_t len = n->m_dataLen[cChild] + n->m_pageOff[cChild];
+                                uint8_t *load;
+                                m_ts->loadByteArray(n->m_pageNum[cChild], len, &load);
+                                uint8_t *ldata = load + n->m_pageOff[cChild];
+                                Trajectory partTraj;
+                                partTraj.loadFromByteArray(ldata);
+                                delete[](load);
+                                if (partTraj.intersectsCylinder(*querycy)) {
                                     m_stats.m_doubleExactQueryResults += 1;
                                     results.insert(m_ts->getTrajId(data.m_id));
                                     v.visitData(data);
-                                } else {
-                                    if (m_bUsingTrajStore == true) {
-//                                        std::cerr<<"not pruned\n"<<*n->m_ptrMBC[cChild]<<"\n"<<*querycy<<"\n";
-                                        m_ts->m_trajIO += std::ceil(n->m_dataLen[cChild] / 4096.0);
-                                        uint32_t len = n->m_dataLen[cChild] + n->m_pageOff[cChild];
-                                        uint8_t *load = new uint8_t[len];
-                                        m_ts->loadByteArray(n->m_pageNum[cChild], len, &load);
-                                        uint8_t *ldata = load + n->m_pageOff[cChild];
-                                        Trajectory partTraj;
-                                        partTraj.loadFromByteArray(ldata);
-                                        delete[](load);
-
-                                        if (partTraj.intersectsCylinder(*querycy)) {
-                                            m_stats.m_doubleExactQueryResults += 1;
-//                                            std::cerr<<"inter\n";
-                                            results.insert(m_ts->getTrajId(data.m_id));
-                                            v.visitData(data);
-                                        }
-                                    } else {
-//                                    //not used code
-//                                    Trajectory traj;
-//                                    traj.loadFromByteArray(data.m_pData);
-////                            v.visitData(data);
-//                                    if (traj.intersectsShape(query)) {
-//                                        m_stats.m_doubleExactQueryResults += 1;
-//                                        v.visitData(data);
-//                                    }
-                                    }
                                 }
                             }
-                        } else {
-                            v.visitData(data);
                         }
                     }
                 }

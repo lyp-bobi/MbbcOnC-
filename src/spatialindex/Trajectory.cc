@@ -159,11 +159,13 @@ STPoint Trajectory::getPointAtTime(const double time) const {
     }
     double h1= (time-pre->m_time)/(next->m_time-pre->m_time);
     double h2= (next->m_time-time)/(next->m_time-pre->m_time);
-    double *coords= new double[m_dimension];
+    STPoint ret;
+    ret.makeDimension(m_dimension);
     for (int i = 0; i < m_dimension; ++i) {
-        coords[i]=h2*pre->m_pCoords[i]+h1*next->m_pCoords[i];
+        ret.m_pCoords[i] = h2 * pre->m_pCoords[i] + h1 * next->m_pCoords[i];
     }
-    return STPoint(coords,time,m_dimension);
+    ret.m_time=time;
+    return ret;
 }
 
 bool Trajectory::intersectsTimeRegion(const SpatialIndex::TimeRegion &in) const {
