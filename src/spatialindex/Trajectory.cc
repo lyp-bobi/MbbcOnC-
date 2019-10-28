@@ -448,7 +448,8 @@ std::vector<Trajectory> Trajectory::getRDPSegments(double len) const {
 }
 
 std::vector<Trajectory> Trajectory::getSegments(double len) const {
-    return getGlobalSegmentsCut(len);
+//    return getGlobalSegmentsCut(len);
+    return getHybridSegments(len);
 //    auto m=getStaticSegments(len*sqrt(double(segNum)));
 //    for(auto &traj:m){
 //        auto seg=traj.getRDPSegments(len);
@@ -463,7 +464,8 @@ std::vector<Trajectory> Trajectory::getHybridSegments(double len) const {
     int segNum=std::ceil((m_endTime()-m_startTime())/len);
     std::vector<Trajectory> res;
     if(segNum==1) {res.emplace_back(*this);return res;}
-    auto m=simplifyWithRDPN(m_points,std::min(int(std::sqrt(m_points.size()-1)),2));
+//    std::cerr<<int(std::floor(std::pow(segNum,1.0/4)))<<"\t";
+    auto m=simplifyWithRDPN(m_points,std::min(int(std::sqrt(m_points.size()-1)),int(segNum/5)));
     for(auto &pts:m){
         if(pts.size()<2){
             std::cerr<<"error on getting segments with "<<len<<"and \n"<<*this;

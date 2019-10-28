@@ -14,20 +14,19 @@ int main(){
     try {
         vector<string> files;
 #if !WIN32
-        struct dirent *ptr;
         DIR *dir;
         string PATH = fileFolder;
         struct dirent **namelist;
         int n;
         n = scandir(PATH.c_str(),&namelist,0,alphasort);
-        int index=0;
+        int index=-1;
         while(index<n&&files.size()<=20)
         {
+            index++;
             if(namelist[index]->d_name[0] == '.')
                 continue;
             //cout << ptr->d_name << endl;
             files.emplace_back(PATH+namelist[index]->d_name);
-            index++;
         }
 #endif
 //        files.emplace_back("D://00.txt");
