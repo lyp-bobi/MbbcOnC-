@@ -7,22 +7,29 @@
 //
 
 #include "testFuncs.h"
+#include "dirent.h"
 
 
 int main(){
     try {
         vector<string> files;
+#if !WIN32
         struct dirent *ptr;
         DIR *dir;
         string PATH = fileFolder;
-        dir=opendir(PATH.c_str());
-        while((ptr=readdir(dir))!=NULL&&files.size()<20)
+        struct dirent **namelist;
+        int n;
+        n = scandir(PATH.c_str(),&namelist,0,alphasort);
+        int index=0;
+        while(index<n&&files.size()<=20)
         {
-            if(ptr->d_name[0] == '.')
+            if(namelist[index]->d_name[0] == '.')
                 continue;
             //cout << ptr->d_name << endl;
-            files.emplace_back(PATH+ptr->d_name);
+            files.emplace_back(PATH+namelist[index]->d_name);
+            index++;
         }
+#endif
 //        files.emplace_back("D://00.txt");
 //        files.emplace_back("D://01.txt");
         calcuTime[0] = 0;

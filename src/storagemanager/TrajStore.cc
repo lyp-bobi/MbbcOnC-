@@ -717,20 +717,22 @@ const Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double ten
     std::set<std::pair<int,int>> loaded;
     loaded.insert(std::make_pair(it->second->m_page,it->second->m_start));
     while(tmpe.m_pvId>=0 && traj.m_points.front().m_time>=tstart){
-        it=m_entries.find(tmpe.m_pvId);
+        id_type nowid=tmpe.m_pvId;
+        it=m_entries.find(nowid);
+        tmpe = *(it->second);
         if(loaded.count(std::make_pair(it->second->m_page,it->second->m_start))==0) {
-            tmptraj = getTraj(tmpe.m_pvId);
-            tmpe = *(it->second);
+            tmptraj = getTraj(nowid);
             traj.linkTrajectory(tmptraj);
             loaded.insert(std::make_pair(it->second->m_page,it->second->m_start));
         }
     }
     tmpe=e;
     while(tmpe.m_ntId>=0 && traj.m_points.back().m_time<=tend){
-        it=m_entries.find(tmpe.m_ntId);
+        id_type nowid=tmpe.m_ntId;
+        it=m_entries.find(nowid);
+        tmpe=*(it->second);
         if(loaded.count(std::make_pair(it->second->m_page,it->second->m_start))==0) {
-            tmptraj=getTraj(tmpe.m_ntId);
-            tmpe=*(it->second);
+            tmptraj=getTraj(nowid);
             traj.linkTrajectory(tmptraj);
             loaded.insert(std::make_pair(it->second->m_page,it->second->m_start));
         }
