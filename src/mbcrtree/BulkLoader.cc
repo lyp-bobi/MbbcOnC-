@@ -365,6 +365,8 @@ void BulkLoader::bulkLoadUsingSTR(
 
 	Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
 
+	calcuTime[0]=calcuTime[1]=calcuTime[2]=0;
+
 	while (stream.hasNext())
 	{
 		Data* d = reinterpret_cast<Data*>(stream.getNext());
@@ -393,13 +395,24 @@ void BulkLoader::bulkLoadUsingSTR(
 		pTree->m_stats.m_nodesInLevel.emplace_back(0);
 
 		Tools::SmartPointer<ExternalSorter> es2 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
+        auto stat=trajStat::instance();
+        double P=static_cast<uint64_t>(std::ceil(static_cast<double>(es->getTotalEntries()) / static_cast<double>(bleaf)));
+        double dx=stat->Dx,dy=stat->Dy,dt=stat->Dt;
+        double v=stat->v;
+        double ltc=pow(dx*dy*dt/v/v/P,1.0/3);
+        double rat=stat->bt/ltc;
+        double q=std::max(0.1,1-1.5*pow(rat,-0.75));
+        ltc=pow(dx*dy*dt/v/v/P/sq(q),1.0/3);
+        ltc=pow(dx*dy*dt/v/v/P/sq(q),1.0/3);
+        std::cerr<<"ltc is "<<ltc<<"\n";
 		createLevel(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);
 		es = es2;
 
 		if (es->getTotalEntries() == 1) break;
 		es->sort();
 	}
-
+	std::cerr<<"Lx is "<<calcuTime[0]/calcuTime[1]<<"\n";
+    std::cerr<<"Lt is "<<calcuTime[2]/calcuTime[1]<<"\n";
 	pTree->m_stats.m_u32TreeHeight = level;
 	pTree->storeHeader();
 }
@@ -425,11 +438,17 @@ void BulkLoader::createLevel(
     if(dimension==0){
         double dx=stat->Dx,dy=stat->Dy,dt=stat->Dt;
         double v=stat->v;
+//        ltc=pow(ceil(pow(b,1.0/3))-1,level)*stat->bt;
+//        ltc=pow(dx*dy*dt/v/v/P*sq(0.99/0.95)/sq(0.6/0.91),1.0/3);
         ltc=pow(dx*dy*dt/v/v/P,1.0/3);
+        double rat=stat->bt/ltc;
+        double q=std::max(0.1,1-1.5*pow(rat,-0.75));
+        ltc=pow(dx*dy*dt/v/v/P/sq(q),1.0/3);
+        //this ltc is calculated for fanout=40
 //        std::cerr<<"ltc is "<<ltc<<"\n";
         double nt=dt/ltc;
 //        int nt=pow(static_cast<double>(P)*v*v*dt*dt/dx/dy,1.0/3);
-        S = nt;
+        S = ceil(nt);
 
         if(S>P) S=1;
     }
@@ -609,9 +628,10 @@ Node* BulkLoader::createNode(SpatialIndex::MBCRTree::MBCRTree* pTree, std::vecto
 	    e[cChild]->m_pData = 0;
 		delete e[cChild];
 	}
-//    if(level==0){
-//        calcuTime[0]+=n->m_nodeMBR.m_pHigh[2]-n->m_nodeMBR.m_pLow[2];
-//        calcuTime[1]+=1;
-//    }
+    if(level==0){
+        calcuTime[0]+=(n->m_nodeMBR.m_pHigh[0]-n->m_nodeMBR.m_pLow[0]);
+        calcuTime[2]+=(n->m_nodeMBR.m_pHigh[2]-n->m_nodeMBR.m_pLow[2]);
+        calcuTime[1]+=1;
+    }
 	return n;
 }

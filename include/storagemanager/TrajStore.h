@@ -18,6 +18,7 @@ namespace SpatialIndex
         ~trajStat(){delete singleton;}
         static trajStat* singleton;
     public:
+        double bt=0;
         double M=0;//total time
         long lineCount=0;
         long trajCount=0;
@@ -169,7 +170,7 @@ namespace SpatialIndex
             void loadTrajs(vector<std::pair<id_type, Trajectory> > &trajs,double segpara,bool idFirst=false,bool output=true,int method=3);
             void loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs,bool idFirst=false,bool output=true);
             const Trajectory getTraj(id_type &id);
-            const Trajectory getTrajByTime(id_type &id,double tstart,double tend);
+            const Trajectory getTrajByTime(id_type &id,double tstart,double tend, bool *hasPrev= nullptr,bool *hasNext=nullptr);
             const ShapeList getMBRsByTime(id_type &id,double tstart,double tend);
             const ShapeList getMBCsByTime(id_type &id,double tstart,double tend);
             const Region getMBR(id_type &id);

@@ -18,7 +18,7 @@ int main(){
         double avgSegLen=100;
         double segLenParas[]={10,20,50,80,100,200,300,400,500,750,1000,1500,2000,2500,3000};
 //        double segLenParas[]={60,70,80,90,100,140,150,170,180,200};
-        double queryLenParas[]={0,0,3600};
+        double queryLenParas[]={0,3600};
         std::cerr<<"Starting range test\n"<<"Segmentation lengths are:";
         for(auto p:segLenParas) std::cerr<<p<<"\t";
         std::cerr<<"\nQuery lengths are:";
@@ -78,6 +78,8 @@ int main(){
 
             segs.clear();
             segs.swap(emptyseg);
+            ts1->flush();
+            ts2->flush();
             std::cerr<<"Seg len:"<<segLen<<"\n";
             for(const auto &qs:querySet) {
                 rangeQueryBatch(r, qs, ts1);

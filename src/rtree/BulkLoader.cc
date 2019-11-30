@@ -398,6 +398,25 @@ void BulkLoader::createLevel(
     remainDim=pTree->m_dimension-dimension;
     uint64_t S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P),1.0/remainDim)));
 
+    //this part might not be applied when comparing the efficiency
+//    auto stat=trajStat::instance();
+//    double ltc;
+//    if(dimension==0){
+//        double dx=stat->Dx,dy=stat->Dy,dt=stat->Dt;
+//        double v=stat->v;
+////        ltc=pow(ceil(pow(b,1.0/3))-1,level)*stat->bt;
+//        ltc=pow(dx*dy*dt/v/v/P,1.0/3);
+////        std::cerr<<"ltc is "<<ltc<<"\n";
+//        double nt=dt/ltc;
+////        int nt=pow(static_cast<double>(P)*v*v*dt*dt/dx/dy,1.0/3);
+//        S = ceil(nt);
+//
+//        if(S>P) S=1;
+//    }
+//    else {
+//        S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P), 1.0 / remainDim)));
+//    }
+
 	if (S == 1 || dimension == pTree->m_dimension - 1 || S * b == es->getTotalEntries())
 	{
 		std::vector<ExternalSorter::Record*> node;

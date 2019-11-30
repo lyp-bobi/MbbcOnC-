@@ -16,10 +16,12 @@ int main(){
 //        double segLenParas[]={20,50,80,100,200,300,500,700,900,1100,1300,1500
 //                              ,1700,1900,2100,2500,3000,4000,5000};
 //        double queryLenParas[]={900,3600};
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
-        double segLenParas[]={100,300,500,700,900,1100,1300,1500,1700,1900,2100,2300,2500,2700,2900,3000,4000};
-//        double segLenParas[]={1200,1500};
-        double queryLenParas[]={900};
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
+//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
+        double segLenParas[]={300,600,900,1200,1500,1800,2100,2400,2700,3000,4000};
+//        double segLenParas[]={300,500,700,900,1100,1300,1500,1700,1900,2100,2300,2500,2700,2900,3000,4000};
+//        double segLenParas[]={500,1000,1500,2000,3000,4000,5000,6000,7000,8000,9000,10000};
+        double queryLenParas[]={900,3600};
         std::cerr<<"Starting knn test\n"<<"Segmentation lengths are:";
         for(auto p:segLenParas) std::cerr<<p<<"\t";
         std::cerr<<"\nQuery lengths are:";

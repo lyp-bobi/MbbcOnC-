@@ -16,7 +16,7 @@ int main(){
 //        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
 //        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs("D://00.txt");
         int maxseg = 0;
-        double para[]={1200};
+        double para[]={1800};
         auto stat=trajStat::instance();
         double queryLen=3600;
         vector<IShape *> queries;

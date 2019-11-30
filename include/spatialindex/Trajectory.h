@@ -7,7 +7,7 @@
 
 #include "ShapeList.h"
 
-extern double calcuTime[2];
+extern double calcuTime[10];
 extern int testPhase;
 extern int disttype;
 
@@ -139,6 +139,7 @@ namespace SpatialIndex
 
         virtual double getMidIED(const Region &sbr,const Region &ebr,double MaxVelocity,double queryVelocity=-1);
         virtual double getMidIED(const MBC &sbc, const MBC &ebc,double MaxVelocity,double queryVelocity=-1);
+        virtual double getMidIED(const STPoint &sp, const STPoint &ep,double MaxVelocity,double queryVelocity=-1);
 
         virtual double getStaticIED(double x, double y, double t1, double t2) const;
         virtual double getStaticIED(const Region in,double ints, double inte) const;

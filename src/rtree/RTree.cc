@@ -560,104 +560,170 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 #endif
 
 	std::priority_queue<NNEntry*, std::vector<NNEntry*>, NNEntry::ascending> queue;
-
-	queue.push(new NNEntry(m_rootID, 0, 0.0));
+	Trajectory qj=*queryTraj;
+    PartsStore ps(qj,0,m_ts,true);
+    ps.push(new NNEntry(m_rootID,nullptr, 0, 0));
 
 	uint32_t count = 0;
 	double knearest = 0.0;
     int iternum=0;
     std::map<id_type ,int> insertedTrajId;
-	while (! queue.empty())
-	{
-	    iternum++;
-		NNEntry* pFirst = queue.top();
 
-		// report all nearest neighbors with equal greatest distances.
-		// (neighbors can be more than k, if many happen to have the same greatest distance).
-		if (count >= k && pFirst->m_minDist > knearest)	break;
+    while (! ps.empty()) {
+        iternum++;
+        NNEntry *pFirst = ps.top();
 
-		queue.pop();
-//        std::cerr<<"iter dist is"<<pFirst->m_minDist<<std::endl;
-		if (pFirst->m_pEntry == nullptr)
-		{
-			// n is a leaf or an index.
-			NodePtr n = readNode(pFirst->m_id);
-			v.visitNode(*n);
-
-			for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
-			{
-				if (n->m_level == 0)
-				{
-					Data* e = new Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBR[cChild]), n->m_pIdentifier[cChild]);
-					// we need to compare the query with the actual data entry here, so we call the
-					// appropriate getMinimumDistance method of NearestNeighborComparator.
-					if(m_DataType==TrajectoryType&&m_bUsingTrajStore== false){
-                        Trajectory traj;
-                        traj.loadFromByteArray(e->m_pData);
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(*queryTraj, traj)));
-					}else{
-//                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e,
-//                                               queryTraj->getLeafMinimumDistance(e->m_region, m_ts->m_maxVelocity)));
-					    double pd=std::max(0.0,simpleTraj.getLeafMinimumDistance(e->m_region,m_ts->m_maxVelocity)-delta);
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e,pd));
-					}
-
-				}
-				else
-				{
-				    if(m_DataType==BoundingBoxType){
-                        const Region* br= dynamic_cast<const Region*>(&query);
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr,br->getMinimumDistance(*(n->m_ptrMBR[cChild]))));
-				    }
-				    else{
-				        double pd=std::max(0.0,simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),m_ts->m_maxVelocity)-delta);
-                        queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, pd));
-				    }
-
-				}
-			}
-		}
-		else
-		{
-		    if(m_DataType==TrajectoryType&&m_bUsingTrajStore&&pFirst->m_type==0){
-		        //load ShapeList<MBR>, aka retrieve MBRs
-                id_type trajId=m_ts->getTrajId(pFirst->m_id);
-                if(insertedTrajId[trajId]==1){
-                    delete pFirst->m_pEntry;
+        // report all nearest neighbors with equal greatest distances.
+        // (neighbors can be more than k, if many happen to have the same greatest distance).
+        if (count >= k && pFirst->m_minDist > knearest) {
+//            std::cerr<<"find minDist"<<knearest<<"\n";
+            break;
+        }
+        switch (pFirst->m_type) {
+            case 0: {//inner node
+                ps.pop();
+                NodePtr n = readNode(pFirst->m_id);
+                v.visitNode(*n);
+                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+                    double pd = std::max(0.0, simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),
+                                                                                m_ts->m_maxVelocity) - delta);
+                    if(pd<1e300) {
+                        if (n->m_level == 0){
+                            Data* e = new Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBR[cChild]), n->m_pIdentifier[cChild]);
+                            ps.push(new NNEntry(n->m_pIdentifier[cChild],e, pd, 1));
+                        }
+                        else
+                            ps.push(new NNEntry(n->m_pIdentifier[cChild],nullptr, pd, 0));
+                    }
                 }
-                else {
-                    ShapeList brs = m_ts->getMBRsByTime(pFirst->m_id, queryTraj->m_points.front().m_time,
-                                                        queryTraj->m_points.back().m_time);
-                    double pd=std::max(0.0,simpleTraj.getMinimumDistance(brs)-delta);
-                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, pd, 1));
-                    insertedTrajId[trajId]=1;
-                }
-//                std::cerr<<nnc.getMinimumDistance(query, brs)<<"\n";
-		    }
-		    else if(m_DataType==TrajectoryType&&m_bUsingTrajStore&&pFirst->m_type==1){
-		        //load Trajectory
-                Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_time,queryTraj->m_points.back().m_time);
-                queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, traj),2));
-		    }
-		    else {
-//                Data *e=static_cast<Data*>(pFirst->m_pEntry);
-                v.visitData(*(static_cast<IData *>(pFirst->m_pEntry)));
+                delete pFirst;
+                break;
+            }
+            case 1: {//leaf node
+                ps.pop();
+                Data *e=static_cast<Data*>(pFirst->m_pEntry);
+                ps.loadPartTraj(e->m_id,e->m_region.m_pLow[2],e->m_region.m_pHigh[2]);
+                delete e;
+                delete pFirst;
+                break;
+            }
+            case 3: {
+                ps.pop();
                 ++(m_stats.m_u64QueryResults);
                 ++count;
                 knearest = pFirst->m_minDist;
-//            std::cout<<"knearest is"<<knearest<<std::endl;
-                delete pFirst->m_pEntry;
+                simpleData d(pFirst->m_id,pFirst->m_minDist);
+                v.visitData(d);
+                delete pFirst;
+                break;
             }
-		}
-		delete pFirst;
-	}
 
-	while (! queue.empty())
-	{
-		NNEntry* e = queue.top(); queue.pop();
-		delete e->m_pEntry;
-		delete e;
-	}
+            default:
+                throw Tools::IllegalStateException("illegal NNEntry state"+std::to_string(pFirst->m_type));
+        }
+    }
+    while (! ps.empty())
+    {
+        NNEntry* e = ps.top(); ps.pop();
+        delete e;
+    }
+
+
+//    queue.push(new NNEntry(m_rootID, 0, 0.0));
+//	while (! queue.empty())
+//	{
+//	    iternum++;
+//		NNEntry* pFirst = queue.top();
+//
+//		// report all nearest neighbors with equal greatest distances.
+//		// (neighbors can be more than k, if many happen to have the same greatest distance).
+//		if (count >= k && pFirst->m_minDist > knearest)	break;
+//
+//		queue.pop();
+////        std::cerr<<"iter dist is"<<pFirst->m_minDist<<std::endl;
+//		if (pFirst->m_pEntry == nullptr)
+//		{
+//			// n is a leaf or an index.
+//			NodePtr n = readNode(pFirst->m_id);
+//			v.visitNode(*n);
+//
+//			for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
+//			{
+//				if (n->m_level == 0)
+//				{
+//					Data* e = new Data(n->m_pDataLength[cChild], n->m_pData[cChild], *(n->m_ptrMBR[cChild]), n->m_pIdentifier[cChild]);
+//					// we need to compare the query with the actual data entry here, so we call the
+//					// appropriate getMinimumDistance method of NearestNeighborComparator.
+//					if(m_DataType==TrajectoryType&&m_bUsingTrajStore== false){
+//					    //not used code
+//                        Trajectory traj;
+//                        traj.loadFromByteArray(e->m_pData);
+//                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e, nnc.getMinimumDistance(*queryTraj, traj)));
+//					}else{
+////                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e,
+////                                               queryTraj->getLeafMinimumDistance(e->m_region, m_ts->m_maxVelocity)));
+//					    double pd=std::max(0.0,simpleTraj.getLeafMinimumDistance(e->m_region,m_ts->m_maxVelocity)-delta);
+//                        queue.push(new NNEntry(n->m_pIdentifier[cChild], e,pd));
+//					}
+//
+//				}
+//				else
+//				{
+//				    if(m_DataType==BoundingBoxType){
+//                        const Region* br= dynamic_cast<const Region*>(&query);
+//                        queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr,br->getMinimumDistance(*(n->m_ptrMBR[cChild]))));
+//				    }
+//				    else{
+//				        double pd=std::max(0.0,simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),m_ts->m_maxVelocity)-delta);
+//                        queue.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, pd));
+//				    }
+//
+//				}
+//			}
+//		}
+//		else
+//		{
+////		    if(m_DataType==TrajectoryType&&m_bUsingTrajStore&&pFirst->m_type==0){
+////		        //load ShapeList<MBR>, aka retrieve MBRs
+////                id_type trajId=m_ts->getTrajId(pFirst->m_id);
+////                if(insertedTrajId[trajId]==1){
+////                    delete pFirst->m_pEntry;
+////                }
+////                else {
+////                    ShapeList brs = m_ts->getMBRsByTime(pFirst->m_id, queryTraj->m_points.front().m_time,
+////                                                        queryTraj->m_points.back().m_time);
+////                    double pd=std::max(0.0,simpleTraj.getMinimumDistance(brs)-delta);
+////                    queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, pd, 1));
+////                    insertedTrajId[trajId]=1;
+////                }
+//////                std::cerr<<nnc.getMinimumDistance(query, brs)<<"\n";
+////		    }
+////		    if(m_DataType==TrajectoryType&&m_bUsingTrajStore&&pFirst->m_type==0){
+////		        //load Trajectory
+////                Trajectory traj=m_ts->getTrajByTime(pFirst->m_id,queryTraj->m_points.front().m_time,queryTraj->m_points.back().m_time);
+////                queue.push(new NNEntry(pFirst->m_id, pFirst->m_pEntry, nnc.getMinimumDistance(*queryTraj, traj),2));
+////		    }
+////		    else {
+//////                Data *e=static_cast<Data*>(pFirst->m_pEntry);
+////                v.visitData(*(static_cast<IData *>(pFirst->m_pEntry)));
+////                ++(m_stats.m_u64QueryResults);
+////                ++count;
+////                knearest = pFirst->m_minDist;
+//////            std::cout<<"knearest is"<<knearest<<std::endl;
+////                delete pFirst->m_pEntry;
+////            }
+//            Data *e=static_cast<Data*>(pFirst->m_pEntry);
+//            id_type res=ps.loadPartTraj(e->m_id,e->m_region.m_pLow[2],e->m_region.m_pHigh[2]);
+//		}
+//		delete pFirst;
+//	}
+//
+//	while (! queue.empty())
+//	{
+//		NNEntry* e = queue.top(); queue.pop();
+//		delete e->m_pEntry;
+//		delete e;
+//	}
 //    std::cerr<<"iternum is "<<iternum<<"\n";
 //    std::cout<<"knearest is"<<knearest<<std::endl;
     m_stats.m_doubleExactQueryResults+=knearest;

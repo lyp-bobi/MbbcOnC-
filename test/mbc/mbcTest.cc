@@ -24,9 +24,9 @@ int main(){
         int realtesttime=(QueryType==2)?testtime:(100*testtime);
         double queryLen=10800;
         auto stat=trajStat::instance();
-        double mp[2]={38.021442825891902828,114.06330331672108969};
-        Cylinder cy(mp,0.041490676595355088785,55307,66107,2);
-        queries.emplace_back(&cy);
+//        double mp[2]={38.021442825891902828,114.06330331672108969};
+//        Cylinder cy(mp,0.041490676595355088785,55307,66107,2);
+//        queries.emplace_back(&cy);
 //        for (int i = 0; i < 10000; i++) {
 //            double t = int(random(stat->mint, stat->maxt - queryLen));
 //            double pLow[3] = {random(stat->minx, stat->maxx), random(stat->miny, stat->maxy), t};
@@ -36,23 +36,25 @@ int main(){
 //            Cylinder *rg = new Cylinder(pLow,random(0.025,0.05),t,t+queryLen,2);
 //            queries.emplace_back(rg);
 //        }
-//        for (int i = 0; i < realtesttime; i++) {
-//            if (QueryType == 1) {
-//                double t = int(random(0, 1000));
-//                double pLow[3] = {random(0, 25000), random(0, 30000), t};
-//                double pHigh[3] = {pLow[0] + random(500, 2000), pLow[1] + random(500, 2000), t+20};
-//                Region *rg = new Region(pLow, pHigh, 3);
-//                queries.emplace_back(rg);
-//            }
-//            else if(QueryType==2){
+        for (int i = 0; i < realtesttime; i++) {
+            if (QueryType == 1) {
+                double t = int(random(0, 1000));
+                double pLow[3] = {random(0, 25000), random(0, 30000), t};
+                double pHigh[3] = {pLow[0] + random(500, 2000), pLow[1] + random(500, 2000), t+20};
+                Region *rg = new Region(pLow, pHigh, 3);
+                queries.emplace_back(rg);
+            }
+            else if(QueryType==2){
+                auto ori = &trajs[0].second;
 //                auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
-//                Trajectory *concate = new Trajectory();
+                Trajectory *concate = new Trajectory();
+                double ts=ori->m_startTime();
 //                double ts = std::max(ori->m_startTime(),random(ori->m_startTime(), ori->m_endTime() - queryLen));
-//                ori->getPartialTrajectory(ts, ts + queryLen, *concate);
-//                if (!concate->m_points.empty())
-//                    queries.emplace_back(concate);
-//            }
-//        }
+                ori->getPartialTrajectory(ts, ts + queryLen, *concate);
+                if (!concate->m_points.empty())
+                    queries.emplace_back(concate);
+            }
+        }
 
         cerr<<"queries generated\n";
         trajs.swap(empty1);
@@ -73,7 +75,7 @@ int main(){
         TrajStore* ts1=new TrajStore(file1,4096,maxseg);
         ts1->loadSegments(segs);
 
-        ISpatialIndex *r=MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1,4096,3,indexIdentifier1);
+        ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(ts1,4096,3,indexIdentifier1);
 
 //        TreeQueryBatch(r, queries,ts1);
 //        delete r;
@@ -81,7 +83,7 @@ int main(){
 
 
         TrajStore* ts2=new TrajStore(file2,4096,maxseg);
-        ts2->loadSegments(segs);
+        ts2->loadSegments(segs,true);
         ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2,4096,3,indexIdentifier2);
 //        TreeQueryBatch(rc, queries,ts2);
 //        delete rc;
@@ -137,13 +139,15 @@ int main(){
         for(int j=0;j<queries.size();j++){
             auto q=queries[j];
 //            oo=TreeQuery(real,q);
+            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
+//            std::cout<<qtraj->m_startTime()<<" "<<qtraj->m_endTime()<<"\n";
             aa=TreeQuery(r,q,ts1);
             bb=TreeQuery(rc,q,ts2);
-//            Trajectory *qtraj= dynamic_cast<Trajectory*>(q);
             if(aa!=bb){
-                Cylinder *qcy= dynamic_cast<Cylinder*>(q);
+//                Cylinder *qcy= dynamic_cast<Cylinder*>(q);
                 cerr<<"error"<<j<<endl;
-                cerr<<aa<<" "<<bb<<" "<<*qcy<<endl;
+                cerr<<aa<<" "<<bb<<" "<<*qtraj<<endl;//<<*qcy<<endl;
+                return 1;
 //                cerr<<*qtraj<<endl;
             }
         }

@@ -43,7 +43,7 @@
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
-#define QueryType 1
+#define QueryType 2
 //1 for range, 2 for 5-NN
 
 using namespace std;
@@ -115,11 +115,16 @@ public:
 
         m_lastResult=d.getIdentifier();
 //        cerr << d.getIdentifier()<<std::endl;
-        auto mou=dynamic_cast<const MBCRTree::MBCRTree::simpleData*>(&d);
-//        cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
-        if(mou!=nullptr){
-            m_lastDist=mou->m_dist;
-        }
+//        auto mou=dynamic_cast<const MBCRTree::MBCRTree::simpleData*>(&d);
+//        if(mou!=nullptr){
+//            m_lastDist=mou->m_dist;
+//            cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
+//        }
+//        auto mou2=dynamic_cast<const RTree::RTree::simpleData*>(&d);
+//        if(mou2!=nullptr){
+//            m_lastDist=mou2->m_dist;
+//            cerr << d.getIdentifier()<<"\t"<<mou2->m_dist << endl;
+//        }
 //        //id of the data
 //        if(ts== nullptr)
 //            cerr << d.getIdentifier() << endl;
@@ -316,6 +321,7 @@ vector<pair<id_type ,Trajectory> >  loadGLToTrajs(string filename=GLFile){
     vector<pair<id_type ,Trajectory> > res;
     int curLine=0;
     getline(inFile, lineStr);
+
     while (getline(inFile, lineStr)&&curLine<maxLinesToRead){
         try {
             string str;
@@ -343,9 +349,11 @@ vector<pair<id_type ,Trajectory> >  loadGLToTrajs(string filename=GLFile){
             break;
         }
     }
+
     stat->Dx=stat->maxx-stat->minx;
     stat->Dy=stat->maxy-stat->miny;
     stat->Dt=stat->maxt-stat->mint;
+    double gdist=0,gtime=0;
     for(auto id:ids){
         multimap<id_type ,xyt>::iterator beg,end,iter;
         vector<xyt> traj;
@@ -362,6 +370,10 @@ vector<pair<id_type ,Trajectory> >  loadGLToTrajs(string filename=GLFile){
                 tps.emplace_back(STPoint(traj[l].x, traj[l].y,traj[l].t));
                 if(l!=0){
                     stat->dist+=std::sqrt(sq(traj[l].x-lastpoint.x)+sq(traj[l].y-lastpoint.y));
+                    if(std::sqrt(sq(traj[l].x-lastpoint.x)+sq(traj[l].y-lastpoint.y))/(traj[l].t-lastpoint.t)>1e-5){
+                        gdist+=std::sqrt(sq(traj[l].x-lastpoint.x)+sq(traj[l].y-lastpoint.y));
+                        gtime+=(traj[l].t-lastpoint.t);
+                    }
                 }
                 lastpoint=traj[l];
             }
@@ -374,6 +386,7 @@ vector<pair<id_type ,Trajectory> >  loadGLToTrajs(string filename=GLFile){
             }
         }
     }
+    std::cerr<<"vh is"<<gdist/gtime<<"\n";
 #ifndef NDEBUG
     std::cerr<<"load data finished\n";
 #endif
@@ -381,8 +394,9 @@ vector<pair<id_type ,Trajectory> >  loadGLToTrajs(string filename=GLFile){
     stat->jt=stat->M/stat->trajCount;
     stat->v=stat->dist/stat->M;
     std::cerr<<*stat;
-    stat->Dx/=15;
-    stat->Dy/=15;
+    stat->Dx/=6.5;
+    stat->Dy/=5;
+    stat->v*=2.5;
 //    drop_cache(3);
     return res;
 }
@@ -429,6 +443,7 @@ double knncost(double bt,int k,double qt,int f,bool useMBR,double _rk){
 //            lc=k*(1+qt/bt)*lmd*std::ceil(bt/stat->tl/160);
     //std::cerr<<bt<<"\t"<<hc<<"\t"<<lc<<"\n";
     double hc=1.1*(1+qt/bt)*sq(1+(lx+rk+bt*stat->v)/stat->v/ltc)*(1+lt/ltc);
+//    double hc=2*
     return hc;
 }
 struct d4{
@@ -496,11 +511,15 @@ double kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStor
     vis.ts=ts;
     auto start = std::chrono::system_clock::now();
     double rad=0;
+    int indio=0;
+    std::vector<int> indios;
     for(int i=0;i<queries.size();i++){
         vis.m_query=queries[i];
         tree->nearestNeighborQuery(thennk,*queries[i],vis);
         rad+=vis.m_lastDist;
         if(reportEnd) std::cerr<<"end\n";
+        indios.emplace_back(ts->m_indexIO-indio);
+        indio=ts->m_indexIO;
     }
     rad/=queries.size();
     double time;
@@ -509,7 +528,14 @@ double kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStor
 //    cerr <<"Average Querying time: "<< time/num<<endl;
 //    cerr <<"Averaged VISIT NODE "<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<endl;
 //    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
-    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<<1.0*ts->m_leaf1/num<<"\t"<<1.0*ts->m_leaf2/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<"\t"<<1.0*ts->m_loadedTraj/num<<endl;
+    sort(indios.begin(),indios.end());
+    int mid1=queries.size()*0.1, mid2=queries.size()*0.9;
+    double sum=0;
+    for(int i=mid1;i<=mid2;i++){
+        sum+=indios[i];
+    }
+    sum=sum/(mid2-mid1);
+    cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<<1.0*ts->m_leaf1/num<<"\t"<<1.0*ts->m_leaf2/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<"\t"<<1.0*ts->m_loadedTraj/num<<"\t"<<sum<<endl;
 //    cerr <<time/num<<"\n";
     return rad;
 }

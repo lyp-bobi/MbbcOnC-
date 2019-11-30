@@ -699,7 +699,7 @@ const Trajectory TrajStore::getTraj(id_type &id) {
     return traj;
 }
 
-const Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double tend) {
+const Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double tend,bool *hasPrev,bool *hasNext) {
     auto it=m_entries.find(id);
     if(it==m_entries.end()){
         std::cerr<<id<<"\n";
@@ -712,6 +712,12 @@ const Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double ten
 //    uint8_t *data = load+e.m_start;
     Trajectory traj,tmptraj;
     traj=getTraj(id);
+    if(hasPrev!= nullptr){
+        *hasPrev=(e.m_pvId>=0);
+    }
+    if(hasNext!= nullptr){
+        *hasNext=(e.m_ntId>=0);
+    }
 //    traj.loadFromByteArray(data);
     Entry tmpe=e;
     std::set<std::pair<int,int>> loaded;
@@ -737,7 +743,9 @@ const Trajectory TrajStore::getTrajByTime(id_type &id, double tstart, double ten
             loaded.insert(std::make_pair(it->second->m_page,it->second->m_start));
         }
     }
-    return traj;
+    Trajectory res;
+    traj.getPartialTrajectory(tstart,tend,res);
+    return res;
 }
 
 const ShapeList TrajStore::getMBCsByTime(id_type &id, double tstart, double tend) {

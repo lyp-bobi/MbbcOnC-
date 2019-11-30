@@ -12,7 +12,7 @@
 #include <spatialindex/SpatialIndex.h>
 #include <storagemanager/TrajStore.h>
 
-double calcuTime[2]={0,0};
+double calcuTime[10]={0};
 int testPhase=0;
 
 int disttype = 0;
@@ -449,6 +449,8 @@ std::vector<Trajectory> Trajectory::getRDPSegments(double len) const {
 
 std::vector<Trajectory> Trajectory::getSegments(double len) const {
 //    return getGlobalSegmentsCut(len);
+    auto stat=trajStat::instance();
+    stat->bt=len;
     return getHybridSegments(len);
 //    auto m=getStaticSegments(len*sqrt(double(segNum)));
 //    for(auto &traj:m){
@@ -1474,6 +1476,48 @@ double Trajectory::getMidIED(const MBC &sbc, const MBC &ebc,
                              double MaxVelocity,double queryVelocity) {
     double sum=0;
     STPoint sPoint(sbc.m_pHigh,sbc.m_endTime,m_dimension),ePoint(ebc.m_pLow,ebc.m_startTime,m_dimension);
+    double ints=sPoint.m_time,inte=ePoint.m_time;
+    fakeTpVector timedTraj(&m_points, ints, inte);
+    for(int i=0;i<timedTraj.m_size-1;i++){
+        double t1=timedTraj[i].m_time,t2=timedTraj[i+1].m_time;
+        double l1 = (t1 - ints) * MaxVelocity,
+                l2 = (t2 - ints) * MaxVelocity,
+                h1 = (inte - t1) * MaxVelocity,
+                h2 = (inte - t2) * MaxVelocity;
+        double ds1=timedTraj[i].getMinimumDistance(sPoint),
+                ds2=timedTraj[i+1].getMinimumDistance(sPoint),
+                de1=timedTraj[i].getMinimumDistance(ePoint),
+                de2=timedTraj[i+1].getMinimumDistance(ePoint);
+        double a1=l1-ds1,a2=l2-ds2,b1=h1-de1,b2=h2-de2;
+        double d1=std::min(a1,b1),d2=std::min(a2,b2);
+        double minus,pd;
+        if(a2>=b2){
+            minus=0.5*(l1+l2)*(timedTraj[i + 1].m_time-timedTraj[i].m_time);
+            pd= getStaticIED(sPoint.m_pCoords[0],sPoint.m_pCoords[1], t1, t2);
+            sum+=std::max(0.0,pd-minus);
+        }else if(b1>=a1){
+            minus=0.5*(h1+h2)*(timedTraj[i + 1].m_time-timedTraj[i].m_time);
+            pd= getStaticIED(ePoint.m_pCoords[0],ePoint.m_pCoords[1], t1, t2);
+            sum+=std::max(0.0,pd-minus);
+        }else{
+            double vmax;
+            if(queryVelocity==-1) vmax=2*MaxVelocity;
+            else vmax=MaxVelocity+queryVelocity;
+            double t0=(t1+t2+(d2-d1)/(vmax))/2;
+            sum+=ldd(d1,-vmax,t0-t1)+ldd(d2,vmax,inte-t2);
+//            double x1=timedTraj[i].m_pCoords[0],x2=timedTraj[i+1].m_pCoords[0],
+//                    y1=timedTraj[i].m_pCoords[1],y2=timedTraj[i+1].m_pCoords[1];
+//            double psx=sPoint.m_pCoords[0],psy=sPoint.m_pCoords[1],
+//                pex=ePoint.m_pCoords[0],pey=ePoint.m_pCoords[1];
+//            double t0=(2*(pex-psx)*(inte))
+        }
+    }
+    return sum;
+}
+
+double Trajectory::getMidIED(const STPoint &sPoint, const STPoint &ePoint,
+                             double MaxVelocity,double queryVelocity) {
+    double sum=0;
     double ints=sPoint.m_time,inte=ePoint.m_time;
     fakeTpVector timedTraj(&m_points, ints, inte);
     for(int i=0;i<timedTraj.m_size-1;i++){

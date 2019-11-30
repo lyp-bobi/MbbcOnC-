@@ -67,6 +67,8 @@ set (SOURCES
         splitQueryTest
         rangeTest
         simpliTest
+        speedEstimator
+        changeKTest
         )
 
 foreach (test ${SOURCES})

@@ -161,7 +161,8 @@ namespace SpatialIndex
 #ifdef HAVE_PTHREAD_H
 			pthread_mutex_t m_lock;
 #endif
-		public: class simpleData:public IData{
+		public:
+		    class simpleData:public IData{
             public:
                 simpleData(id_type id,double dist):m_id(id),m_dist(dist){}
                 id_type m_id;
@@ -653,6 +654,7 @@ namespace SpatialIndex
             public:
 			    bool isLoaded(id_type id){ return loadedLeaf.count(id)>0;}
 			    void loadLeaf(const Node &n){
+//                    std::cerr<<"load leaf"<<n.m_nodeMBR<<"\n";
 //                    std::cerr<<"leaf dist"<<m_query.getNodeMinimumDistance(n.m_nodeMBR,100)/(m_query.m_endTime()-m_query.m_startTime())<<"\n";
 //                    std::cerr<<"load leaf"<<n.m_identifier<<"\n";
 			        loadedLeaf.insert(n.m_identifier);
@@ -767,7 +769,7 @@ namespace SpatialIndex
                     }
                     return traj;
                 }
-			};
+			};//PartStore
 
 
 			friend class Node;
