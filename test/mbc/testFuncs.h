@@ -506,6 +506,8 @@ void TreeQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore
 
 double kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStore *ts= nullptr,int thennk=5,bool reportEnd=false){
     ts->cleanStatistic();
+    ts->flush();
+    drop_cache(3);
     int num=queries.size();
     MyVisitor vis;
     vis.ts=ts;

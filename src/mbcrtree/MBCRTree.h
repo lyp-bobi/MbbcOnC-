@@ -32,6 +32,8 @@
 #include "PointerPoolNode.h"
 #include "storagemanager/TrajStore.h"
 #include <cmath>
+#include <thread>
+#include <mutex>
 
 extern bool simpli;
 
@@ -236,6 +238,21 @@ namespace SpatialIndex
                         raise(index);
                     }
                 }
+                void updateValue(const MutablePriorityQueue<NNEntry*>::handle_type &handle,id_type id, double minDist,int type)
+                {
+                    m_vElements[handle]->m_id=id;
+                    m_vElements[handle]->m_minDist=minDist;
+                    m_vElements[handle]->m_type=type;
+                }
+                void updateOrder(const MutablePriorityQueue<NNEntry*>::handle_type &handle)
+                {
+                    size_t index=m_vHandleIndex[handle];
+                    if (!lower(index))
+                    {
+                        raise(index);
+                    }
+                }
+
 			};
             struct storeEntry{
                 id_type m_page;
@@ -341,7 +358,7 @@ namespace SpatialIndex
                     m_parts[id].insert(bc,prev,next,entry);
                 }
 
-                double update(id_type id) {
+                double updateValue(id_type id) {
                     Parts *parts = &m_parts[id];
                     double computedTime = 0;
                     double pd, sum = 0;
@@ -547,17 +564,13 @@ namespace SpatialIndex
                                 sum+=pd;
                             }
                         }
+
                         parts->m_calcMin = sum;
                         parts->m_computedTime = computedTime;
                         int type = 2;
                         if (parts->m_missingLeaf.empty()) type = 3;
                         sum = std::max(0.0, sum - m_error);
-                        if (m_handlers.count(id) == 0) {
-                            auto handle = m_mpq.push(new NNEntry(id, sum, type));
-                            m_handlers[id] = handle;
-                        } else {
-                            m_mpq.update(m_handlers[id], id, sum, type);
-                        }
+                        m_mpq.updateValue(m_handlers[id], id, sum, type);
                         return sum;
                     }
                     else if(disttype==1){
@@ -578,7 +591,7 @@ namespace SpatialIndex
                                     pd = parts->m_computedDist[timeInterval];
                                     max=std::max(max,pd);
                                 } else {
-                                    pd = m_query.getStaticIED(parts->m_mbrs.front(), m_query.m_startTime(),
+                                    pd = m_query.getStaticMaxSED(parts->m_mbrs.front(), m_query.m_startTime(),
                                                               parts->m_mintime);
                                     parts->m_computedDist[timeInterval] = pd;
                                     computedTime += timeInterval.second - timeInterval.first;
@@ -640,12 +653,7 @@ namespace SpatialIndex
                         int type = 2;
                         if (parts->m_missingLeaf.empty()) type = 3;
                         max = std::max(0.0, max - m_error);
-                        if (m_handlers.count(id) == 0) {
-                            auto handle = m_mpq.push(new NNEntry(id, max, type));
-                            m_handlers[id] = handle;
-                        } else {
-                            m_mpq.update(m_handlers[id], id, max, type);
-                        }
+                        m_mpq.updateValue(m_handlers[id], id, max, type);
                         return max;
                     }
                     else throw Tools::IllegalStateException("");
@@ -658,7 +666,7 @@ namespace SpatialIndex
 //                    std::cerr<<"leaf dist"<<m_query.getNodeMinimumDistance(n.m_nodeMBR,100)/(m_query.m_endTime()-m_query.m_startTime())<<"\n";
 //                    std::cerr<<"load leaf"<<n.m_identifier<<"\n";
 			        loadedLeaf.insert(n.m_identifier);
-                    std::vector<id_type > relatedIds;
+                    std::set<id_type > relatedIds;
                     for(int i=0;i<n.m_children;i++){
                         id_type trajid=m_ts->getTrajId(n.m_pIdentifier[i]);
                         storeEntry entry= {
@@ -675,7 +683,7 @@ namespace SpatialIndex
                                        (m_query.m_startTime()<bts)?n.m_prevNode[i]:-1
                                         , (m_query.m_endTime()>bte)?n.m_nextNode[i]:-1,
                                         entry);
-                                relatedIds.emplace_back(trajid);
+                                relatedIds.insert(trajid);
                             }
 
                         }else{
@@ -687,24 +695,54 @@ namespace SpatialIndex
                                        (m_query.m_startTime()<bts)?n.m_prevNode[i]:-1
                                         , (m_query.m_endTime()>bte)?n.m_nextNode[i]:-1,
                                         entry);
-                                relatedIds.emplace_back(trajid);
+                                relatedIds.insert(trajid);
                             }
                         }
                     }
                     for(const auto &rid:relatedIds){
                         m_parts[rid].m_missingLeaf.erase(n.m_identifier);
                         m_parts[rid].m_loadedLeaf.insert(n.m_identifier);
-                        update(rid);
+                        if(m_handlers.count(rid)==0){
+                            auto handle = m_mpq.push(new NNEntry(rid, 1e9, 0));
+                            m_handlers[rid] = handle;
+                        }
+                    }
+//                    std::cerr<<"rid is: ";
+//                    for(const auto &rid:relatedIds){
+//                        std::cerr<<rid<<"\t";
+//                    }
+//                    std::cerr<<"\n";
+                    std::thread th1([=]{
+                        auto it=relatedIds.begin();
+                        for(int i=0;i<relatedIds.size()/2;i++){
+                            updateValue(*it);
+                            it++;
+                        }
+                    });
+                    std::thread th2([=]{
+                        auto it=relatedIds.begin();
+                        for(int i=0;i<relatedIds.size()/2;i++) it++;
+                        for(int i=relatedIds.size()/2;i<relatedIds.size();i++){
+                            updateValue(*it);
+                            it++;
+                        }
+                    });
+                    th1.join();th2.join();
+                    for(const auto &rid:relatedIds){
+//                        updateValue(rid);
+                        m_mpq.updateOrder(m_handlers[rid]);
                     }
                 }
 
                 auto top(){
                     if(!m_mpq.empty()&&m_mpq.top()->m_type==2){
                         id_type lastid=m_mpq.top()->m_id;
-                        update(lastid);
+                        updateValue(lastid);
+                        m_mpq.updateOrder(m_handlers[lastid]);
                         while(m_mpq.top()->m_type==2&&m_mpq.top()->m_id!=lastid){
                             lastid=m_mpq.top()->m_id;
-                            update(lastid);
+                            updateValue(lastid);
+                            m_mpq.updateOrder(m_handlers[lastid]);
                         }
                     }
                     if(!m_mpq.empty()&&(m_nodespq.empty()||m_mpq.top()->m_minDist<m_nodespq.top()->m_minDist))

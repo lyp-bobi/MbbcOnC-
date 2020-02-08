@@ -345,6 +345,8 @@ void DiskStorageManager::flush()
 
 	m_indexFile.flush();
 	m_dataFile.flush();
+	m_indexFile.sync();
+	m_dataFile.sync();
 }
 
 void DiskStorageManager::loadByteArray(const id_type page, uint32_t& len, uint8_t** data)

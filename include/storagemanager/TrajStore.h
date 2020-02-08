@@ -6,6 +6,7 @@
 
 
 #include <spatialindex/SpatialIndex.h>
+
 using namespace SpatialIndex;
 using namespace SpatialIndex::StorageManager;
 using std::vector;
@@ -126,7 +127,7 @@ namespace SpatialIndex
         public:
             ~TrajStore();
             TrajStore(IStorageManager *store,uint32_t pageSize,int maxseg=100);
-            void flush(){m_pStorageManager->flush();}
+            void flush();
             void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
                 auto start = std::chrono::system_clock::now();
                 m_pStorageManager->loadByteArray(page,len,data);

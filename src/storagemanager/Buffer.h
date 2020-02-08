@@ -54,7 +54,7 @@ namespace SpatialIndex
 
 			virtual void clear();
 			virtual uint64_t getHits();
-
+            IStorageManager* m_pStorageManager;
 		protected:
 			class Entry
 			{
@@ -77,7 +77,7 @@ namespace SpatialIndex
 
 			uint32_t m_capacity;
 			bool m_bWriteThrough;
-			IStorageManager* m_pStorageManager;
+
             id_type nextPage() override {return m_pStorageManager->nextPage();}
 			std::map<id_type, Entry*> m_buffer;
 			uint64_t m_u64Hits;

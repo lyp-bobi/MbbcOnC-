@@ -5,6 +5,8 @@
 #include "storagemanager/TrajStore.h"
 #include <cmath>
 #include <cstring>
+#include "Buffer.h"
+
 //
 // tsExternalSorter::Record
 //
@@ -408,6 +410,17 @@ struct id3{
     id3(id_type id,id_type pvId,id_type ntId)
         :m_id(id),m_pvId(pvId),m_ntId(ntId){};
 };
+void TrajStore::flush() {
+    Buffer *pb= dynamic_cast<Buffer*>(m_pStorageManager);
+    if(pb!= nullptr){
+        pb->m_pStorageManager->flush();
+        pb->clear();
+    }
+    else{
+        m_pStorageManager->flush();
+    }
+}
+
 void TrajStore::loadTrajs(vector<std::pair<id_type,Trajectory>> &trajs,double segpara, bool idFirst, bool output,
                           int method) {
     vector<std::pair<id_type, vector<Trajectory>>> segs;
