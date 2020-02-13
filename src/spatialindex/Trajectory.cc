@@ -1759,6 +1759,7 @@ double Trajectory::getNodeMinimumDistance(const SpatialIndex::Region &in,double 
             double pd = line2MBRMinSED(timedTraj[i],timedTraj[i+1],copy);
             min=std::min(min,pd);
         }
+        if(min>=1e300) return 0;
         return min*(m_endTime()-m_startTime());
     }
     else
