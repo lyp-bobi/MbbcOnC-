@@ -423,28 +423,45 @@ vector<pair<id_type ,Trajectory> >  loadGTFolder(int num=10,string folder=fileFo
     return res;
 }
 
+double rn(double n,double S,double Nq, double qt,double v2) {
+    double a = std::sqrt(n * S / M_PI / Nq) * qt / 2;
+    double b = qt / 4 * std::sqrt(2 * v2 * qt * v2 * qt + 4 * n * S / M_PI / Nq);
+    return a + b;
+}
+
+
 double knncost(double bt,int k,double qt,int f,bool useMBR,double _rk){
     auto stat=trajStat::instance();
-    double nq=std::min(double(stat->trajCount),stat->M/stat->jt*(qt+2*stat->jt)/stat->Dt);
-    nq=std::min(double(stat->trajCount),nq);
-//    double nq=10000;
-    double rk=sqrt(k*stat->Dx*stat->Dy/M_PI/nq);
-    if(_rk>0) rk=_rk;
-    double d=bt*stat->v;
-//    double lmd;
-//    if(useMBR) lmd=1+4*d/M_PI/M_PI/rk+d*d/rk/rk/M_PI/M_PI;
-//    else lmd=sq(1+0.15*d/rk);
-    double ltc=pow(stat->Dx*stat->Dy*stat->Dt/stat->M*bt*f/stat->v/stat->v,1.0/3);
-    double lt=ltc+bt;
-    double lx=lt*stat->v;
-    double leafnum=stat->M/bt/f;
-    double interleafnum=leafnum*lt/stat->Dt;
-//    double hc=1.1*(1+qt/lt)*sq(2*rk+lx)*interleafnum/stat->Dx/stat->Dy,
-//            lc=k*(1+qt/bt)*lmd*std::ceil(bt/stat->tl/160);
-    //std::cerr<<bt<<"\t"<<hc<<"\t"<<lc<<"\n";
-    double hc=1.1*(1+qt/bt)*sq(1+(lx+rk+bt*stat->v)/stat->v/ltc)*(1+lt/ltc);
-//    double hc=2*
-    return hc;
+
+    double v2=stat->v*2;
+    double Nt=stat->trajCount;
+    double Nq=Nt*(qt+2*stat->jt)/stat->Dt;
+    Nq = min(Nq, Nt);
+    double Ltc=pow(stat->Dx*stat->Dy*stat->Dt/stat->M*bt*f/v2/v2,1.0/3);
+    double Lxc=Ltc*v2;
+    double Lt=Ltc+bt;
+    double vv=min(-7e-9*Lt+0.0001,1e-4)+5e-5;
+    double Lx=vv*Lt;
+
+    double r = sqrt(k*stat->Dx*stat->Dy/M_PI/ Nq);
+    double Rk=(r*qt/2+qt*sqrt(v2*v2*qt*qt*2+4*r*r)/4);
+    double rk=Rk/qt;
+
+    double Rcost=(pow((2*rk+Lx),2)*(qt+Lt)+Lx*qt*qt*v2)/(pow(Ltc,3)*v2*v2);
+
+    double rnq=rn(5,stat->Dx*stat->Dy,Nq,qt,v2)+stat->v/2*bt*qt/2;
+    double nmin=5.0;
+    double nmax=10000.0;
+    while(nmax-nmin>0.1){
+        double mid=(nmax+nmin)/2;
+        if(rn(mid,stat->Dx*stat->Dy,Nq,qt,v2)>rnq) {
+            nmax = mid;
+        }else{
+            nmin=mid;
+        }
+    }
+    double Tcost=(nmax+nmin)/4;
+    return Rcost+Tcost;
 }
 struct d4{
     d4(double _low,double _high,double _vlow,double _vhigh){
