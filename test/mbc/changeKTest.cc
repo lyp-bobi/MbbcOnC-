@@ -62,13 +62,13 @@ int main(){
                     *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
-            TrajStore *ts1 = new TrajStore(file1, 4096, maxseg+1);
+            TrajStore *ts1 = new TrajStore(name1, file1, 4096, maxseg+1);
             ts1->loadSegments(segs1);
             segs1.clear();
             segs1.swap(emptyseg);
             ISpatialIndex *r = RTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
-            TrajStore *ts2 = new TrajStore(file2, 4096, maxseg+1);
+            TrajStore *ts2 = new TrajStore(name2, file2, 4096, maxseg+1);
             ts2->loadSegments(segs2,true);
             segs2.clear();
             segs2.swap(emptyseg);

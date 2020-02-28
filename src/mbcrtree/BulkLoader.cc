@@ -225,7 +225,7 @@ void ExternalSorter::sort()
 			std::list<Tools::SmartPointer<Tools::TemporaryFile> >::iterator it = m_runs.begin();
 			for (uint32_t i = 0; i < (std::min)(static_cast<uint32_t>(m_runs.size()), m_u32BufferPages); ++i)
 			{
-				buckets.emplace_back(*it);
+				buckets.push_back(*it);
 				buffers.emplace_back(std::queue<Record*>());
 
 				r = new Record();
@@ -366,21 +366,31 @@ void BulkLoader::bulkLoadUsingSTR(
 	Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
 
 	calcuTime[0]=calcuTime[1]=calcuTime[2]=0;
-
+    int scount=0;
 	while (stream.hasNext())
 	{
-		Data* d = reinterpret_cast<Data*>(stream.getNext());
-		if (d == 0)
-			throw Tools::IllegalArgumentException(
-				"bulkLoadUsingSTR: MBCRTree bulk load expects SpatialIndex::MBCRTree::Data entries."
-			);
-
-		es->insert(new ExternalSorter::Record(d->m_mbr, d->m_id, d->m_dataLength, d->m_pData, 0,0,&d->m_mbc));
-		d->m_pData = 0;
-		delete d;
+	    scount++;
+	    auto d=stream.getNext();
+		Data* d1 = dynamic_cast<Data*>(d);
+		if(d1!= nullptr){
+            es->insert(new ExternalSorter::Record(d1->m_mbr, d1->m_id, d1->m_dataLength, d1->m_pData, 0,0,&d1->m_mbc));
+            d1->m_pData = 0;
+            delete d1;
+		} else{
+		    ircData* d2 = dynamic_cast<ircData*>(d);
+            if (d2 == nullptr) {
+                throw Tools::IllegalArgumentException(
+                        "bulkLoadUsingSTR: MBCRTree bulk load expects SpatialIndex::MBCRTree::Data entries."
+                );
+            }
+            es->insert(new ExternalSorter::Record(d2->m_br, d2->m_id, 0, nullptr, 0,0,&d2->m_bc));
+//            std::cerr<<scount<<"\t"<<stream.size()<<"\n";
+            delete d2;
+		}
 	}
+	std::cerr<<"start sorting";
 	es->sort();
-
+    std::cerr<<"sorted.\n";
 	pTree->m_stats.m_u64Data = es->getTotalEntries();
 
 	// create index levels.
@@ -402,7 +412,6 @@ void BulkLoader::bulkLoadUsingSTR(
         double ltc=pow(dx*dy*dt/v/v/P,1.0/3);
         double rat=stat->bt/ltc;
         double q=std::max(0.1,1-1.5*pow(rat,-0.75));
-        ltc=pow(dx*dy*dt/v/v/P/sq(q),1.0/3);
         ltc=pow(dx*dy*dt/v/v/P/sq(q),1.0/3);
         std::cerr<<"ltc is "<<ltc<<"\n";
 		createLevel(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);

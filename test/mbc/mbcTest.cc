@@ -72,7 +72,7 @@ int main(){
 //        dsm1= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile1);
 //        dsm2= dynamic_cast<StorageManager::DiskStorageManager*>(diskfile2);
 
-        TrajStore* ts1=new TrajStore(file1,4096,maxseg);
+        TrajStore* ts1=new TrajStore(name1, file1,4096,maxseg);
         ts1->loadSegments(segs);
 
         ISpatialIndex *r=RTree::createAndBulkLoadNewRTreeWithTrajStore(ts1,4096,3,indexIdentifier1);
@@ -82,7 +82,7 @@ int main(){
 //        delete ts1;
 
 
-        TrajStore* ts2=new TrajStore(file2,4096,maxseg);
+        TrajStore* ts2=new TrajStore(name2, file2,4096,maxseg);
         ts2->loadSegments(segs,true);
         ISpatialIndex *rc=MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2,4096,3,indexIdentifier2);
 //        TreeQueryBatch(rc, queries,ts2);

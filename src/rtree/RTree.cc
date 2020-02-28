@@ -622,11 +622,7 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
                 throw Tools::IllegalStateException("illegal NNEntry state"+std::to_string(pFirst->m_type));
         }
     }
-    while (! ps.empty())
-    {
-        NNEntry* e = ps.top(); ps.pop();
-        delete e;
-    }
+    ps.clean();
 
 
 //    queue.push(new NNEntry(m_rootID, 0, 0.0));

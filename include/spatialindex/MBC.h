@@ -71,13 +71,16 @@ namespace SpatialIndex
         virtual bool prevalidate(const Region& in) const;
         virtual bool prevalidate(const Cylinder& in) const;
 
+        std::string toString() const ;
+        void loadFromString(std::string s);
+
         double m_startTime;
         double m_endTime;
         double m_rd;
         double m_rv;
         double* m_pLow;
         double* m_pHigh;
-        uint32_t m_dimension=2;
+        uint32_t m_dimension=2;// should be 2 for 3 dimension
 
         friend SIDX_DLL std::ostream& operator<<(std::ostream& os, const MBC& r);
 

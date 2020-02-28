@@ -715,3 +715,38 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const MBC& r)
     os<<"rd: "<<r.m_rd<<",rv "<<r.m_rv<<std::endl;
     return os;
 }
+
+std::string MBC::toString() const {
+    uint32_t i;
+    std::string s;
+    s=std::to_string(m_startTime)+" "+std::to_string(m_endTime)+" ";
+    for (i = 0; i < m_dimension; ++i)
+    {
+        s+= std::to_string(m_pLow[i]) + " ";
+    }
+    for (i = 0; i < m_dimension; ++i)
+    {
+        s+= std::to_string(m_pHigh[i]) + " ";
+    }
+    s += std::to_string(m_rd) + " "+std::to_string(m_rv);
+    return s;
+}
+void MBC::loadFromString(std::string s) {
+    auto nums=split(s,' ');
+    int d= nums.size()/2-1;
+    makeInfinite(d-1);
+    int i;
+    int cur=0;
+    m_startTime=std::stod(nums[cur++]);
+    m_endTime=std::stod(nums[cur++]);
+    for (i = 0; i < m_dimension; ++i)
+    {
+        m_pLow[i]=std::stod(nums[cur++]);
+    }
+    for (i = 0; i < m_dimension; ++i)
+    {
+        m_pHigh[i]=std::stod(nums[cur++]);
+    }
+    m_rd=std::stod(nums[cur++]);
+    m_rv=std::stod(nums[cur++]);
+}

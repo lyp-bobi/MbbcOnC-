@@ -620,11 +620,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                 throw Tools::IllegalStateException("illegal NNEntry state");
         }
     }
-	while (! ps.empty())
-	{
-		NNEntry* e = ps.top(); ps.pop();
-		delete e;
-	}
+	ps.clean();
 //    std::cout<<"knearest is"<<knearest<<std::endl;
 //    std::cerr<<"iternum is "<<iternum<<"\n";
     m_stats.m_doubleExactQueryResults+=knearest;

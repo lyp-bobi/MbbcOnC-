@@ -44,8 +44,8 @@ int main(){
         StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
                 *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                 *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
-        TrajStore *ts1 = new TrajStore(file1, 4096, 500);
-        TrajStore *ts2 = new TrajStore(file2, 4096, 500);
+        TrajStore *ts1 = new TrajStore(name1, file1, 4096, 500);
+        TrajStore *ts2 = new TrajStore(name2, file2, 4096, 500);
         vector<pair<id_type, Trajectory> > trajs;
         vector<IShape*> queries;
         for(int dataSize=1;dataSize<=20;dataSize++){

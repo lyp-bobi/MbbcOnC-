@@ -6,13 +6,17 @@
 #pragma once
 
 #include "ShapeList.h"
-
+#define subTrajFile "./subTrajFile.stj"
 extern double calcuTime[10];
 extern int testPhase;
 extern int disttype;
 
 #define bip auto start = std::chrono::system_clock::now();
 #define bbip auto end = std::chrono::system_clock::now();auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);calcuTime[testPhase]+=double(duration.count()) * std::chrono::microseconds::period::num/ std::chrono::microseconds::period::den;
+using std::vector;
+using std::pair;
+using std::string;
+using namespace SpatialIndex;
 
 namespace SpatialIndex
 {
@@ -179,9 +183,59 @@ namespace SpatialIndex
         std::vector<Trajectory> getGlobalSegmentsCut(double len) const;
         void linkTrajectory(Trajectory &other);
 
+        static int cutTrajsIntoFile(std::vector<std::pair<id_type, Trajectory> > &trajs,double segLen,std::string filename=subTrajFile);
+        class subTrajStream{
+        public:
+            std::ifstream inFile;
+            string nextline="";
+            subTrajStream(std::string str=subTrajFile){
+                inFile.open(str,std::ios::in);
+            }
+            bool hasNext(){
+                return nextline!="END";
+            }
+            pair<id_type,vector<Trajectory>> getNext(){
+                id_type id;
+                vector<Trajectory> v;
+                if(!hasNext()){
+                    return std::make_pair(id,v);
+                }
+                std::string s;
+                s=nextline;
+                Trajectory tmp;
+                bool isId=false;
+                while(true){
+                    if(s=="SubTraj"){
+                        isId=true;
+                    }
+                    else if(s=="ESubTraj"){
+                        std::getline(inFile,s);
+                        break;
+                    }
+                    else if(isId){
+                        id=std::stoll(s);
+                        isId=false;
+                    }
+                    else if(!s.empty()){
+                        tmp.loadFromString(s);
+                        v.emplace_back(tmp);
+                    } else{
+                        if(!s.empty()) std::cout<<"some err";
+                    }
+                    std::getline(inFile,s);
+                }
+                nextline=s;
+                return std::make_pair(id,v);
+            }
+            ~subTrajStream(){
+                inFile.close();
+            }
+        };
+        
         inline double m_startTime() const{return m_points.front().m_time;}
         inline double m_endTime() const { return m_points.back().m_time;}
 
+        std::string toString() const ;
         void loadFromString(std::string s);
 
         static int getPhase(const SpatialIndex::Region &r,const Point &p1,const Point &p2);
@@ -200,3 +254,4 @@ namespace SpatialIndex
 typedef Tools::PoolPointer<Trajectory> TrajectoryPtr;
 SIDX_DLL std::ostream& operator<<(std::ostream& os, const Trajectory& r);
 }
+std::vector<std::string> split(const std::string &strtem,char a);

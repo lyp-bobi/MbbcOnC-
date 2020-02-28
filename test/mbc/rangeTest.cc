@@ -11,12 +11,9 @@ int main(){
         vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
 //        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
 //        vector<pair<id_type, Trajectory> > trajs = loadGTFolder();
-        vector<pair<id_type, vector<Trajectory>>> segs;
-        vector<pair<id_type, vector<Trajectory>>> emptyseg;
         auto stat=trajStat::instance();
         int maxseg = 0;
-        double avgSegLen=100;
-        double segLenParas[]={10,20,50,80,100,200,300,400,500,750,1000,1500,2000,2500,3000};
+        double segLenParas[]={50,80,100,200,300,400,500,750,1000,1500,2000,2500,3000};
 //        double segLenParas[]={60,70,80,90,100,140,150,170,180,200};
         double queryLenParas[]={0,3600};
         std::cerr<<"Starting range test\n"<<"Segmentation lengths are:";
@@ -41,8 +38,6 @@ int main(){
         }
         for (double segLen:segLenParas) {
             maxseg=300;
-            segs.clear();
-            int totallen = 0, totalseg = 0;
             string name0 ="name0", name1 ="name1", name2 = "name2";
             id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
             IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
@@ -53,31 +48,17 @@ int main(){
                     *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
-            for (const auto &traj:trajs) {
-                totallen += traj.second.m_points.size();
-//                if(traj.second.m_endTime()-traj.second.m_startTime()<10){
-//                    std::cerr<<traj.second<<endl;
-//                }
-                auto seg = traj.second.getSegments(segLen);
-                totalseg += seg.size();
-                maxseg = std::max(int(seg.size()), maxseg);
-                segs.emplace_back(make_pair(traj.first, seg));
-            }
-            std::cerr<<"seg is"<<totalseg<<"\n";
-            avgSegLen=double(totallen)/totalseg;
-            std::cerr<<"segments' average length is "<<totallen*1.0/totalseg<<"\n";
+            maxseg=Trajectory::cutTrajsIntoFile(trajs,segLen);
 
-            TrajStore *ts1 = new TrajStore(diskfile1, 4096, maxseg+1);
-            TrajStore *ts2 = new TrajStore(diskfile2, 4096, maxseg+1);
+            TrajStore *ts1 = new TrajStore(name1, diskfile1, 4096, maxseg+1);
+            TrajStore *ts2 = new TrajStore(name2, diskfile2, 4096, maxseg+1);
 
-            ts1->loadSegments(segs,true);
+            ts1->loadSegments(subTrajFile,true);
             ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
-            ts2->loadSegments(segs,true);
+            ts2->loadSegments(subTrajFile,true);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
-            segs.clear();
-            segs.swap(emptyseg);
             ts1->flush();
             ts2->flush();
             std::cerr<<"Seg len:"<<segLen<<"\n";

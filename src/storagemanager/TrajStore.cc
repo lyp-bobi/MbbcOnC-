@@ -398,10 +398,13 @@ TrajStore::Entry::Entry(id_type page, uint32_t start, uint32_t len, id_type pvId
 
 TrajStore::~TrajStore() {
     releaseTmp();
+    if(m_stream!= nullptr) delete m_stream;
 }
 
-TrajStore::TrajStore(IStorageManager *store,uint32_t pageSize,int maxseg)
-    :m_pStorageManager(store),m_pageSize(pageSize),m_maxTrajSegs(maxseg){}
+TrajStore::TrajStore(string &name,IStorageManager *store,uint32_t pageSize,int maxseg)
+    :m_pStorageManager(store),m_pageSize(pageSize),m_maxTrajSegs(maxseg){
+    m_name=name;
+}
 
 struct id3{
     id_type m_id;
@@ -465,8 +468,8 @@ void TrajStore::loadTrajs(vector<std::pair<id_type,Trajectory>> &trajs,double se
     }
 }
 
-void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs,bool idFisrt,bool output){
-    if(idFisrt) {
+void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &trajs,bool idFirst,bool output){
+    if(idFirst) {
         id_type thisPageId = m_pStorageManager->nextPage();
         int linecount=0;
         double vol1=0,vol2=0;
@@ -694,6 +697,251 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
         delete[] pageData;
     }
 }
+
+void TrajStore::loadSegments(std::string file, bool idFirst, bool output) {
+    Trajectory::subTrajStream trajs(file);
+    std::string s="./"+m_name+".sbb";
+    m_stream=new SBBStream(s);
+    double radius1=0,radius2=0;
+    double ratio=0;
+    if(idFirst) {
+        id_type thisPageId = m_pStorageManager->nextPage();
+        int linecount=0;
+        double vol1=0,vol2=0;
+        uint8_t *data;
+        uint32_t len;
+        int pointnum=(m_pageSize-2* sizeof(bool)-sizeof(unsigned long))/(3* sizeof(double));
+        if(output) std::cerr<<"A page could store "<<pointnum<<" points\n";
+        while (trajs.hasNext()) {
+            auto traj=trajs.getNext();
+            auto it=traj.second.begin();
+            id_type segid;
+            id_type pvId=-1,ntId=-1;
+            while(it!=traj.second.end()){
+                Trajectory seg=*it;
+                vector<id3> ids;
+                int r=it-traj.second.begin();
+                segid=getSegId(traj.first,it-traj.second.begin());
+                pvId=it==traj.second.begin()?-1:segid-1;
+                ntId=(it+1)==traj.second.end()?-1:(segid+1);
+                ids.emplace_back(id3(segid,pvId,ntId));
+                Region thebr;
+                MBC thebc;
+                it->getMBC(thebc);
+                it->getMBRfull(thebr);
+                m_stream->inputSBB(segid,&thebr,&thebc);
+//                m_entryMbcs[segid] = thebc;
+//                m_entryMbrs[segid] = thebr;
+                vol1 += thebr.getArea();
+                vol2 += thebc.getArea();
+                radius1+=sqrt(sq(thebr.m_pHigh[0]-thebr.m_pLow[0])+
+                              sq(thebr.m_pHigh[1]-thebr.m_pLow[1]));
+                double dt=thebc.m_rd/thebc.m_rv;
+                if(thebc.m_rv<1e-7){
+                    dt=(thebc.m_endTime-thebc.m_startTime)/2;
+                }
+                double t=thebc.m_endTime-thebc.m_startTime;
+                ratio+=dt/t;
+                radius2+=(t-dt)/t*thebc.m_rd;
+                double v = (Point(thebc.m_pLow, 2).getMinimumDistance(Point(thebc.m_pHigh, 2))) /
+                           (thebc.m_endTime - thebc.m_startTime) + thebc.m_rv;
+                if (v > m_maxVelocity) m_maxVelocity = v;
+                while((it+1)!=traj.second.end()&&seg.m_points.size()+(it+1)->m_points.size()<pointnum){
+                    it++;
+                    seg.linkTrajectory(*it);
+                    segid=getSegId(traj.first,it-traj.second.begin());
+                    pvId=(it==traj.second.begin())?-1:segid-1;
+                    ntId=((it+1)==traj.second.end())?-1:(segid+1);
+                    ids.emplace_back(id3(segid,pvId,ntId));
+                    it->getMBC(thebc);
+                    it->getMBRfull(thebr);
+                    m_stream->inputSBB(segid,&thebr,&thebc);
+//                    m_entryMbcs[segid] = thebc;
+//                    m_entryMbrs[segid] = thebr;
+                    vol1 += thebr.getArea();
+                    vol2 += thebc.getArea();
+                    radius1+=sqrt(sq(thebr.m_pHigh[0]-thebr.m_pLow[0])+
+                                  sq(thebr.m_pHigh[1]-thebr.m_pLow[1]));
+                    double dt=thebc.m_rd/thebc.m_rv;
+                    if(thebc.m_rv<1e-7){
+                        dt=(thebc.m_endTime-thebc.m_startTime)/2;
+                    }
+                    double t=thebc.m_endTime-thebc.m_startTime;
+                    ratio+=dt/t;
+                    radius2+=(t-dt)/t*thebc.m_rd;
+                    double v = (Point(thebc.m_pLow, 2).getMinimumDistance(Point(thebc.m_pHigh, 2))) /
+                               (thebc.m_endTime - thebc.m_startTime) + thebc.m_rv;
+                    if (v > m_maxVelocity) m_maxVelocity = v;
+                }
+                m_segCount++;
+                m_timeCount += seg.m_endTime() - seg.m_startTime();
+                linecount += seg.m_points.size() - 1;
+                seg.storeToByteArray(&data, len);
+                for(const auto &s:ids){
+                    Entry *sege = new Entry(thisPageId, 0, len, s.m_pvId,s.m_ntId);
+                    m_entries[s.m_id] = sege;
+                }
+                id_type newPage = StorageManager::NewPage;
+                m_pStorageManager->storeByteArray(newPage,len, data);
+                assert(newPage == thisPageId);
+                pvId=segid;
+                thisPageId+=std::ceil(double(len)/m_pageSize);
+                it++;
+                delete[](data);
+            }
+        }
+        radius1/=m_stream->m_size;
+        radius2/=m_stream->m_size;
+        ratio/=m_stream->m_size;
+        if(output) {
+            std::cerr << "radius MBR is " << radius1 << ",radius MBC is " << radius2 << ", ratio is" << ratio << "\n";
+            std::cerr << "total segment is" <<m_stream->m_size<< "\n";
+            std::cerr << "expression effectiveness " << vol1 << " versus " << vol2 << "\n" << vol2 / vol1 << "\n";
+        }
+    }else{//group by spatial
+        Tools::SmartPointer<tsExternalSorter> es = Tools::SmartPointer<tsExternalSorter>(
+                new tsExternalSorter(m_pageSize, 200));
+        //load segments to sorter's record
+        if(output) {
+            std::cerr << "TrajStore:loading segments\n";
+        }
+        Region maxbr;
+        maxbr.makeInfinite(3);
+        double vol1 = 0, vol2 = 0;
+        long linecount = 0;
+        while(trajs.hasNext()) {
+            auto traj=trajs.getNext();
+            for (int j = 0; j < traj.second.size(); j++) {//segment
+                Trajectory seg = traj.second[j];
+                m_segCount++;
+                m_timeCount += seg.m_endTime() - seg.m_startTime();
+                linecount += seg.m_points.size() - 1;
+                uint8_t *data;
+                uint32_t len;
+                seg.storeToByteArray(&data, len);
+                MBC thebc;
+                seg.getMBC(thebc);
+                double v = (Point(thebc.m_pLow, 2).getMinimumDistance(Point(thebc.m_pHigh, 2))) /
+                           (thebc.m_endTime - thebc.m_startTime) + thebc.m_rv;
+                if (v > m_maxVelocity) m_maxVelocity = v;
+                Region thebr;
+                seg.getMBRfull(thebr);
+                maxbr.combineRegion(thebr);
+                id_type segid = getSegId(traj.first, j),
+                        pvId = (j == 0) ? -1 : segid - 1,
+                        ntId = (j == traj.second.size() - 1) ? -1 : segid + 1;
+                es->insert(new tsExternalSorter::Record(thebr, segid, pvId, ntId, len, data, 0, 0, &thebc));
+                m_stream->inputSBB(segid,&thebr,&thebc);
+//                m_entryMbcs[segid] = thebc;
+//                m_entryMbrs[segid] = thebr;
+                vol1 += thebr.getArea();
+                vol2 += thebc.getArea();
+            }
+        }
+        if(output) {
+            std::cerr << "total segment is" << m_entryMbrs.size() << "=" << m_entryMbcs.size() << "\n";
+            std::cerr << "expression effectiveness " << vol1 << " versus " << vol2 << "\n" << vol2 / vol1 << "\n";
+        }
+        //adjust the encoder
+        auto encoder = XZ3Enocder::instance();
+        encoder->m_xmin = maxbr.m_pLow[0];
+        encoder->m_xmax = maxbr.m_pHigh[0];
+        encoder->m_ymin = maxbr.m_pLow[1];
+        encoder->m_ymax = maxbr.m_pHigh[1];
+        encoder->m_zmin = maxbr.m_pLow[2];
+        encoder->m_zmax = maxbr.m_pHigh[2];
+
+        //sort the data
+        if(output) {
+            std::cerr << "TrajStore:sorting using XZ3 curve\n";
+        }
+        es->sort();
+
+        //save the data into pages
+        id_type thisPageId = m_pStorageManager->nextPage();
+#ifndef NDEBUG
+        std::cerr << "TrajStore:storing data into pages\n";
+#endif
+        uint32_t spaceRem = m_pageSize, currentLen = 0;//this two add to m_pagesize
+        uint8_t *pageData = new uint8_t[m_pageSize];
+        while (true) {
+            tsExternalSorter::Record *r;
+            try { r = es->getNextRecord(); } catch (Tools::EndOfStreamException) {
+                if (currentLen > 0) {
+//                m_pStorageManager->storeByteArray(thisPageId, currentLen, pageData);
+                    id_type newPage = StorageManager::NewPage;
+                    m_pStorageManager->storeByteArray(newPage, currentLen, pageData);
+                    assert(newPage == thisPageId);
+//                if(newPage!=thisPageId) std::cerr<<newPage<<" "<<thisPageId<<"\n";
+                    thisPageId++;
+                    spaceRem = m_pageSize;
+                    currentLen = 0;
+                }
+                break;
+            }
+            //if the traj expand to multiple pages, open a new page and store it
+            uint8_t *data = r->m_pData;
+            uint32_t len = r->m_len;
+            if (len > m_pageSize) {
+                //flush the current page
+                if (currentLen > 0) {
+                    id_type newPage = StorageManager::NewPage;
+                    m_pStorageManager->storeByteArray(newPage, currentLen, pageData);
+                    assert(newPage == thisPageId);
+//                if(newPage!=thisPageId) std::cerr<<newPage<<" "<<thisPageId<<"\n";
+                    thisPageId++;
+                    spaceRem = m_pageSize;
+                    currentLen = 0;
+                }
+                //record the entry
+                Entry *sege = new Entry(thisPageId, 0, len, r->m_pvId, r->m_ntId);
+                m_entries[r->m_id] = sege;
+                //write the big traj
+                id_type newPage = StorageManager::NewPage;
+                m_pStorageManager->storeByteArray(newPage, len, data);
+                assert(newPage == thisPageId);
+//            if(newPage!=thisPageId) std::cerr<<newPage<<" "<<thisPageId<<"\n";
+                thisPageId += std::ceil(1.0 * len / m_pageSize);
+                spaceRem = m_pageSize;
+                currentLen = 0;
+            }
+                //if this page is full,open a new page and store it
+            else if (spaceRem < len) {
+                //flush the current page
+                if (currentLen > 0) {
+                    id_type newPage = StorageManager::NewPage;
+                    m_pStorageManager->storeByteArray(newPage, currentLen, pageData);
+//                assert(newPage==thisPageId);
+                    if (newPage != thisPageId) std::cerr << newPage << " " << thisPageId << "\n";
+                    thisPageId++;
+                    spaceRem = m_pageSize;
+                    currentLen = 0;
+                }
+                //record the entry
+                Entry *sege = new Entry(thisPageId, 0, len, r->m_pvId, r->m_ntId);
+                m_entries[r->m_id] = sege;
+                //write in the new page
+                memcpy(&pageData[currentLen], data, len);
+                currentLen += len;
+                spaceRem -= len;
+            }
+                //if the Data could fit in page
+            else {
+                //record the entry
+                Entry *sege = new Entry(thisPageId, currentLen, len, r->m_pvId, r->m_ntId);
+                m_entries[r->m_id] = sege;
+                //write in the new page
+                memcpy(&pageData[currentLen], data, len);
+                currentLen += len;
+                spaceRem -= len;
+            }
+            delete r;
+        }
+        delete[] pageData;
+    }
+}
+
+
 
 const Trajectory TrajStore::getTraj(id_type &id) {
     auto it=m_entries.find(id);

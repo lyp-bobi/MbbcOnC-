@@ -28,6 +28,7 @@
 #include <spatialindex/SpatialIndex.h>
 
 #include <cstring>
+#include <string>
 #include <cmath>
 #include <limits>
 
@@ -621,4 +622,32 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const Region& r)
 	}
 
 	return os;
+}
+
+std::string Region::toString() const {
+    uint32_t i;
+    std::string s;
+    for (i = 0; i < m_dimension; ++i)
+    {
+        s+= std::to_string(m_pLow[i]) + " ";
+    }
+    for (i = 0; i < m_dimension; ++i)
+    {
+        s+= std::to_string(m_pHigh[i]) + " ";
+    }
+    return s;
+}
+void Region::loadFromString(std::string s) {
+    auto nums=split(s,' ');
+    int d= nums.size()/2;
+    makeDimension(d);
+    int i;
+    for (i = 0; i < m_dimension; ++i)
+    {
+        m_pLow[i]=std::stod(nums[i]);
+    }
+    for (i = 0; i < m_dimension; ++i)
+    {
+        m_pHigh[i]=std::stod(nums[d+i]);
+    }
 }

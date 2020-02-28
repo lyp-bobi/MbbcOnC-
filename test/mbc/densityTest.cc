@@ -27,8 +27,8 @@ int main(){
         StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
                 *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                 *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
-        TrajStore *ts1 = new TrajStore(file1, 4096, 100);
-        TrajStore *ts2 = new TrajStore(file2, 4096, 100);
+        TrajStore *ts1 = new TrajStore(name1, file1, 4096, 100);
+        TrajStore *ts2 = new TrajStore(name2, file2, 4096, 100);
         for(int dataSize=1;dataSize<=files.size();dataSize++){
             vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs(files[dataSize-1]);
             int maxseg = 0;

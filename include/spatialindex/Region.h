@@ -93,6 +93,9 @@ namespace SpatialIndex
 		virtual void makeInfinite(uint32_t dimension);
 		virtual void makeDimension(uint32_t dimension);
 
+        std::string toString() const ;
+        void loadFromString(std::string s);
+
 	private:
 		void initialize(const double* pLow, const double* pHigh, uint32_t dimension);
 

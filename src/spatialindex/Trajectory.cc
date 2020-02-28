@@ -7,6 +7,7 @@
 #include <limits>
 #include <algorithm>
 #include <string>
+#include <fstream>
 
 
 #include <spatialindex/SpatialIndex.h>
@@ -1884,7 +1885,8 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const Trajectory& r) {
 }
 
 
-std::vector<std::string> split(const std::string strtem,char a)
+
+std::vector<std::string> split(const std::string &strtem,char a)
 {
     std::vector<std::string> strvec;
 
@@ -1902,7 +1904,18 @@ std::vector<std::string> split(const std::string strtem,char a)
     return strvec;
 }
 
+std::string Trajectory::toString() const{
+    std::string s;
+    for (const auto &p:m_points) {
+        s += std::to_string(p.m_pCoords[0]) + "," + std::to_string(p.m_pCoords[1]) +
+             "," + std::to_string(p.m_time) + " ";
+    }
+    s.pop_back();
+    return s;
+}
+
 void Trajectory::loadFromString(std::string str) {
+    m_points.clear();
     std::vector<std::string> points=split(str,' ');
     for(const auto &p: points){
         std::vector<std::string> xyt=split(p,',');
@@ -1970,4 +1983,29 @@ void Trajectory::getPartialTrajectory(double tstart, double tend, SpatialIndex::
         double xy[2]={x,y};
         out.m_points.emplace_back(STPoint(xy,tend,2));
     }
+}
+
+int Trajectory::cutTrajsIntoFile(std::vector<std::pair<SpatialIndex::id_type, SpatialIndex::Trajectory>> &trajs,
+                                 double segLen, std::string filename) {
+    double totallen=0;
+    int maxseg=0;
+    int totalseg=0;
+    std::ofstream file(filename,std::ios::out);
+    for (const auto &traj:trajs) {
+        totallen += traj.second.m_points.size();
+        auto seg = traj.second.getSegments(segLen);
+        totalseg += seg.size();
+        maxseg = std::max(int(seg.size()), maxseg);
+        file<<"SubTraj\n"<<traj.first<<"\n";
+        for(auto s:seg){
+            file<<s.toString()<<"\n";
+        }
+        file<<"ESubTraj\n";
+    }
+    file<<"END";
+    double avgSegLen=double(totallen)/totalseg;
+    std::cerr<<"total sub-trajs num:"<<totalseg<<"\n";
+    std::cerr<<"segments' average length is "<<totallen*1.0/totalseg<<"\n";
+    file.close();
+    return maxseg;
 }

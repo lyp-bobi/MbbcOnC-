@@ -252,7 +252,13 @@ namespace SpatialIndex
                         raise(index);
                     }
                 }
-
+                void clean(){
+                    for(long i=1;i<m_vHandleHeap.size();i++){
+                        id_type idd=m_vHandleHeap[i];
+                        delete m_vElements[idd];
+                    }
+                    m_vHandleHeap.clear();
+			    }
 			};
             struct storeEntry{
                 id_type m_page;
@@ -756,6 +762,10 @@ namespace SpatialIndex
                         return m_mpq.pop();
                     else
                         return m_nodespq.pop();
+                }
+                void clean(){
+                    m_mpq.clean();
+                    m_nodespq.clean();
                 }
 
                 auto push(NNEntry* e){

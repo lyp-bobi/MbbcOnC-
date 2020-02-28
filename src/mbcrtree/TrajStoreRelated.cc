@@ -19,12 +19,22 @@ public:
 ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(IStorageManager *tsm,
                                                                            uint32_t pageSize, uint32_t dimension,
                                                                            id_type &indexIdentifier) {
-    TrajStore *ts= static_cast<TrajStore*>(tsm);
-    auto dataStream=new mbcrtreeSegmentStream(ts);
-    int indexCapacity=std::floor((pageSize-56)/56);
-    int leafCapacity=std::floor((pageSize-56)/104);
-    ISpatialIndex* tree= createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,leafCapacity,dimension,SpatialIndex::MBCRTree::RV_RSTAR,indexIdentifier);
-    delete dataStream;
+    std::cerr<<"start bulkloading with TrajStore\n";
+    TrajStore *ts = static_cast<TrajStore *>(tsm);
+    int indexCapacity = std::floor((pageSize - 56) / 56);
+    int leafCapacity = std::floor((pageSize - 56) / 104);
+    ISpatialIndex *tree;
+    if (ts->m_stream!= nullptr) {
+        tree = createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR, *ts->m_stream, *ts, 0.9,
+                                                           indexCapacity, leafCapacity, dimension,
+                                                           SpatialIndex::MBCRTree::RV_RSTAR, indexIdentifier);
+    } else {
+        auto dataStream = new mbcrtreeSegmentStream(ts);
+        tree = createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR, *dataStream, *ts, 0.9,
+                                                           indexCapacity, leafCapacity, dimension,
+                                                           SpatialIndex::MBCRTree::RV_RSTAR, indexIdentifier);
+        delete dataStream;
+    }
     MBCRTree* r= static_cast<MBCRTree*>(tree);
     ts->releaseTmp();
 //    std::cerr<<"leaf time period"<<calcuTime[0]/calcuTime[1]<<"\n";
@@ -36,12 +46,22 @@ ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore
 ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(IStorageManager *tsm,
                                                                                  uint32_t pageSize, uint32_t dimension,
                                                                                  id_type &indexIdentifier) {
+    std::cerr<<"start bulkloading with TrajStore\n";
     TrajStore *ts= static_cast<TrajStore*>(tsm);
-    auto dataStream=new mbcrtreeSegmentStream(ts);
     int indexCapacity=std::floor((pageSize-56)/56);
     int leafCapacity=std::floor((pageSize-56)/88);
-    ISpatialIndex* tree= createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,leafCapacity,dimension,SpatialIndex::MBCRTree::RV_RSTAR,indexIdentifier,true);
-    delete dataStream;
+    ISpatialIndex *tree;
+    if (ts->m_stream!= nullptr) {
+        tree = createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR, *ts->m_stream, *ts, 0.9,
+                                            indexCapacity, leafCapacity, dimension,
+                                            SpatialIndex::MBCRTree::RV_RSTAR, indexIdentifier,true);
+    } else {
+        auto dataStream = new mbcrtreeSegmentStream(ts);
+        tree = createAndBulkLoadNewMBCRTree(SpatialIndex::MBCRTree::BLM_STR, *dataStream, *ts, 0.9,
+                                            indexCapacity, leafCapacity, dimension,
+                                            SpatialIndex::MBCRTree::RV_RSTAR, indexIdentifier,true);
+        delete dataStream;
+    }
     MBCRTree* r= static_cast<MBCRTree*>(tree);
     ts->releaseTmp();
 //    std::cerr<<"leaf time period"<<calcuTime[0]/calcuTime[1]<<"\n";
