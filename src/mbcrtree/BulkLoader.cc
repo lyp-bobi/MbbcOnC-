@@ -371,12 +371,12 @@ void BulkLoader::bulkLoadUsingSTR(
 	{
 	    scount++;
 	    auto d=stream.getNext();
-		Data* d1 = dynamic_cast<Data*>(d);
-		if(d1!= nullptr){
-            es->insert(new ExternalSorter::Record(d1->m_mbr, d1->m_id, d1->m_dataLength, d1->m_pData, 0,0,&d1->m_mbc));
-            d1->m_pData = 0;
-            delete d1;
-		} else{
+//		Data* d1 = dynamic_cast<Data*>(d);
+//		if(d1!= nullptr){
+//            es->insert(new ExternalSorter::Record(d1->m_mbr, d1->m_id, d1->m_dataLength, d1->m_pData, 0,0,&d1->m_mbc));
+//            d1->m_pData = 0;
+//            delete d1;
+//		} else{
 		    ircData* d2 = dynamic_cast<ircData*>(d);
             if (d2 == nullptr) {
                 throw Tools::IllegalArgumentException(
@@ -384,11 +384,15 @@ void BulkLoader::bulkLoadUsingSTR(
                 );
             }
             es->insert(new ExternalSorter::Record(d2->m_br, d2->m_id, 0, nullptr, 0,0,&d2->m_bc));
-//            std::cerr<<scount<<"\t"<<stream.size()<<"\n";
+            if(scount>67108000){
+                std::cerr<<scount<<"\t"<<es->getTotalEntries()<<"\n";
+                std::cerr<<d2->m_id<<"\n"<<d2->m_br<<"\n"<<d2->m_bc<<"\n";
+            }
+
             delete d2;
-		}
+//		}
 	}
-	std::cerr<<"start sorting";
+	std::cerr<<"start sorting the"<<es->getTotalEntries()<<"entries\n";
 	es->sort();
     std::cerr<<"sorted.\n";
 	pTree->m_stats.m_u64Data = es->getTotalEntries();
@@ -494,7 +498,15 @@ void BulkLoader::createLevel(
                         NodePtr child=pTree->readNode(n->m_pIdentifier[i]);
                         for(int j=0;j<child->m_children;j++){
                             id_type id=child->m_pIdentifier[j];
-                            auto entry=pTree->m_ts->m_entries[id];
+                            TrajStore::Entry *entry;
+                            if(pTree->m_ts->m_stream!= nullptr){
+                                auto it=pTree->m_ts->
+                                        m_dentries.search(std::to_string(id));
+                                DiskMultiMap::MultiMapTuple tuple = *it;
+                                entry=new TrajStore::Entry(tuple.value);
+                            }else{
+                                entry=pTree->m_ts->m_entries[id];
+                            }
                             id_type pvId=entry->m_pvId;
                             if(pvId>=0){
                                 auto store=pTree->m_ts->m_part2node[pvId];
@@ -542,7 +554,15 @@ void BulkLoader::createLevel(
                     NodePtr child=pTree->readNode(n->m_pIdentifier[i]);
                     for(int j=0;j<child->m_children;j++){
                         id_type id=child->m_pIdentifier[j];
-                        auto entry=pTree->m_ts->m_entries[id];
+                        TrajStore::Entry *entry;
+                        if(pTree->m_ts->m_stream!= nullptr){
+                            auto it=pTree->m_ts->
+                                    m_dentries.search(std::to_string(id));
+                            DiskMultiMap::MultiMapTuple tuple = *it;
+                            entry=new TrajStore::Entry(tuple.value);
+                        }else{
+                            entry=pTree->m_ts->m_entries[id];
+                        }
                         id_type pvId=entry->m_pvId;
                         if(pvId>=0){
                             auto store=pTree->m_ts->m_part2node[pvId];

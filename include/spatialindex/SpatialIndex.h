@@ -29,6 +29,7 @@
 
 #include "tools/Tools.h"
 #include "tools/MutablePriorityQueue.h"
+#include "tools/DiskMultiMap.h"
 #include <chrono>
 
 #ifndef M_PI_2

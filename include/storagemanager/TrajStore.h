@@ -158,44 +158,63 @@ namespace SpatialIndex
         };
         class SBBStream:public IDataStream{
         public:
-            std::fstream m_File;
+            std::fstream m_idFile;
+            std::fstream m_brFile;
+            std::fstream m_bcFile;
             bool m_binput=true;
             bool m_busembc=false;
             id_type m_size;
             id_type m_cur;
             string m_s;
             SBBStream(std::string &str){
-                m_File.open(str,std::ios::out);
+                m_idFile.open(str+".id",std::ios::out);
+                m_brFile.open(str+".mbr",std::ios::out);
+                m_bcFile.open(str+".mbc",std::ios::out);
                 m_size=0;
                 m_cur=0;
                 m_s=str;
             }
             bool hasNext(){
+//                std::cerr<<m_cur<<m_size;
                 return m_cur<m_size;
             }
             void inputSBB(id_type id, Region* br, MBC* bc=nullptr){
+                m_size+=1;
+//                return;
                 if(!m_binput){
-                    m_File.open(m_s,std::ios::out);
+                    m_idFile.open(m_s+".id",std::ios::out);
+                    m_brFile.open(m_s+".mbr",std::ios::out);
+                    m_bcFile.open(m_s+".mbc",std::ios::out);
                     m_binput=true;
                     rewind();
                 }
-                m_size+=1;
-                m_File<<id<<std::endl<<br->toString()<<std::endl;
-                if(bc!= nullptr){
+                m_idFile<<id<<"\n";
+                m_brFile<<br->toString()<<"\n";
+                if(m_busembc||bc!= nullptr){
                     m_busembc=true;
-                    m_File<<bc->toString()<<std::endl;
+                    m_bcFile<<bc->toString()<<"\n";
                 }
             }
             uint32_t size() override {
                 return m_size;
             }
             void endInput(){
-                m_File<<"END"<<std::endl;
-                m_File.flush();
-                m_File.close();
-                m_File.clear();
                 m_binput=false;
-                m_File.open(m_s,std::ios::in);
+                m_idFile<<"END"<<std::endl;
+                m_idFile.flush();
+                m_idFile.close();
+                m_idFile.clear();
+                m_idFile.open(m_s+".id",std::ios::in);
+                m_brFile<<"END"<<std::endl;
+                m_brFile.flush();
+                m_brFile.close();
+                m_brFile.clear();
+                m_brFile.open(m_s+".mbr",std::ios::in);
+                m_bcFile<<"END"<<std::endl;
+                m_bcFile.flush();
+                m_bcFile.close();
+                m_bcFile.clear();
+                m_bcFile.open(m_s+".mbc",std::ios::in);
                 rewind();
                 std::cerr<<m_s<<" input finished. We have "<<m_size<<" sub-bounding boxes.\n";
             }
@@ -208,17 +227,34 @@ namespace SpatialIndex
                 MBC bc;
                 m_cur++;
                 std::string s;
-                std::getline(m_File,s);
+                std::getline(m_idFile,s);
+                if(m_cur>67108000){
+                    std::cerr<<s<<"\n";
+                }
                 id=std::stoll(s);
-                std::getline(m_File,s);
+                std::getline(m_brFile,s);
+                if(m_cur>67108000){
+                    std::cerr<<s<<"\n";
+                }
                 br.loadFromString(s);
                 if(m_busembc){
-                    std::getline(m_File,s);
+                    std::getline(m_bcFile,s);
+                    if(m_cur>67108000){
+                        std::cerr<<s<<"\n";
+                    }
                     bc.loadFromString(s);
                 }
                 if(m_size==m_cur){
                     std::cerr<<"SBB loading finished.\n";
-                    m_File.close();
+                    m_idFile.flush();
+                    m_idFile.close();
+                    m_idFile.clear();
+                    m_brFile.flush();
+                    m_brFile.close();
+                    m_brFile.clear();
+                    m_bcFile.flush();
+                    m_bcFile.close();
+                    m_bcFile.clear();
                     m_size=0;
                 }
 //                if(m_size-m_cur<10){
@@ -228,12 +264,17 @@ namespace SpatialIndex
             }
             void rewind() override{
                 m_cur=0;
-                m_File.clear();
-                m_File.seekg(std::ios::beg);
+                m_idFile.clear();
+                m_idFile.seekg(std::ios::beg);
+                m_brFile.clear();
+                m_brFile.seekg(std::ios::beg);
+                m_bcFile.clear();
+                m_bcFile.seekg(std::ios::beg);
             }
             ~SBBStream(){
-                m_File.close();
-                std::remove(m_s.c_str());
+                m_idFile.close();
+                m_brFile.close();
+                m_bcFile.close();
             }
         };
 
@@ -259,6 +300,7 @@ namespace SpatialIndex
             void releaseTmp(){
 //                delete m_stream; //error on this line
                 for(const auto e:m_entries) delete e.second;
+
                 m_entries.clear();
                 m_entryMbcs.clear();
                 m_entryMbrs.clear();
@@ -280,6 +322,8 @@ namespace SpatialIndex
                 id_type m_pvId;
                 id_type m_ntId;
                 Entry(id_type page,uint32_t start,uint32_t len,id_type pvId,id_type ntId);
+                std::string toString();
+                Entry(string &s);
             };
             id_type getTrajId(id_type id){return id/m_maxTrajSegs;}
             id_type getSegId(id_type id,uint32_t segnum){return id*m_maxTrajSegs+segnum;}
@@ -292,6 +336,7 @@ namespace SpatialIndex
             const ShapeList getMBCsByTime(id_type &id,double tstart,double tend);
             const Region getMBR(id_type &id);
             const MBC getMBC(id_type &id);
+            DiskMultiMap m_dentries;
             std::map<id_type, Entry*> m_entries;//map from seg id to entry
             std::map<id_type, MBC> m_entryMbcs;
             std::map<id_type, Region> m_entryMbrs;

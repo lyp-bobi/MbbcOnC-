@@ -36,6 +36,7 @@ ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore
         delete dataStream;
     }
     MBCRTree* r= static_cast<MBCRTree*>(tree);
+    std::cerr<<"Tree built.\n";
     ts->releaseTmp();
 //    std::cerr<<"leaf time period"<<calcuTime[0]/calcuTime[1]<<"\n";
     calcuTime[0]=calcuTime[1]=0;
@@ -63,6 +64,7 @@ ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(IS
         delete dataStream;
     }
     MBCRTree* r= static_cast<MBCRTree*>(tree);
+    std::cerr<<"Tree built.\n";
     ts->releaseTmp();
 //    std::cerr<<"leaf time period"<<calcuTime[0]/calcuTime[1]<<"\n";
 //    calcuTime[0]=calcuTime[1]=0;

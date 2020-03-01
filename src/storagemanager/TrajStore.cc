@@ -7,6 +7,7 @@
 #include <cstring>
 #include "Buffer.h"
 
+
 //
 // tsExternalSorter::Record
 //
@@ -395,6 +396,22 @@ inline uint64_t tsExternalSorter::getTotalEntries() const
 TrajStore::Entry::Entry(id_type page, uint32_t start, uint32_t len, id_type pvId, id_type ntId)
     :m_page(page),m_start(start),m_len(len),m_pvId(pvId),m_ntId(ntId){}
 
+std::string TrajStore::Entry::toString() {
+    string s;
+    s=std::to_string(m_page)+","+std::to_string(m_start)+","+
+            std::to_string(m_len)+","+std::to_string(m_pvId)+","
+            +std::to_string(m_ntId);
+    return s;
+}
+
+TrajStore::Entry::Entry(string &s) {
+    auto ws=split(s,',');
+    m_page=std::stoll(ws[0]);
+    m_start=std::stoi(ws[1]);
+    m_len=std::stoi(ws[2]);
+    m_pvId=std::stoll(ws[3]);
+    m_ntId=std::stoll(ws[4]);
+}
 
 TrajStore::~TrajStore() {
     releaseTmp();
@@ -404,6 +421,7 @@ TrajStore::~TrajStore() {
 TrajStore::TrajStore(string &name,IStorageManager *store,uint32_t pageSize,int maxseg)
     :m_pStorageManager(store),m_pageSize(pageSize),m_maxTrajSegs(maxseg){
     m_name=name;
+    m_dentries.createNew("./"+m_name+".le",100000);
 }
 
 struct id3{
@@ -711,7 +729,7 @@ void TrajStore::loadSegments(std::string file, bool idFirst, bool output) {
         uint8_t *data;
         uint32_t len;
         int pointnum=(m_pageSize-2* sizeof(bool)-sizeof(unsigned long))/(3* sizeof(double));
-        if(output) std::cerr<<"A page could store "<<pointnum<<" points\n";
+//        if(output) std::cerr<<"A page could store "<<pointnum<<" points\n";
         while (trajs.hasNext()) {
             auto traj=trajs.getNext();
             auto it=traj.second.begin();
@@ -779,7 +797,9 @@ void TrajStore::loadSegments(std::string file, bool idFirst, bool output) {
                 seg.storeToByteArray(&data, len);
                 for(const auto &s:ids){
                     Entry *sege = new Entry(thisPageId, 0, len, s.m_pvId,s.m_ntId);
-                    m_entries[s.m_id] = sege;
+//                    m_entries[s.m_id] = sege;
+                    m_dentries.insert(std::to_string(s.m_id),sege->toString(),"");
+                    delete(sege);
                 }
                 id_type newPage = StorageManager::NewPage;
                 m_pStorageManager->storeByteArray(newPage,len, data);

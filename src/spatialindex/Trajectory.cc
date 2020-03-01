@@ -2000,12 +2000,13 @@ int Trajectory::cutTrajsIntoFile(std::vector<std::pair<SpatialIndex::id_type, Sp
         for(auto s:seg){
             file<<s.toString()<<"\n";
         }
-        file<<"ESubTraj\n";
+        file<<"ESubTraj"<<endl;
     }
-    file<<"END";
+    file<<"END"<<endl;
     double avgSegLen=double(totallen)/totalseg;
     std::cerr<<"total sub-trajs num:"<<totalseg<<"\n";
     std::cerr<<"segments' average length is "<<totallen*1.0/totalseg<<"\n";
+    file.flush();
     file.close();
     return maxseg;
 }

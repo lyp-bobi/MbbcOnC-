@@ -8,12 +8,12 @@ int main(){
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
-//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
+//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
+        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
 //        vector<pair<id_type, Trajectory> > trajs = loadGTFolder();
         auto stat=trajStat::instance();
         int maxseg = 0;
-        double segLenParas[]={50,80,100,200,300,400,500,750,1000,1500,2000,2500,3000};
+        double segLenParas[]={100,200,300,400,500,750,1000,1500,2000,2500,3000,3500,4000};
 //        double segLenParas[]={60,70,80,90,100,140,150,170,180,200};
         double queryLenParas[]={0,3600};
         std::cerr<<"Starting range test\n"<<"Segmentation lengths are:";
@@ -37,7 +37,7 @@ int main(){
             queries.clear();
         }
         for (double segLen:segLenParas) {
-            maxseg=300;
+            maxseg=3000;
             string name0 ="name0", name1 ="name1", name2 = "name2";
             id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
             IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
@@ -48,7 +48,8 @@ int main(){
                     *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
-            maxseg=Trajectory::cutTrajsIntoFile(trajs,segLen);
+            maxseg=std::max(3000,Trajectory::cutTrajsIntoFile(trajs,segLen));
+            std::cerr<<"maxseg is "<<maxseg<<"\n";
 
             TrajStore *ts1 = new TrajStore(name1, diskfile1, 4096, maxseg+1);
             TrajStore *ts2 = new TrajStore(name2, diskfile2, 4096, maxseg+1);
