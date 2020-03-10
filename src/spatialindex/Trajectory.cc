@@ -1065,19 +1065,24 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
     double max=0;
     fakeTpVector midTraj(&m_points,cut1,cut2);
     if(m_startTime()<cut1){
-        double pd= getStaticIED(timedTraj2[0].m_pCoords[0], timedTraj2[0].m_pCoords[1], m_startTime(), cut1);
+        double pd;
         if(disttype==0) {
+            pd= getStaticIED(timedTraj2[0].m_pCoords[0], timedTraj2[0].m_pCoords[1], m_startTime(), cut1);
             sum += pd;
         }else if(disttype==1){
+            pd= getStaticMaxSED(timedTraj2[0].m_pCoords[0], timedTraj2[0].m_pCoords[1], m_startTime(), cut1);
             max=std::max(max,pd);
         }
     }
     if(m_endTime()>cut2){
-        double pd= getStaticIED(timedTraj2[timedTraj2.m_size - 1].m_pCoords[0],
-                                timedTraj2[timedTraj2.m_size - 1].m_pCoords[1], cut2, m_endTime());
+        double pd;
         if(disttype==0) {
+            pd= getStaticIED(timedTraj2[timedTraj2.m_size - 1].m_pCoords[0],
+                              timedTraj2[timedTraj2.m_size - 1].m_pCoords[1], cut2, m_endTime());
             sum += pd;
         }else if(disttype==1){
+            pd= getStaticMaxSED(timedTraj2[timedTraj2.m_size - 1].m_pCoords[0],
+                              timedTraj2[timedTraj2.m_size - 1].m_pCoords[1], cut2, m_endTime());
             max=std::max(max,pd);
         }
     }
@@ -1350,11 +1355,11 @@ double Trajectory::getMinimumDistance(const ShapeList &in,bool hasPrev,bool hasN
                 if (pd != 1e300) max=std::max(max,pd);
             }
             if (m_startTime() < ints) {
-                pd = getStaticIED(sPoint.m_pCoords[0], sPoint.m_pCoords[1], m_startTime(), ints);
+                pd = getStaticMaxSED(sPoint.m_pCoords[0], sPoint.m_pCoords[1], m_startTime(), ints);
                 if (pd != 1e300) max=std::max(max,pd);
             }
             if (m_endTime() > inte) {
-                pd = getStaticIED(ePoint.m_pCoords[0], ePoint.m_pCoords[1], inte, m_endTime());
+                pd = getStaticMaxSED(ePoint.m_pCoords[0], ePoint.m_pCoords[1], inte, m_endTime());
                 if (pd != 1e300) max=std::max(max,pd);
             }
         }
