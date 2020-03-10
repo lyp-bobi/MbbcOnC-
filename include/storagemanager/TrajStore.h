@@ -228,20 +228,11 @@ namespace SpatialIndex
                 m_cur++;
                 std::string s;
                 std::getline(m_idFile,s);
-                if(m_cur>67108000){
-                    std::cerr<<s<<"\n";
-                }
                 id=std::stoll(s);
                 std::getline(m_brFile,s);
-                if(m_cur>67108000){
-                    std::cerr<<s<<"\n";
-                }
                 br.loadFromString(s);
                 if(m_busembc){
                     std::getline(m_bcFile,s);
-                    if(m_cur>67108000){
-                        std::cerr<<s<<"\n";
-                    }
                     bc.loadFromString(s);
                 }
                 if(m_size==m_cur){

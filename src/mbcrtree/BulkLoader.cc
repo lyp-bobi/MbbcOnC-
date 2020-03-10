@@ -371,12 +371,12 @@ void BulkLoader::bulkLoadUsingSTR(
 	{
 	    scount++;
 	    auto d=stream.getNext();
-//		Data* d1 = dynamic_cast<Data*>(d);
-//		if(d1!= nullptr){
-//            es->insert(new ExternalSorter::Record(d1->m_mbr, d1->m_id, d1->m_dataLength, d1->m_pData, 0,0,&d1->m_mbc));
-//            d1->m_pData = 0;
-//            delete d1;
-//		} else{
+		Data* d1 = dynamic_cast<Data*>(d);
+		if(d1!= nullptr){
+            es->insert(new ExternalSorter::Record(d1->m_mbr, d1->m_id, d1->m_dataLength, d1->m_pData, 0,0,&d1->m_mbc));
+            d1->m_pData = 0;
+            delete d1;
+		} else{
 		    ircData* d2 = dynamic_cast<ircData*>(d);
             if (d2 == nullptr) {
                 throw Tools::IllegalArgumentException(
@@ -384,13 +384,8 @@ void BulkLoader::bulkLoadUsingSTR(
                 );
             }
             es->insert(new ExternalSorter::Record(d2->m_br, d2->m_id, 0, nullptr, 0,0,&d2->m_bc));
-            if(scount>67108000){
-                std::cerr<<scount<<"\t"<<es->getTotalEntries()<<"\n";
-                std::cerr<<d2->m_id<<"\n"<<d2->m_br<<"\n"<<d2->m_bc<<"\n";
-            }
-
             delete d2;
-//		}
+		}
 	}
 	std::cerr<<"start sorting the"<<es->getTotalEntries()<<"entries\n";
 	es->sort();

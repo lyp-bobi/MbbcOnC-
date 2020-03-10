@@ -129,15 +129,15 @@ int main(){
         string name0 = "name0";
         IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096);
         StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false);
-        auto ts=TrajStore(name0,file0,4096);
-        ts.loadSegments(segs);
+        auto ts= new TrajStore(name0,file0,4096);
+        ts->loadSegments(segs);
 //        for(auto e:ts.m_entries){
 //            cout<<e.first<<endl;
 //            cout<<e.second->m_page<<" "<<e.second->m_start<<" "<<e.second->m_len<<endl;
 //        }
         id_type id=1500;
         Trajectory tj;
-        tj=ts.getTrajByTime(id,0,1000);
+        tj=ts->getTrajByTime(id,0,1000);
         cout<<trajs[15].second<<endl;
         cout<<tj;
     }
