@@ -466,7 +466,8 @@ namespace SpatialIndex
                                                    (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
                                 sum+=pd;
                             }
-                        } else {
+                        }
+                        else {
                             //inferred distance(front dist, back dist and mid dist) should be stored as negative values
                             //front dist
                             if (parts->m_mintime > m_query.m_startTime()) {
@@ -642,8 +643,8 @@ namespace SpatialIndex
                                         pd = parts->m_computedDist[timeInterval];
                                         max=std::max(max,pd);
                                     } else {
-                                        pd = m_query.getStaticMaxSED(parts->m_mbrs.back(), parts->m_maxtime,
-                                                                     m_query.m_endTime());
+                                        pd = m_query.getStaticMaxSED(parts->m_mbcs.front().m_pLow[0],parts->m_mbcs.front().m_pLow[1],
+                                                                     m_query.m_startTime(),parts->m_mintime);
                                         parts->m_computedDist[timeInterval] = pd;
                                         computedTime += timeInterval.second - timeInterval.first;
                                         max=std::max(max,pd);
