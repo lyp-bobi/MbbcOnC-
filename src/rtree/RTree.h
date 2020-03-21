@@ -454,30 +454,36 @@ namespace SpatialIndex
                             }
                             max=std::max(max,pd);
                         }
-                        if(!parts->m_hasPrev){
-                            if (parts->m_computedDist.count(timeInterval) > 0) {
-                                pd = parts->m_computedDist[timeInterval];
-                                max=std::max(max,pd);
-                            } else {
-                                pd = m_query.getStaticMaxSED(parts->m_pTrajs.front().m_points.front().m_pCoords[0],
-                                                             parts->m_pTrajs.front().m_points.front().m_pCoords[1],
-                                                             m_query.m_startTime(), parts->m_mintime);
-                                parts->m_computedDist[timeInterval] = pd;
-                                computedTime += timeInterval.second - timeInterval.first;
-                                max=std::max(max,pd);
+                        if(m_query.m_startTime()<parts->m_mintime){
+                            if(!parts->m_hasPrev){
+                                timeInterval = std::make_pair(m_query.m_startTime(),parts->m_mintime);
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    pd = parts->m_computedDist[timeInterval];
+                                    max=std::max(max,pd);
+                                } else {
+                                    pd = m_query.getStaticMaxSED(parts->m_pTrajs.front().m_points.front().m_pCoords[0],
+                                                                 parts->m_pTrajs.front().m_points.front().m_pCoords[1],
+                                                                 m_query.m_startTime(), parts->m_mintime);
+                                    parts->m_computedDist[timeInterval] = pd;
+                                    computedTime += timeInterval.second - timeInterval.first;
+                                    max=std::max(max,pd);
+                                }
                             }
                         }
-                        if(!parts->m_hasNext){
-                            if (parts->m_computedDist.count(timeInterval) > 0) {
-                                pd = parts->m_computedDist[timeInterval];
-                                max=std::max(max,pd);
-                            } else {
-                                pd = m_query.getStaticMaxSED(parts->m_pTrajs.back().m_points.back().m_pCoords[0],
-                                                             parts->m_pTrajs.back().m_points.back().m_pCoords[1], parts->m_maxtime,
-                                                             m_query.m_endTime());
-                                parts->m_computedDist[timeInterval] = pd;
-                                computedTime += timeInterval.second - timeInterval.first;
-                                max=std::max(max,pd);
+                        if(m_query.m_endTime()>parts->m_maxtime){
+                            if(!parts->m_hasNext){
+                                timeInterval = std::make_pair(parts->m_maxtime,m_query.m_endTime());
+                                if (parts->m_computedDist.count(timeInterval) > 0) {
+                                    pd = parts->m_computedDist[timeInterval];
+                                    max=std::max(max,pd);
+                                } else {
+                                    pd = m_query.getStaticMaxSED(parts->m_pTrajs.back().m_points.back().m_pCoords[0],
+                                                                 parts->m_pTrajs.back().m_points.back().m_pCoords[1], parts->m_maxtime,
+                                                                 m_query.m_endTime());
+                                    parts->m_computedDist[timeInterval] = pd;
+                                    computedTime += timeInterval.second - timeInterval.first;
+                                    max=std::max(max,pd);
+                                }
                             }
                         }
 
