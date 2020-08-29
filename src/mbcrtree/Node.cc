@@ -64,7 +64,7 @@ uint32_t Node::getByteArraySize() const
                  m_children * (m_pTree->m_dimension * sizeof(double) * 2+ sizeof(double)*2 + sizeof(id_type)));
     if(m_level==0)
         len=len+m_children *(2* sizeof(id_type)+ sizeof(id_type)+ 2*sizeof(uint32_t));
-//    std::cerr<<len<<"\n";
+    //std::cerr<<len<<"\n";
     return len;
 }
 

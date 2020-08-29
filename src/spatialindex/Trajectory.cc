@@ -630,11 +630,13 @@ inline double theF(double c1,double c2,double c3,double c4,double t){
                + (2 * c1 * t + c2) * sqrt(std::max(0.0,c1 * t * t + c2 * t + c3)) / 4 / c1 / c4;
     }
 }
-double theD(double c1,double c2,double c3,double c4,double t){
+inline double theD(double c1,double c2,double c3,double c4,double t){
     //the c4 should be the length of that time period
     return sqrt(c1*t*t+c2*t+c3)/c4;
 }
-
+inline double theDdd(double c1,double c2,double c3,double c4,double t){
+    return 0;
+}
 
 double Trajectory::line2lineIED(const SpatialIndex::STPoint &p1s, const SpatialIndex::STPoint &p1e,
                                 const SpatialIndex::STPoint &p2s, const SpatialIndex::STPoint &p2e) {
@@ -1991,14 +1993,24 @@ void Trajectory::getPartialTrajectory(double tstart, double tend, SpatialIndex::
 }
 
 int Trajectory::cutTrajsIntoFile(std::vector<std::pair<SpatialIndex::id_type, SpatialIndex::Trajectory>> &trajs,
-                                 double segLen, std::string filename) {
+                                 double segLen, int strat, std::string filename) {
     double totallen=0;
     int maxseg=0;
     int totalseg=0;
     std::ofstream file(filename,std::ios::out);
     for (const auto &traj:trajs) {
         totallen += traj.second.m_points.size();
-        auto seg = traj.second.getSegments(segLen);
+        std::vector<Trajectory> seg;
+        switch(strat){
+            case 0:
+                seg = traj.second.getHybridSegments(segLen);
+                break;
+            case 1:
+                seg = traj.second.getFixedSegments(int(segLen)+1);
+                break;
+            default:
+                break;
+        }
         totalseg += seg.size();
         maxseg = std::max(int(seg.size()), maxseg);
         file<<"SubTraj\n"<<traj.first<<"\n";

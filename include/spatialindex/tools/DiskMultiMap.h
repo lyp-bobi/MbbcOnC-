@@ -14,6 +14,7 @@
 #include <fstream>
 #include <string>
 #include <type_traits>
+#include <limits.h>
 #include <cstdint> // if Offset is int32_t instead of ios::streamoff
 using namespace std;
 
@@ -25,7 +26,7 @@ struct is_string {
 
 SIDX_DLL class BinaryFile {
 public:
-    typedef int32_t Offset;
+    typedef unsigned long long Offset;
 
     ~BinaryFile() {
         m_stream.close();
@@ -197,9 +198,10 @@ public:
     }
     Iterator search(const std::string& key){
         DiskMultiMapBucket bucket = bucketAt(hash(key));
-        if (bucket.numNodes == 0)
+        if (bucket.numNodes == 0) {
+            std::cerr<<"ERROR at key "<<key<<","<<hash(key)<<"\n";
             return Iterator();
-
+        }
         std::list<BucketNode> bucketNodes(1, nodeAt(bucket.firstNode));
         for (int i = 1; i < bucket.numNodes; i++)
             bucketNodes.push_back(nodeAt(bucketNodes.back().nextNode));
@@ -244,7 +246,7 @@ public:
         return itemsErased;
     }
 private:
-    static const Location LIST_END = 2147483647;
+    static const Location LIST_END = ULONG_LONG_MAX;
     struct DiskMultiMapHeader {
         unsigned int numBuckets = 0;
         long numDeletedNodes = 0;

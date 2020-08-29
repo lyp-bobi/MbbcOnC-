@@ -183,7 +183,7 @@ namespace SpatialIndex
         std::vector<Trajectory> getGlobalSegmentsCut(double len) const;
         void linkTrajectory(Trajectory &other);
 
-        static int cutTrajsIntoFile(std::vector<std::pair<id_type, Trajectory> > &trajs,double segLen,std::string filename=subTrajFile);
+        static int cutTrajsIntoFile(std::vector<std::pair<id_type, Trajectory> > &trajs,double segLen, int strat=0,std::string filename=subTrajFile);
         class subTrajStream{
         public:
             std::ifstream inFile;

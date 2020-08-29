@@ -71,6 +71,7 @@ set (SOURCES
         simpliTest
         speedEstimator
         changeKTest
+        e2eRangeTest
         )
 
 foreach (test ${SOURCES})

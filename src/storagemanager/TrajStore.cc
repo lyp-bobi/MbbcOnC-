@@ -421,7 +421,7 @@ TrajStore::~TrajStore() {
 TrajStore::TrajStore(string &name,IStorageManager *store,uint32_t pageSize,int maxseg)
     :m_pStorageManager(store),m_pageSize(pageSize),m_maxTrajSegs(maxseg){
     m_name=name;
-    m_dentries.createNew("./"+m_name+".le",100000);
+    m_dentries.createNew("./"+m_name+".le",1000000);
 }
 
 struct id3{

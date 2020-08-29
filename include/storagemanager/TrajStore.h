@@ -31,6 +31,22 @@ namespace SpatialIndex
         double Dx=0,Dy=0,Dt=0;
         double dist=0;
         static trajStat* instance();
+        void set(double _bt, double _M, long _lineCount, long _trajCount,
+            double _tl, double _jt, double _v, double _minx, double _maxx,
+            double _miny, double _maxy, double _mint, double _maxt,
+            double _Dx, double _Dy, double _Dt, double _dist)
+        {
+            bt=_bt; M=_M; lineCount=_lineCount; trajCount=_trajCount;
+            tl=_tl; jt=_jt; v=_v; minx=_minx; maxx=_maxx;
+            miny=_miny; maxy=_maxy; mint=_mint; maxt=_maxt;
+            Dx=_Dx; Dy=_Dy; Dt=_Dt; dist=_dist;
+        }
+        void output(){
+            std::cerr<<bt<<","<< M<<","<< lineCount<<","<< trajCount<<","<<
+                     tl<<","<< jt<<","<< v<<","<< minx<<","<< maxx<<","<<
+                     miny<<","<< maxy<<","<< mint<<","<< maxt<<","<<
+                     Dx<<","<< Dy<<","<< Dt<<","<< dist<<"\n";
+        }
         void clear(){
             M=lineCount=trajCount=jt=tl=Dx=Dy=Dt=0;
         }
