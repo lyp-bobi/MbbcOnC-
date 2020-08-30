@@ -818,33 +818,63 @@ namespace SpatialIndex
                 :m_query(traj),m_error(error),m_useMBR(useMBR),m_ts(ts){}
                 ~PartsStore(){}
                 Trajectory getTraj(id_type id){
-                    Trajectory traj;
-                    Trajectory tmpTraj;
+                    vector<STPoint> buff;
                     m_ts->m_loadedTraj+=1;
 //                    std::cerr<<"start getting traj\n";
 //                    for(auto &bc:m_parts[id].m_mbcs){
 //                        std::cerr<<*bc<<"\n";
 //                    }
-                    std::set<storeEntry> loaded;
+                    std::vector<storeEntry> toload;
+                    storeEntry last = m_parts[id].m_entries.begin()->second;
                     for(const auto &pair:m_parts[id].m_entries){
                         auto e=pair.second;
-                        if(loaded.count(e)==0) {
-                            loaded.insert(e);
-                            m_ts->m_trajIO += std::ceil(e.m_len / 4096.0);
-                            uint32_t len = e.m_off + e.m_len;
-                            uint8_t *load;
-                            m_ts->loadByteArray(e.m_page, len, &load);
-                            uint8_t *data = load + e.m_off;
-                            tmpTraj.loadFromByteArray(data);
-                            delete[] load;
-                            if (traj.m_points.empty()) {
-                                traj = tmpTraj;
-                            } else {
-                                traj.linkTrajectory(tmpTraj);
+                        if(e.m_page == last.m_page && e.m_off == last.m_off){
+                            //pass
+                        }else{//todo: replace these magic values
+                            if((e.m_page - last.m_page)* 4096 + (e.m_off - last.m_off) ==
+                               last.m_len){
+                                /*merge two entries*/
+                                last.m_len += e.m_len;
+                            }
+                            else{
+                                toload.emplace_back(last);
+                                last = e;
                             }
                         }
                     }
-                    return traj;
+                    toload.emplace_back(last);
+
+                    bool fhead, fback;
+                    for(const auto &e:toload){
+                        m_ts->m_trajIO += std::ceil(e.m_len / 4096.0);
+                        uint32_t len = e.m_off + e.m_len;
+                        uint8_t *load;
+                        m_ts->loadByteArray(e.m_page, len, &load);
+                        uint8_t *ptr = load + e.m_off;
+                        memcpy(&fhead, ptr, sizeof(bool));
+                        ptr += sizeof(bool);
+                        memcpy(&fback, ptr, sizeof(bool));
+                        ptr += sizeof(bool);
+                        if(!buff.empty()&& fhead){
+                            buff.pop_back();
+                        }
+                        unsigned long size;
+                        memcpy(&size, ptr, sizeof(unsigned long));
+                        ptr += sizeof(unsigned long);
+                        STPoint  p;
+                        for(int i=0;i<size;i++){
+                            p.makeDimension(m_dimension);
+                            memcpy(&p.m_time, ptr, sizeof(double));
+                            ptr += sizeof(double);
+                            memcpy(p.m_pCoords, ptr, m_dimension * sizeof(double));
+                            if(i!=size-1){
+                                ptr += m_dimension * sizeof(double);
+                            }
+                            buff.emplace_back(p);
+                        }
+                        delete[] load;
+                    }
+                    return Trajectory(buff);
                 }
 			};//PartStore
 
@@ -1090,8 +1120,8 @@ namespace SpatialIndex
             public:
                 void loadPartTraj(id_type id, leafInfo * e){
                     Trajectory tmpTraj;
-                    m_ts->m_trajIO += std::ceil(e->m_len / 4096.0);
                     uint32_t len = e->m_off + e->m_len;
+                    m_ts->m_trajIO += std::ceil(len / 4096.0);
                     uint8_t *load;
                     m_ts->loadByteArray(e->m_page, len, &load);
                     uint8_t *data = load + e->m_off;
