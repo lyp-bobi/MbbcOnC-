@@ -965,6 +965,9 @@ void TrajStore::loadSegments(std::string file, bool idFirst, bool output) {
 
 const Trajectory TrajStore::getTraj(id_type &id) {
     auto it=m_entries.find(id);
+    if(it == m_entries.end()){
+        std::cout<<id<<endl;
+    }
     assert(it!=m_entries.end());
     Entry e=*(it->second);
     uint32_t len=e.m_start+e.m_len;

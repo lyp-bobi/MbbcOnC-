@@ -341,18 +341,25 @@ void BulkLoader::bulkLoadUsingSTR(
 
 	Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
 
-	while (stream.hasNext())
-	{
-		Data* d = reinterpret_cast<Data*>(stream.getNext());
-		if (d == 0)
-			throw Tools::IllegalArgumentException(
-				"bulkLoadUsingSTR: RTree bulk load expects SpatialIndex::RTree::Data entries."
-			);
-
-		es->insert(new ExternalSorter::Record(d->m_region, d->m_id, d->m_dataLength, d->m_pData, 0));
-		d->m_pData = 0;
-		delete d;
-	}
+    while (stream.hasNext())
+    {
+        auto d=stream.getNext();
+        Data* d1 = dynamic_cast<Data*>(d);
+        if(d1!= nullptr){
+            es->insert(new ExternalSorter::Record(d1->m_region, d1->m_id, d1->m_dataLength, d1->m_pData, 0));
+            d1->m_pData = 0;
+            delete d1;
+        } else{
+            ircData* d2 = dynamic_cast<ircData*>(d);
+            if (d2 == nullptr) {
+                throw Tools::IllegalArgumentException(
+                        "bulkLoadUsingSTR: MBCRTree bulk load expects SpatialIndex::MBCRTree::Data entries."
+                );
+            }
+            es->insert(new ExternalSorter::Record(d2->m_br, d2->m_id, 0, nullptr, 0));
+            delete d2;
+        }
+    }
 	es->sort();
 
 	pTree->m_stats.m_u64Data = es->getTotalEntries();

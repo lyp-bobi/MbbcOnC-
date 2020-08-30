@@ -539,88 +539,165 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
 	Tools::LockGuard lock(&m_lock);
 #endif
 
-    PartsStore ps(simpleTraj,delta,m_ts,m_bUsingMBR);
-	ps.push(new NNEntry(m_rootID, 0, 0));
+    double knearest = 0.0;
+    int iternum = 0;
+    /*SBB-Driven*/
+    if(m_bUsingBFMST == false) {
+        PartsStore ps(simpleTraj, delta, m_ts, m_bUsingMBR);
+        ps.push(new NNEntry(m_rootID, 0, 0));
 
-	uint32_t count = 0;
-	double knearest = 0.0;
-    int iternum=0;
-    std::map<id_type ,int> insertedTrajId;
-    while (! ps.empty()) {
-        iternum++;
-        NNEntry *pFirst = ps.top();
+        uint32_t count = 0;
 
-        // report all nearest neighbors with equal greatest distances.
-        // (neighbors can be more than k, if many happen to have the same greatest distance).
-        if (count >= k && pFirst->m_minDist > knearest) {
+        std::map<id_type, int> insertedTrajId;
+        while (!ps.empty()) {
+            iternum++;
+            NNEntry *pFirst = ps.top();
+
+            // report all nearest neighbors with equal greatest distances.
+            // (neighbors can be more than k, if many happen to have the same greatest distance).
+            if (count >= k && pFirst->m_minDist > knearest) {
 //            std::cerr<<"find minDist"<<knearest<<"\n";
-            break;
-        }
-        switch (pFirst->m_type) {
-            case 0: {//inner node
-                ps.pop();
-                NodePtr n = readNode(pFirst->m_id);
-                v.visitNode(*n);
-                for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
-                    double pd = std::max(0.0, simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),
-                            m_ts->m_maxVelocity) - delta);
-                    if(pd<1e300) {
-                        if (n->m_level == 1)
-                            ps.push(new NNEntry(n->m_pIdentifier[cChild], pd, 1));
-                        else
-                            ps.push(new NNEntry(n->m_pIdentifier[cChild], pd, 0));
-                    }
-                }
-                delete pFirst;
-//                n.relinquish();
                 break;
             }
-            case 1: {//leaf node
-                ps.pop();
-                if(!ps.isLoaded(pFirst->m_id)) {
+            switch (pFirst->m_type) {
+                case 0: {//inner node
+                    ps.pop();
                     NodePtr n = readNode(pFirst->m_id);
-                    m_ts->m_leaf1+=1;
+                    v.visitNode(*n);
+                    for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+                        double pd = std::max(0.0, simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),
+                                                                                    m_ts->m_maxVelocity) - delta);
+                        if (pd < 1e300) {
+                            if (n->m_level == 1)
+                                ps.push(new NNEntry(n->m_pIdentifier[cChild], pd, 1));
+                            else
+                                ps.push(new NNEntry(n->m_pIdentifier[cChild], pd, 0));
+                        }
+                    }
+                    delete pFirst;
+//                n.relinquish();
+                    break;
+                }
+                case 1: {//leaf node
+                    ps.pop();
+                    if (!ps.isLoaded(pFirst->m_id)) {
+                        NodePtr n = readNode(pFirst->m_id);
+                        m_ts->m_leaf1 += 1;
+                        v.visitNode(*n);
+                        ps.loadLeaf(*n);
+//                    n.relinquish();
+                    }
+                    delete pFirst;
+                    break;
+                }
+                case 2: {//incomplete bounding
+                    id_type missing = ps.getOneMissingPart(pFirst->m_id);
+                    NodePtr n = readNode(missing);
                     v.visitNode(*n);
                     ps.loadLeaf(*n);
-//                    n.relinquish();
-                }
-                delete pFirst;
-                break;
-            }
-            case 2: {//incomplete bounding
-                id_type missing = ps.getOneMissingPart(pFirst->m_id);
-                NodePtr n = readNode(missing);
-                v.visitNode(*n);
-                ps.loadLeaf(*n);
-                m_ts->m_leaf2+=1;
+                    m_ts->m_leaf2 += 1;
 //                n.relinquish();
-                break;
-            }
-            case 3: {//complete bounding
-                ps.pop();
-                Trajectory traj=ps.getTraj(pFirst->m_id);
+                    break;
+                }
+                case 3: {//complete bounding
+                    ps.pop();
+                    Trajectory traj = ps.getTraj(pFirst->m_id);
 //                std::cerr<<"trajIO"<<m_ts->m_trajIO<<"\n";
 //                std::cerr<<"getTraj"<<traj<<"\n";
 //                Trajectory traj = m_ts->getTrajByTime(pFirst->m_id, queryTraj->m_startTime(), queryTraj->m_endTime());
-                ps.push(new NNEntry(pFirst->m_id, queryTraj->getMinimumDistance(traj), 4));
-                delete pFirst;
-                break;
+                    ps.push(new NNEntry(pFirst->m_id, queryTraj->getMinimumDistance(traj), 4));
+                    delete pFirst;
+                    break;
+                }
+                case 4: {//exact traj
+                    ps.pop();
+                    ++(m_stats.m_u64QueryResults);
+                    ++count;
+                    knearest = pFirst->m_minDist;
+                    simpleData d(pFirst->m_id, pFirst->m_minDist);
+                    v.visitData(d);
+                    delete pFirst;
+                    break;
+                }
+                default:
+                    throw Tools::IllegalStateException("illegal NNEntry state");
             }
-            case 4: {//exact traj
-                ps.pop();
-                ++(m_stats.m_u64QueryResults);
-                ++count;
-                knearest = pFirst->m_minDist;
-                simpleData d(pFirst->m_id,pFirst->m_minDist);
-                v.visitData(d);
-                delete pFirst;
-                break;
-            }
-            default:
-                throw Tools::IllegalStateException("illegal NNEntry state");
         }
+        ps.clean();
     }
-	ps.clean();
+    else{/*BFMST*/
+        PartsStoreBFMST ps(simpleTraj,0,m_ts,true);
+        ps.push(new NNEntry(m_rootID, 0, 0));
+
+        uint32_t count = 0;
+        double knearest = 0.0;
+        int iternum=0;
+        std::map<id_type ,int> insertedTrajId;
+
+        while (! ps.empty()) {
+            iternum++;
+            NNEntry *pFirst = ps.top();
+
+            // report all nearest neighbors with equal greatest distances.
+            // (neighbors can be more than k, if many happen to have the same greatest distance).
+            if (count >= k && pFirst->m_minDist > knearest) {
+//            std::cerr<<"find minDist"<<knearest<<"\n";
+                break;
+            }
+            switch (pFirst->m_type) {
+                case 0: {//inner and leaf node
+                    ps.pop();
+                    NodePtr n = readNode(pFirst->m_id);
+                    v.visitNode(*n);
+                    for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+                        if (n->m_level == 0) {
+                            double pd;
+                            if(m_bUsingMBR)
+                                pd= std::max(0.0, simpleTraj.getLeafMinimumDistance(*(n->m_ptrMBR[cChild]),
+                                                                                        m_ts->m_maxVelocity) - delta);
+                            else
+                                pd= std::max(0.0, simpleTraj.getLeafMinimumDistance(*(n->m_ptrMBC[cChild]),
+                                                                                    m_ts->m_maxVelocity) - delta);
+                            leafInfo *e = new leafInfo();
+                            e->m_page = n->m_pageNum[cChild];
+                            e->m_off = n->m_pageOff[cChild];
+                            e->m_len = n->m_dataLen[cChild];
+                            e->m_hasPrev = (n->m_prevNode[cChild] != -1);
+                            e->m_hasNext = (n->m_nextNode[cChild] != -1);
+                            ps.push(new NNEntry(n->m_pIdentifier[cChild], e, pd, 1));
+                        } else {
+                            double pd = std::max(0.0, simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),
+                                                                                        m_ts->m_maxVelocity) - delta);
+                            ps.push(new NNEntry(n->m_pIdentifier[cChild], nullptr, pd, 0));
+                        }
+                    }
+                    delete pFirst;
+                    break;
+                }
+                case 1: {//leaf node
+                    ps.pop();
+                    ps.loadPartTraj(pFirst->m_id, pFirst->m_pEntry);
+                    delete pFirst->m_pEntry;
+                    delete pFirst;
+                    break;
+                }
+                case 3: {
+                    ps.pop();
+                    ++(m_stats.m_u64QueryResults);
+                    ++count;
+                    knearest = pFirst->m_minDist;
+                    simpleData d(pFirst->m_id, pFirst->m_minDist);
+                    v.visitData(d);
+                    delete pFirst;
+                    break;
+                }
+
+                default:
+                    throw Tools::IllegalStateException("illegal NNEntry state" + std::to_string(pFirst->m_type));
+            }
+        }
+        ps.clean();
+    }
 //    std::cout<<"knearest is"<<knearest<<std::endl;
 //    std::cerr<<"iternum is "<<iternum<<"\n";
     m_stats.m_doubleExactQueryResults+=knearest;

@@ -264,11 +264,11 @@ namespace SpatialIndex
                     return std::tie(m_page, m_off, m_len) == std::tie(y.m_page, y.m_off, y.m_len);
                 }
             };
-            class PartsStore{
+            class PartsStoreBFMST{
             protected:
                 class Parts{
                 public:
-                    PartsStore* m_ps;
+                    PartsStoreBFMST* m_ps;
                     std::set<id_type> m_missingLeaf, m_loadedLeaf;
                     std::list<Trajectory> m_pTrajs;
                     std::map<std::pair<double,double>,double> m_computedDist;
@@ -277,7 +277,7 @@ namespace SpatialIndex
                     double m_mintime=1e300,m_maxtime=-1e300;
                     bool m_hasPrev=true,m_hasNext=true;
                     double m_computedTime=0,m_loadedTime=0;
-                    Parts(PartsStore* ps= nullptr):m_ps(ps){}
+                    Parts(PartsStoreBFMST* ps= nullptr):m_ps(ps){}
                     void insert(Trajectory &r,id_type prev,id_type next,storeEntry &entry){
                         if(m_pTrajs.empty()) m_pTrajs.emplace_back(r);
                         else{
@@ -553,10 +553,10 @@ namespace SpatialIndex
                 }
 
                 auto empty(){return m_mpq.empty()&&m_nodespq.empty();}
-                PartsStore(Trajectory &traj,double error,TrajStore* ts,bool useMBR)
+                PartsStoreBFMST(Trajectory &traj,double error,TrajStore* ts,bool useMBR)
                         :m_query(traj),m_error(error),m_useMBR(useMBR),m_ts(ts){}
-                ~PartsStore(){}
-            };//PartStore
+                ~PartsStoreBFMST(){}
+            };//PartStoreBFMST
 
 
 			friend class Node;

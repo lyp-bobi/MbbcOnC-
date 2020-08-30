@@ -508,7 +508,7 @@ void SpatialIndex::RTree::RTree::containsWhatQuery(const IShape& query, IVisitor
 }
 void SpatialIndex::RTree::RTree::intersectsWithQuery(const IShape& query, IVisitor& v)
 {
-	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("intersectsWithQuery: Shape has the wrong number of dimensions.");
+	//if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("intersectsWithQuery: Shape has the wrong number of dimensions.");
 	rangeQuery(IntersectionQuery, query, v);
 }
 
@@ -561,7 +561,7 @@ void SpatialIndex::RTree::RTree::nearestNeighborQuery(uint32_t k, const IShape& 
 
 	std::priority_queue<NNEntry*, std::vector<NNEntry*>, NNEntry::ascending> queue;
 	Trajectory qj=*queryTraj;
-    PartsStore ps(qj,0,m_ts,true);
+    PartsStoreBFMST ps(qj,0,m_ts,true);
     ps.push(new NNEntry(m_rootID,nullptr, 0, 0));
 
 	uint32_t count = 0;
@@ -1562,7 +1562,14 @@ void SpatialIndex::RTree::RTree::rangeQuery(RangeQueryType type, const IShape& q
 					++(m_stats.m_u64QueryResults);
 					if(m_DataType==TrajectoryType){
                         if (m_bUsingTrajStore == true) {
-                            Trajectory segtraj = m_ts->getTraj(n->m_pIdentifier[cChild]);
+                            Trajectory segtraj;
+                            /* I forget why should i do this instead of get the subtraj?*/
+                            if(m_ts->m_stream!= nullptr){
+                                id_type tmpid =m_ts->getTrajId(n->m_pIdentifier[cChild]);
+                                segtraj = m_ts->getTraj(tmpid);
+                            } else {
+                                segtraj = m_ts->getTraj(n->m_pIdentifier[cChild]);
+                            }
                             if (query.intersectsShape(segtraj)) {
                                 m_stats.m_doubleExactQueryResults += 1;
                                 v.visitData(data);

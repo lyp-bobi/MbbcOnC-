@@ -72,6 +72,7 @@ set (SOURCES
         speedEstimator
         changeKTest
         e2eRangeTest
+        indexTest
         )
 
 foreach (test ${SOURCES})

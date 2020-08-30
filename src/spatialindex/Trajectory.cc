@@ -638,7 +638,7 @@ inline double theDdd(double c1,double c2,double c3,double c4,double t){
     return 0;
 }
 
-double Trajectory::line2lineIED(const SpatialIndex::STPoint &p1s, const SpatialIndex::STPoint &p1e,
+inline double Trajectory::line2lineIED(const SpatialIndex::STPoint &p1s, const SpatialIndex::STPoint &p1e,
                                 const SpatialIndex::STPoint &p2s, const SpatialIndex::STPoint &p2e) {
     if(p1s.m_time!=p2s.m_time|p1e.m_time!=p2e.m_time)
         throw Tools::IllegalStateException("line2lineIED: time period not the same");
@@ -658,7 +658,7 @@ double Trajectory::line2lineIED(const SpatialIndex::STPoint &p1s, const SpatialI
     }
 }
 
-double Trajectory::line2lineMinSED(const SpatialIndex::STPoint &p1s, const SpatialIndex::STPoint &p1e,
+inline double Trajectory::line2lineMinSED(const SpatialIndex::STPoint &p1s, const SpatialIndex::STPoint &p1e,
                                 const SpatialIndex::STPoint &p2s, const SpatialIndex::STPoint &p2e) {
     if(p1s.m_time!=p2s.m_time|p1e.m_time!=p2e.m_time)
         throw Tools::IllegalStateException("line2lineMinSED: time period not the same");
@@ -684,7 +684,7 @@ double Trajectory::line2lineMinSED(const SpatialIndex::STPoint &p1s, const Spati
     }
 }
 
-int Trajectory::getPhase(const SpatialIndex::Region &r,const Point &p1,const Point &p2){
+inline int Trajectory::getPhase(const SpatialIndex::Region &r,const Point &p1,const Point &p2){
     // 7 8 9
     // 4 5 6
     // 1 2 3
@@ -795,7 +795,7 @@ std::vector<std::pair<STPoint,STPoint>> Trajectory::cutByPhase(const SpatialInde
     return res;
 }
 
-double Trajectory::line2MBRMinSED_impl(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
+inline double Trajectory::line2MBRMinSED_impl(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                        const SpatialIndex::Region &r, int sr) {
     double ts = ps.m_time, te = pe.m_time;
 //    if(std::fabs(te-ts)<1e-7) return 0;
@@ -816,7 +816,7 @@ double Trajectory::line2MBRMinSED_impl(const SpatialIndex::STPoint &ps, const Sp
     }
 }
 
-double Trajectory::line2MBRMinSED(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
+inline double Trajectory::line2MBRMinSED(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                   const SpatialIndex::Region &r) {
     assert(r.m_pLow[m_dimension]<=ps.m_time);
     assert(r.m_pHigh[m_dimension]>=pe.m_time);
@@ -836,7 +836,7 @@ double Trajectory::line2MBRMinSED(const SpatialIndex::STPoint &ps, const Spatial
     }
 }
 
-double Trajectory::line2MBRIED_impl(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
+inline double Trajectory::line2MBRIED_impl(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                     const SpatialIndex::Region &r, int sr) {
     double ts = ps.m_time, te = pe.m_time;
     if(std::fabs(te-ts)<1e-7) return 0;
@@ -857,7 +857,7 @@ double Trajectory::line2MBRIED_impl(const SpatialIndex::STPoint &ps, const Spati
     }
 }
 
-double Trajectory::line2MBRMaxSED(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
+inline double Trajectory::line2MBRMaxSED(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                   const SpatialIndex::Region &r) {
     assert(r.m_pLow[m_dimension]<=ps.m_time);
     assert(r.m_pHigh[m_dimension]>=pe.m_time);
@@ -865,7 +865,7 @@ double Trajectory::line2MBRMaxSED(const SpatialIndex::STPoint &ps, const Spatial
     return std::max(ps.getMinimumDistance(mbr2d),pe.getMinimumDistance(mbr2d));
 }
 
-double Trajectory::line2MBRDistance(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
+inline double Trajectory::line2MBRDistance(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                     const SpatialIndex::Region &r) {
     //the line's time period should be in the MBR's time period
     assert(r.m_pLow[m_dimension]<=ps.m_time);
@@ -914,7 +914,7 @@ inline double mbcArea(double t0,double t3,double rd,double rv,double ts,double t
     return sum;
 }
 
-double Trajectory::line2MBCDistance(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
+inline double Trajectory::line2MBCDistance(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                     const SpatialIndex::MBC &r) {
     if(disttype==0) {
         double x1 = r.m_pLow[0], y1 = r.m_pLow[1], t1 = r.m_startTime;

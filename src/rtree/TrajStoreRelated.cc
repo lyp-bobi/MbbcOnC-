@@ -24,7 +24,19 @@ ISpatialIndex* SpatialIndex::RTree::createAndBulkLoadNewRTreeWithTrajStore(IStor
     auto dataStream=new rtreeSegmentStream(ts);
     int indexCapacity=std::floor((pageSize-56)/56);
     int leafCapacity=std::floor((pageSize-56)/88);
-    ISpatialIndex* tree= createAndBulkLoadNewRTree(SpatialIndex::RTree::BLM_STR,*dataStream,*ts,0.9,indexCapacity,leafCapacity,dimension,SpatialIndex::RTree::RV_RSTAR,indexIdentifier);
+    ISpatialIndex* tree;
+    if (ts->m_stream!= nullptr) {
+        tree = createAndBulkLoadNewRTree(SpatialIndex::RTree::BLM_STR, *ts->m_stream, *ts, 0.9,
+                                            indexCapacity, leafCapacity, dimension,
+                                            SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
+    } else {
+        auto dataStream = new rtreeSegmentStream(ts);
+        tree = createAndBulkLoadNewRTree(SpatialIndex::RTree::BLM_STR, *dataStream, *ts, 0.9,
+                                            indexCapacity, leafCapacity, dimension,
+                                            SpatialIndex::RTree::RV_RSTAR, indexIdentifier);
+        delete dataStream;
+    }
+
     delete dataStream;
     RTree* r= static_cast<RTree*>(tree);
     r->m_DataType=TrajectoryType;
