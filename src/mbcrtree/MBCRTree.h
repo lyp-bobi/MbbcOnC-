@@ -35,7 +35,8 @@
 #include <thread>
 #include <mutex>
 
-extern bool simpli;
+extern bool bUsingSimp;
+extern bool bUsingBFMST;
 
 namespace SpatialIndex
 {
@@ -107,9 +108,9 @@ namespace SpatialIndex
 			void selfJoinQuery(id_type id1, id_type id2, const Region& r, IVisitor& vis);
             void visitSubTree(NodePtr subTree, IVisitor& v);
         public:
-            bool m_bUsingTrajStore=false;
-            bool m_bUsingMBR=true;
-            bool m_bUsingBFMST = false;
+            bool m_bUsingTrajStore=true;
+            bool m_bUsingMBR=false;
+            bool m_bStoringLinks = true;
 
             TrajStore *m_ts=nullptr;
 
@@ -747,22 +748,12 @@ namespace SpatialIndex
 //                        std::cerr<<rid<<"\t";
 //                    }
 //                    std::cerr<<"\n";
-                    std::thread th1([=]{
-                        auto it=relatedIds.begin();
-                        for(int i=0;i<relatedIds.size()/2;i++){
+
+                    auto it=relatedIds.begin();
+                        for(int i=0;i<relatedIds.size();i++){
                             updateValue(*it);
                             it++;
                         }
-                    });
-                    std::thread th2([=]{
-                        auto it=relatedIds.begin();
-                        for(int i=0;i<relatedIds.size()/2;i++) it++;
-                        for(int i=relatedIds.size()/2;i<relatedIds.size();i++){
-                            updateValue(*it);
-                            it++;
-                        }
-                    });
-                    th1.join();th2.join();
                     for(const auto &rid:relatedIds){
 //                        updateValue(rid);
                         m_mpq.updateOrder(m_handlers[rid]);

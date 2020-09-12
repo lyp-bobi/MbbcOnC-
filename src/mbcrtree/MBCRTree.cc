@@ -37,7 +37,8 @@
 #include "MBCRTree.h"
 
 
-bool simpli=true;
+bool bUsingSimp=true;
+bool bUsingBFMST=false;
 int sbb=0,sb=0;
 
 using namespace SpatialIndex::MBCRTree;
@@ -512,7 +513,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
     }
     Trajectory simpleTraj;
     double delta=0;
-    if(simpli==true) {
+    if(bUsingSimp == true) {
 //        auto stat=trajStat::instance();
         int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (m_ts->m_timeCount/m_ts->m_segCount));
         segnum=std::max(segnum,10);
@@ -542,7 +543,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
     double knearest = 0.0;
     int iternum = 0;
     /*SBB-Driven*/
-    if(m_bUsingBFMST == false) {
+    if(bUsingBFMST == false) {
         PartsStore ps(simpleTraj, delta, m_ts, m_bUsingMBR);
         ps.push(new NNEntry(m_rootID, 0, 0));
 

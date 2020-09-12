@@ -81,12 +81,12 @@ int main(){
             segs.swap(emptyseg);
             std::cerr<<"Seg len:"<<segLen<<"\n";
             disttype=0;
-            simpli=true;
+            bUsingSimp=true;
             for(const auto &qs:querySet) {
                 kNNQueryBatch(r, qs, ts1);
                 kNNQueryBatch(rc, qs, ts2);
             }
-//                    simpli= false;
+//                    bUsingSimp= false;
             disttype=1;
             for(const auto &qs:querySet) {
                 kNNQueryBatch(r, qs, ts1);

@@ -4,7 +4,7 @@
 
 
 #pragma once
-
+#include <cmath>
 #include "ShapeList.h"
 #define subTrajFile "./subTrajFile.stj"
 extern double calcuTime[10];
@@ -234,6 +234,14 @@ namespace SpatialIndex
         
         inline double m_startTime() const{return m_points.front().m_time;}
         inline double m_endTime() const { return m_points.back().m_time;}
+        inline double m_dist() const{
+            double res=0;
+            for(int i=1;i<m_points.size();i++){
+                res += std::sqrt(sq(m_points[i].m_pCoords[0]-m_points[i-1].m_pCoords[0])
+                        +sq(m_points[i].m_pCoords[1]-m_points[i-1].m_pCoords[1]));
+            }
+            return res;
+        }
 
         std::string toString() const ;
         void loadFromString(std::string s);

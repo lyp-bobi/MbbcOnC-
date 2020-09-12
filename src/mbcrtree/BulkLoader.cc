@@ -652,10 +652,12 @@ Node* BulkLoader::createNode(SpatialIndex::MBCRTree::MBCRTree* pTree, std::vecto
 	    e[cChild]->m_pData = 0;
 		delete e[cChild];
 	}
+#ifdef Tristat
     if(level==0){
         calcuTime[0]+=(n->m_nodeMBR.m_pHigh[0]-n->m_nodeMBR.m_pLow[0]);
         calcuTime[2]+=(n->m_nodeMBR.m_pHigh[2]-n->m_nodeMBR.m_pLow[2]);
         calcuTime[1]+=1;
     }
+#endif
 	return n;
 }

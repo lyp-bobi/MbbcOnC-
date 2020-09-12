@@ -34,7 +34,7 @@ int main(){
         calcuTime[0] = 0;
         srand((int) time(NULL));
         rsimpli=false;
-        simpli=true;
+        bUsingSimp=true;
         string name0 ="name0", name1 ="name1", name2 = "name2";
         id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
         IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),

@@ -21,7 +21,7 @@ int main(){
 //        double queryLenParas[]={900,3600};
         vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();;
         double queryLenParas[]={900,3600};
-        std::cerr<<"Starting simpli test\n"<<"Segmentation lengths are:";
+        std::cerr<<"Starting bUsingSimp test\n"<<"Segmentation lengths are:";
         for(auto p:segLenParas) std::cerr<<p<<"\t";
         std::cerr<<"\nQuery lengths are:";
         for(auto p:queryLenParas) std::cerr<<p<<"\t";
@@ -77,9 +77,9 @@ int main(){
             std::cerr<<"Seg len:"<<segLen<<"\n";
             disttype=0;
             for(const auto &qs:querySet) {
-                simpli=true;
+                bUsingSimp=true;
                 kNNQueryBatch(r, qs, ts1);
-                simpli=false;
+                bUsingSimp=false;
                 kNNQueryBatch(r, qs, ts1);
             }
 

@@ -74,11 +74,11 @@ int main(){
 //                    std::cerr << "Querying with segmenting len " << seglen <<
 //                              ", querying len " << queryLen << ", NN's k" << thek << "\n";
                     cerr<< segpara<<"\t"<<queryLen<<"\n";
-//                    simpli=true;
+//                    bUsingSimp=true;
                     disttype=0;
 //                    kNNQueryBatch(r, queries, ts1);
                     std::cerr<<kNNQueryBatch(rc, queries, ts2,thek);
-////                    simpli= false;
+////                    bUsingSimp= false;
 //                    disttype=1;
 //                    kNNQueryBatch(r, queries, ts1);
 //                    kNNQueryBatch(rc, queries, ts2);

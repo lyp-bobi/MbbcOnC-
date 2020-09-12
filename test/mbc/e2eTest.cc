@@ -14,7 +14,7 @@ int main(){
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
         rsimpli=false;
-        simpli=true;
+        bUsingSimp=true;
         for (double queryLen=100;queryLen<=3600;queryLen+=200) {
             maxseg=0;
             segs1.clear();

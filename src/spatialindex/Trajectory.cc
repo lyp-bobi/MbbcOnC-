@@ -36,7 +36,7 @@ Trajectory::Trajectory(std::vector<SpatialIndex::STPoint>& in)
 Trajectory::Trajectory(bool fakehead, bool fakeback,std::vector<SpatialIndex::STPoint> &in) {
 #ifndef NDEBUG
     if(in.front().m_time>=in.back().m_time){
-        std::cerr<<"wrong trajectory!";
+        std::cerr<<"wrong trajectory!\n"<<*this;
     }
 #endif
     m_points=in;
@@ -249,10 +249,18 @@ void Trajectory::getCenter(Point& out) const{
 }
 uint32_t Trajectory::getDimension() const{return 2;}
 void Trajectory::getMBR(Region& out) const{
-    out.makeInfinite(m_dimension);
+    out.makeInfinite(m_dimension+1);
+    Region mid;
+    mid.makeInfinite(m_dimension);
     for(int i=0;i<m_points.size();i++){
-        out.combinePoint(m_points[i]);
+        mid.combinePoint(m_points[i]);
     }
+    out.m_pLow[0] = mid.m_pLow[0];
+    out.m_pLow[1] = mid.m_pLow[1];
+    out.m_pLow[2] = m_points.front().m_time;
+    out.m_pHigh[0] = mid.m_pHigh[0];
+    out.m_pHigh[1] = mid.m_pHigh[1];
+    out.m_pHigh[2] = m_points.back().m_time;
 }
 
 
@@ -1929,6 +1937,9 @@ void Trajectory::loadFromString(std::string str) {
         double xy[2];
         xy[0]=std::stod(xyt[0]);xy[1]=std::stod(xyt[1]);
         m_points.emplace_back(STPoint(xy,std::stod(xyt[2]),2));
+    }
+    if(m_points.size()>1 && m_points.front().m_time>=m_points.back().m_time){
+        m_points.clear();
     }
 }
 

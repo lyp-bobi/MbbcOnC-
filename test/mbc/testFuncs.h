@@ -309,6 +309,76 @@ vector<pair<id_type ,Trajectory> >  loadGTToTrajs(string filename=genFile){
     return res;
 }
 
+vector<pair<id_type ,Trajectory> >  loadDumpedFiledToTrajs(string filename= genFile){
+    //first level: vector of time period
+    //second level: vector of segments in the time period
+#ifndef NDEBUG
+    cerr<<"loading generated trajectories from txt to trajectories"<<endl;
+#endif
+    auto stat = trajStat::instance();
+    ifstream inFile(filename, ios::in);
+    string lineStr;
+    set<id_type> ids;
+    vector<pair<id_type ,Trajectory> > res;
+    Trajectory tj;
+    Region r;
+    int curLine=0;
+    while (getline(inFile, lineStr)&&curLine<maxLinesToRead){
+        try {
+            string str;
+            stringstream ss(lineStr);
+            getline(ss, str);
+            id_type id = stringToNum<id_type>(str);
+            getline(inFile, str);
+            tj.loadFromString(str);
+            if (tj.m_points.size()>=2) {
+                ids.insert(id);
+                res.emplace_back(make_pair(id, tj));
+                curLine++;
+                tj.getMBR(r);
+                if (r.m_pHigh[0] > stat->maxx) stat->maxx = r.m_pHigh[0];
+                if (r.m_pLow[0] < stat->minx) stat->minx = r.m_pLow[0];
+                if (r.m_pHigh[1] > stat->maxy) stat->maxy = r.m_pHigh[1];
+                if (r.m_pLow[1] < stat->miny) stat->miny = r.m_pLow[1];
+                if (r.m_pHigh[2] > stat->maxt) stat->maxt = r.m_pHigh[2];
+                if (r.m_pLow[2] < stat->mint) stat->mint = r.m_pLow[2];
+                stat->dist += tj.m_dist();
+                stat->lineCount += tj.m_points.size() - 1;
+                stat->trajCount += 1;
+                stat->M += tj.m_endTime() - tj.m_startTime();
+            }
+        }
+        catch(...) {
+            break;
+        }
+    }
+    stat->Dx=stat->maxx-stat->minx;
+    stat->Dy=stat->maxy-stat->miny;
+    stat->Dt=stat->maxt-stat->mint;
+
+#ifndef NDEBUG
+    std::cerr<<"load data finished\n";
+#endif
+    stat->tl=stat->M/stat->lineCount;
+    stat->jt=stat->M/stat->trajCount;
+    stat->v=stat->dist/stat->M;
+    std::cerr<<*stat;
+    stat->output();
+//    drop_cache(3);
+    return res;
+}
+
+
+void dumpToFile(vector<pair<id_type ,Trajectory> > &trajs, string filename = "dumpedtraj.txt"){
+    ofstream outFile(filename, ios::out);
+    for (auto traj : trajs){
+        outFile<<traj.first<<"\n";
+        outFile<<traj.second.toString()<<"\n";
+    }
+    outFile.close();
+}
+
+
 vector<pair<id_type ,Trajectory> >  loadGLToTrajs(string filename=GLFile){
     //first level: vector of time period
     //second level: vector of segments in the time period
@@ -432,7 +502,6 @@ double rn(double n,double S,double Nq, double qt,double v2) {
 
 double knncost(double bt,int k,double qt,int f,bool useMBR,double _rk){
     auto stat=trajStat::instance();
-
     double v2=stat->v*2;
     double Nt=stat->trajCount;
     double Nq=Nt*(qt+2*stat->jt)/stat->Dt;
@@ -440,7 +509,8 @@ double knncost(double bt,int k,double qt,int f,bool useMBR,double _rk){
     double Ltc=pow(stat->Dx*stat->Dy*stat->Dt/stat->M*bt*f/v2/v2,1.0/3);
     double Lxc=Ltc*v2;
     double Lt=Ltc+bt;
-    double vv=min(-7e-9*Lt+0.0001,1e-4)+5e-5;
+//    double vv=min(-7e-9*Lt+0.0001,1e-4)+5e-5;
+    double vv=v2;
     double Lx=vv*Lt;
 
     double r = sqrt(k*stat->Dx*stat->Dy/M_PI/ Nq);
@@ -469,8 +539,7 @@ struct d4{
     }
     double low,high,vlow,vhigh;
 };
-double biSearchMax(int k,double qt,int f,bool useMBR, double rk=-1){
-    double low=1,high=10000;
+double biSearchMax(int k,double qt,int f,bool useMBR, double rk=-1,double low =1, double high = 10000){
     std::stack<d4> st;
     double vlow,vhigh;
     vlow=knncost(low,k,qt,f,useMBR,rk);
@@ -554,6 +623,7 @@ double kNNQueryBatch(ISpatialIndex* tree,const vector<IShape*> &queries,TrajStor
         sum+=indios[i];
     }
     sum=sum/(mid2-mid1);
+    cerr <<"time\tindexVisit\tLeafVisit\t leaf1\tleaf2\tindexIO\ttrajIO\tresult\n";
     cerr <<time/num<<"\t"<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<"\t"<<1.0*ts->m_leaf1/num<<"\t"<<1.0*ts->m_leaf2/num<<"\t"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<"\t"<<1.0*ts->m_loadedTraj/num<<"\t"<<sum<<endl;
 //    cerr <<time/num<<"\n";
     return rad;
