@@ -419,8 +419,10 @@ void BulkLoader::bulkLoadUsingSTR(
 		if (es->getTotalEntries() == 1) break;
 		es->sort();
 	}
+#ifdef Tristat
 	std::cerr<<"Lx is "<<calcuTime[0]/calcuTime[1]<<"\n";
     std::cerr<<"Lt is "<<calcuTime[2]/calcuTime[1]<<"\n";
+#endif
 	pTree->m_stats.m_u32TreeHeight = level;
 	pTree->storeHeader();
 }

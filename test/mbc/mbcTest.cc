@@ -2,6 +2,7 @@
 
 int main() {
     try {
+        int QueryType = 1;
         calcuTime[0] = 0;
         srand((int) time(NULL));
 //        srand(21);
@@ -38,10 +39,13 @@ int main() {
 //        }
         for (int i = 0; i < realtesttime; i++) {
             if (QueryType == 1) {
-                double t = int(random(0, 1000));
-                double pLow[3] = {random(0, 25000), random(0, 30000), t};
-                double pHigh[3] = {pLow[0] + random(500, 2000), pLow[1] + random(500, 2000), t + 20};
-                Region *rg = new Region(pLow, pHigh, 3);
+//                double t = int(random(0, 1000));
+//                double pLow[3] = {random(0, 25000), random(0, 30000), t};
+//                double pHigh[3] = {pLow[0] + random(500, 2000), pLow[1] + random(500, 2000), t + 20};
+//                Region *rg = new Region(pLow, pHigh, 3);
+                double t = int(random(stat->mint, stat->maxt - queryLen));
+                double pLow[3] = {random(stat->minx, stat->maxx), random(stat->miny, stat->maxy), t};
+                Cylinder *rg = new Cylinder(pLow, random(0.1, 0.2), t, t + queryLen, 2);
                 queries.emplace_back(rg);
             } else if (QueryType == 2) {
                 auto ori = &trajs[0].second;
@@ -90,16 +94,20 @@ int main() {
 
         segs.clear();
 
-//        TrajMbrStream ds1;
-//        ds1.feedTraj(&trajs);
-//        ds1.rewind();
-//        ISpatialIndex* real = RTree::createAndBulkLoadNewRTree(
-//                RTree::BulkLoadMethod::BLM_STR, ds1, *file0, 0.9, 10000,100000, 3,RTree::RV_RSTAR, indexIdentifier0);
-//        real->m_DataType=TrajectoryType;
+
+        TrajStore *reals = new TrajStore(name2, file0, 40960000000000, maxseg);
+        ts2->loadSegments(segs, true);
+        ISpatialIndex *real = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
 
-
-
+        for(auto q:queries){
+            std::cerr<<q;
+            vector<IShape *> tmp;
+            tmp.emplace_back(q);
+            rangeQueryBatch(r, tmp, ts1);
+            rangeQueryBatch(rc, tmp, ts1);
+            rangeQueryBatch(real, tmp, ts1);
+        }
 
 //        id_type that=242800;
 //        cout<<ts1.getTraj(that);

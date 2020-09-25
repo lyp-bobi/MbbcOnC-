@@ -5,7 +5,7 @@
 #include "testFuncs.h"
 
 int main() {
-    vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("~/TD.csv");
+    vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
     dumpToFile(trajs);
     return 0;
 }

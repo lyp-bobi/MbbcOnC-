@@ -64,6 +64,12 @@ int main() {
             ts2->flush();
             std::cerr << "Seg len:" << segLen << "\n";
             for (const auto &qs:querySet) {
+                std::cerr<<"SBBD off\n";
+                bUsingSBBD = false;
+                rangeQueryBatch(r, qs, ts1);
+                rangeQueryBatch(rc, qs, ts2);
+                std::cerr<<"SBBD on\n";
+                bUsingSBBD = true;
                 rangeQueryBatch(r, qs, ts1);
                 rangeQueryBatch(rc, qs, ts2);
             }

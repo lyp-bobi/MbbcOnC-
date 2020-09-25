@@ -50,7 +50,7 @@
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
-#define QueryType 2
+//extern int QueryType;
 //1 for range, 2 for 5-NN
 
 using namespace std;
@@ -533,31 +533,31 @@ double biSearchMax(int k, double qt, int f, bool useMBR, double rk = -1, double 
     }
     throw Tools::IllegalStateException("biSearch:failed searching");
 }
-
-void TreeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajStore *ts = nullptr, int thennk = 5) {
-    MyVisitor vis;
-    vis.ts = ts;
-    auto start = std::chrono::system_clock::now();
-//    drop_cache(3);
-    for (int i = 0; i < queries.size(); i++) {
-//        drop_cache(3);
-//        cerr<<"Query is "<<queries.at(i)->toString();
-        if (QueryType == 1) {
-            tree->intersectsWithQuery(*queries[i], vis);
-        } else if (QueryType == 2) {
-            vis.m_query = queries[i];
-            tree->nearestNeighborQuery(thennk, *queries[i], vis);
-//            cerr<<"finished "<<i<<"already\n";
-        }
-    }
-    double time;
-    auto end = std::chrono::system_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    time = double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
-    cerr << "Querying time: " << time << endl;
-    cerr << "VISIT NODE " << vis.m_indexvisited << "\t" << vis.m_leafvisited << endl;
-    cerr << "TrajStore Statistic" << ts->m_indexIO << "\t" << ts->m_trajIO << endl;
-}
+//
+//void TreeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajStore *ts = nullptr, int thennk = 5) {
+//    MyVisitor vis;
+//    vis.ts = ts;
+//    auto start = std::chrono::system_clock::now();
+////    drop_cache(3);
+//    for (int i = 0; i < queries.size(); i++) {
+////        drop_cache(3);
+////        cerr<<"Query is "<<queries.at(i)->toString();
+//        if (QueryType == 1) {
+//            tree->intersectsWithQuery(*queries[i], vis);
+//        } else if (QueryType == 2) {
+//            vis.m_query = queries[i];
+//            tree->nearestNeighborQuery(thennk, *queries[i], vis);
+////            cerr<<"finished "<<i<<"already\n";
+//        }
+//    }
+//    double time;
+//    auto end = std::chrono::system_clock::now();
+//    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+//    time = double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
+//    cerr << "Querying time: " << time << endl;
+//    cerr << "VISIT NODE " << vis.m_indexvisited << "\t" << vis.m_leafvisited << endl;
+//    cerr << "TrajStore Statistic" << ts->m_indexIO << "\t" << ts->m_trajIO << endl;
+//}
 
 double kNNQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajStore *ts = nullptr, int thennk = 5,
                      bool reportEnd = false) {
@@ -620,32 +620,33 @@ void rangeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajS
 //    cerr <<"Average Querying time: "<< time/num<<endl;
 //    cerr <<"Averaged VISIT NODE "<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<endl;
 //    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
+    cerr << "average time\tIndexVisit\tLeafVisit\tIndexIO\ttrajIO\tprevalidateRate\tinternum\tcontainNum\n";
     cerr << time / num << "\t" << 1.0 * vis.m_indexvisited / num << "\t" << 1.0 * vis.m_leafvisited / num << "\t"
          << 1.0 * ts->m_indexIO / num << "\t" << 1.0 * ts->m_trajIO / num << "\t" << double(sbb) / sb << "\t" << sb
          << "\t" << sbb << endl;
 //    cerr <<time/num<<"\n";
 }
-
-int TreeQuery(ISpatialIndex *tree, IShape *query, TrajStore *ts = nullptr) {
-    clock_t start, end;
-    MyVisitor vis;
-    if (ts != nullptr)
-        vis.ts = ts;
-    vis.m_query = query;
-    start = clock();
-    if (QueryType == 1) {
-        tree->intersectsWithQuery(*query, vis);
-    } else if (QueryType == 2) {
-        vis.m_query = query;
-        tree->nearestNeighborQuery(5, *query, vis);
-    }
-    end = clock();
-    if (QueryType == 1) {
-        return vis.m_resultGet;
-    } else if (ts != nullptr) {
-        return vis.m_lastResult;
-    } else return vis.m_lastResult;
-}
+//
+//int TreeQuery(ISpatialIndex *tree, IShape *query, TrajStore *ts = nullptr) {
+//    clock_t start, end;
+//    MyVisitor vis;
+//    if (ts != nullptr)
+//        vis.ts = ts;
+//    vis.m_query = query;
+//    start = clock();
+//    if (QueryType == 1) {
+//        tree->intersectsWithQuery(*query, vis);
+//    } else if (QueryType == 2) {
+//        vis.m_query = query;
+//        tree->nearestNeighborQuery(5, *query, vis);
+//    }
+//    end = clock();
+//    if (QueryType == 1) {
+//        return vis.m_resultGet;
+//    } else if (ts != nullptr) {
+//        return vis.m_lastResult;
+//    } else return vis.m_lastResult;
+//}
 
 
 #endif //SPATIALINDEX_TESTFUNCS_H
