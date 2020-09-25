@@ -73,6 +73,7 @@ set (SOURCES
         changeKTest
         e2eRangeTest
         indexTest
+        dump
         )
 
 foreach (test ${SOURCES})
