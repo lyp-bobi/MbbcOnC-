@@ -36,7 +36,7 @@
 #include <mutex>
 
 extern bool bUsingSimp;
-extern bool bUsingBFMST;
+extern bool bUsingSBBD;
 
 namespace SpatialIndex
 {
@@ -108,7 +108,6 @@ namespace SpatialIndex
 			void selfJoinQuery(id_type id1, id_type id2, const Region& r, IVisitor& vis);
             void visitSubTree(NodePtr subTree, IVisitor& v);
         public:
-            bool m_bUsingTrajStore=true;
             bool m_bUsingMBR=false;
             bool m_bStoringLinks = true;
 

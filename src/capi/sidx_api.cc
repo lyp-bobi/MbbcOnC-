@@ -1911,12 +1911,6 @@ SIDX_C_DLL RTError IndexProperty_SetIndexVariant( IndexPropertyH hProp,
 		if (type == RT_RTree) {
 			var.m_val.lVal = static_cast<RTree::RTreeVariant>(value);
 			prop->setProperty("TreeVariant", var);
-		} else if (type	 == RT_MVRTree) {
-			var.m_val.lVal = static_cast<MVRTree::MVRTreeVariant>(value);
-			prop->setProperty("TreeVariant", var);
-		} else if (type == RT_TPRTree) {
-			var.m_val.lVal = static_cast<TPRTree::TPRTreeVariant>(value);
-			prop->setProperty("TreeVariant", var);
 		}
 
 	} catch (Tools::Exception& e)

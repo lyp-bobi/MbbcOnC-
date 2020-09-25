@@ -68,6 +68,10 @@ namespace SpatialIndex
     virtual bool intersectsRegion(const Region& in) const;
     virtual bool intersectsCylinder(const Cylinder& in) const;
 
+
+    int checkRel(const MBC &bc) const;
+    int checkRel(const Region &br) const;
+
 //        virtual void combineCylinder(const Cylinder& in);
 //        virtual bool containsCylinder(const Cylinder& in);
 //        virtual void getCombinedCylinder(Cylinder& out, const Cylinder& in) const;;

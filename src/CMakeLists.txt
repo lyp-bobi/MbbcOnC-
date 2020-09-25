@@ -29,7 +29,6 @@ set(SIDX_CAPI_DIR "${PROJECT_SOURCE_DIR}/src/capi")
 set(SIDX_BASE_HPP
   "${SIDX_HEADERS_DIR}/LineSegment.h"
   "${SIDX_HEADERS_DIR}/MovingPoint.h"
-  "${SIDX_HEADERS_DIR}/MVRTree.h"
   "${SIDX_HEADERS_DIR}/Point.h"
   "${SIDX_HEADERS_DIR}/Region.h"
   "${SIDX_HEADERS_DIR}/RTree.h"
@@ -38,7 +37,6 @@ set(SIDX_BASE_HPP
   "${SIDX_HEADERS_DIR}/TimePoint.h"
   "${SIDX_HEADERS_DIR}/STPoint.h"
   "${SIDX_HEADERS_DIR}/TimeRegion.h"
-  "${SIDX_HEADERS_DIR}/TPRTree.h"
   "${SIDX_HEADERS_DIR}/Version.h"
   "${SIDX_HEADERS_DIR}/../storagemanager/TrajStore.h"
   "${SIDX_HEADERS_DIR}/ShapeList.h"
@@ -92,21 +90,6 @@ set(SIDX_SPATIALINDEX_CPP
   "${SIDX_SRC_DIR}/spatialindex/ShapeList.cc"
 )
 list (APPEND SIDX_CPP ${SIDX_SPATIALINDEX_CPP} )
-
-set(SIDX_MVRTREE_CPP
-  "${SIDX_SRC_DIR}/mvrtree/Index.cc"
-  "${SIDX_SRC_DIR}/mvrtree/Index.h"
-  "${SIDX_SRC_DIR}/mvrtree/Leaf.cc"
-  "${SIDX_SRC_DIR}/mvrtree/Leaf.h"
-  "${SIDX_SRC_DIR}/mvrtree/MVRTree.cc"
-  "${SIDX_SRC_DIR}/mvrtree/MVRTree.h"
-  "${SIDX_SRC_DIR}/mvrtree/Node.cc"
-  "${SIDX_SRC_DIR}/mvrtree/Node.h"
-  "${SIDX_SRC_DIR}/mvrtree/PointerPoolNode.h"
-  "${SIDX_SRC_DIR}/mvrtree/Statistics.cc"
-  "${SIDX_SRC_DIR}/mvrtree/Statistics.h"
-)
-list (APPEND SIDX_CPP ${SIDX_MVRTREE_CPP})
 
 set(SIDX_RTREE_CPP
   "${SIDX_SRC_DIR}/rtree/BulkLoader.cc"
@@ -168,21 +151,6 @@ set(SIDX_TOOLS_CPP
 )
 list (APPEND SIDX_CPP ${SIDX_TOOLS_CPP})
 
-
-set(SIDX_TOOLS_CPP
-  "${SIDX_SRC_DIR}/tprtree/Index.cc"
-  "${SIDX_SRC_DIR}/tprtree/Index.h"
-  "${SIDX_SRC_DIR}/tprtree/Leaf.cc"
-  "${SIDX_SRC_DIR}/tprtree/Leaf.h"
-  "${SIDX_SRC_DIR}/tprtree/Node.cc"
-  "${SIDX_SRC_DIR}/tprtree/Node.h"
-  "${SIDX_SRC_DIR}/tprtree/PointerPoolNode.h"
-  "${SIDX_SRC_DIR}/tprtree/Statistics.cc"
-  "${SIDX_SRC_DIR}/tprtree/Statistics.h"
-  "${SIDX_SRC_DIR}/tprtree/TPRTree.cc"
-  "${SIDX_SRC_DIR}/tprtree/TPRTree.h"
-)
-list (APPEND SIDX_CPP ${SIDX_TOOLS_CPP} )
 #
 # Group source files for IDE source explorers (e.g. Visual Studio)
 #

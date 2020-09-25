@@ -266,14 +266,12 @@ namespace SpatialIndex
 #include "TimeRegion.h"
 #include "MovingPoint.h"
 #include "MovingRegion.h"
-#include "Cylinder.h"
 #include "MBC.h"
+#include "Cylinder.h"
 #include "Trajectory.h"
 #include "ShapeList.h"
 #include "RTree.h"
 #include "MBCRTree.h"
-#include "MVRTree.h"
-#include "TPRTree.h"
 #include "Version.h"
 
 

@@ -561,7 +561,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
         for(const auto &bc: m_entryMbcs){
             double dt=bc.second.m_rd/bc.second.m_rv;
             if(bc.second.m_rv<1e-7){
-                dt=(bc.second.m_endTime-bc.second.m_startTime)/2;
+                dt=0;
             }
             double t=bc.second.m_endTime-bc.second.m_startTime;
             ratio+=dt/t;
@@ -756,7 +756,7 @@ void TrajStore::loadSegments(std::string file, bool idFirst, bool output) {
                               sq(thebr.m_pHigh[1]-thebr.m_pLow[1]));
                 double dt=thebc.m_rd/thebc.m_rv;
                 if(thebc.m_rv<1e-7){
-                    dt=(thebc.m_endTime-thebc.m_startTime)/2;
+                    dt=0;
                 }
                 double t=thebc.m_endTime-thebc.m_startTime;
                 ratio+=dt/t;
@@ -782,7 +782,7 @@ void TrajStore::loadSegments(std::string file, bool idFirst, bool output) {
                                   sq(thebr.m_pHigh[1]-thebr.m_pLow[1]));
                     double dt=thebc.m_rd/thebc.m_rv;
                     if(thebc.m_rv<1e-7){
-                        dt=(thebc.m_endTime-thebc.m_startTime)/2;
+                        dt=0;
                     }
                     double t=thebc.m_endTime-thebc.m_startTime;
                     ratio+=dt/t;

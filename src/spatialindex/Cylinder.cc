@@ -293,3 +293,95 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const Cylinder& r)
     os<<"rd: "<<r.m_r<<std::endl;
     return os;
 }
+
+/*
+ * checkRel, 0 for not intersects, 1 for intersects, and 2 for timely contains
+ */
+
+int Cylinder::checkRel(const Region &br) const {
+    if(br.m_pLow[m_dimension]>m_endTime||br.m_pHigh[m_dimension]<m_startTime) return 0;
+    double x1 = br.m_pLow[0], x2 =  br.m_pHigh[0], y1 = br.m_pLow[1], y2 =  br.m_pHigh[1];
+    double x= m_p[0], y =m_p[1];
+    double r2 = m_r*m_r;
+    double d1 = sq(x-x1) + sq(y-y1), d2 = sq(x-x1) + sq(y-y2), d3 = sq(x-x2) + sq(y-y1), d4 = sq(x-x2) + sq(y-y2);
+    if (d1<r2 && d2<r2&&d3<r2&&d4<r2)
+        return 2;
+    if (d1<r2 || d2<r2||d3<r2||d4<r2)
+        return 1;
+    return 0;
+}
+
+int Cylinder::checkRel(const MBC &bc) const {
+    if (bc.m_startTime > m_endTime || bc.m_endTime < m_startTime) return 0;
+    if (m_startTime == m_endTime) {
+        auto timed = bc.getCenterRdAtTime(m_startTime);
+        double d = timed.first.getMinimumDistance(Point(m_p,m_dimension));
+        if (d + timed.second<=m_r){
+            return 2;
+        }else if (d <= timed.second+m_r){
+            return 1;
+        }else{
+            return 0;
+        }
+    } else {
+        double t0 = bc.m_startTime, t1 = bc.m_startTime + bc.m_rd / bc.m_rv, t2 =
+                m_endTime - bc.m_rd / bc.m_rv, t3 = m_endTime;
+        if (bc.m_rv < 1e-7) {
+            t1 = bc.m_startTime;
+            t2 = bc.m_endTime;
+        }
+        double tlow = m_startTime, thigh = m_endTime;
+        double ints = std::max(t0, tlow), inte = std::min(t3, thigh);
+        auto a = bc.getCenterRdAtTime(ints), b = bc.getCenterRdAtTime(inte);
+        double d = Trajectory::line2lineMinSED(a.first, b.first, STPoint(m_p, ints, 2), STPoint(m_p, inte, 2));
+        if (d > bc.m_rd + m_r) return 0;
+        if (d <= m_r-bc.m_rd) return 2;
+        double ts = ints, te = inte;
+        double dxs=m_p[0]-a.first.m_pCoords[0];
+        double dys=m_p[1]-a.first.m_pCoords[1];
+        double dxe=m_p[0]-b.first.m_pCoords[0];
+        double dye=m_p[1]-b.first.m_pCoords[1];
+        //lower cone
+        ints=std::max(t0,tlow);inte=std::min(t1,thigh);
+        if(ints<inte){
+            double c1=sq(dxs-dxe)+sq(dys-dye),
+                    c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
+                    c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
+                    c4=te-ts;
+            c1=c1-sq(c4*bc.m_rv);
+            c2=c2+sq(c4)*2*(m_r+bc.m_rv*t0)*bc.m_rv;
+            c3=c3-sq(c4*(m_r+bc.m_rv*t0));
+            double middle=-c2/c1/2;
+            if(middle>ints&&middle<inte){
+                if(c1*middle*middle+c2*middle+c3<0){
+                    return 2;
+                }
+            }
+            else{
+                if(c1*ints*ints+c2*ints+c3<=0||c1*inte*inte+c2*inte+c3<=0) return 2;
+            }
+        }
+        //higher cone
+        ints=std::max(t2,tlow);inte=std::min(t3,thigh);
+        if(ints<inte){
+            double c1=sq(dxs-dxe)+sq(dys-dye),
+                    c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
+                    c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
+                    c4=te-ts;
+            c1=c1-sq(c4*bc.m_rv);
+            c2=c2-sq(c4)*2*(m_r-bc.m_rv*t3)*bc.m_rv;
+            c3=c3-sq(c4*(m_r-bc.m_rv*t3));
+            double middle=-c2/c1/2;
+            if(middle>ints&&middle<inte){
+                if(c1*middle*middle+c2*middle+c3<0){
+                    return 2;
+                }
+            }
+            else{
+                if(c1*ints*ints+c2*ints+c3<=0||c1*inte*inte+c2*inte+c3<=0) return 2;
+            }
+        }
+        return 0;
+    }
+}
+

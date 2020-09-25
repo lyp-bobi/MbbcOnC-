@@ -5,20 +5,20 @@
 #include "testFuncs.h"
 
 
-int main(){
+int main() {
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
 //        vector<pair<id_type, Trajectory> > trajs = loadGTFolder(1);
         vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
-        vector<pair<id_type, vector<Trajectory>>> segs1,segs2;
+        vector<pair<id_type, vector<Trajectory>>> segs1, segs2;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
-        rsimpli=false;
-        bUsingSimp=true;
-        vector<IShape*> queries;
-        auto stat=trajStat::instance();
-        double queryLen=3600;
+        rsimpli = false;
+        bUsingSimp = true;
+        vector<IShape *> queries;
+        auto stat = trajStat::instance();
+        double queryLen = 3600;
 //        for (int i = 0; i < 100; i++) {
 //            id_type randId = long(random(0, trajs.size()));
 //            Trajectory *ori=new Trajectory();
@@ -33,9 +33,9 @@ int main(){
             if (!concate->m_points.empty())
                 queries.emplace_back(concate);
         }
-        for (int nnk=10;nnk<=200;nnk+=10) {
-            std::cerr<<"nnk is"<<nnk<<"\n";
-            maxseg=0;
+        for (int nnk = 10; nnk <= 200; nnk += 10) {
+            std::cerr << "nnk is" << nnk << "\n";
+            maxseg = 0;
             segs1.clear();
             segs2.clear();
             emptyseg.clear();
@@ -44,15 +44,15 @@ int main(){
                 maxseg = std::max(int(seg.size()), maxseg);
                 segs1.emplace_back(make_pair(traj.first, seg));
             }
-            double segpara1=biSearchMax(nnk,3600,40,false,0.012);
-            std::cerr<<"segpara is estimated as "<<segpara1;
+            double segpara1 = biSearchMax(nnk, 3600, 40, false, 0.012);
+            std::cerr << "segpara is estimated as " << segpara1;
             for (auto &traj:trajs) {
                 auto seg = traj.second.getSegments(segpara1);
                 maxseg = std::max(int(seg.size()), maxseg);
                 segs2.emplace_back(make_pair(traj.first, seg));
             }
 
-            string name0 ="name0", name1 ="name1", name2 = "name2";
+            string name0 = "name0", name1 = "name1", name2 = "name2";
             id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
             IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
                     *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
@@ -62,21 +62,21 @@ int main(){
                     *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
-            TrajStore *ts1 = new TrajStore(name1, file1, 4096, maxseg+1);
+            TrajStore *ts1 = new TrajStore(name1, file1, 4096, maxseg + 1);
             ts1->loadSegments(segs1);
             segs1.clear();
             segs1.swap(emptyseg);
-            ISpatialIndex *r = RTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
+            ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
-            TrajStore *ts2 = new TrajStore(name2, file2, 4096, maxseg+1);
-            ts2->loadSegments(segs2,true);
+            TrajStore *ts2 = new TrajStore(name2, file2, 4096, maxseg + 1);
+            ts2->loadSegments(segs2, true);
             segs2.clear();
             segs2.swap(emptyseg);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
 
-            kNNQueryBatch(r, queries, ts1,nnk);
-            kNNQueryBatch(rc, queries, ts2,nnk);
+            kNNQueryBatch(r, queries, ts1, nnk);
+            kNNQueryBatch(rc, queries, ts2, nnk);
             cerr << "\n";
             delete r;
             delete ts1;
@@ -90,8 +90,7 @@ int main(){
             delete diskfile2;
         }
     }
-    catch (Tools::Exception& e)
-    {
+    catch (Tools::Exception &e) {
         cerr << "******ERROR******" << endl;
         std::string s = e.what();
         cerr << s << endl;

@@ -46,29 +46,6 @@ SpatialIndex::ISpatialIndex* Index::CreateIndex()
 			throw std::runtime_error(os.str());
 		}
 	}
-
-	else if (GetIndexType() == RT_MVRTree) {
-
-		try {
-			index = MVRTree::returnMVRTree(	 *m_buffer, m_properties);
-		} catch (Tools::Exception& e) {
-			std::ostringstream os;
-			os << "Spatial Index Error: " << e.what();
-			throw std::runtime_error(os.str());
-		}
-	}
-
-	else if (GetIndexType() == RT_TPRTree) {
-
-		try {
-			index = TPRTree::returnTPRTree(	 *m_buffer,m_properties);
-		} catch (Tools::Exception& e) {
-			std::ostringstream os;
-			os << "Spatial Index Error: " << e.what();
-			throw std::runtime_error(os.str());
-		}
-	}
-
 	return index;
 }
 
@@ -364,12 +341,6 @@ void Index::SetIndexVariant(RTStorageType v)
 
 	if (GetIndexType() == RT_RTree) {
 		var.m_val.ulVal = static_cast<RTree::RTreeVariant>(v);
-		m_properties.setProperty("TreeVariant", var);
-	} else if (GetIndexType() == RT_MVRTree) {
-		var.m_val.ulVal = static_cast<MVRTree::MVRTreeVariant>(v);
-		m_properties.setProperty("TreeVariant", var);
-	} else if (GetIndexType() == RT_TPRTree) {
-		var.m_val.ulVal = static_cast<TPRTree::TPRTreeVariant>(v);
 		m_properties.setProperty("TreeVariant", var);
 	}
 }

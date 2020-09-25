@@ -8,7 +8,7 @@
 
 #include "testFuncs.h"
 
-int main(){
+int main() {
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
@@ -16,14 +16,14 @@ int main(){
 //        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
 //        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs("D://00.txt");
         int maxseg = 0;
-        double para[]={1800};
-        auto stat=trajStat::instance();
-        double queryLen=3600;
+        double para[] = {1800};
+        auto stat = trajStat::instance();
+        double queryLen = 3600;
         vector<IShape *> queries;
         for (int i = 0; i < 1000; i++) {
             auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
             Trajectory *concate = new Trajectory();
-            double ts = std::max(ori->m_startTime(),random(ori->m_startTime(), ori->m_endTime() - queryLen));
+            double ts = std::max(ori->m_startTime(), random(ori->m_startTime(), ori->m_endTime() - queryLen));
             ori->getPartialTrajectory(ts, ts + queryLen, *concate);
             if (!concate->m_points.empty())
                 queries.emplace_back(concate);
@@ -37,7 +37,7 @@ int main(){
 //            queries.emplace_back(rg);
 //        }
         for (double segpara:para) {
-            maxseg=500;
+            maxseg = 500;
 //            string name[6]={"name1","name2","name3","name4","name5","name6"};
 //            id_type indexIdentifier[6];
 //            IStorageManager* diskfile[6];
@@ -47,20 +47,20 @@ int main(){
 //                file[i] = StorageManager::createNewRandomEvictionsBuffer(*diskfile[i], 10, false),
 //            }
 
-            std::cerr<<segpara<<"\n";
-            std::cerr<<"start splitting\n";
+            std::cerr << segpara << "\n";
+            std::cerr << "start splitting\n";
 
-            for(int i=0;i<6;i++){
-                string name="name";
+            for (int i = 0; i < 6; i++) {
+                string name = "name";
                 id_type id;
                 IStorageManager *diskfile = StorageManager::createNewDiskStorageManager(name, 4096);
                 StorageManager::IBuffer *file = StorageManager::createNewRandomEvictionsBuffer(*diskfile, 10, false);
                 vector<pair<id_type, vector<Trajectory>>> segs;
                 for (const auto &traj:trajs) {
                     std::vector<Trajectory> seg;
-                    switch(i){
+                    switch (i) {
                         case 0:
-                            seg = traj.second.getFixedSegments(int(std::ceil(segpara/stat->tl)+1));
+                            seg = traj.second.getFixedSegments(int(std::ceil(segpara / stat->tl) + 1));
                             break;
                         case 1:
                             seg = traj.second.getStaticSegments(segpara);
@@ -83,16 +83,19 @@ int main(){
                     maxseg = std::max(int(seg.size()), maxseg);
                     segs.emplace_back(make_pair(traj.first, seg));
                 }
-                TrajStore *ts = new TrajStore(name ,file, 4096, maxseg+1);
-                ts->loadSegments(segs,true,false);
+                TrajStore *ts = new TrajStore(name, file, 4096, maxseg + 1);
+                ts->loadSegments(segs, true, false);
 //                drop_cache(1);
                 segs.clear();
                 ISpatialIndex *r = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts, 4096, 3, id);
                 kNNQueryBatch(r, queries, ts);
-                delete r;delete ts;delete file;delete diskfile;
+                delete r;
+                delete ts;
+                delete file;
+                delete diskfile;
             }
 
-            std::cerr<<"split finished\n";
+            std::cerr << "split finished\n";
 //            kNNQueryBatch(r0, queries, ts0);
 //            kNNQueryBatch(r1, queries, ts1);
 //            kNNQueryBatch(r2, queries, ts2);
@@ -104,13 +107,12 @@ int main(){
 //            delete r2;delete ts3;delete file3;delete diskfile3;
 //            delete r3;delete ts4;delete file4;delete diskfile4;
         }
-        for(auto &tras:queries){
+        for (auto &tras:queries) {
             delete tras;
         }
         queries.clear();
     }
-    catch (Tools::Exception& e)
-    {
+    catch (Tools::Exception &e) {
         cerr << "******ERROR******" << endl;
         std::string s = e.what();
         cerr << s << endl;

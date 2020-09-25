@@ -38,7 +38,7 @@
 
 
 bool bUsingSimp=true;
-bool bUsingBFMST=false;
+bool bUsingSBBD=false;
 int sbb=0,sb=0;
 
 using namespace SpatialIndex::MBCRTree;
@@ -226,7 +226,6 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
     TrajStore *ts= dynamic_cast<TrajStore*>(&sm);
     if(ts!= nullptr){
         r->m_DataType=TrajectoryType;
-        r->m_bUsingTrajStore=true;
         r->m_ts=ts;
     }
     r->m_bUsingMBR=useMBR;
@@ -543,7 +542,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
     double knearest = 0.0;
     int iternum = 0;
     /*SBB-Driven*/
-    if(bUsingBFMST == false) {
+    if(bUsingSBBD == false) {
         PartsStore ps(simpleTraj, delta, m_ts, m_bUsingMBR);
         ps.push(new NNEntry(m_rootID, 0, 0));
 
@@ -1517,7 +1516,10 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
     const Region *querybr= dynamic_cast<const Region*>(&query);
     const Cylinder *querycy= dynamic_cast<const Cylinder*>(&query);
     std::set<id_type > results;
+    std::multimap<id_type, storeEntry> pending;
+    storeEntry storee;
     if(querybr!= nullptr) {
+        /* deprecated */
         bool isSlice;
         if (querybr->m_pLow[querybr->m_dimension - 1] == querybr->m_pHigh[querybr->m_dimension - 1])
             isSlice = true;
@@ -1563,7 +1565,6 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                                     results.insert(m_ts->getTrajId(data.m_id));
                                     v.visitData(data);
                                 } else {
-                                    if (m_bUsingTrajStore == true) {
                                         m_ts->m_trajIO += std::ceil(n->m_dataLen[cChild] / 4096.0);
                                         uint32_t len = n->m_dataLen[cChild] + n->m_pageOff[cChild];
                                         uint8_t *load = new uint8_t[len];
@@ -1577,7 +1578,6 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                                             results.insert(m_ts->getTrajId(data.m_id));
                                             v.visitData(data);
                                         }
-                                    }
                                 }
                             } else {
                                 //time-period range query
@@ -1595,7 +1595,6 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                                     results.insert(m_ts->getTrajId(data.m_id));
                                     v.visitData(data);
                                 } else {
-                                    if (m_bUsingTrajStore == true) {
                                         m_ts->m_trajIO += std::ceil(n->m_dataLen[cChild] / 4096.0);
                                         uint32_t len = n->m_dataLen[cChild] + n->m_pageOff[cChild];
                                         uint8_t *load = new uint8_t[len];
@@ -1609,16 +1608,6 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                                             results.insert(m_ts->getTrajId(data.m_id));
                                             v.visitData(data);
                                         }
-                                    } else {
-//                                    //not used code
-//                                    Trajectory traj;
-//                                    traj.loadFromByteArray(data.m_pData);
-////                            v.visitData(data);
-//                                    if (traj.intersectsShape(query)) {
-//                                        m_stats.m_doubleExactQueryResults += 1;
-//                                        v.visitData(data);
-//                                    }
-                                    }
                                 }
                             }
                         } else {
@@ -1640,9 +1629,7 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
         bool isSlice=(querycy->m_startTime==querycy->m_endTime);
         std::stack<NodePtr> st;
         NodePtr root = readNode(m_rootID);
-
         if (root->m_children > 0 && root->m_nodeMBR.intersectsShape(query)) st.push(root);
-
         while (!st.empty()) {
             NodePtr n = st.top();
             st.pop();
@@ -1650,53 +1637,44 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                 v.visitNode(*n);
                 for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
                     if(results.count(m_ts->getTrajId(n->m_pIdentifier[cChild]))>0) continue;
-                    bool b;
+                    int b;
                     if (m_bUsingMBR) {
-                        if (type == ContainmentQuery) b = n->m_ptrMBR[cChild]->containsShape(query);
-                        else b = n->m_ptrMBR[cChild]->intersectsShape(query);
+                        b = querycy->checkRel(*(n->m_ptrMBR[cChild]));
                     } else {
-                        if (type == ContainmentQuery) b = n->m_ptrMBC[cChild]->containsShape(query);
-                        else b = n->m_ptrMBC[cChild]->intersectsShape(query);
+                        b = querycy->checkRel(*(n->m_ptrMBC[cChild]));
                     }
-                    if (b) {
+                    if (b>0) {
                         sb += 1;
                         simpleData data = simpleData(n->m_pIdentifier[cChild], 0);
-                        ++(m_stats.m_u64QueryResults);
-                        bool bb;
-                        if (m_bUsingMBR) {
-                            double x1 = n->m_ptrMBR[cChild]->m_pLow[0], x2 = n->m_ptrMBR[cChild]->m_pHigh[0],
-                                    y1 = n->m_ptrMBR[cChild]->m_pLow[1], y2 = n->m_ptrMBR[cChild]->m_pHigh[1];
-                            double dx = std::max(fabs(x1 - querycy->m_p[0]), fabs(x2 - querycy->m_p[0])),
-                                    dy = std::max(fabs(y1 - querycy->m_p[1]), fabs(y2 - querycy->m_p[1]));
-                            bb = sqrt(sq(dx) + sq(dy)) <= querycy->m_r;
-                        } else {
-                            if (isSlice) {
-                                auto cent = n->m_ptrMBC[cChild]->getCenterRdAtTime(querycy->m_startTime);
-                                bb = Point(querycy->m_p, 2).getMinimumDistance(cent.first) <=
-                                     querycy->m_r - cent.second;
-                            } else
-                                bb = n->m_ptrMBC[cChild]->prevalidate(*querycy);
-                        }
-
-                        if (bb) {
+                        if (b==2) {
                             sbb += 1;
                             m_stats.m_doubleExactQueryResults += 1;
                             results.insert(m_ts->getTrajId(data.m_id));
+                            pending.erase(m_ts->getTrajId(data.m_id));
                             v.visitData(data);
+                            ++(m_stats.m_u64QueryResults);
                         } else {
-                            if (m_bUsingTrajStore == true) {
-                                m_ts->m_trajIO += std::ceil(n->m_dataLen[cChild] / 4096.0);
-                                uint32_t len = n->m_dataLen[cChild] + n->m_pageOff[cChild];
+                            storee.m_page = n->m_pageNum[cChild];
+                            storee.m_off = n->m_pageOff[cChild];
+                            storee.m_len = n->m_dataLen[cChild];
+                            id_type id = m_ts->getTrajId(data.m_id);
+                            if(bUsingSBBD) {
+                                pending.insert(make_pair(id, storee));
+                            }else{
+                                uint32_t len = storee.m_off + storee.m_len;
+                                m_ts->m_trajIO += std::ceil(len / 4096.0);
                                 uint8_t *load;
-                                m_ts->loadByteArray(n->m_pageNum[cChild], len, &load);
-                                uint8_t *ldata = load + n->m_pageOff[cChild];
+                                m_ts->loadByteArray(storee.m_page, len, &load);
+                                uint8_t *ldata = load + storee.m_off;
                                 Trajectory partTraj;
                                 partTraj.loadFromByteArray(ldata);
                                 delete[](load);
                                 if (partTraj.intersectsCylinder(*querycy)) {
                                     m_stats.m_doubleExactQueryResults += 1;
-                                    results.insert(m_ts->getTrajId(data.m_id));
+                                    results.insert(id);
+                                    simpleData data = simpleData(id, 0);
                                     v.visitData(data);
+                                    ++(m_stats.m_u64QueryResults);
                                 }
                             }
                         }
@@ -1708,6 +1686,31 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                     if (query.intersectsShape(*(n->m_ptrMBR[cChild]))) {
                         st.push(readNode(n->m_pIdentifier[cChild]));
                     }
+                }
+            }
+        }
+        if(bUsingSBBD) {
+            while (!pending.empty()) {
+                auto iter = pending.begin();
+                storee = iter->second;
+                id_type id = iter->first;
+                uint32_t len = storee.m_off + storee.m_len;
+                m_ts->m_trajIO += std::ceil(len / 4096.0);
+                uint8_t *load;
+                m_ts->loadByteArray(storee.m_page, len, &load);
+                uint8_t *ldata = load + storee.m_off;
+                Trajectory partTraj;
+                partTraj.loadFromByteArray(ldata);
+                delete[](load);
+                if (partTraj.intersectsCylinder(*querycy)) {
+                    m_stats.m_doubleExactQueryResults += 1;
+                    results.insert(id);
+                    pending.erase(id);
+                    simpleData data = simpleData(id, 0);
+                    v.visitData(data);
+                    ++(m_stats.m_u64QueryResults);
+                } else {
+                    pending.erase(iter);
                 }
             }
         }

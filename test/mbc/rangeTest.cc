@@ -4,25 +4,25 @@
 
 #include "testFuncs.h"
 
-int main(){
+int main() {
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
 //        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
         vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
 //        vector<pair<id_type, Trajectory> > trajs = loadGTFolder();
-        auto stat=trajStat::instance();
+        auto stat = trajStat::instance();
         int maxseg = 0;
-        double segLenParas[]={100,200,300,400,500,750,1000,1500,2000,2500,3000,3500,4000};
+        double segLenParas[] = {100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3000, 3500, 4000};
 //        double segLenParas[]={60,70,80,90,100,140,150,170,180,200};
-        double queryLenParas[]={0,3600};
-        std::cerr<<"Starting range test\n"<<"Segmentation lengths are:";
-        for(auto p:segLenParas) std::cerr<<p<<"\t";
-        std::cerr<<"\nQuery lengths are:";
-        for(auto p:queryLenParas) std::cerr<<p<<"\t";
-        std::cerr<<"\n";
+        double queryLenParas[] = {0, 3600};
+        std::cerr << "Starting range test\n" << "Segmentation lengths are:";
+        for (auto p:segLenParas) std::cerr << p << "\t";
+        std::cerr << "\nQuery lengths are:";
+        for (auto p:queryLenParas) std::cerr << p << "\t";
+        std::cerr << "\n";
         vector<vector<IShape *>> querySet;
-        for(auto queryLen:queryLenParas) {
+        for (auto queryLen:queryLenParas) {
             vector<IShape *> queries;
             for (int i = 0; i < 5000; i++) {
                 double t = int(random(stat->mint, stat->maxt - queryLen));
@@ -30,15 +30,15 @@ int main(){
 //                double pHigh[3] = {pLow[0] + random(0.05,0.1),
 //                                   pLow[1] + random(0.05,0.1), t + queryLen};
 //                Region *rg = new Region(pLow, pHigh, 3);
-                Cylinder *rg = new Cylinder(pLow,random(0.1,0.2),t,t+queryLen,2);
+                Cylinder *rg = new Cylinder(pLow, random(0.1, 0.2), t, t + queryLen, 2);
                 queries.emplace_back(rg);
             }
             querySet.emplace_back(queries);
             queries.clear();
         }
         for (double segLen:segLenParas) {
-            maxseg=3000;
-            string name0 ="name0", name1 ="name1", name2 = "name2";
+            maxseg = 3000;
+            string name0 = "name0", name1 = "name1", name2 = "name2";
             id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;
             IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
                     *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
@@ -48,22 +48,22 @@ int main(){
                     *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
-            maxseg=std::max(3000,Trajectory::cutTrajsIntoFile(trajs,segLen));
-            std::cerr<<"maxseg is "<<maxseg<<"\n";
+            maxseg = std::max(3000, Trajectory::cutTrajsIntoFile(trajs, segLen));
+            std::cerr << "maxseg is " << maxseg << "\n";
 
-            TrajStore *ts1 = new TrajStore(name1, diskfile1, 4096, maxseg+1);
-            TrajStore *ts2 = new TrajStore(name2, diskfile2, 4096, maxseg+1);
+            TrajStore *ts1 = new TrajStore(name1, diskfile1, 4096, maxseg + 1);
+            TrajStore *ts2 = new TrajStore(name2, diskfile2, 4096, maxseg + 1);
 
-            ts1->loadSegments(subTrajFile,true);
+            ts1->loadSegments(subTrajFile, true);
             ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
-            ts2->loadSegments(subTrajFile,true);
+            ts2->loadSegments(subTrajFile, true);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
             ts1->flush();
             ts2->flush();
-            std::cerr<<"Seg len:"<<segLen<<"\n";
-            for(const auto &qs:querySet) {
+            std::cerr << "Seg len:" << segLen << "\n";
+            for (const auto &qs:querySet) {
                 rangeQueryBatch(r, qs, ts1);
                 rangeQueryBatch(rc, qs, ts2);
             }
@@ -80,20 +80,19 @@ int main(){
             delete diskfile1;
             delete diskfile2;
         }
-        for(auto &qs:querySet){
-            for(auto &shape:qs){
-                delete(shape);
+        for (auto &qs:querySet) {
+            for (auto &shape:qs) {
+                delete (shape);
             }
         }
     }
-    catch (Tools::Exception& e)
-    {
+    catch (Tools::Exception &e) {
         cerr << "******ERROR******" << endl;
         std::string s = e.what();
         cerr << s << endl;
         return -1;
     }
-    catch(...){
+    catch (...) {
 
     }
     return 0;

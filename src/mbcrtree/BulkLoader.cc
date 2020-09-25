@@ -481,13 +481,13 @@ void BulkLoader::createLevel(
 				pTree->writeNode(n);
 				es2->insert(new ExternalSorter::Record(n->m_nodeMBR, n->m_identifier, 0, 0, 0,level));
 				pTree->m_rootID = n->m_identifier;
-                if(level==0&&pTree->m_bUsingTrajStore){
+                if(level==0){
                     //state the storage place of bounding boxes
                     for(int i=0;i<n->m_children;i++){
                         pTree->m_ts->m_part2node[n->m_pIdentifier[i]]=n->m_identifier;
                     }
                 }
-                else if(level==1&&pTree->m_bUsingTrajStore){
+                else if(level==1){
                     //linking the bounding boxes
                     for(int i=0;i<n->m_children;i++){
                         NodePtr child=pTree->readNode(n->m_pIdentifier[i]);
@@ -537,13 +537,13 @@ void BulkLoader::createLevel(
 			pTree->writeNode(n);
 			es2->insert(new ExternalSorter::Record(n->m_nodeMBR, n->m_identifier, 0, 0, 0,level));
 			pTree->m_rootID = n->m_identifier;
-            if(level==0&&pTree->m_bUsingTrajStore){
+            if(level==0){
                 //state the storage place of bounding boxes
                 for(int i=0;i<n->m_children;i++){
                     pTree->m_ts->m_part2node[n->m_pIdentifier[i]]=n->m_identifier;
                 }
             }
-            else if(level==1&&pTree->m_bUsingTrajStore){
+            else if(level==1){
                 //linking the bounding boxes
                 for(int i=0;i<n->m_children;i++){
                     NodePtr child=pTree->readNode(n->m_pIdentifier[i]);

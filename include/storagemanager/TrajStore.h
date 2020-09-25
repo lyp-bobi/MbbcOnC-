@@ -47,6 +47,22 @@ namespace SpatialIndex
                      miny<<","<< maxy<<","<< mint<<","<< maxt<<","<<
                      Dx<<","<< Dy<<","<< Dt<<","<< dist<<"\n";
         }
+        string toString(){
+            ostringstream ostream;
+            ostream<<bt<<" "<< M<<" "<< lineCount<<" "<< trajCount<<" "<<
+                    tl<<" "<< jt<<" "<< v<<" "<< minx<<" "<< maxx<<" "<<
+                    miny<<" "<< maxy<<" "<< mint<<" "<< maxt<<" "<<
+                    Dx<<" "<< Dy<<" "<< Dt<<" "<< dist;
+            return ostream.str();
+        }
+        void fromString(string s){
+            istringstream istream(s);
+            istream>>bt>> M>> lineCount>> trajCount>>
+                   tl>> jt>> v>> minx>> maxx>>
+                   miny>> maxy>> mint>> maxt>>
+                   Dx>> Dy>> Dt>> dist;
+            return;
+        }
         void clear(){
             M=lineCount=trajCount=jt=tl=Dx=Dy=Dt=0;
         }

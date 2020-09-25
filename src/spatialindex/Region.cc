@@ -174,7 +174,6 @@ void Region::storeToByteArray(uint8_t** data, uint32_t& len)
 	memcpy(ptr, m_pHigh, m_dimension * sizeof(double));
 	//ptr += m_dimension * sizeof(double);
 }
-
 //
 // IShape interface
 //
