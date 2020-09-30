@@ -32,7 +32,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define random(x, y) (((double)rand()/RAND_MAX)*(y-x)+x)
+
 
 #include <spatialindex/SpatialIndex.h>
 

@@ -25,12 +25,13 @@ int main() {
         for (auto queryLen:queryLenParas) {
             vector<IShape *> queries;
             for (int i = 0; i < 5000; i++) {
-                double t = int(random(stat->mint, stat->maxt - queryLen));
-                double pLow[3] = {random(stat->minx, stat->maxx), random(stat->miny, stat->maxy), t};
+                auto p =trajs[int(random(0,trajs.size()-1))].second.randomPoint();
+//                double t = int(random(stat->mint, stat->maxt - queryLen));
+//                double pLow[3] = {random(stat->minx, stat->maxx), random(stat->miny, stat->maxy), t};
 //                double pHigh[3] = {pLow[0] + random(0.05,0.1),
 //                                   pLow[1] + random(0.05,0.1), t + queryLen};
 //                Region *rg = new Region(pLow, pHigh, 3);
-                Cylinder *rg = new Cylinder(pLow, random(0.1, 0.2), t, t + queryLen, 2);
+                Cylinder *rg = new Cylinder(p.m_pCoords, random(0.1, 0.2), p.m_time - queryLen/2, p.m_time + queryLen/2, 2);
                 queries.emplace_back(rg);
             }
             querySet.emplace_back(queries);

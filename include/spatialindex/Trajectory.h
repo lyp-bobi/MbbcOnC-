@@ -7,6 +7,8 @@
 #include <cmath>
 #include "ShapeList.h"
 #define subTrajFile "./subTrajFile.stj"
+
+#define random(x, y) (((double)rand()/RAND_MAX)*(y-x)+x)
 extern double calcuTime[10];
 extern int testPhase;
 extern int disttype;
@@ -241,6 +243,11 @@ namespace SpatialIndex
                         +sq(m_points[i].m_pCoords[1]-m_points[i-1].m_pCoords[1]));
             }
             return res;
+        }
+
+        STPoint randomPoint(){
+            int i = int(random(0,m_points.size()-1));
+            return m_points[i];
         }
 
         std::string toString() const ;
