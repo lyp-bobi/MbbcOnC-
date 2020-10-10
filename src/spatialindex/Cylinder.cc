@@ -300,15 +300,15 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const Cylinder& r)
 
 int Cylinder::checkRel(const Region &br) const {
     if(br.m_pLow[m_dimension]>m_endTime||br.m_pHigh[m_dimension]<m_startTime) return 0;
+    bool b = intersectsRegion(br);
+    if (!b) return 0;
     double x1 = br.m_pLow[0], x2 =  br.m_pHigh[0], y1 = br.m_pLow[1], y2 =  br.m_pHigh[1];
     double x= m_p[0], y =m_p[1];
     double r2 = m_r*m_r;
     double d1 = sq(x-x1) + sq(y-y1), d2 = sq(x-x1) + sq(y-y2), d3 = sq(x-x2) + sq(y-y1), d4 = sq(x-x2) + sq(y-y2);
     if (d1<r2 && d2<r2&&d3<r2&&d4<r2)
         return 2;
-    if (d1<r2 || d2<r2||d3<r2||d4<r2)
-        return 1;
-    return 0;
+    return 1;
 }
 
 int Cylinder::checkRel(const MBC &bc) const {

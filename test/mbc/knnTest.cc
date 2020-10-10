@@ -12,15 +12,11 @@ int main() {
         auto stat = trajStat::instance();
         int maxseg = 0;
         double avgSegLen = 100;
-//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
-//        double segLenParas[]={20,50,80,100,200,300,500,700,900,1100,1300,1500
-//                              ,1700,1900,2100,2500,3000,4000,5000};
-//        double queryLenParas[]={900,3600};
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
-//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
+//        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
+        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://TRI-framework/dumpedtraj.txt");
+
         double segLenParas[] = {300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000, 4000};
-//        double segLenParas[]={300,500,700,900,1100,1300,1500,1700,1900,2100,2300,2500,2700,2900,3000,4000};
-//        double segLenParas[]={500,1000,1500,2000,3000,4000,5000,6000,7000,8000,9000,10000};
+
         double queryLenParas[] = {900, 3600};
         std::cerr << "Starting knn test\n" << "Segmentation lengths are:";
         for (auto p:segLenParas) std::cerr << p << "\t";
@@ -30,10 +26,10 @@ int main() {
         vector<vector<IShape *>> querySet;
         for (auto queryLen:queryLenParas) {
             vector<IShape *> queries;
-            for (int i = 0; i < 200; i++) {
+            for (int i = 0; i < 100; i++) {
                 auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
                 Trajectory *concate = new Trajectory();
-                double ts = std::max(ori->m_startTime(), random(ori->m_startTime(), ori->m_endTime() - queryLen));
+                double ts = ori->randomPoint().m_time-queryLen/2;
                 ori->getPartialTrajectory(ts, ts + queryLen, *concate);
                 if (!concate->m_points.empty())
                     queries.emplace_back(concate);
@@ -80,20 +76,18 @@ int main() {
             segs.clear();
             segs.swap(emptyseg);
             std::cerr << "Seg len:" << segLen << "\n";
-            disttype = 0;
-            bUsingSimp = true;
+//            bUsingSimp = true;
+//            bUsingSBBD = true;
+//            for (const auto &qs:querySet) {
+//                kNNQueryBatch(r, qs, ts1);
+//                kNNQueryBatch(rc, qs, ts2);
+//            }
+            bUsingSimp = false;
+            bUsingSBBD = false;
             for (const auto &qs:querySet) {
                 kNNQueryBatch(r, qs, ts1);
                 kNNQueryBatch(rc, qs, ts2);
             }
-//                    bUsingSimp= false;
-            disttype = 1;
-            for (const auto &qs:querySet) {
-                kNNQueryBatch(r, qs, ts1);
-                kNNQueryBatch(rc, qs, ts2);
-            }
-
-
             delete r;
             delete ts1;
             delete rc;
@@ -120,5 +114,6 @@ int main() {
     catch (...) {
 
     }
+
     return 0;
 }

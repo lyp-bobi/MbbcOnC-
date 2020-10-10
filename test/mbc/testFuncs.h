@@ -288,7 +288,6 @@ vector<pair<id_type, Trajectory> > loadDumpedFiledToTrajs(string filename = genF
     vector<pair<id_type, Trajectory> > res;
     Trajectory tj;
     Region r;
-    getline(inFile, lineStr);
     stat->fromString(lineStr);
     int curLine = 0;
     while (getline(inFile, lineStr) && curLine < maxLinesToRead) {
@@ -303,40 +302,48 @@ vector<pair<id_type, Trajectory> > loadDumpedFiledToTrajs(string filename = genF
                 ids.insert(id);
                 res.emplace_back(make_pair(id, tj));
                 curLine++;
-//                tj.getMBR(r);
-//                if (r.m_pHigh[0] > stat->maxx) stat->maxx = r.m_pHigh[0];
-//                if (r.m_pLow[0] < stat->minx) stat->minx = r.m_pLow[0];
-//                if (r.m_pHigh[1] > stat->maxy) stat->maxy = r.m_pHigh[1];
-//                if (r.m_pLow[1] < stat->miny) stat->miny = r.m_pLow[1];
-//                if (r.m_pHigh[2] > stat->maxt) stat->maxt = r.m_pHigh[2];
-//                if (r.m_pLow[2] < stat->mint) stat->mint = r.m_pLow[2];
-//                stat->dist += tj.m_dist();
-//                stat->lineCount += tj.m_points.size() - 1;
-//                stat->trajCount += 1;
-//                stat->M += tj.m_endTime() - tj.m_startTime();
+                tj.getMBR(r);
+                if (r.m_pHigh[0] > stat->maxx) stat->maxx = r.m_pHigh[0];
+                if (r.m_pLow[0] < stat->minx) stat->minx = r.m_pLow[0];
+                if (r.m_pHigh[1] > stat->maxy) stat->maxy = r.m_pHigh[1];
+                if (r.m_pLow[1] < stat->miny) stat->miny = r.m_pLow[1];
+                if (r.m_pHigh[2] > stat->maxt) stat->maxt = r.m_pHigh[2];
+                if (r.m_pLow[2] < stat->mint) stat->mint = r.m_pLow[2];
+                stat->dist += tj.m_dist();
+                stat->lineCount += tj.m_points.size() - 1;
+                stat->trajCount += 1;
+                stat->M += tj.m_endTime() - tj.m_startTime();
             }
         }
         catch (...) {
             break;
         }
     }
-//    stat->Dx = stat->maxx - stat->minx;
-//    stat->Dy = stat->maxy - stat->miny;
-//    stat->Dt = stat->maxt - stat->mint;
-//    stat->tl = stat->M / stat->lineCount;
-//    stat->jt = stat->M / stat->trajCount;
-//    stat->v = stat->dist / stat->M;
+    stat->Dx = stat->maxx - stat->minx;
+    stat->Dy = stat->maxy - stat->miny;
+    stat->Dt = stat->maxt - stat->mint;
+    stat->tl = stat->M / stat->lineCount;
+    stat->jt = stat->M / stat->trajCount;
+    stat->v = stat->dist / stat->M;
     std::cerr << *stat;
+    std::cerr<<stat->toString();
 //    drop_cache(3);
     return res;
 }
 
 
-void dumpToFile(vector<pair<id_type, Trajectory> > &trajs, string filename = "dumpedtraj.txt") {
+void dumpToFile(vector<pair<id_type, Trajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
     ofstream outFile(filename, ios::out);
     auto stat = trajStat::instance();
     outFile<<stat->toString()<<"\n";
-    for (auto traj : trajs) {
+    if( num ==-1){
+        num = trajs.size();
+    }
+    else{
+        num = min(num,int(trajs.size()));
+    }
+    for(int i=0;i<num;i++){
+        auto traj = trajs[i];
         outFile << traj.first << "\n";
         outFile << traj.second.toString() << "\n";
     }
@@ -587,31 +594,33 @@ double kNNQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajS
 //    cerr <<"Average Querying time: "<< time/num<<endl;
 //    cerr <<"Averaged VISIT NODE "<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<endl;
 //    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
-    sort(indios.begin(), indios.end());
-    int mid1 = queries.size() * 0.1, mid2 = queries.size() * 0.9;
-    double sum = 0;
-    for (int i = mid1; i <= mid2; i++) {
-        sum += indios[i];
-    }
-    sum = sum / (mid2 - mid1);
-    cerr << "time\tindexVisit\tLeafVisit\t leaf1\tleaf2\tindexIO\ttrajIO\tresult\n";
+//    sort(indios.begin(), indios.end());
+//    int mid1 = queries.size() * 0.1, mid2 = queries.size() * 0.9;
+//    double sum = 0;
+//    for (int i = mid1; i <= mid2; i++) {
+//        sum += indios[i];
+//    }
+//    sum = sum / (mid2 - mid1);
+    cerr << "time\tindexVisit\tLeafVisit\t leaf1\tleaf2\tindexIO\ttrajIO\n";
     cerr << time / num << "\t" << 1.0 * vis.m_indexvisited / num << "\t" << 1.0 * vis.m_leafvisited / num << "\t"
          << 1.0 * ts->m_leaf1 / num << "\t" << 1.0 * ts->m_leaf2 / num << "\t" << 1.0 * ts->m_indexIO / num << "\t"
-         << 1.0 * ts->m_trajIO / num << "\t" << 1.0 * ts->m_loadedTraj / num << "\t" << sum << endl;
+         << 1.0 * ts->m_trajIO / num << endl;
 //    cerr <<time/num<<"\n";
     return rad;
 }
 
-void rangeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajStore *ts = nullptr) {
+void rangeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajStore *ts = nullptr, MyVisitor* vis = nullptr) {
     ts->cleanStatistic();
     int num = queries.size();
-    MyVisitor vis;
-    vis.ts = ts;
+    if(vis == nullptr){
+        vis = new MyVisitor();
+    }
+    vis->ts = ts;
     sb = 0, sbb = 0;
     auto start = std::chrono::system_clock::now();
     for (int i = 0; i < queries.size(); i++) {
-        vis.m_query = queries[i];
-        tree->intersectsWithQuery(*queries[i], vis);
+        vis->m_query = queries[i];
+        tree->intersectsWithQuery(*queries[i], *vis);
     }
     double time;
     auto end = std::chrono::system_clock::now();
@@ -621,9 +630,10 @@ void rangeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajS
 //    cerr <<"Averaged VISIT NODE "<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<endl;
 //    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
     cerr << "average time\tIndexVisit\tLeafVisit\tIndexIO\ttrajIO\tprevalidateRate\tinternum\tcontainNum\n";
-    cerr << time / num << "\t" << 1.0 * vis.m_indexvisited / num << "\t" << 1.0 * vis.m_leafvisited / num << "\t"
+    cerr << time / num << "\t" << 1.0 * vis->m_indexvisited / num << "\t" << 1.0 * vis->m_leafvisited / num << "\t"
          << 1.0 * ts->m_indexIO / num << "\t" << 1.0 * ts->m_trajIO / num << "\t" << double(sbb) / sb << "\t" << sb
          << "\t" << sbb << endl;
+    cerr <<vis->m_resultGet<<"\n";
 //    cerr <<time/num<<"\n";
 }
 //

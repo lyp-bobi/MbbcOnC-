@@ -65,7 +65,7 @@ int main() {
             for (int i = 0; i < 200; i++) {
                 auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
                 Trajectory *concate = new Trajectory();
-                double ts = std::max(ori->m_startTime(), random(ori->m_startTime(), ori->m_endTime() - queryLen));
+                double ts = ori->randomPoint().m_time - queryLen/2;
                 ori->getPartialTrajectory(ts, ts + queryLen, *concate);
                 if (!concate->m_points.empty())
                     queries.emplace_back(concate);

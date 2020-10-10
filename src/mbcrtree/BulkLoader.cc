@@ -40,6 +40,7 @@
 #include "Index.h"
 #include "BulkLoader.h"
 
+
 using namespace SpatialIndex;
 using namespace SpatialIndex::MBCRTree;
 

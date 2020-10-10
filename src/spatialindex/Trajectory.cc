@@ -13,7 +13,7 @@
 #include <spatialindex/SpatialIndex.h>
 #include <storagemanager/TrajStore.h>
 
-double calcuTime[10]={0};
+double calcuTime[10]={0,0,0,0,0,0,0,0};
 int testPhase=0;
 
 int disttype = 0;
@@ -1152,6 +1152,70 @@ double Trajectory::getMinimumDistance(const SpatialIndex::Trajectory &in) const 
     else{throw Tools::NotSupportedException("Wrong distance");}
 }
 
+double Trajectory::getMinimumDistanceInner(const SpatialIndex::Trajectory &in) const {
+    if(m_startTime()>=in.m_endTime()||m_endTime()<=in.m_startTime())
+        return 1e300;
+    fakeTpVector timedTraj2(&in.m_points,m_startTime(),m_endTime());
+    double cut1=timedTraj2[0].m_time,cut2=timedTraj2[timedTraj2.m_size-1].m_time;
+    double sum=0;
+    double max=0;
+    fakeTpVector midTraj(&m_points,cut1,cut2);
+    if(midTraj.m_size!=0) {
+        double newtime = midTraj[0].m_time, lasttime = midTraj[0].m_time;
+        auto iter1 = midTraj.m_vectorPointer->begin()+midTraj.m_is;
+        auto iter2 = timedTraj2.m_vectorPointer->begin()+timedTraj2.m_is;
+        STPoint lastp1 = midTraj[0], lastp2 = timedTraj2[0], newp1, newp2;
+        newp1.makeInfinite(2);newp2.makeInfinite(2);
+        if(disttype==1) {max=std::max(max,iter1->getMinimumDistance(*iter2));}
+        while (lasttime != timedTraj2[timedTraj2.m_size-1].m_time) {
+            if ((iter1 + 1)->m_time == (iter2 + 1)->m_time) {
+                newtime = (iter1 + 1)->m_time;
+                newp1 = *(iter1 + 1);
+                newp2 = *(iter2 + 1);
+                iter1++;
+                iter2++;
+            } else if ((iter1 + 1)->m_time < (iter2 + 1)->m_time) {
+                newtime = (iter1 + 1)->m_time;
+                newp1 = *(iter1 + 1);
+                double x=makemidmacro(iter2->m_pCoords[0],iter2->m_time,(iter2 + 1)->m_pCoords[0],(iter2 + 1)->m_time,newtime);
+                double y=makemidmacro(iter2->m_pCoords[1],iter2->m_time,(iter2 + 1)->m_pCoords[1],(iter2 + 1)->m_time,newtime);
+                newp2.m_pCoords[0]=x;
+                newp2.m_pCoords[1]=y;
+                newp2.m_time=newtime;
+                iter1++;
+            } else {
+                newtime = (iter2 + 1)->m_time;
+                double x=makemidmacro(iter1->m_pCoords[0],iter1->m_time,(iter1 + 1)->m_pCoords[0],(iter1 + 1)->m_time,newtime);
+                double y=makemidmacro(iter1->m_pCoords[1],iter1->m_time,(iter1 + 1)->m_pCoords[1],(iter1 + 1)->m_time,newtime);
+                newp1.m_pCoords[0]=x;
+                newp1.m_pCoords[1]=y;
+                newp1.m_time=newtime;
+                newp2 = *(iter2 + 1);
+                iter2++;
+            }
+            lasttime = newtime;
+            if(disttype==0) {
+                double pd = line2lineIED(lastp1, newp1, lastp2, newp2);
+//                std::cerr<<"distance\n"<<lastp1<<"\t"<<newp1<<"\n"<<lastp2<<"\t"<<newp2<<"\n"<<pd<<"\n";
+                sum += pd;
+            }
+            else if(disttype==1){
+                max=std::max(newp1.getMinimumDistance(newp2),max);
+            }
+            else{throw Tools::NotSupportedException("Wrong distance");}
+            lastp1 = newp1;
+            lastp2 = newp2;
+        }
+    }
+    if(disttype==0) {
+        return sum;
+    }
+    else if(disttype==1){
+        return max;
+    }
+    else{throw Tools::NotSupportedException("Wrong distance");}
+}
+
 double Trajectory::getMinimumDistance(const ShapeList &in,bool hasPrev,bool hasNext,double MaxVelocity) const {
     double sum=0,max=0;
     double ints,inte;
@@ -1988,10 +2052,10 @@ void Trajectory::getPartialTrajectory(double tstart, double tend, SpatialIndex::
         y=makemidmacro(m_points[is-1].m_pCoords[1],m_points[is-1].m_time,
                        m_points[is].m_pCoords[1],m_points[is].m_time,tstart);
         double xy[2]={x,y};
-        out.m_points.emplace_back(STPoint(xy,tstart,2));
+        out.m_points.push_back(STPoint(xy,tstart,2));
     }
     for(int i=is;i<=ie;i++){
-        out.m_points.emplace_back(m_points[i]);
+        out.m_points.push_back(STPoint(m_points[i]));
     }
     if(ie!=m_points.size()-1&&m_points[ie].m_time!=tend){
         x=makemidmacro(m_points[ie].m_pCoords[0],m_points[ie].m_time,
@@ -1999,7 +2063,7 @@ void Trajectory::getPartialTrajectory(double tstart, double tend, SpatialIndex::
         y=makemidmacro(m_points[ie].m_pCoords[1],m_points[ie].m_time,
                        m_points[ie+1].m_pCoords[1],m_points[ie+1].m_time,tstart);
         double xy[2]={x,y};
-        out.m_points.emplace_back(STPoint(xy,tend,2));
+        out.m_points.push_back(STPoint(xy,tend,2));
     }
 }
 

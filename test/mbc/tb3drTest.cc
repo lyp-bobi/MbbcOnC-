@@ -5,7 +5,9 @@ int main() {
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
+//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
+//        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://TRI-framework/dumpedtraj.txt");
+        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
 //        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
         vector<pair<id_type, vector<Trajectory>>> segs1;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
@@ -37,25 +39,27 @@ int main() {
             ts1->loadSegments(segs1);
             ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
-            TrajStore *ts2 = new TrajStore(name2, file2, 4096, maxseg + 1);
-            ts2->loadSegments(segs1, true);
-            ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
+//            TrajStore *ts2 = new TrajStore(name2, file2, 4096, maxseg + 1);
+//            ts2->loadSegments(segs1, true);
+//            ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
             //kNN
             segs1.clear();
             segs1.swap(emptyseg);
             emptyseg.clear();
             vector<IShape *> queries;
-            for (int i = 0; i < 200; i++) {
+            for (int i = 0; i < 500; i++) {
                 auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
                 Trajectory *concate = new Trajectory();
-                double ts = std::max(ori->m_startTime(), random(ori->m_startTime(), ori->m_endTime() - queryLen));
+                double ts = ori->randomPoint().m_time - queryLen/2;
                 ori->getPartialTrajectory(ts, ts + queryLen, *concate);
                 if (!concate->m_points.empty())
                     queries.emplace_back(concate);
             }
+            bUsingSBBD= false;
             kNNQueryBatch(r, queries, ts1);
-            kNNQueryBatch(rc, queries, ts2);
+            bUsingSBBD= true;
+            kNNQueryBatch(r, queries, ts1);
             cerr << "\n";
             for (auto &tras:queries) {
                 delete tras;
@@ -63,8 +67,8 @@ int main() {
             queries.clear();
             delete r;
             delete ts1;
-            delete rc;
-            delete ts2;
+//            delete rc;
+//            delete ts2;
             delete file0;
             delete file1;
             delete file2;

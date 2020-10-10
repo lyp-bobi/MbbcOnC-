@@ -6,8 +6,8 @@ int main() {
         calcuTime[0] = 0;
         srand((int) time(NULL));
 //        srand(21);
-//        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
+        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
+//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, Trajectory> > empty1;
         int totallen = 0, totalseg = 0;

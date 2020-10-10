@@ -129,6 +129,8 @@ namespace SpatialIndex
         virtual double getMinimumDistance(const Trajectory& in) const;
         virtual double getMinimumDistance(const ShapeList& in,bool hasPrev=false,bool hasNext=false,double MaxVelocity=1e300) const;
 
+        virtual double getMinimumDistanceInner(const Trajectory& in) const;
+
         static double line2lineIED(const STPoint &p1s, const STPoint &p1e, const STPoint &p2s, const STPoint &p2e);
         static double line2lineMinSED(const STPoint &p1s, const STPoint &p1e, const STPoint &p2s, const STPoint &p2e);
         static double line2MBRDistance(const STPoint &ps,const STPoint &pe,const Region &r);

@@ -9,7 +9,7 @@ int main() {
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
+        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
         vector<pair<id_type, vector<Trajectory>>> segs1, segs2;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
@@ -58,16 +58,17 @@ int main() {
             //kNN
             emptyseg.clear();
             vector<IShape *> queries;
-            for (int i = 0; i < 200; i++) {
+            for (int i = 0; i < 500; i++) {
                 auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
                 Trajectory *concate = new Trajectory();
-                double ts = std::max(ori->m_startTime(), random(ori->m_startTime(), ori->m_endTime() - queryLen));
+                double ts = ori->randomPoint().m_time - queryLen/2;
                 ori->getPartialTrajectory(ts, ts + queryLen, *concate);
                 if (!concate->m_points.empty())
                     queries.emplace_back(concate);
             }
-
+            bUsingSimp = bUsingSBBD = false;
             kNNQueryBatch(r, queries, ts1);
+            bUsingSimp = bUsingSBBD = true;
             kNNQueryBatch(rc, queries, ts2);
             cerr << "\n";
             for (auto &tras:queries) {

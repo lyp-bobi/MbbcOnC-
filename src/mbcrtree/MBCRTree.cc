@@ -511,8 +511,9 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
         }
     }
     Trajectory simpleTraj;
-    double delta=0;
-    if(bUsingSimp == true) {
+    Trajectory ssTraj;
+    double delta=0, ssdelta= 0;
+    if(bUsingSBBD==true && bUsingSimp == true) {
 //        auto stat=trajStat::instance();
         int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (m_ts->m_timeCount/m_ts->m_segCount));
         segnum=std::max(segnum,10);
@@ -531,6 +532,11 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
         simpp.emplace_back(simpseg.back().back());
         simpleTraj=Trajectory(simpp);
         delta = queryTraj->getMinimumDistance(simpleTraj);
+        simpp.clear();
+        simpp.emplace_back(queryTraj->m_points[0]);
+        simpp.emplace_back(queryTraj->m_points[queryTraj->m_points.size()-1]);
+        ssTraj=Trajectory(simpp);
+        ssdelta = queryTraj->getMinimumDistance(ssTraj);
     }else{
         simpleTraj=*queryTraj;
     }
@@ -542,7 +548,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
     double knearest = 0.0;
     int iternum = 0;
     /*SBB-Driven*/
-    if(bUsingSBBD == false) {
+    if(bUsingSBBD == true) {
         PartsStore ps(simpleTraj, delta, m_ts, m_bUsingMBR);
         ps.push(new NNEntry(m_rootID, 0, 0));
 
@@ -565,8 +571,14 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                     NodePtr n = readNode(pFirst->m_id);
                     v.visitNode(*n);
                     for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
-                        double pd = std::max(0.0, simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),
-                                                                                    m_ts->m_maxVelocity) - delta);
+                        double pd;
+                        if(n->m_level>=2 && bUsingSimp){
+                            pd = std::max(0.0, ssTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),
+                                                                                 m_ts->m_maxVelocity) - delta);
+                        }else{
+                            pd = std::max(0.0, simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),
+                                                                                   m_ts->m_maxVelocity) - delta);
+                        }
                         if (pd < 1e300) {
                             if (n->m_level == 1)
                                 ps.push(new NNEntry(n->m_pIdentifier[cChild], pd, 1));
