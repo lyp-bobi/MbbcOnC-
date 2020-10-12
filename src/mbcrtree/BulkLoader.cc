@@ -405,15 +405,6 @@ void BulkLoader::bulkLoadUsingSTR(
 		pTree->m_stats.m_nodesInLevel.emplace_back(0);
 
 		Tools::SmartPointer<ExternalSorter> es2 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
-        auto stat=trajStat::instance();
-        double P=static_cast<uint64_t>(std::ceil(static_cast<double>(es->getTotalEntries()) / static_cast<double>(bleaf)));
-        double dx=stat->Dx,dy=stat->Dy,dt=stat->Dt;
-        double v=stat->v;
-        double ltc=pow(dx*dy*dt/v/v/P,1.0/3);
-        double rat=stat->bt/ltc;
-        double q=std::max(0.1,1-1.5*pow(rat,-0.75));
-        ltc=pow(dx*dy*dt/v/v/P/sq(q),1.0/3);
-        std::cerr<<"ltc is "<<ltc<<"\n";
 		createLevel(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);
 		es = es2;
 
@@ -447,20 +438,12 @@ void BulkLoader::createLevel(
     double ltc;
     auto stat=trajStat::instance();
     if(dimension==0){
-        double dx=stat->Dx,dy=stat->Dy,dt=stat->Dt;
-        double v=stat->v;
-//        ltc=pow(ceil(pow(b,1.0/3))-1,level)*stat->bt;
-//        ltc=pow(dx*dy*dt/v/v/P*sq(0.99/0.95)/sq(0.6/0.91),1.0/3);
-        ltc=pow(dx*dy*dt/v/v/P,1.0/3);
-        double rat=stat->bt/ltc;
-        double q=std::max(0.1,1-1.5*pow(rat,-0.75));
-        ltc=pow(dx*dy*dt/v/v/P/sq(q),1.0/3);
-        //this ltc is calculated for fanout=40
-//        std::cerr<<"ltc is "<<ltc<<"\n";
-        double nt=dt/ltc;
-//        int nt=pow(static_cast<double>(P)*v*v*dt*dt/dx/dy,1.0/3);
-        S = ceil(nt);
-
+//        double ltc= pow(M_PI*sq(stat->Sr)*stat->P/P/sq(stat->vv()),1.0/3);
+//        std::cerr<<"space is "<<M_PI*sq(stat->Sr)*stat->P<<"\tP,S is"<<P<<"\t"<<S<<"\tltc is "<<ltc<<endl;
+//        double nt=P/ltc;
+        double nt = pow(P * sq(stat->vv())*sq(stat->P) / sq((M_PI * sq(stat->Sr))),1.0/3);
+        std::cerr<<"nt is "<<nt<<"\t rest is "<<sqrt(P/nt)<<endl;
+        S = max(1,int(floor(nt)));
         if(S>P) S=1;
     }
     else {

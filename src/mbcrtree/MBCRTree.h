@@ -180,6 +180,7 @@ namespace SpatialIndex
                 uint32_t m_off;
                 uint32_t m_len;
                 bool m_hasPrev, m_hasNext;
+                double m_ts, m_te;
             };
 			class NNEntry
 			{
@@ -928,6 +929,7 @@ namespace SpatialIndex
                     tmp.m_points.emplace_back(r.m_points[r.m_points.size()-1]);
                     m_parts[id].m_computedDist[std::make_pair(r.m_startTime(),r.m_endTime())] = r.getMinimumDistance(m_query);
                     m_parts[id].insert(tmp,prev,next,entry);
+//                    std::cerr<<"part"<<id<<"\t"<<m_parts[id].m_loadedTime<<"\t"<<m_query.m_endTime()-m_query.m_startTime()<<"\n";
                     update(id);
                 }
 
@@ -1125,15 +1127,11 @@ namespace SpatialIndex
                     delete[] load;
                     id_type trajid = m_ts->getTrajId(id);
                     storeEntry ee;
-                    if(tmpTraj.m_startTime()>=m_query.m_startTime() && tmpTraj.m_endTime()<=m_query.m_endTime()){
-                        insert(trajid, tmpTraj, e->m_hasPrev ? 1 : -1, e->m_hasNext ? 1 : -1, ee);
-                    }else
-                    {
-                        Trajectory inter;
-                        tmpTraj.getPartialTrajectory(m_query.m_startTime(),m_query.m_endTime(),inter);
-                        insert(trajid, inter, e->m_hasPrev ? 1 : -1, e->m_hasNext ? 1 : -1, ee);
-                    }
-                    //double res = update(trajid);
+
+                    Trajectory inter;
+                    tmpTraj.getPartialTrajectory(max(m_query.m_startTime(),e->m_ts),
+                                                 min(m_query.m_endTime(),e->m_te),inter);
+                    insert(trajid, inter, e->m_hasPrev ? 1 : -1, e->m_hasNext ? 1 : -1, ee);
                 }
 
                 auto top(){

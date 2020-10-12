@@ -129,7 +129,7 @@ int main() {
         string name0 = "name0";
         IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096);
         StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false);
-        auto ts = new TrajStore(name0, file0, 4096);
+        auto ts = new TrajStore(name0, diskfile0, 4096);
         ts->loadSegments(segs);
 //        for(auto e:ts.m_entries){
 //            cout<<e.first<<endl;

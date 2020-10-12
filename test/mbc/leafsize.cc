@@ -6,6 +6,7 @@
 
 int main() {
 //    vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://TRI-framework/dumpedtraj.txt");
+    auto stat= trajStat::instance();
     vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
     double segLenParas[] = {300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000, 4000};
     int maxseg;
@@ -29,7 +30,7 @@ int main() {
         StorageManager::IBuffer
                 *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false);
 
-        TrajStore *ts1 = new TrajStore(name1, file1, 4096, maxseg + 1);
+        TrajStore *ts1 = new TrajStore(name1, diskfile1, 4096, maxseg + 1);
         ts1->loadSegments(segs, true);
         ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
         delete r;
@@ -38,6 +39,7 @@ int main() {
         delete diskfile1;
     }
     trajs.clear();
+    stat->init();
     trajs = loadDumpedFiledToTrajs("/root/glfilter.txt");
     for (double segLen:segLenParas) {
         vector<pair<id_type, vector<Trajectory>>> segs;
@@ -59,7 +61,7 @@ int main() {
         StorageManager::IBuffer
                 *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false);
 
-        TrajStore *ts1 = new TrajStore(name1, file1, 4096, maxseg + 1);
+        TrajStore *ts1 = new TrajStore(name1, diskfile1, 4096, maxseg + 1);
         ts1->loadSegments(segs, true);
         ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
@@ -69,6 +71,7 @@ int main() {
         delete diskfile1;
     }
     trajs.clear();
+    stat->init();
     trajs = loadGTFolder();
     double segLenParas2[] = {10,30,50,70,90,110,130,150};
     for (double segLen:segLenParas2) {
@@ -91,7 +94,7 @@ int main() {
         StorageManager::IBuffer
                 *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false);
 
-        TrajStore *ts1 = new TrajStore(name1, file1, 4096, maxseg + 1);
+        TrajStore *ts1 = new TrajStore(name1, diskfile1, 4096, maxseg + 1);
         ts1->loadSegments(segs, true);
         ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 

@@ -1,9 +1,11 @@
-ip2="root@$waifu:~/tri/"
-scp ./copy.sh ${ip2}
-scp ./CMakeLists.txt ${ip2}
-scp ./COPYING ${ip2}
-scp -r ./src ${ip2}
-scp -r ./include ${ip2}
-scp -r ./test ${ip2}
-scp ./CMakeLists.txt ${ip2}
-scp ./COPYING ${ip2}
+ip1="root@"$1":~/tri/"
+
+echo $ip1
+scp ./copy.sh ${ip1}
+scp ./CMakeLists.txt ${ip1}
+scp ./COPYING ${ip1}
+scp -r ./src ${ip1}
+scp -r ./include ${ip1}
+scp -r ./test ${ip1}
+scp ./CMakeLists.txt ${ip1}
+scp ./COPYING ${ip1}

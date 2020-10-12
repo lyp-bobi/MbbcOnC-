@@ -46,7 +46,7 @@
 #define GLFile "/root/GLSC.csv"
 #define fileFolder "/root/out/"
 #define maxLinesToRead 1e10
-#define testtime 100
+#define testtime 500
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
@@ -276,12 +276,14 @@ vector<pair<id_type, Trajectory> > loadGTToTrajs(string filename = genFile) {
     stat->jt = stat->M / stat->trajCount;
     stat->v = stat->dist / stat->M;
     std::cerr << *stat;
+    stat->usedata("od");
 //    drop_cache(3);
     return res;
 }
 
 vector<pair<id_type, Trajectory> > loadDumpedFiledToTrajs(string filename = genFile) {
     auto stat = trajStat::instance();
+    stat->init();
     ifstream inFile(filename, ios::in);
     string lineStr;
     set<id_type> ids;
@@ -325,9 +327,14 @@ vector<pair<id_type, Trajectory> > loadDumpedFiledToTrajs(string filename = genF
     stat->tl = stat->M / stat->lineCount;
     stat->jt = stat->M / stat->trajCount;
     stat->v = stat->dist / stat->M;
+    stat->Sr = (stat->Dx+stat->Dy)/2;
+    stat->P = stat->Dt;
     std::cerr << *stat;
     std::cerr<<stat->toString();
 //    drop_cache(3);
+    std::cerr<<filename<<endl;
+    if (filename.find("td")!=filename.npos) stat->usedata("td");
+    if (filename.find("gl")!=filename.npos) stat->usedata("gl");
     return res;
 }
 
@@ -457,10 +464,12 @@ vector<pair<id_type, Trajectory> > loadGTFolder(int num = 10, string folder = fi
         //cout << ptr->d_name << endl;
         files.emplace_back(PATH + ptr->d_name);
     }
+    auto stat = trajStat::instance();
     for (auto file:files) {
         vector<pair<id_type, Trajectory> > tmptrajs = loadGTToTrajs(file);
         res.insert(res.begin(), tmptrajs.begin(), tmptrajs.end());
     }
+    stat->usedata("od");
 //    drop_cache(3);
     return res;
 }
@@ -514,31 +523,24 @@ struct d4 {
     double low, high, vlow, vhigh;
 };
 
-double biSearchMax(int k, double qt, int f, bool useMBR, double rk = -1, double low = 1, double high = 10000) {
-    std::stack<d4> st;
-    double vlow, vhigh;
-    vlow = knncost(low, k, qt, f, useMBR, rk);
-    vhigh = knncost(high, k, qt, f, useMBR, rk);
-    st.push(d4(low, high, vlow, vhigh));
-    d4 first(0, 0, 0, 0);
+double biSearchMax(int k, double qt, int f, bool useMBR, double rk = -1, double low = 50, double high = 10000) {
     auto stat = trajStat::instance();
-    while (!st.empty()) {
-        first = st.top();
-        st.pop();
-        double mid = (first.low + first.high) / 2;
-        if (first.high - first.low < 1) {
-            return std::max(mid, stat->tl);
-        }
-        double vmid = knncost(mid, k, qt, f, useMBR, rk);
-        bool rising = knncost(mid + 0.1, k, qt, f, useMBR, rk) > vmid;
-//        std::cerr<<mid<<"\t"<<vmid<<"\n";
-        if (rising) {
-            st.push(d4(first.low, mid, first.vlow, vmid));
-        } else {
-            st.push(d4(mid, first.high, vmid, first.vhigh));
+    double mincost=1e300, bestbt;
+    double gap=low;
+    if(stat->dataset=="od") gap = 5;
+    for (double i =low;i<high;i+=gap){
+        double c = stat->knncost(i,k,qt);
+//        std::cerr<<i<<"\t"<<c<<"\n";
+        if(c<mincost){
+            mincost = c;
+            bestbt = i;
         }
     }
-    throw Tools::IllegalStateException("biSearch:failed searching");
+    stat->knncost(bestbt,k,qt,true);
+    if(stat->tl>bestbt){
+        bestbt = int(stat->tl/gap)*gap;
+    }
+    return bestbt;
 }
 //
 //void TreeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajStore *ts = nullptr, int thennk = 5) {
@@ -633,7 +635,7 @@ void rangeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajS
     cerr << time / num << "\t" << 1.0 * vis->m_indexvisited / num << "\t" << 1.0 * vis->m_leafvisited / num << "\t"
          << 1.0 * ts->m_indexIO / num << "\t" << 1.0 * ts->m_trajIO / num << "\t" << double(sbb) / sb << "\t" << sb
          << "\t" << sbb << endl;
-    cerr <<vis->m_resultGet<<"\n";
+//    cerr <<vis->m_resultGet<<"\n";
 //    cerr <<time/num<<"\n";
 }
 //

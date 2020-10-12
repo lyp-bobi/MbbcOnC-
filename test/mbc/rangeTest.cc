@@ -5,16 +5,12 @@
 #include "testFuncs.h"
 
 int main() {
+
     try {
-        calcuTime[0] = 0;
-        srand((int) time(NULL));
-//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
-//        vector<pair<id_type, Trajectory> > trajs = loadGTFolder();
+        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/glfilter.txt");
         auto stat = trajStat::instance();
         int maxseg = 0;
-        double segLenParas[] = {100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3000, 3500, 4000};
-//        double segLenParas[]={60,70,80,90,100,140,150,170,180,200};
+        double segLenParas[] = {100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3000};
         double queryLenParas[] = {0, 3600};
         std::cerr << "Starting range test\n" << "Segmentation lengths are:";
         for (auto p:segLenParas) std::cerr << p << "\t";
@@ -24,13 +20,8 @@ int main() {
         vector<vector<IShape *>> querySet;
         for (auto queryLen:queryLenParas) {
             vector<IShape *> queries;
-            for (int i = 0; i < 5000; i++) {
+            for (int i = 0; i < 1000; i++) {
                 auto p =trajs[int(random(0,trajs.size()-1))].second.randomPoint();
-//                double t = int(random(stat->mint, stat->maxt - queryLen));
-//                double pLow[3] = {random(stat->minx, stat->maxx), random(stat->miny, stat->maxy), t};
-//                double pHigh[3] = {pLow[0] + random(0.05,0.1),
-//                                   pLow[1] + random(0.05,0.1), t + queryLen};
-//                Region *rg = new Region(pLow, pHigh, 3);
                 Cylinder *rg = new Cylinder(p.m_pCoords, random(0.1, 0.2), p.m_time - queryLen/2, p.m_time + queryLen/2, 2);
                 queries.emplace_back(rg);
             }
@@ -65,11 +56,11 @@ int main() {
             ts2->flush();
             std::cerr << "Seg len:" << segLen << "\n";
             for (const auto &qs:querySet) {
-                std::cerr<<"SBBD off\n";
-                bUsingSBBD = false;
-                rangeQueryBatch(r, qs, ts1);
-                rangeQueryBatch(rc, qs, ts2);
-                std::cerr<<"SBBD on\n";
+//                std::cerr<<"SBBD off\n";
+//                bUsingSBBD = false;
+//                rangeQueryBatch(r, qs, ts1);
+//                rangeQueryBatch(rc, qs, ts2);
+//                std::cerr<<"SBBD on\n";
                 bUsingSBBD = true;
                 rangeQueryBatch(r, qs, ts1);
                 rangeQueryBatch(rc, qs, ts2);
@@ -102,5 +93,8 @@ int main() {
     catch (...) {
 
     }
+
+
+
     return 0;
 }

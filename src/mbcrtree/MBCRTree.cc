@@ -639,6 +639,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
     }
     else{/*BFMST*/
         PartsStoreBFMST ps(simpleTraj,0,m_ts,true);
+        string str = queryTraj->toString();
         ps.push(new NNEntry(m_rootID, 0, 0));
 
         uint32_t count = 0;
@@ -649,7 +650,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
         while (! ps.empty()) {
             iternum++;
             NNEntry *pFirst = ps.top();
-
+//            std::cerr<<"pfirst\t"<<pFirst->m_minDist<<"\n";
             // report all nearest neighbors with equal greatest distances.
             // (neighbors can be more than k, if many happen to have the same greatest distance).
             if (count >= k && pFirst->m_minDist > knearest) {
@@ -664,18 +665,26 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                     for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
                         if (n->m_level == 0) {
                             double pd;
-                            if(m_bUsingMBR)
-                                pd= std::max(0.0, simpleTraj.getLeafMinimumDistance(*(n->m_ptrMBR[cChild]),
-                                                                                        m_ts->m_maxVelocity) - delta);
-                            else
-                                pd= std::max(0.0, simpleTraj.getLeafMinimumDistance(*(n->m_ptrMBC[cChild]),
-                                                                                    m_ts->m_maxVelocity) - delta);
+                            double ts, te;
+                            if (m_bUsingMBR) {
+                                pd = std::max(0.0, simpleTraj.getLeafMinimumDistance(*(n->m_ptrMBR[cChild]),
+                                                                                     m_ts->m_maxVelocity) - delta);
+                                ts = n->m_ptrMBR[cChild]->m_pLow[2];
+                                te = n->m_ptrMBR[cChild]->m_pHigh[2];
+                            } else {
+                                pd = std::max(0.0, simpleTraj.getLeafMinimumDistance(*(n->m_ptrMBC[cChild]),
+                                                                                 m_ts->m_maxVelocity) - delta);
+                                ts = n->m_ptrMBC[cChild]->m_startTime;
+                                te = n->m_ptrMBC[cChild]->m_endTime;
+                        }
                             leafInfo *e = new leafInfo();
                             e->m_page = n->m_pageNum[cChild];
                             e->m_off = n->m_pageOff[cChild];
                             e->m_len = n->m_dataLen[cChild];
                             e->m_hasPrev = (n->m_prevNode[cChild] != -1);
                             e->m_hasNext = (n->m_nextNode[cChild] != -1);
+                            e->m_ts = ts;
+                            e->m_te = te;
                             ps.push(new NNEntry(n->m_pIdentifier[cChild], e, pd, 1));
                         } else {
                             double pd = std::max(0.0, simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),

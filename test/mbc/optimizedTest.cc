@@ -37,11 +37,11 @@ int main() {
                     *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
-            TrajStore *ts1 = new TrajStore(name1, file1, 4096, maxseg + 1);
+            TrajStore *ts1 = new TrajStore(name1, diskfile1, 4096, maxseg + 1);
             ts1->loadSegments(segs1);
             ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 
-            TrajStore *ts2 = new TrajStore(name2, file2, 4096, maxseg + 1);
+            TrajStore *ts2 = new TrajStore(name2, diskfile2, 4096, maxseg + 1);
             ts2->loadSegments(segs2);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
 
@@ -51,7 +51,7 @@ int main() {
             segs2.swap(emptyseg);
             emptyseg.clear();
             vector<IShape *> queries;
-            for (int i = 0; i < 200; i++) {
+            for (int i = 0; i < testtime; i++) {
                 auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
                 Trajectory *concate = new Trajectory();
                 double ts = ori->randomPoint().m_time - queryLen/2;

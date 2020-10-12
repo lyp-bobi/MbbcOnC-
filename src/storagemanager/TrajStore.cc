@@ -7,7 +7,7 @@
 #include <cstring>
 #include "Buffer.h"
 
-
+bool bSecondaryIndex=false;
 //
 // tsExternalSorter::Record
 //
@@ -518,7 +518,7 @@ void TrajStore::loadSegments(vector<std::pair<id_type, vector<Trajectory>> > &tr
                 double v = (Point(thebc.m_pLow, 2).getMinimumDistance(Point(thebc.m_pHigh, 2))) /
                            (thebc.m_endTime - thebc.m_startTime) + thebc.m_rv;
                 if (v > m_maxVelocity) m_maxVelocity = v;
-                while((it+1)!=traj.second.end()&&seg.m_points.size()+(it+1)->m_points.size()<pointnum){
+                while((it+1)!=traj.second.end()&&(bSecondaryIndex||seg.m_points.size()+(it+1)->m_points.size()<pointnum)){
                     it++;
                     seg.linkTrajectory(*it);
                     segid=getSegId(traj.first,it-traj.second.begin());
@@ -764,7 +764,7 @@ void TrajStore::loadSegments(std::string file, bool idFirst, bool output) {
                 double v = (Point(thebc.m_pLow, 2).getMinimumDistance(Point(thebc.m_pHigh, 2))) /
                            (thebc.m_endTime - thebc.m_startTime) + thebc.m_rv;
                 if (v > m_maxVelocity) m_maxVelocity = v;
-                while((it+1)!=traj.second.end()&&seg.m_points.size()+(it+1)->m_points.size()<pointnum){
+                while((it+1)!=traj.second.end()&&(bSecondaryIndex||seg.m_points.size()+(it+1)->m_points.size()<pointnum)){
                     it++;
                     seg.linkTrajectory(*it);
                     segid=getSegId(traj.first,it-traj.second.begin());

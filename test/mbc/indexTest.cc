@@ -62,7 +62,7 @@ int main() {
             std::cerr << "Seg len:" << segLen << "\n";
 
             vector<IShape *> queries;
-            for (int i = 0; i < 200; i++) {
+            for (int i = 0; i < testtime; i++) {
                 auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
                 Trajectory *concate = new Trajectory();
                 double ts = ori->randomPoint().m_time - queryLen/2;

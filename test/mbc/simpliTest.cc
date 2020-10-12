@@ -29,7 +29,7 @@ int main() {
         vector<vector<IShape *>> querySet;
         for (auto queryLen:queryLenParas) {
             vector<IShape *> queries;
-            for (int i = 0; i < 200; i++) {
+            for (int i = 0; i < testtime; i++) {
                 auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
                 Trajectory *concate = new Trajectory();
                 double ts = ori->randomPoint().m_time - queryLen/2;
@@ -67,7 +67,7 @@ int main() {
                     *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),
                     *file2 = StorageManager::createNewRandomEvictionsBuffer(*diskfile2, 10, false);
 
-            TrajStore *ts1 = new TrajStore(name1, file1, 4096, maxseg + 1);
+            TrajStore *ts1 = new TrajStore(name1, diskfile1, 4096, maxseg + 1);
             ts1->loadSegments(segs, true);
             ISpatialIndex *r = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
 

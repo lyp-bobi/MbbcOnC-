@@ -13,6 +13,8 @@ extern double calcuTime[10];
 extern int testPhase;
 extern int disttype;
 
+#define Tristat
+
 #define bip auto start = std::chrono::system_clock::now();
 #define bbip auto end = std::chrono::system_clock::now();auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);calcuTime[testPhase]+=double(duration.count()) * std::chrono::microseconds::period::num/ std::chrono::microseconds::period::den;
 using std::vector;
@@ -183,8 +185,10 @@ namespace SpatialIndex
         std::vector<Trajectory> getRDPSegments(double len) const;
         std::vector<Trajectory> getStaticSegments(double len) const;
         std::vector<Trajectory> getStaticSegmentsCut(double len) const;
-        std::vector<Trajectory> getFixedSegments(int len=140) const;
+        std::vector<Trajectory> getFixedSegments(int len=169) const;
         std::vector<Trajectory> getGlobalSegmentsCut(double len) const;
+        std::vector<Trajectory> getItself() const;
+
         void linkTrajectory(Trajectory &other);
 
         static int cutTrajsIntoFile(std::vector<std::pair<id_type, Trajectory> > &trajs,double segLen, int strat=0,std::string filename=subTrajFile);

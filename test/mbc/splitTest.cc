@@ -83,7 +83,7 @@ int main() {
                     maxseg = std::max(int(seg.size()), maxseg);
                     segs.emplace_back(make_pair(traj.first, seg));
                 }
-                TrajStore *ts = new TrajStore(name, file, 4096, maxseg + 1);
+                TrajStore *ts = new TrajStore(name, diskfile, 4096, maxseg + 1);
                 ts->loadSegments(segs, true, false);
 //                drop_cache(1);
                 segs.clear();

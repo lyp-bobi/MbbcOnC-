@@ -90,7 +90,6 @@ void Trajectory::loadFromByteArray(const uint8_t* ptr) {
     STPoint p;
     p.makeDimension(m_dimension);
     for(int i=0;i<size;i++){
-        p.makeDimension(m_dimension);
         memcpy(&p.m_time, ptr, sizeof(double));
         ptr += sizeof(double);
         memcpy(p.m_pCoords, ptr, m_dimension * sizeof(double));
@@ -620,6 +619,13 @@ std::vector<Trajectory> Trajectory::getFixedSegments(int len) const {
             seg.emplace_back(m_points[i]);
         }
     }
+    return res;
+}
+
+
+std::vector<Trajectory> Trajectory::getItself() const {
+    vector<Trajectory> res;
+    res.emplace_back(*this);
     return res;
 }
 
@@ -2069,6 +2075,8 @@ void Trajectory::getPartialTrajectory(double tstart, double tend, SpatialIndex::
 
 int Trajectory::cutTrajsIntoFile(std::vector<std::pair<SpatialIndex::id_type, SpatialIndex::Trajectory>> &trajs,
                                  double segLen, int strat, std::string filename) {
+    auto stat = trajStat::instance();
+    stat->bt = segLen;
     double totallen=0;
     int maxseg=0;
     int totalseg=0;

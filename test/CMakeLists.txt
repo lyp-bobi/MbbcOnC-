@@ -75,6 +75,7 @@ set (SOURCES
         e2eRangeTest
         indexTest
         dump
+        secondaryTest
         )
 
 foreach (test ${SOURCES})
