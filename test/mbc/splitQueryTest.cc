@@ -12,7 +12,7 @@ int main() {
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
+        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
 //        vector<pair<id_type, Trajectory> > trajs = loadGTFolder();
         vector<pair<id_type, vector<Trajectory>>> segs;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;

@@ -40,6 +40,7 @@
 #define cube(x) (x)*(x)*(x)
 #define makemidmacro(x1,t1,x2,t2,t) ((t)-(t1))/((t2)-(t1))*(x2)+((t2)-(t))/((t2)-(t1))*(x1)
 
+#define prex double
 
 namespace SpatialIndex
 {
@@ -270,6 +271,15 @@ namespace SpatialIndex
 #include "Cylinder.h"
 #include "Trajectory.h"
 #include "ShapeList.h"
+
+
+#include "xPoint.h"
+#include "xMBR.h"
+#include "xLine.h"
+#include "xMBC.h"
+#include "xCylinder.h"
+#include "xTrajectory.h"
+
 #include "RTree.h"
 #include "MBCRTree.h"
 #include "Version.h"

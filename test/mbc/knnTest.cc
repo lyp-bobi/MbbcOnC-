@@ -5,7 +5,6 @@
 #include "testFuncs.h"
 
 int main() {
-    bSecondaryIndex = true;
     vector<string> ds;
     ds.emplace_back("/root/tdfilter.txt");
     ds.emplace_back("/root/glfilter.txt");
@@ -17,10 +16,10 @@ int main() {
             auto stat = trajStat::instance();
             int maxseg = 0;
             double avgSegLen = 100;
-            vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs(dataset);
-//        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://TRI-framework/dumpedtraj.txt");
+//            vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs(dataset);
+        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://TRI-framework/dumpedtraj.txt");
 
-            double segLenParas[] = {310, 610, 910, 1210, 1510, 1810, 2110, 2410, 2710, 3010};
+            double segLenParas[] = {300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
 
             double queryLenParas[] = {900, 3600};
             std::cerr << "Starting knn test\n" << "Segmentation lengths are:";
@@ -83,12 +82,6 @@ int main() {
                 drop_cache(3);
 
                 std::cerr << "Seg len:" << segLen << "\n";
-                bUsingSimp = true;
-                bUsingSBBD = true;
-                for (const auto &qs:querySet) {
-                    kNNQueryBatch(r, qs, ts1);
-                    kNNQueryBatch(rc, qs, ts2);
-                }
                 bUsingSimp = false;
                 bUsingSBBD = false;
                 for (const auto &qs:querySet) {

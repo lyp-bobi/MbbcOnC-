@@ -143,6 +143,8 @@ int main() {
             kNNQueryBatch(r, queries, ts1);
             bUsingSBBD= true;
             kNNQueryBatch(r, queries, ts1);
+            bUsingSBBD= true;
+            kNNQueryBatch(r, queries, ts1);
             cerr << "\n";
             for (auto &tras:queries) {
                 delete tras;

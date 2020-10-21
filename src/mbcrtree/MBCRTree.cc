@@ -606,7 +606,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                     id_type missing = ps.getOneMissingPart(pFirst->m_id);
                     NodePtr n = readNode(missing);
                     v.visitNode(*n);
-                    ps.loadLeaf(*n);
+                    ps.loadLeaf(*n,pFirst->m_minDist);
                     m_ts->m_leaf2 += 1;
 //                n.relinquish();
                     break;

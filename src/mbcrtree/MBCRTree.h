@@ -697,7 +697,7 @@ namespace SpatialIndex
 
             public:
 			    bool isLoaded(id_type id){ return loadedLeaf.count(id)>0;}
-			    void loadLeaf(const Node &n){
+			    void loadLeaf(const Node &n, double dist = 0){
 //                    std::cerr<<"load leaf"<<n.m_nodeMBR<<"\n";
 //                    std::cerr<<"leaf dist"<<m_query.getNodeMinimumDistance(n.m_nodeMBR,100)/(m_query.m_endTime()-m_query.m_startTime())<<"\n";
 //                    std::cerr<<"load leaf"<<n.m_identifier<<"\n";
@@ -739,7 +739,7 @@ namespace SpatialIndex
                         m_parts[rid].m_missingLeaf.erase(n.m_identifier);
                         m_parts[rid].m_loadedLeaf.insert(n.m_identifier);
                         if(m_handlers.count(rid)==0){
-                            auto handle = m_mpq.push(new NNEntry(rid, 1e9, 0));
+                            auto handle = m_mpq.push(new NNEntry(rid, dist, 2));
                             m_handlers[rid] = handle;
                         }
                     }
@@ -749,15 +749,15 @@ namespace SpatialIndex
 //                    }
 //                    std::cerr<<"\n";
 
-                    auto it=relatedIds.begin();
-                        for(int i=0;i<relatedIds.size();i++){
-                            updateValue(*it);
-                            it++;
-                        }
-                    for(const auto &rid:relatedIds){
-//                        updateValue(rid);
-                        m_mpq.updateOrder(m_handlers[rid]);
-                    }
+//                    auto it=relatedIds.begin();
+//                        for(int i=0;i<relatedIds.size();i++){
+//                            updateValue(*it);
+//                            it++;
+//                        }
+//                    for(const auto &rid:relatedIds){
+////                        updateValue(rid);
+//                        m_mpq.updateOrder(m_handlers[rid]);
+//                    }
                 }
 
                 auto top(){

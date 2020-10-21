@@ -12,11 +12,10 @@ int main() {
     try {
         calcuTime[0] = 0;
         srand((int) time(NULL));
-        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs();
-//        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
-//        vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs("D://00.txt");
+        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
+//        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://TRI-framework/dumpedtraj.txt");
         int maxseg = 0;
-        double para[] = {1800};
+        double para[] = {1500};
         auto stat = trajStat::instance();
         double queryLen = 3600;
         vector<IShape *> queries;

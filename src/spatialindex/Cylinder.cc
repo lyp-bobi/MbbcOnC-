@@ -311,6 +311,14 @@ int Cylinder::checkRel(const Region &br) const {
     return 1;
 }
 
+
+bool below0(double a,double b,double c,double ts,double te){
+    if(a*ts*ts+b*ts+c<=0||a*te*te+b*te+c<=0) return true;
+    double m = -b/2/a;
+    if(ts<m && m<te && a*m*m +b*m +c<=0) return true;
+    return false;
+}
+
 int Cylinder::checkRel(const MBC &bc) const {
     if (bc.m_startTime > m_endTime || bc.m_endTime < m_startTime) return 0;
     if (m_startTime == m_endTime) {
@@ -325,22 +333,58 @@ int Cylinder::checkRel(const MBC &bc) const {
         }
     } else {
         double t0 = bc.m_startTime, t1 = bc.m_startTime + bc.m_rd / bc.m_rv, t2 =
-                m_endTime - bc.m_rd / bc.m_rv, t3 = m_endTime;
+                bc.m_endTime - bc.m_rd / bc.m_rv, t3 = bc.m_endTime;
         if (bc.m_rv < 1e-7) {
             t1 = bc.m_startTime;
             t2 = bc.m_endTime;
         }
         double tlow = m_startTime, thigh = m_endTime;
         double ints = std::max(t0, tlow), inte = std::min(t3, thigh);
-        auto a = bc.getCenterRdAtTime(ints), b = bc.getCenterRdAtTime(inte);
-        double d = Trajectory::line2lineMinSED(a.first, b.first, STPoint(m_p, ints, 2), STPoint(m_p, inte, 2));
-        if (d > bc.m_rd + m_r) return 0;
-        if (d <= m_r-bc.m_rd) return 2;
         double ts = ints, te = inte;
+        auto a = bc.getCenterRdAtTime(ints), b = bc.getCenterRdAtTime(inte);
+        double d,dmid;
         double dxs=m_p[0]-a.first.m_pCoords[0];
         double dys=m_p[1]-a.first.m_pCoords[1];
         double dxe=m_p[0]-b.first.m_pCoords[0];
         double dye=m_p[1]-b.first.m_pCoords[1];
+
+
+        double c1=sq(dxs-dxe)+sq(dys-dye),
+                c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
+                c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
+                c4=te-ts;
+        if(c1<1e-7){
+            d= std::sqrt(sq(dxs)+sq(dys));
+        }else{
+            double middle=-c2/c1/2;
+            if(middle>ints&&middle<inte){
+                d= sqrt((4*c1*c3-c2*c2)/4/c1)/c4;
+            }
+            else{
+                d= std::min(std::sqrt(sq(dxs)+sq(dys)),std::sqrt(sq(dxe)+sq(dye)));
+            }
+        }
+        int tmpRes=0;
+        ints=std::max(t1,tlow);inte=std::min(t2,thigh);
+        if(c1<1e-7){
+            dmid = std::sqrt(sq(dxs)+sq(dys));
+        }else{
+            double middle=-c2/c1/2;
+            if(middle>ints&&middle<inte){
+                dmid= sqrt((4*c1*c3-c2*c2)/4/c1)/c4;
+            }
+            else{
+                dmid= std::min(std::sqrt(sq(dxs)+sq(dys)),std::sqrt(sq(dxe)+sq(dye)));
+            }
+        }
+
+        if (d > bc.m_rd + m_r) return 0;
+        if (d <= m_r-bc.m_rd) return 2;
+
+        if (dmid <= bc.m_rd + m_r) tmpRes = 1;
+        //else tmpRes=0;
+
+        double d1,d2,d3;
         //lower cone
         ints=std::max(t0,tlow);inte=std::min(t1,thigh);
         if(ints<inte){
@@ -348,18 +392,14 @@ int Cylinder::checkRel(const MBC &bc) const {
                     c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
                     c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
                     c4=te-ts;
-            c1=c1-sq(c4*bc.m_rv);
-            c2=c2+sq(c4)*2*(m_r+bc.m_rv*t0)*bc.m_rv;
-            c3=c3-sq(c4*(m_r+bc.m_rv*t0));
-            double middle=-c2/c1/2;
-            if(middle>ints&&middle<inte){
-                if(c1*middle*middle+c2*middle+c3<0){
-                    return 2;
-                }
-            }
-            else{
-                if(c1*ints*ints+c2*ints+c3<=0||c1*inte*inte+c2*inte+c3<=0) return 2;
-            }
+            d1=c1-sq(c4*bc.m_rv);
+            d2=c2+sq(c4)*2*(m_r+bc.m_rv*t0)*bc.m_rv;
+            d3=c3-sq(c4*(m_r+bc.m_rv*t0));
+            if(below0(d1,d2,d3,ints,inte)) return 2;
+            d2 = c2 - 2*sq(c4)*(m_r - bc.m_rv*t0)*bc.m_rv;
+            d3 = c3 - sq(c4*(m_r-bc.m_rv*t0));
+            if(below0(d1,d2,d3,ints,inte)) tmpRes = max(1, tmpRes);
+            // else 0;
         }
         //higher cone
         ints=std::max(t2,tlow);inte=std::min(t3,thigh);
@@ -368,20 +408,15 @@ int Cylinder::checkRel(const MBC &bc) const {
                     c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
                     c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
                     c4=te-ts;
-            c1=c1-sq(c4*bc.m_rv);
-            c2=c2-sq(c4)*2*(m_r-bc.m_rv*t3)*bc.m_rv;
-            c3=c3-sq(c4*(m_r-bc.m_rv*t3));
-            double middle=-c2/c1/2;
-            if(middle>ints&&middle<inte){
-                if(c1*middle*middle+c2*middle+c3<0){
-                    return 2;
-                }
-            }
-            else{
-                if(c1*ints*ints+c2*ints+c3<=0||c1*inte*inte+c2*inte+c3<=0) return 2;
-            }
+            d1=c1-sq(c4*bc.m_rv);
+            d2=c2-sq(c4)*2*(m_r-bc.m_rv*t3)*bc.m_rv;
+            d3=c3-sq(c4*(m_r-bc.m_rv*t3));
+            if(below0(d1,d2,d3,ints,inte)) return 2;
+            d2=c2+sq(c4)*2*(m_r+bc.m_rv*t3)*bc.m_rv;
+            d3=c3-sq(c4*(m_r+bc.m_rv*t3));
+            if(below0(d1,d2,d3,ints,inte)) tmpRes = max(1, tmpRes);
+            //else 0
         }
-        return 0;
+        return tmpRes;
     }
 }
-

@@ -456,10 +456,11 @@ std::vector<Trajectory> Trajectory::getRDPSegments(double len) const {
 }
 
 std::vector<Trajectory> Trajectory::getSegments(double len) const {
-//    return getGlobalSegmentsCut(len);
     auto stat=trajStat::instance();
     stat->bt=len;
-    return getHybridSegments(len);
+    return getGlobalSegmentsCut(len);
+
+//    return getHybridSegments(len);
 //    auto m=getStaticSegments(len*sqrt(double(segNum)));
 //    for(auto &traj:m){
 //        auto seg=traj.getRDPSegments(len);

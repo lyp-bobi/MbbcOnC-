@@ -46,7 +46,7 @@
 #define GLFile "/root/GLSC.csv"
 #define fileFolder "/root/out/"
 #define maxLinesToRead 1e10
-#define testtime 500
+#define testtime 100
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000

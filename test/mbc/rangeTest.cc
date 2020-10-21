@@ -11,7 +11,7 @@ int main() {
         auto stat = trajStat::instance();
         int maxseg = 0;
         double segLenParas[] = {100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3000};
-        double queryLenParas[] = {0, 3600};
+        double queryLenParas[] = {3600};
         std::cerr << "Starting range test\n" << "Segmentation lengths are:";
         for (auto p:segLenParas) std::cerr << p << "\t";
         std::cerr << "\nQuery lengths are:";
@@ -20,9 +20,9 @@ int main() {
         vector<vector<IShape *>> querySet;
         for (auto queryLen:queryLenParas) {
             vector<IShape *> queries;
-            for (int i = 0; i < 1000; i++) {
+            for (int i = 0; i < 2*testtime; i++) {
                 auto p =trajs[int(random(0,trajs.size()-1))].second.randomPoint();
-                Cylinder *rg = new Cylinder(p.m_pCoords, random(0.1, 0.2), p.m_time - queryLen/2, p.m_time + queryLen/2, 2);
+                Cylinder *rg = new Cylinder(p.m_pCoords, 0.05, p.m_time - queryLen/2, p.m_time + queryLen/2, 2);
                 queries.emplace_back(rg);
             }
             querySet.emplace_back(queries);
@@ -55,13 +55,13 @@ int main() {
             ts1->flush();
             ts2->flush();
             std::cerr << "Seg len:" << segLen << "\n";
+            bUsingSBBD = true;
             for (const auto &qs:querySet) {
 //                std::cerr<<"SBBD off\n";
 //                bUsingSBBD = false;
 //                rangeQueryBatch(r, qs, ts1);
 //                rangeQueryBatch(rc, qs, ts2);
 //                std::cerr<<"SBBD on\n";
-                bUsingSBBD = true;
                 rangeQueryBatch(r, qs, ts1);
                 rangeQueryBatch(rc, qs, ts2);
             }

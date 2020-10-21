@@ -12,22 +12,6 @@
 
 int main() {
     try {
-        vector<string> files;
-#if !WIN32
-        DIR *dir;
-        string PATH = fileFolder;
-        struct dirent **namelist;
-        int n;
-        n = scandir(PATH.c_str(), &namelist, 0, alphasort);
-        int index = -1;
-        while (index < n && files.size() <= 20) {
-            index++;
-            if (namelist[index]->d_name[0] == '.')
-                continue;
-            //cout << ptr->d_name << endl;
-            files.emplace_back(PATH + namelist[index]->d_name);
-        }
-#endif
         calcuTime[0] = 0;
         srand((int) time(NULL));
         rsimpli = false;
@@ -41,10 +25,8 @@ int main() {
         TrajStore *ts2 = new TrajStore(name2, diskfile2, 4096, 500);
         vector<pair<id_type, Trajectory> > trajs;
         vector<IShape *> queries;
-        for (int dataSize = 1; dataSize <= 20; dataSize++) {
-            std::cerr<<"loading"<<files[dataSize - 1]<<"\n";
-            vector<pair<id_type, Trajectory> > tmptrajs = loadGTToTrajs(files[dataSize - 1]);
-            trajs.insert(trajs.begin(), tmptrajs.begin(), tmptrajs.end());
+        for (int dataSize = 1; dataSize <= 50; dataSize+=5) {
+            trajs = loadGTFolder(dataSize);
             vector<pair<id_type, vector<Trajectory>>> segs1;
             vector<pair<id_type, vector<Trajectory>>> segs2;
             for (auto &traj:trajs) {
@@ -66,6 +48,9 @@ int main() {
             long count = ts1->m_entries.size();
             ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
+            ts1->flush();
+            ts2->flush();
+            drop_cache(1);
             if (dataSize == 1) {
                 for (int i = 0; i < testtime; i++) {
                     Trajectory *t = new Trajectory();
