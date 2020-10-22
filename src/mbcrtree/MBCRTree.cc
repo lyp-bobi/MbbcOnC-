@@ -574,7 +574,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                         double pd;
                         if(n->m_level>=2 && bUsingSimp){
                             pd = std::max(0.0, ssTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),
-                                                                                 m_ts->m_maxVelocity) - delta);
+                                                                                 m_ts->m_maxVelocity) - ssdelta);
                         }else{
                             pd = std::max(0.0, simpleTraj.getNodeMinimumDistance(*(n->m_ptrMBR[cChild]),
                                                                                    m_ts->m_maxVelocity) - delta);

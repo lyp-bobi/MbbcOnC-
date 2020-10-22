@@ -48,6 +48,20 @@ namespace SpatialIndex
 	class LineSegment;
 	class Region;
 
+	struct DISTE{
+	    double opt=0;
+	    double pes=0;
+	    double e=0;
+	    bool infer = false;
+	    DISTE(){};
+	    DISTE(double optimistic,double pessimistic,double error, bool isinferred)
+	    {opt=optimistic;pes=pessimistic;e=error;infer=isinferred;}
+	    DISTE(double exact){
+	        opt=pes=exact;
+	        e=0;
+	        infer = false;
+	    }
+	};
 
 	typedef int64_t id_type;
 
@@ -280,7 +294,6 @@ namespace SpatialIndex
 #include "xCylinder.h"
 #include "xTrajectory.h"
 
-#include "RTree.h"
 #include "MBCRTree.h"
 #include "Version.h"
 

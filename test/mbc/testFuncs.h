@@ -40,7 +40,6 @@
 #include "storagemanager/TrajStore.h"
 #include "../../src/storagemanager/DiskStorageManager.h"
 #include "../../src/mbcrtree/MBCRTree.h"
-#include "../../src/rtree/RTree.h"
 //#define sourceFile "D://t1000.txt"
 #define genFile "D://00.txt"
 #define GLFile "/root/GLSC.csv"
@@ -290,7 +289,7 @@ vector<pair<id_type, Trajectory> > loadDumpedFiledToTrajs(string filename = genF
     vector<pair<id_type, Trajectory> > res;
     Trajectory tj;
     Region r;
-    stat->fromString(lineStr);
+//    stat->fromString(lineStr);
     int curLine = 0;
     while (getline(inFile, lineStr) && curLine < maxLinesToRead) {
         try {
@@ -314,6 +313,9 @@ vector<pair<id_type, Trajectory> > loadDumpedFiledToTrajs(string filename = genF
                 stat->dist += tj.m_dist();
                 stat->lineCount += tj.m_points.size() - 1;
                 stat->trajCount += 1;
+                if(stat->vmax< tj.maxSpeed()){
+                    stat->vmax=tj.maxSpeed();
+                }
                 stat->M += tj.m_endTime() - tj.m_startTime();
             }
         }

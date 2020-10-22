@@ -5,13 +5,14 @@
 
 #pragma once
 #include <cmath>
-#include "ShapeList.h"
 #define subTrajFile "./subTrajFile.stj"
 
 #define random(x, y) (((double)rand()/RAND_MAX)*(y-x)+x)
 extern double calcuTime[10];
 extern int testPhase;
 extern int disttype;
+
+extern bool bUsingVerboseLB;
 
 #define Tristat
 
@@ -21,6 +22,8 @@ using std::vector;
 using std::pair;
 using std::string;
 using namespace SpatialIndex;
+
+
 
 namespace SpatialIndex
 {
@@ -116,6 +119,7 @@ namespace SpatialIndex
         virtual uint32_t getDimension() const;
         virtual void getMBR(Region& out) const;
 
+        virtual Point pos(double t) const;
         virtual void getPartialTrajectory(double tstart, double tend, SpatialIndex::Trajectory &out) const;
 
         virtual double getArea() const;
@@ -129,8 +133,6 @@ namespace SpatialIndex
         virtual double getMaxSED(const MBC& in) const;
         virtual double getMinimumDistance(const MBC& in) const;
         virtual double getMinimumDistance(const Trajectory& in) const;
-        virtual double getMinimumDistance(const ShapeList& in,bool hasPrev=false,bool hasNext=false,double MaxVelocity=1e300) const;
-
         virtual double getMinimumDistanceInner(const Trajectory& in) const;
 
         static double line2lineIED(const STPoint &p1s, const STPoint &p1e, const STPoint &p2s, const STPoint &p2e);
@@ -142,14 +144,14 @@ namespace SpatialIndex
         static double line2MBRMinSED_impl(const STPoint &ps, const STPoint &pe, const Region &r, int sr);
         static double line2MBCDistance(const STPoint &ps,const STPoint &pe,const MBC &r);
 
-        virtual double getFrontIED(const Region smbr, double MaxVelocity) const;
-        virtual double getBackIED(const Region embr, double MaxVelocity) const;
-        virtual double getFrontIED(double x,double y,double ts, double MaxVelocity) const;
-        virtual double getBackIED(double x,double y,double te, double MaxVelocity) const;
+        virtual DISTE getFrontIED(const Region smbr, double MaxVelocity) const;
+        virtual DISTE getBackIED(const Region embr, double MaxVelocity) const;
+        virtual DISTE getFrontIED(double x,double y,double ts, double MaxVelocity) const;
+        virtual DISTE getBackIED(double x,double y,double te, double MaxVelocity) const;
 
-        virtual double getMidIED(const Region &sbr,const Region &ebr,double MaxVelocity,double queryVelocity=-1);
-        virtual double getMidIED(const MBC &sbc, const MBC &ebc,double MaxVelocity,double queryVelocity=-1);
-        virtual double getMidIED(const STPoint &sp, const STPoint &ep,double MaxVelocity,double queryVelocity=-1);
+        virtual DISTE getMidIED(const Region &sbr,const Region &ebr,double MaxVelocity,double queryVelocity=-1);
+        virtual DISTE getMidIED(const MBC &sbc, const MBC &ebc,double MaxVelocity,double queryVelocity=-1);
+        virtual DISTE getMidIED(const STPoint &sp, const STPoint &ep,double MaxVelocity,double queryVelocity=-1);
 
         virtual double getStaticIED(double x, double y, double t1, double t2) const;
         virtual double getStaticIED(const Region in,double ints, double inte) const;
@@ -177,6 +179,8 @@ namespace SpatialIndex
         virtual void getMBRfull(Region& out) const;
         virtual void getTimeMBR(TimeRegion& out) const;
         STPoint getPointAtTime(double time) const;
+        double maxSpeed() const;
+
         static std::vector<std::vector<SpatialIndex::STPoint>> simplifyWithRDPN(const std::vector<SpatialIndex::STPoint>& Points, int numPart);
         static std::vector<SpatialIndex::STPoint> simplifyWithRDP(const std::vector<SpatialIndex::STPoint>& Points, double threshold);
         std::vector<Trajectory> cuttraj(std::vector<SpatialIndex::STPoint>);

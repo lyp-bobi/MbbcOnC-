@@ -29,6 +29,7 @@ namespace SpatialIndex
         double tl=0;//time len of a segment
         double jt=0;
         double v=0;
+        double vmax = 0;
         double minx=1e300,maxx=-1e300,miny=1e300,maxy=-1e300,mint=1e300,maxt=-1e300;
         double Dx=0,Dy=0,Dt=0;
         double Sr=0;

@@ -38,6 +38,55 @@
 extern bool bUsingSimp;
 extern bool bUsingSBBD;
 
+class poppq{
+public:
+    std::list<std::pair<double,id_type>> m_pq;
+    int m_len=5;
+    void setLen(int k){
+        m_len=k;
+        while(m_pq.size()>m_len) m_pq.pop_back();
+    }
+    double threshold(){
+        if(m_pq.size()==m_len)
+            return m_pq.back().first;
+        return 1e300;
+    }
+    bool insert(id_type id, double priority){
+        bool doi= false;
+        if(m_pq.size()<m_len){
+            doi = true;
+        }
+        else if(priority < m_pq.back().first){
+            doi = true;
+        }
+        for(auto it = m_pq.begin();it != m_pq.end();it++){
+            if(it->second == id){
+                m_pq.erase(it);
+                doi = true;
+                break;
+            }
+        }
+        if(doi){
+            for(auto it = m_pq.begin();it != m_pq.end();it++){
+                if (priority<it->first){
+                    m_pq.insert(it,std::make_pair(priority,id));
+                    if(m_pq.size()>m_len){
+                        m_pq.pop_back();
+                    }
+                    return true;
+                }
+            }
+            if(m_pq.size()<m_len){
+                m_pq.push_back(std::make_pair(priority,id));
+                return true;
+            }
+        }
+        return false;
+    }
+
+};
+
+
 namespace SpatialIndex
 {
 	namespace MBCRTree
@@ -294,7 +343,7 @@ namespace SpatialIndex
                     std::set<id_type> m_missingLeaf, m_loadedLeaf;
                     std::list<Region> m_mbrs;
                     std::list<MBC> m_mbcs;
-                    std::map<std::pair<double,double>,double> m_computedDist;
+                    std::map<std::pair<double,double>,DISTE> m_computedDist;
                     std::map<double,storeEntry> m_entries;
                     double m_calcMin=0;
                     double m_mintime=1e300,m_maxtime=-1e300;
@@ -363,6 +412,8 @@ namespace SpatialIndex
                 Trajectory m_query;
                 double m_error;
                 TrajStore* m_ts;
+                poppq m_pes;
+                trajStat* stat = trajStat::instance();
                 std::map<id_type ,Parts> m_parts;
                 int m_dimension=2;
                 std::set<id_type > loadedLeaf;
@@ -382,25 +433,21 @@ namespace SpatialIndex
                 double updateValue(id_type id) {
                     Parts *parts = &m_parts[id];
                     double computedTime = 0;
-                    double pd, sum = 0;
+                    DISTE pd;
+                    double sum = 0,pessi = 0;
                     std::pair<double, double> timeInterval;
                     if (disttype == 0) {
                         if (m_useMBR) {
-                            //inferred distance(front dist, back dist and mid dist) should be stored as negative values
                             //front dist
                             if (parts->m_mintime > m_query.m_startTime()) {
                                 timeInterval.first=m_query.m_startTime();
                                 timeInterval.second=parts->m_mintime;
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    if(parts->m_computedDist[timeInterval]>=0)
-                                        pd= parts->m_computedDist[timeInterval];
-                                    else{
-                                        pd = -parts->m_computedDist[timeInterval]-1;
-                                    }
+                                    pd= parts->m_computedDist[timeInterval];
                                 } else {
                                     if (parts->m_hasPrev) {
-                                        pd = m_query.getFrontIED(parts->m_mbrs.front(), m_ts->m_maxVelocity);
-                                        parts->m_computedDist[timeInterval] = -pd-1;
+                                        pd = m_query.getFrontIED(parts->m_mbrs.front(), stat->vmax);
+                                        parts->m_computedDist[timeInterval] = pd;
                                     } else {
                                         pd = m_query.getStaticIED(parts->m_mbrs.front(), m_query.m_startTime(),
                                                                   parts->m_mintime);
@@ -408,10 +455,11 @@ namespace SpatialIndex
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
                                 }
-                                if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
-                                    pd=std::max(pd,m_nodespq.top()->m_minDist*
+                                if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty())
+                                    pd.opt=std::max(pd.opt,m_nodespq.top()->m_minDist*
                                                    (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
-                                sum += pd;
+                                sum += pd.opt;
+                                pessi +=pd.pes;
                             }
                             //mid dist
                             const Region *prev= nullptr;
@@ -420,17 +468,13 @@ namespace SpatialIndex
                                 timeInterval.first=box.m_pLow[m_dimension];
                                 timeInterval.second=box.m_pHigh[m_dimension];
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    if (parts->m_computedDist[timeInterval] > 0) {
-                                        pd = parts->m_computedDist[timeInterval];
-                                    } else {
-                                        pd = m_query.getMinimumDistance(box);
-                                        parts->m_computedDist[timeInterval] = pd;
-                                    }
+                                    pd = parts->m_computedDist[timeInterval];
                                 } else {
                                     pd = m_query.getMinimumDistance(box);
                                     parts->m_computedDist[timeInterval] = pd;
                                 }
-                                sum += pd;
+                                sum += pd.opt;
+                                pessi +=pd.pes;
                                 computedTime += timeInterval.second - timeInterval.first;
                                 //the gap
                                 if (box.m_pLow[m_dimension] != parts->m_mbrs.front().m_pLow[m_dimension]) {
@@ -438,19 +482,16 @@ namespace SpatialIndex
                                         timeInterval.first=prev->m_pHigh[m_dimension];
                                         timeInterval.second=box.m_pLow[m_dimension];
                                         if (parts->m_computedDist.count(timeInterval) > 0) {
-                                            if(parts->m_computedDist[timeInterval]>=0)
-                                                pd= parts->m_computedDist[timeInterval];
-                                            else{
-                                                pd = -parts->m_computedDist[timeInterval]-1;
-                                            }
+                                            pd= parts->m_computedDist[timeInterval];
                                         } else {
-                                            pd = m_query.getMidIED(*prev, box, m_ts->m_maxVelocity);
-                                            parts->m_computedDist[timeInterval] = -pd-1;
+                                            pd = m_query.getMidIED(*prev, box, stat->vmax);
+                                            parts->m_computedDist[timeInterval] = pd;
                                         }
-                                        if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
-                                            pd=std::max(pd,m_nodespq.top()->m_minDist*
+                                        if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty())
+                                            pd.opt=std::max(pd.opt,m_nodespq.top()->m_minDist*
                                                            (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
-                                        sum+=pd;
+                                        sum+=pd.opt;
+                                        pessi+=pd.pes;
                                     }
                                 }
                                 prev = &box;
@@ -460,15 +501,11 @@ namespace SpatialIndex
                                 timeInterval.first=parts->m_maxtime;
                                 timeInterval.second=m_query.m_endTime();
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    if(parts->m_computedDist[timeInterval]>=0)
-                                        pd= parts->m_computedDist[timeInterval];
-                                    else{
-                                        pd = -parts->m_computedDist[timeInterval]-1;
-                                    }
+                                    pd= parts->m_computedDist[timeInterval];
                                 } else {
                                     if (parts->m_hasNext) {
-                                        pd = m_query.getBackIED(parts->m_mbrs.back(), m_ts->m_maxVelocity);
-                                        parts->m_computedDist[timeInterval] = -pd-1;
+                                        pd = m_query.getBackIED(parts->m_mbrs.back(), stat->vmax);
+                                        parts->m_computedDist[timeInterval] = pd;
                                     } else {
                                         pd = m_query.getStaticIED(parts->m_mbrs.back(), parts->m_maxtime,
                                                                   m_query.m_endTime());
@@ -476,10 +513,11 @@ namespace SpatialIndex
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
                                 }
-                                if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
-                                    pd=std::max(pd,m_nodespq.top()->m_minDist*
+                                if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty())
+                                    pd.opt=std::max(pd.opt,m_nodespq.top()->m_minDist*
                                                    (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
-                                sum+=pd;
+                                sum+=pd.opt;
+                                pessi+=pd.pes;
                             }
                         }
                         else {
@@ -489,18 +527,14 @@ namespace SpatialIndex
                                 timeInterval.first=m_query.m_startTime();
                                 timeInterval.second=parts->m_mintime;
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    if(parts->m_computedDist[timeInterval]>=0)
-                                        pd= parts->m_computedDist[timeInterval];
-                                    else{
-                                        pd = -parts->m_computedDist[timeInterval]-1;
-                                    }
+                                    pd= parts->m_computedDist[timeInterval];
                                 } else {
                                     if (parts->m_hasPrev) {
                                         pd = m_query.getFrontIED(parts->m_mbcs.front().m_pLow[0],
                                                                  parts->m_mbcs.front().m_pLow[1],
                                                                  parts->m_mbcs.front().m_startTime,
-                                                                 m_ts->m_maxVelocity);
-                                        parts->m_computedDist[timeInterval] = -pd-1;
+                                                                 stat->vmax);
+                                        parts->m_computedDist[timeInterval] = pd;
                                     } else {
                                         pd = m_query.getStaticIED(parts->m_mbcs.front().m_pLow[0],
                                                                   parts->m_mbcs.front().m_pLow[1],
@@ -509,10 +543,11 @@ namespace SpatialIndex
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
                                 }
-                                if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
-                                    pd=std::max(pd,m_nodespq.top()->m_minDist*
+                                if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty())
+                                    pd.opt=std::max(pd.opt,m_nodespq.top()->m_minDist*
                                                    (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
-                                sum+=pd;
+                                sum+=pd.opt;
+                                pessi += pd.pes;
                             }
                             //mid dist
                             const MBC *prev= nullptr;
@@ -521,17 +556,13 @@ namespace SpatialIndex
                                 timeInterval.first=box.m_startTime;
                                 timeInterval.second=box.m_endTime;
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    if (parts->m_computedDist[timeInterval] > 0) {
-                                        pd = parts->m_computedDist[timeInterval];
-                                    } else {
-                                        pd = m_query.getMinimumDistance(box);
-                                        parts->m_computedDist[timeInterval] = pd;
-                                    }
+                                    pd = parts->m_computedDist[timeInterval];
                                 } else {
                                     pd = m_query.getMinimumDistance(box);
                                     parts->m_computedDist[timeInterval] = pd;
                                 }
-                                sum += pd;
+                                sum += pd.opt;
+                                pessi += pd.pes;
                                 computedTime += timeInterval.second - timeInterval.first;
                                 //the gap
                                 if (box.m_startTime != parts->m_mbcs.front().m_startTime) {//not first
@@ -539,19 +570,16 @@ namespace SpatialIndex
                                         timeInterval.first=prev->m_endTime;
                                         timeInterval.second=box.m_startTime;
                                         if (parts->m_computedDist.count(timeInterval) > 0) {
-                                            if(parts->m_computedDist[timeInterval]>=0)
-                                                pd= parts->m_computedDist[timeInterval];
-                                            else{
-                                                pd = -parts->m_computedDist[timeInterval]-1;
-                                            }
+                                            pd= parts->m_computedDist[timeInterval];
                                         } else {
-                                            pd = m_query.getMidIED(*prev, box, m_ts->m_maxVelocity);
-                                            parts->m_computedDist[timeInterval] = -pd-1;
+                                            pd = m_query.getMidIED(*prev, box, stat->vmax);
+                                            parts->m_computedDist[timeInterval] = pd;
                                         }
-                                        if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
-                                            pd=std::max(pd,m_nodespq.top()->m_minDist*
+                                        if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty())
+                                            pd.opt=std::max(pd.opt,m_nodespq.top()->m_minDist*
                                                            (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
-                                        sum+=pd;
+                                        sum+=pd.opt;
+                                        pessi+=pd.pes;
                                     }
                                 }
                                 prev = &box;
@@ -561,17 +589,13 @@ namespace SpatialIndex
                                 timeInterval.first=parts->m_maxtime;
                                 timeInterval.second=m_query.m_endTime();
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    if(parts->m_computedDist[timeInterval]>=0)
-                                        pd= parts->m_computedDist[timeInterval];
-                                    else{
-                                        pd = -parts->m_computedDist[timeInterval]-1;
-                                    }
+                                    pd= parts->m_computedDist[timeInterval];
                                 } else {
                                     if (parts->m_hasNext) {
                                         pd = m_query.getBackIED(parts->m_mbcs.back().m_pHigh[0],
                                                                  parts->m_mbcs.back().m_pHigh[1],
-                                                                 parts->m_mbcs.back().m_endTime, m_ts->m_maxVelocity);
-                                        parts->m_computedDist[timeInterval] = -pd-1;
+                                                                 parts->m_mbcs.back().m_endTime, stat->vmax);
+                                        parts->m_computedDist[timeInterval] = pd;
                                     } else {
                                         pd = m_query.getStaticIED(parts->m_mbcs.back().m_pHigh[0],
                                                                   parts->m_mbcs.back().m_pHigh[1], parts->m_maxtime,
@@ -580,10 +604,11 @@ namespace SpatialIndex
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
                                 }
-                                if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
-                                    pd=std::max(pd,m_nodespq.top()->m_minDist*
+                                if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty())
+                                    pd.opt=std::max(pd.opt,m_nodespq.top()->m_minDist*
                                                    (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
-                                sum+=pd;
+                                sum+=pd.opt;
+                                pessi+=pd.pes;
                             }
                         }
 
@@ -596,101 +621,7 @@ namespace SpatialIndex
                         return sum;
                     }
                     else if(disttype==1){
-                        double max=0;
-                        if(m_useMBR){
-                            for(const auto &box:parts->m_mbrs){
-                                timeInterval = std::make_pair(box.m_pLow[m_dimension], box.m_pHigh[m_dimension]);
-                                if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    pd = parts->m_computedDist[timeInterval];
-                                } else {
-                                    pd = m_query.getMaxSED(box);
-                                    parts->m_computedDist[timeInterval] = pd;
-                                }
-                                max=std::max(max,pd);
-                            }
-                            if(m_query.m_startTime()<parts->m_mintime){
-                                if(!parts->m_hasPrev){
-                                    timeInterval = std::make_pair(m_query.m_startTime(),parts->m_mintime);
-                                    if (parts->m_computedDist.count(timeInterval) > 0) {
-                                        pd = parts->m_computedDist[timeInterval];
-                                        max=std::max(max,pd);
-                                    } else {
-                                        pd = m_query.getStaticMaxSED(parts->m_mbrs.front(), m_query.m_startTime(),
-                                                                     parts->m_mintime);
-                                        parts->m_computedDist[timeInterval] = pd;
-                                        computedTime += timeInterval.second - timeInterval.first;
-                                        max=std::max(max,pd);
-                                    }
-                                }
-                            }
-                            if(m_query.m_endTime()>parts->m_maxtime){
-                                if(!parts->m_hasNext){
-                                    timeInterval = std::make_pair(parts->m_maxtime,m_query.m_endTime());
-                                    if (parts->m_computedDist.count(timeInterval) > 0) {
-                                        pd = parts->m_computedDist[timeInterval];
-                                        max=std::max(max,pd);
-                                    } else {
-                                        pd = m_query.getStaticMaxSED(parts->m_mbrs.back(), parts->m_maxtime,
-                                                                     m_query.m_endTime());
-                                        parts->m_computedDist[timeInterval] = pd;
-                                        computedTime += timeInterval.second - timeInterval.first;
-                                        max=std::max(max,pd);
-                                    }
-                                }
-                            }
-
-                        }
-                        else{
-                            for(const auto &box:parts->m_mbcs){
-                                timeInterval = std::make_pair(box.m_startTime, box.m_endTime);
-                                if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    pd = parts->m_computedDist[timeInterval];
-                                } else {
-                                    pd = m_query.getMaxSED(box);
-                                    parts->m_computedDist[timeInterval] = pd;
-                                }
-                                max=std::max(max,pd);
-                            }
-                            if(m_query.m_startTime()<parts->m_mintime){
-                                if(!parts->m_hasNext){
-                                    timeInterval = std::make_pair(m_query.m_startTime(),parts->m_mintime);
-                                    if (parts->m_computedDist.count(timeInterval) > 0) {
-                                        pd = parts->m_computedDist[timeInterval];
-                                        max=std::max(max,pd);
-                                    } else {
-                                        pd = m_query.getStaticMaxSED(parts->m_mbcs.front().m_pLow[0],parts->m_mbcs.front().m_pLow[1],
-                                                                     m_query.m_startTime(),parts->m_mintime);
-                                        parts->m_computedDist[timeInterval] = pd;
-                                        computedTime += timeInterval.second - timeInterval.first;
-                                        max=std::max(max,pd);
-                                    }
-                                }
-                            }
-                            if(m_query.m_endTime()>parts->m_maxtime){
-                                if(!parts->m_hasNext){
-                                    timeInterval = std::make_pair(parts->m_maxtime,m_query.m_endTime());
-                                    if (parts->m_computedDist.count(timeInterval) > 0) {
-                                        pd = parts->m_computedDist[timeInterval];
-                                        max=std::max(max,pd);
-                                    } else {
-                                        pd = m_query.getStaticMaxSED(parts->m_mbcs.back().m_pHigh[0],
-                                                                     parts->m_mbcs.back().m_pHigh[1], parts->m_maxtime,
-                                                                     m_query.m_endTime());
-                                        parts->m_computedDist[timeInterval] = pd;
-                                        computedTime += timeInterval.second - timeInterval.first;
-                                        max=std::max(max,pd);
-                                    }
-                                }
-                            }
-
-                        }
-                        parts->m_calcMin = max;
-                        parts->m_computedTime = computedTime;
-                        int type = 2;
-                        if (parts->m_missingLeaf.empty()) type = 3;
-                        max = std::max(0.0, max - m_error);
-                        m_mpq.updateValue(m_handlers[id], id, max, type);
-                        return max;
+                        Tools::IllegalStateException("MaxSED is no longer supported now");
                     }
                     else throw Tools::IllegalStateException("");
                 }
@@ -877,7 +808,7 @@ namespace SpatialIndex
                     PartsStoreBFMST* m_ps;
                     std::set<id_type> m_missingLeaf, m_loadedLeaf;
                     std::list<Trajectory> m_pTrajs;
-                    std::map<std::pair<double,double>,double> m_computedDist;
+                    std::map<std::pair<double,double>,DISTE> m_computedDist;
                     std::map<double,storeEntry> m_entries;
                     double m_calcMin=0;
                     double m_mintime=1e300,m_maxtime=-1e300;
@@ -912,10 +843,13 @@ namespace SpatialIndex
                 std::map<id_type ,MutablePriorityQueue<NNEntry>::handle_type > m_handlers;
                 EntryMPQ m_mpq;
                 EntryMPQ m_nodespq;
+                std::set<id_type> m_except;
+                poppq m_pes;
                 bool m_useMBR=false;
                 Trajectory m_query;
                 double m_error;
                 TrajStore* m_ts;
+                trajStat* stat = trajStat::instance();
                 std::map<id_type ,Parts> m_parts;
                 int m_dimension=2;
                 std::set<id_type > loadedLeaf;
@@ -927,16 +861,22 @@ namespace SpatialIndex
                     Trajectory tmp;
                     tmp.m_points.emplace_back(r.m_points[0]);
                     tmp.m_points.emplace_back(r.m_points[r.m_points.size()-1]);
-                    m_parts[id].m_computedDist[std::make_pair(r.m_startTime(),r.m_endTime())] = r.getMinimumDistance(m_query);
+                    m_parts[id].m_computedDist[std::make_pair(r.m_startTime(),r.m_endTime())]
+                        = DISTE( r.getMinimumDistance(m_query));
                     m_parts[id].insert(tmp,prev,next,entry);
 //                    std::cerr<<"part"<<id<<"\t"<<m_parts[id].m_loadedTime<<"\t"<<m_query.m_endTime()-m_query.m_startTime()<<"\n";
                     update(id);
                 }
 
                 double update(id_type id) {
+                    if(m_except.count(id)>0){
+                        return 1e300;
+                    }
                     Parts *parts = &m_parts[id];
                     double computedTime = 0;
-                    double pd, sum = 0;
+                    DISTE pd(0);
+                    double sum = 0;
+                    double pessi = 0;
                     std::pair<double, double> timeInterval;
                     if (disttype == 0) {
                         //inferred distance(front dist, back dist and mid dist) should be stored as negative values
@@ -945,18 +885,14 @@ namespace SpatialIndex
                             timeInterval.first=m_query.m_startTime();
                             timeInterval.second=parts->m_mintime;
                             if (parts->m_computedDist.count(timeInterval) > 0) {
-                                if(parts->m_computedDist[timeInterval]>=0)
                                     pd= parts->m_computedDist[timeInterval];
-                                else{
-                                    pd = -parts->m_computedDist[timeInterval]-1;
-                                }
                             } else {
                                 if (parts->m_hasPrev) {
                                     pd = m_query.getFrontIED(parts->m_pTrajs.front().m_points.front().m_pCoords[0],
                                                              parts->m_pTrajs.front().m_points.front().m_pCoords[0],
                                                              parts->m_pTrajs.front().m_startTime(),
-                                                             m_ts->m_maxVelocity);
-                                    parts->m_computedDist[timeInterval] = -pd-1;
+                                                             stat->vmax);
+                                    parts->m_computedDist[timeInterval] = pd.opt;
                                 } else {
                                     pd = m_query.getStaticIED(parts->m_pTrajs.front().m_points.front().m_pCoords[0],
                                                               parts->m_pTrajs.front().m_points.front().m_pCoords[1],
@@ -965,10 +901,11 @@ namespace SpatialIndex
                                     computedTime += timeInterval.second - timeInterval.first;
                                 }
                             }
-                            if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
-                                pd=std::max(pd,m_nodespq.top()->m_minDist*
+                            if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty())
+                                pd.opt=std::max(pd.opt,m_nodespq.top()->m_minDist*
                                                (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
-                            sum+=pd;
+                            sum+=pd.opt;
+                            pessi+=pd.pes;
                         }
                         //mid dist
                         const Trajectory *prev= nullptr;
@@ -977,17 +914,18 @@ namespace SpatialIndex
                             timeInterval.first=traj.m_startTime();
                             timeInterval.second=traj.m_endTime();
                             if (parts->m_computedDist.count(timeInterval) > 0) {
-                                if (parts->m_computedDist[timeInterval] > 0) {
+                                if (parts->m_computedDist[timeInterval].infer==false) {
                                     pd = parts->m_computedDist[timeInterval];
                                 } else {
-                                    pd = traj.getMinimumDistance(m_query);
+                                    pd = DISTE(traj.getMinimumDistance(m_query));
                                     parts->m_computedDist[timeInterval] = pd;
                                 }
                             } else {
-                                pd = traj.getMinimumDistance(m_query);
+                                pd = DISTE(traj.getMinimumDistance(m_query));
                                 parts->m_computedDist[timeInterval] = pd;
                             }
-                            sum += pd;
+                            sum += pd.opt;
+                            pessi +=pd.pes;
                             computedTime += timeInterval.second - timeInterval.first;
                             //the gap
                             if (traj.m_startTime() != parts->m_pTrajs.front().m_startTime()) {//not first
@@ -995,19 +933,16 @@ namespace SpatialIndex
                                     timeInterval.first=prev->m_endTime();
                                     timeInterval.second=traj.m_startTime();
                                     if (parts->m_computedDist.count(timeInterval) > 0) {
-                                        if(parts->m_computedDist[timeInterval]>=0)
-                                            pd= parts->m_computedDist[timeInterval];
-                                        else{
-                                            pd = -parts->m_computedDist[timeInterval]-1;
-                                        }
+                                        pd= parts->m_computedDist[timeInterval];
                                     } else {
-                                        pd = m_query.getMidIED(prev->m_points.back(), traj.m_points.front(), m_ts->m_maxVelocity);
-                                        parts->m_computedDist[timeInterval] = -pd-1;
+                                        pd = m_query.getMidIED(prev->m_points.back(), traj.m_points.front(), stat->vmax);
+                                        parts->m_computedDist[timeInterval] = pd;
                                     }
-                                    if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
-                                        pd=std::max(pd,m_nodespq.top()->m_minDist*
+                                    if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty())
+                                        pd.opt=std::max(pd.opt,m_nodespq.top()->m_minDist*
                                                        (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
-                                    sum+=pd;
+                                    sum+=pd.opt;
+                                    pessi += pd.pes;
                                 }
                             }
                             prev = &traj;
@@ -1017,17 +952,13 @@ namespace SpatialIndex
                             timeInterval.first=parts->m_maxtime;
                             timeInterval.second=m_query.m_endTime();
                             if (parts->m_computedDist.count(timeInterval) > 0) {
-                                if(parts->m_computedDist[timeInterval]>=0)
-                                    pd= parts->m_computedDist[timeInterval];
-                                else{
-                                    pd = -parts->m_computedDist[timeInterval]-1;
-                                }
+                                pd= parts->m_computedDist[timeInterval];
                             } else {
                                 if (parts->m_hasNext) {
-                                    pd = m_query.getFrontIED(parts->m_pTrajs.back().m_points.back().m_pCoords[0],
+                                    pd = m_query.getBackIED(parts->m_pTrajs.back().m_points.back().m_pCoords[0],
                                                              parts->m_pTrajs.back().m_points.back().m_pCoords[1],
-                                                             parts->m_pTrajs.back().m_endTime(), m_ts->m_maxVelocity);
-                                    parts->m_computedDist[timeInterval] = -pd-1;
+                                                             parts->m_pTrajs.back().m_endTime(), stat->vmax);
+                                    parts->m_computedDist[timeInterval] = pd;
                                 } else {
                                     pd = m_query.getStaticIED(parts->m_pTrajs.back().m_points.back().m_pCoords[0],
                                                               parts->m_pTrajs.back().m_points.back().m_pCoords[1], parts->m_maxtime,
@@ -1036,10 +967,11 @@ namespace SpatialIndex
                                     computedTime += timeInterval.second - timeInterval.first;
                                 }
                             }
-                            if(parts->m_computedDist[timeInterval]<0&&!m_nodespq.empty())
-                                pd=std::max(pd,m_nodespq.top()->m_minDist*
+                            if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty())
+                                pd.opt=std::max(pd.opt,m_nodespq.top()->m_minDist*
                                                (timeInterval.second - timeInterval.first)/(m_query.m_endTime()-m_query.m_startTime()));
-                            sum+=pd;
+                            sum+=pd.opt;
+                            pessi+=pd.pes;
                         }
 
                         parts->m_calcMin = sum;
@@ -1053,65 +985,14 @@ namespace SpatialIndex
                         } else {
                             m_mpq.update(m_handlers[id], id, sum, type);
                         }
+                        m_pes.insert(id, pessi);
+                        if(sum>m_pes.threshold()){
+                            m_except.insert(id);
+                        }
                         return sum;
                     }
                     else if(disttype==1){
-                        double max=0;
-                        for(const auto &traj:parts->m_pTrajs){
-                            timeInterval = std::make_pair(traj.m_startTime(), traj.m_endTime());
-                            if (parts->m_computedDist.count(timeInterval) > 0) {
-                                pd = parts->m_computedDist[timeInterval];
-                            } else {
-                                pd = m_query.getMinimumDistance(traj);
-                                parts->m_computedDist[timeInterval] = pd;
-                            }
-                            max=std::max(max,pd);
-                        }
-                        if(m_query.m_startTime()<parts->m_mintime){
-                            if(!parts->m_hasPrev){
-                                timeInterval = std::make_pair(m_query.m_startTime(),parts->m_mintime);
-                                if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    pd = parts->m_computedDist[timeInterval];
-                                    max=std::max(max,pd);
-                                } else {
-                                    pd = m_query.getStaticMaxSED(parts->m_pTrajs.front().m_points.front().m_pCoords[0],
-                                                                 parts->m_pTrajs.front().m_points.front().m_pCoords[1],
-                                                                 m_query.m_startTime(), parts->m_mintime);
-                                    parts->m_computedDist[timeInterval] = pd;
-                                    computedTime += timeInterval.second - timeInterval.first;
-                                    max=std::max(max,pd);
-                                }
-                            }
-                        }
-                        if(m_query.m_endTime()>parts->m_maxtime){
-                            if(!parts->m_hasNext){
-                                timeInterval = std::make_pair(parts->m_maxtime,m_query.m_endTime());
-                                if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    pd = parts->m_computedDist[timeInterval];
-                                    max=std::max(max,pd);
-                                } else {
-                                    pd = m_query.getStaticMaxSED(parts->m_pTrajs.back().m_points.back().m_pCoords[0],
-                                                                 parts->m_pTrajs.back().m_points.back().m_pCoords[1], parts->m_maxtime,
-                                                                 m_query.m_endTime());
-                                    parts->m_computedDist[timeInterval] = pd;
-                                    computedTime += timeInterval.second - timeInterval.first;
-                                    max=std::max(max,pd);
-                                }
-                            }
-                        }
-
-                        parts->m_calcMin = max;
-                        parts->m_computedTime = computedTime;
-                        int type = 2;
-                        if (parts->m_loadedTime + 1e-7 >= (m_query.m_endTime() - m_query.m_startTime())) type = 3;
-                        max = std::max(0.0, max - m_error);
-                        if (m_handlers.count(id) == 0) {
-                            auto handle = m_mpq.push(new NNEntry(id,nullptr, max, type));
-                            m_handlers[id] = handle;
-                        } else {
-                            m_mpq.update(m_handlers[id], id, max, type);
-                        }
-                        return max;
+                        throw Tools::IllegalStateException("maxsed nolonger supported.");
                     }
                     else throw Tools::IllegalStateException("");
                 }
@@ -1127,10 +1008,16 @@ namespace SpatialIndex
                     delete[] load;
                     id_type trajid = m_ts->getTrajId(id);
                     storeEntry ee;
-
                     Trajectory inter;
+
                     tmpTraj.getPartialTrajectory(max(m_query.m_startTime(),e->m_ts),
                                                  min(m_query.m_endTime(),e->m_te),inter);
+                    if(inter.m_points.size()==0){
+                        auto ee=m_mpq.top();
+                        string q = m_query.toString();
+                        auto s = m_parts[ee->m_id];
+                        std::cerr<<ee->m_id;
+                    }
                     insert(trajid, inter, e->m_hasPrev ? 1 : -1, e->m_hasNext ? 1 : -1, ee);
                 }
 

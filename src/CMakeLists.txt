@@ -31,7 +31,6 @@ set(SIDX_BASE_HPP
   "${SIDX_HEADERS_DIR}/MovingPoint.h"
   "${SIDX_HEADERS_DIR}/Point.h"
   "${SIDX_HEADERS_DIR}/Region.h"
-  "${SIDX_HEADERS_DIR}/RTree.h"
   "${SIDX_HEADERS_DIR}/MBCRTree.h"
   "${SIDX_HEADERS_DIR}/SpatialIndex.h"
   "${SIDX_HEADERS_DIR}/TimePoint.h"
@@ -91,23 +90,7 @@ set(SIDX_SPATIALINDEX_CPP
 )
 list (APPEND SIDX_CPP ${SIDX_SPATIALINDEX_CPP} )
 
-set(SIDX_RTREE_CPP
-  "${SIDX_SRC_DIR}/rtree/BulkLoader.cc"
-  "${SIDX_SRC_DIR}/rtree/BulkLoader.h"
-  "${SIDX_SRC_DIR}/rtree/Index.cc"
-  "${SIDX_SRC_DIR}/rtree/Index.h"
-  "${SIDX_SRC_DIR}/rtree/Leaf.cc"
-  "${SIDX_SRC_DIR}/rtree/Leaf.h"
-  "${SIDX_SRC_DIR}/rtree/Node.cc"
-  "${SIDX_SRC_DIR}/rtree/Node.h"
-  "${SIDX_SRC_DIR}/rtree/PointerPoolNode.h"
-  "${SIDX_SRC_DIR}/rtree/RTree.cc"
-  "${SIDX_SRC_DIR}/rtree/RTree.h"
-  "${SIDX_SRC_DIR}/rtree/Statistics.cc"
-  "${SIDX_SRC_DIR}/rtree/Statistics.h"
-  "${SIDX_SRC_DIR}/rtree/TrajStoreRelated.cc"
-)
-list (APPEND SIDX_CPP ${SIDX_RTREE_CPP})
+
 
 set(SIDX_MBCRTREE_CPP
         "${SIDX_SRC_DIR}/mbcrtree/BulkLoader.cc"

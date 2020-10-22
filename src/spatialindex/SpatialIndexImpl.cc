@@ -26,7 +26,6 @@
 ******************************************************************************/
 #include <spatialindex/SpatialIndex.h>
 
-#include "../rtree/RTree.h"
 #include "../mbcrtree/MBCRTree.h"
 
 SpatialIndex::InvalidPageException::InvalidPageException(id_type id)
@@ -43,12 +42,6 @@ std::string SpatialIndex::InvalidPageException::what()
 
 std::ostream& SpatialIndex::operator<<(std::ostream& os, const ISpatialIndex& i)
 {
-	const SpatialIndex::RTree::RTree* pRTree = dynamic_cast<const SpatialIndex::RTree::RTree*>(&i);
-    if (pRTree != 0)
-    {
-        os << *pRTree;
-        return os;
-    }
     const SpatialIndex::MBCRTree::MBCRTree* pMBCRTree = dynamic_cast<const SpatialIndex::MBCRTree::MBCRTree*>(&i);
     if (pMBCRTree != 0)
     {
@@ -62,13 +55,6 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const ISpatialIndex& i)
 
 std::ostream& SpatialIndex::operator<<(std::ostream& os, const IStatistics& s)
 {
-	const SpatialIndex::RTree::Statistics* pRTreeStats = dynamic_cast<const SpatialIndex::RTree::Statistics*>(&s);
-	if (pRTreeStats != 0)
-	{
-		os << *pRTreeStats;
-		return os;
-	}
-
     const SpatialIndex::MBCRTree::Statistics* pMBCRTreeStats = dynamic_cast<const SpatialIndex::MBCRTree::Statistics*>(&s);
     if (pMBCRTreeStats != 0)
     {
