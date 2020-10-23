@@ -4,7 +4,7 @@
 int main() {
     try {
         calcuTime[0] = 0;
-        srand((int) time(NULL));
+        srand(0);
 //        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
 //        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://TRI-framework/dumpedtraj.txt");
         vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
@@ -87,7 +87,7 @@ int main() {
 
     try {
         calcuTime[0] = 0;
-        srand((int) time(NULL));
+        srand(0);
 //        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
 //        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://TRI-framework/dumpedtraj.txt");
         vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/glfilter.txt");

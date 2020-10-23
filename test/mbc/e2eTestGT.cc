@@ -13,7 +13,7 @@
 int main() {
     try {
         calcuTime[0] = 0;
-        srand((int) time(NULL));
+        srand(0);
         rsimpli = false;
         bUsingSimp = true;
         string name0 = "name0", name1 = "name1", name2 = "name2";

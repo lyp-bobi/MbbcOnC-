@@ -114,7 +114,7 @@ vector<pair<id_type, Trajectory> > loadGTToTrajs() {
 
 int main() {
     try {
-        srand((int) time(NULL));
+        srand(0);
         vector<pair<id_type, Trajectory> > trajs = loadGTToTrajs();
         vector<pair<id_type, Trajectory> > empty1;
         vector<pair<id_type, vector<Trajectory>>> segs;

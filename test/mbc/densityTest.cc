@@ -7,7 +7,7 @@
 int main() {
     try {
         calcuTime[0] = 0;
-        srand((int) time(NULL));
+        srand(0);
 //        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
         vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
 //        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://geolifeCleaner/tdfilter.txt");

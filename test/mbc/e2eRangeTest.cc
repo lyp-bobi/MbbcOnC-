@@ -10,7 +10,7 @@ int main() {
 
     try {
         calcuTime[0] = 0;
-        srand((int) time(NULL));
+        srand(0);
         vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
 //        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://TRI-framework/dumpedtraj.txt");
 
@@ -107,7 +107,7 @@ int main() {
 
     try {
         calcuTime[0] = 0;
-        srand((int) time(NULL));
+        srand(0);
         vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/glfilter.txt");
         auto stat = trajStat::instance();
         int maxseg = 0;

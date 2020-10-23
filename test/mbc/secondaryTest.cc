@@ -14,7 +14,7 @@ int main() {
     for(auto dataset:ds) {
         try {
             calcuTime[0] = 0;
-            srand((int) time(NULL));
+            srand(0);
             vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs(dataset);
             vector<pair<id_type, vector<Trajectory>>> segs1, segs2;
             vector<pair<id_type, vector<Trajectory>>> emptyseg;

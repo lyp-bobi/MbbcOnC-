@@ -8,7 +8,7 @@
 int main() {
     try {
         calcuTime[0] = 0;
-        srand((int) time(NULL));
+        srand(0);
         vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
         vector<pair<id_type, vector<Trajectory>>> segs1, segs2;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
@@ -96,7 +96,7 @@ int main() {
 
     try {
         calcuTime[0] = 0;
-        srand((int) time(NULL));
+        srand(0);
         vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/glfilter.txt");
         vector<pair<id_type, vector<Trajectory>>> segs1, segs2;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
