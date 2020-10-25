@@ -158,8 +158,6 @@ namespace SpatialIndex
         virtual double getStaticMaxSED(double x, double y, double t1, double t2) const;
         virtual double getStaticMaxSED(const Region in,double ints, double inte) const;
 
-        virtual double getInferredNodeMinimumIED(const Region &in, double MaxVelocity,double queryMaxVelocity=0) const;
-
         virtual double getNodeMinimumDistance(const Region &in,double MaxVelocity) const;
         virtual double getLeafMinimumDistance(const Region &in, double MaxVelocity) const;
         virtual double getLeafMinimumDistance(const MBC &in, double MaxVelocity) const;

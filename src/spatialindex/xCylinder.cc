@@ -128,19 +128,13 @@ void xCylinder::getCenter(Point& out) const{
     out=Point(p3d,3);
 }
 uint32_t xCylinder::getDimension() const{return 2;}
-void xCylinder::getMBR(Region& out) const{
-    //return a 3d mbr
-    double *pLow=new double[3];
-    double *pHigh=new double[3];
-    pLow[0]=(m_p.m_x)-m_r;
-    pHigh[0]=(m_p.m_x)+m_r;
-    pLow[1]=(m_p.m_y)-m_r;
-    pHigh[1]=(m_p.m_y)+m_r;
-    pLow[2]=m_startTime;
-    pHigh[2]=m_endTime;
-    out=Region(pLow,pHigh,3);
-    delete[](pLow);
-    delete[](pHigh);
+void xCylinder::getxMBR(xMBR& out) const{
+    out.m_xmin=(m_p.m_x)-m_r;
+    out.m_xmax=(m_p.m_x)+m_r;
+    out.m_ymin=(m_p.m_y)-m_r;
+    out.m_ymax=(m_p.m_y)+m_r;
+    out.m_tmin=m_startTime;
+    out.m_tmax=m_endTime;
 }
 
 double xCylinder::getArea() const{
@@ -201,7 +195,7 @@ int xCylinder::checkRel(const xMBR &br) const {
     return 1;
 }
 
-bool below0(double a,double b,double c,double ts,double te){
+static bool below0(double a,double b,double c,double ts,double te){
     if(a*ts*ts+b*ts+c<=0||a*te*te+b*te+c<=0) return true;
     double m = -b/2/a;
     if(ts<m && m<te && a*m*m +b*m +c<=0) return true;

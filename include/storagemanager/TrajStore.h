@@ -16,210 +16,6 @@ extern bool bSecondaryIndex;
 
 namespace SpatialIndex
 {
-    class trajStat{
-    private:
-        trajStat(){};
-        ~trajStat(){delete singleton;}
-        static trajStat* singleton;
-    public:
-        double bt=0;
-        double M=0;//total time
-        long lineCount=0;
-        long trajCount=0;
-        double tl=0;//time len of a segment
-        double jt=0;
-        double v=0;
-        double vmax = 0;
-        double minx=1e300,maxx=-1e300,miny=1e300,maxy=-1e300,mint=1e300,maxt=-1e300;
-        double Dx=0,Dy=0,Dt=0;
-        double Sr=0;
-        double P=0;
-        double dist=0;
-        double Df =2;
-        double f = 50,fp=170;
-        string dataset = "";
-        static trajStat* instance();
-        void init(){
-            bt=0;
-            M=0;
-            long lineCount=0;
-            long trajCount=0;
-            tl=0;//time len of a segment
-            jt=0;
-            v=0;
-            minx=1e300,maxx=-1e300,miny=1e300,maxy=-1e300,mint=1e300,maxt=-1e300;
-            Dx=0,Dy=0,Dt=0;
-            Sr=0;
-            P=0;
-            dist=0;
-            Df =2;
-            f = 50;
-        }
-        void usedata(string str){
-            dataset = str;
-            if (dataset == "gl"){
-                M = 1.31808e+08;
-                lineCount = 20069299;
-                trajCount = 20619;
-                tl = 6.56764;
-                jt = 6392.55;
-                Sr = 0.5;
-                Df = 1.25;
-                P = 60000;
-                std::cerr<<"use gl sta\n";
-            }else if(dataset == "td"){
-                M = 5.20574e+09;
-                lineCount = 16205956;
-                trajCount = 10267;
-                tl = 321.224;
-                jt = 507037;
-                Sr = 0.5;
-                Df = 1.56;
-                P = 533315;
-                std::cerr<<"use td sta\n";
-            }
-            else if (dataset == "od"){
-                Sr = 10000;
-                Df = 1.4;
-                P = 5000;
-                std::cerr<<"use od sta\n";
-            }
-        }
-
-        double rd(double x){
-            if (dataset == "gl"){
-                return 2e-05 * x + 0.0023;
-            }else if(dataset == "td"){
-                return 1E-05 * x + 0.0003;
-            }
-            else if (dataset == "od"){
-                return -0.0326 * x*x + 20.289*x - 78.702;
-            }
-            return vv()*x;
-        }
-
-        double dd(double x){
-            if (dataset == "gl"){
-                return 4.5e-5*x - 1e-5/4000*x*x;
-            }else if(dataset == "td"){
-                return 4e-5*x;
-            }
-            else if (dataset == "od"){
-                return 55*x;
-            }
-            return vv()*x;
-        }
-
-        double vv(){
-            if (dataset == "gl"){
-                return dd(bt)/bt;
-            }else if(dataset == "td"){
-                return dd(bt)/bt;
-            }
-            else if (dataset == "od"){
-                return dd(bt)/bt;
-            }
-            return v;
-        }
-
-        double Lx(){
-            if (dataset == "gl"){
-
-            }else if(dataset == "td"){
-
-            }
-            else if (dataset == "od"){
-
-            }else{
-                return pow(M_PI*Sr*Sr*P*M*dd(bt)/bt/bt/f,0.33) + dd(bt);
-            }
-        }
-
-        double Lt(){
-            if (dataset == "gl"){
-
-            }else if(dataset == "td"){
-
-            }
-            else if (dataset == "od"){
-
-            }else{
-                return (pow(M_PI*Sr*Sr*P*M*dd(bt)/bt/bt/f,0.33) + dd(bt))*bt/dd(bt);
-            }
-        }
-
-        double knncost(double _bt,int k,double qt, bool out = false){
-            bt = _bt;
-            double leafs = M/bt/f;
-            double nt = pow(leafs * sq(vv())*sq(P) / sq((M_PI * sq(Sr))),1.0/3);
-            double ltc = P/nt;
-            double lt = ltc+bt;
-            double lxc = ltc * vv();
-            double lx = lt * vv();
-            double Nq = min(1.0,(qt+jt) /P)  * trajCount;
-            double rk =  pow(k/Nq, Df/2)*Sr;
-            double Rk = rk*qt/2 + qt/4* sqrt(2*sq(dd(qt)+4*sq(rk)));
-            double Rnq = Rk +rd(bt)*qt;
-
-            double nmin = k;
-            double nmax = 100*k;
-            while (nmax - nmin > 0.1) {
-                double mid = (nmax + nmin) / 2;
-                double rn =  pow(mid/Nq, Df/2)*Sr;
-                double Rn = rn*qt/2 + qt/4* sqrt(2*sq(dd(qt)+4*sq(rn)));
-                if (Rn > Rnq) {
-                    nmax = mid;
-                } else {
-                    nmin = mid;
-                }
-            }
-            double nq = (nmax+nmin)/2;
-
-            double pruneCost = sq(lx + 2*Rk/qt + dd(qt))*(lt+qt)   *(M/bt/f/P/pow(M_PI*sq(Sr),Df/2));
-            double filterCost = nq*(1+qt/fp/lt);
-            if (out){
-                std::cerr<<"nt "<<nt <<" lt "<<lt<<" lx "<<lx<<"\n";
-                std::cerr<<"expect cost is "<<pruneCost<<"\t"<<filterCost<<"\n";
-            }
-            return pruneCost+filterCost/8;
-        }
-
-        void set(double _bt, double _M, long _lineCount, long _trajCount,
-                 double _tl, double _jt, double _v, double _minx, double _maxx,
-                 double _miny, double _maxy, double _mint, double _maxt,
-                 double _Dx, double _Dy, double _Dt, double _dist)
-        {
-            bt=_bt; M=_M; lineCount=_lineCount; trajCount=_trajCount;
-            tl=_tl; jt=_jt; v=_v; minx=_minx; maxx=_maxx;
-            miny=_miny; maxy=_maxy; mint=_mint; maxt=_maxt;
-            Dx=_Dx; Dy=_Dy; Dt=_Dt; dist=_dist;
-        }
-        void output(){
-            std::cerr<<bt<<","<< M<<","<< lineCount<<","<< trajCount<<","<<
-                     tl<<","<< jt<<","<< v<<","<< minx<<","<< maxx<<","<<
-                     miny<<","<< maxy<<","<< mint<<","<< maxt<<","<<
-                     Dx<<","<< Dy<<","<< Dt<<","<< dist<<"\n";
-        }
-        string toString(){
-            ostringstream ostream;
-            ostream<<bt<<" "<< M<<" "<< lineCount<<" "<< trajCount<<" "<<
-                   tl<<" "<< jt<<" "<< v<<" "<< minx<<" "<< maxx<<" "<<
-                   miny<<" "<< maxy<<" "<< mint<<" "<< maxt<<" "<<
-                   Dx<<" "<< Dy<<" "<< Dt<<" "<< dist;
-            return ostream.str();
-        }
-        void fromString(string s){
-            istringstream istream(s);
-            istream>>bt>> M>> lineCount>> trajCount>>
-                   tl>> jt>> v>> minx>> maxx>>
-                   miny>> maxy>> mint>> maxt>>
-                   Dx>> Dy>> Dt>> dist;
-            return;
-        }
-        friend SIDX_DLL std::ostream& operator<<(std::ostream& os,const trajStat &r);
-    };
-    SIDX_DLL std::ostream& operator<<(std::ostream& os, const trajStat& r);
-
     class SIDX_DLL XZ3Enocder{
     private:
         XZ3Enocder();
@@ -338,6 +134,7 @@ namespace SpatialIndex
                 }
             }
         };
+
         class SBBStream:public IDataStream{
         public:
             std::fstream m_idFile;
@@ -510,6 +307,7 @@ namespace SpatialIndex
             const Region getMBR(id_type &id);
             const MBC getMBC(id_type &id);
             DiskMultiMap m_dentries;
+            json m_property;
             std::map<id_type, Entry*> m_entries;//map from seg id to entry
             std::map<id_type, MBC> m_entryMbcs;
             std::map<id_type, Region> m_entryMbrs;
@@ -519,6 +317,8 @@ namespace SpatialIndex
             std::string m_name;
             uint32_t m_pageSize;
             uint32_t m_maxTrajSegs=100;
+
+            /*statistic*/
             uint32_t m_leaf1=0,m_leaf2=0;
             uint32_t m_trajIO=0,m_indexIO=0;
             uint32_t m_loadedTraj=0;

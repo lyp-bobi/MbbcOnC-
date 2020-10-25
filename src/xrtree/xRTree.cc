@@ -34,18 +34,18 @@
 #include "Leaf.h"
 #include "Index.h"
 #include "BulkLoader.h"
-#include "MBCRTree.h"
+#include "xRTree.h"
 
 
 bool bUsingSimp=true;
 bool bUsingSBBD=false;
 int sbb=0,sb=0;
 
-using namespace SpatialIndex::MBCRTree;
+using namespace SpatialIndex::xRTree;
 using namespace SpatialIndex;
 
-SpatialIndex::MBCRTree::Data::Data(uint32_t len, uint8_t* pData, MBC& r, Region &rg, id_type id)
-	: m_id(id), m_mbc(r),m_mbr(rg), m_pData(0), m_dataLength(len)
+SpatialIndex::xRTree::Data::Data(uint32_t len, uint8_t* pData, xMBC& r, xMBR &rg, id_type id)
+	: m_id(id), m_xMBC(r),m_mbr(rg), m_pData(0), m_dataLength(len)
 {
 	if (m_dataLength > 0)
 	{
@@ -54,8 +54,8 @@ SpatialIndex::MBCRTree::Data::Data(uint32_t len, uint8_t* pData, MBC& r, Region 
 	}
 }
 
-SpatialIndex::MBCRTree::Data::Data(uint32_t len, uint8_t* pData, MBC& r, id_type id)
-        : m_id(id), m_mbc(r), m_pData(0), m_dataLength(len)
+SpatialIndex::xRTree::Data::Data(uint32_t len, uint8_t* pData, xMBC& r, id_type id)
+        : m_id(id), m_xMBC(r), m_pData(0), m_dataLength(len)
 {
     m_mbr.makeInfinite(2);
     if (m_dataLength > 0)
@@ -65,27 +65,27 @@ SpatialIndex::MBCRTree::Data::Data(uint32_t len, uint8_t* pData, MBC& r, id_type
     }
 }
 
-SpatialIndex::MBCRTree::Data::~Data()
+SpatialIndex::xRTree::Data::~Data()
 {
 	delete[] m_pData;
 }
 
-SpatialIndex::MBCRTree::Data* SpatialIndex::MBCRTree::Data::clone()
+SpatialIndex::xRTree::Data* SpatialIndex::xRTree::Data::clone()
 {
-	return new Data(m_dataLength, m_pData, m_mbc,m_mbr, m_id);
+	return new Data(m_dataLength, m_pData, m_xMBC,m_mbr, m_id);
 }
 
-id_type SpatialIndex::MBCRTree::Data::getIdentifier() const
+id_type SpatialIndex::xRTree::Data::getIdentifier() const
 {
 	return m_id;
 }
 
-void SpatialIndex::MBCRTree::Data::getShape(IShape** out) const
+void SpatialIndex::xRTree::Data::getShape(IShape** out) const
 {
-	*out = new MBC(m_mbc);
+	*out = new xMBC(m_xMBC);
 }
 
-void SpatialIndex::MBCRTree::Data::getData(uint32_t& len, uint8_t** data) const
+void SpatialIndex::xRTree::Data::getData(uint32_t& len, uint8_t** data) const
 {
 	len = m_dataLength;
 	*data = 0;
@@ -97,17 +97,17 @@ void SpatialIndex::MBCRTree::Data::getData(uint32_t& len, uint8_t** data) const
 	}
 }
 
-uint32_t SpatialIndex::MBCRTree::Data::getByteArraySize() const
+uint32_t SpatialIndex::xRTree::Data::getByteArraySize() const
 {
 	return
 		sizeof(id_type) +
 		sizeof(uint32_t) +
 		m_dataLength +
 		m_mbr.getByteArraySize()+
-		m_mbc.getByteArraySize();
+		m_xMBC.getByteArraySize();
 }
 
-void SpatialIndex::MBCRTree::Data::loadFromByteArray(const uint8_t* ptr)
+void SpatialIndex::xRTree::Data::loadFromByteArray(const uint8_t* ptr)
 {
 	memcpy(&m_id, ptr, sizeof(id_type));
 	ptr += sizeof(id_type);
@@ -126,18 +126,18 @@ void SpatialIndex::MBCRTree::Data::loadFromByteArray(const uint8_t* ptr)
 	}
     m_mbr.loadFromByteArray(ptr);
 	ptr+=m_mbr.getByteArraySize();
-	m_mbc.loadFromByteArray(ptr);
+	m_xMBC.loadFromByteArray(ptr);
 }
 
-void SpatialIndex::MBCRTree::Data::storeToByteArray(uint8_t** data, uint32_t& len)
+void SpatialIndex::xRTree::Data::storeToByteArray(uint8_t** data, uint32_t& len)
 {
 	// it is thread safe this way.
-	uint32_t regionsize,regionsize2;
-	uint8_t* regiondata = 0,*regiondata2=0;
-    m_mbr.storeToByteArray(&regiondata, regionsize);
-	m_mbc.storeToByteArray(&regiondata2, regionsize2);
+	uint32_t xMBRsize,xMBRsize2;
+	uint8_t* xMBRdata = 0,*xMBRdata2=0;
+    m_mbr.storeToByteArray(&xMBRdata, xMBRsize);
+	m_xMBC.storeToByteArray(&xMBRdata2, xMBRsize2);
 
-	len = sizeof(id_type) + sizeof(uint32_t) + m_dataLength + regionsize;
+	len = sizeof(id_type) + sizeof(uint32_t) + m_dataLength + xMBRsize;
 
 	*data = new uint8_t[len];
 	uint8_t* ptr = *data;
@@ -153,27 +153,27 @@ void SpatialIndex::MBCRTree::Data::storeToByteArray(uint8_t** data, uint32_t& le
 		ptr += m_dataLength;
 	}
 
-	memcpy(ptr, regiondata, regionsize);
-    ptr += regionsize;
-    memcpy(ptr, regiondata2, regionsize2);
-	delete[] regiondata;
-	delete[] regiondata2;
-	// ptr += regionsize;
+	memcpy(ptr, xMBRdata, xMBRsize);
+    ptr += xMBRsize;
+    memcpy(ptr, xMBRdata2, xMBRsize2);
+	delete[] xMBRdata;
+	delete[] xMBRdata2;
+	// ptr += xMBRsize;
 }
 
-SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::returnMBCRTree(SpatialIndex::IStorageManager& sm, Tools::PropertySet& ps)
+SpatialIndex::ISpatialIndex* SpatialIndex::xRTree::returnxRTree(SpatialIndex::IStorageManager& sm, Tools::PropertySet& ps)
 {
-	SpatialIndex::ISpatialIndex* si = new SpatialIndex::MBCRTree::MBCRTree(sm, ps);
+	SpatialIndex::ISpatialIndex* si = new SpatialIndex::xRTree::xRTree(sm, ps);
 	return si;
 }
 
-SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createNewMBCRTree(
+SpatialIndex::ISpatialIndex* SpatialIndex::xRTree::createNewxRTree(
 	SpatialIndex::IStorageManager& sm,
 	double fillFactor,
 	uint32_t indexCapacity,
 	uint32_t leafCapacity,
 	uint32_t dimension,
-	MBCRTreeVariant rv,
+	xRTreeVariant rv,
 	id_type& indexIdentifier)
 {
 	Tools::Variant var;
@@ -199,7 +199,7 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createNewMBCRTree(
 	var.m_val.lVal = rv;
 	ps.setProperty("TreeVariant", var);
 
-	ISpatialIndex* ret = returnMBCRTree(sm, ps);
+	ISpatialIndex* ret = returnxRTree(sm, ps);
 
 	var.m_varType = Tools::VT_LONGLONG;
 	var = ps.getProperty("IndexIdentifier");
@@ -208,7 +208,7 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createNewMBCRTree(
 	return ret;
 }
 
-SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTree(
+SpatialIndex::ISpatialIndex* SpatialIndex::xRTree::createAndBulkLoadNewxRTree(
 	BulkLoadMethod m,
 	IDataStream& stream,
 	SpatialIndex::IStorageManager& sm,
@@ -216,14 +216,14 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
 	uint32_t indexCapacity,
 	uint32_t leafCapacity,
 	uint32_t dimension,
-	SpatialIndex::MBCRTree::MBCRTreeVariant rv,
+	SpatialIndex::xRTree::xRTreeVariant rv,
 	id_type& indexIdentifier,
 	bool useMBR //false;
 	)
 {
-	SpatialIndex::ISpatialIndex* tree = createNewMBCRTree(sm, fillFactor, indexCapacity, leafCapacity, dimension, rv, indexIdentifier);
-    MBCRTree* r= static_cast<MBCRTree*>(tree);
-    TrajStore *ts= dynamic_cast<TrajStore*>(&sm);
+	SpatialIndex::ISpatialIndex* tree = createNewxRTree(sm, fillFactor, indexCapacity, leafCapacity, dimension, rv, indexIdentifier);
+    xRTree* r= static_cast<xRTree*>(tree);
+    xStore *ts= dynamic_cast<xStore*>(&sm);
     if(ts!= nullptr){
         r->m_DataType=TrajectoryType;
         r->m_ts=ts;
@@ -232,22 +232,22 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
 	uint32_t bindex = static_cast<uint32_t>(std::floor(static_cast<double>(indexCapacity)));
 	uint32_t bleaf = static_cast<uint32_t>(std::floor(static_cast<double>(leafCapacity)));
 
-	SpatialIndex::MBCRTree::BulkLoader bl;
+	SpatialIndex::xRTree::BulkLoader bl;
 
 	switch (m)
 	{
 	case BLM_STR:
-		bl.bulkLoadUsingSTR(static_cast<MBCRTree*>(tree), stream, bindex, bleaf, 10000, 10000);
+		bl.bulkLoadUsingSTR(static_cast<xRTree*>(tree), stream, bindex, bleaf, 10000, 10000);
 		break;
 	default:
-		throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Unknown bulk load method.");
+		throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Unknown bulk load method.");
 		break;
 	}
 
 	return tree;
 }
 
-SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTree(
+SpatialIndex::ISpatialIndex* SpatialIndex::xRTree::createAndBulkLoadNewxRTree(
 	BulkLoadMethod m,
 	IDataStream& stream,
 	SpatialIndex::IStorageManager& sm,
@@ -255,7 +255,7 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
 	id_type& indexIdentifier)
 {
 	Tools::Variant var;
-	MBCRTreeVariant rv(RV_LINEAR);
+	xRTreeVariant rv(RV_LINEAR);
 	double fillFactor(0.0);
 	uint32_t indexCapacity(0);
 	uint32_t leafCapacity(0);
@@ -272,9 +272,9 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
 			(var.m_val.lVal != RV_LINEAR &&
 			var.m_val.lVal != RV_QUADRATIC &&
 			var.m_val.lVal != RV_RSTAR))
-			throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Property TreeVariant must be Tools::VT_LONG and of MBCRTreeVariant type");
+			throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Property TreeVariant must be Tools::VT_LONG and of xRTreeVariant type");
 
-		rv = static_cast<MBCRTreeVariant>(var.m_val.lVal);
+		rv = static_cast<xRTreeVariant>(var.m_val.lVal);
 	}
 
 	// fill factor
@@ -284,15 +284,15 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
 	if (var.m_varType != Tools::VT_EMPTY)
 	{
 	    if (var.m_varType != Tools::VT_DOUBLE)
-            throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Property FillFactor was not of type Tools::VT_DOUBLE");
+            throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Property FillFactor was not of type Tools::VT_DOUBLE");
 
         if (var.m_val.dblVal <= 0.0)
-            throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Property FillFactor was less than 0.0");
+            throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Property FillFactor was less than 0.0");
 
         if (((rv == RV_LINEAR || rv == RV_QUADRATIC) && var.m_val.dblVal > 0.5))
-            throw Tools::IllegalArgumentException( "createAndBulkLoadNewMBCRTree: Property FillFactor must be in range (0.0, 0.5) for LINEAR or QUADRATIC index types");
+            throw Tools::IllegalArgumentException( "createAndBulkLoadNewxRTree: Property FillFactor must be in range (0.0, 0.5) for LINEAR or QUADRATIC index types");
         if ( var.m_val.dblVal >= 1.0)
-            throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Property FillFactor must be in range (0.0, 1.0) for RSTAR index type");
+            throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Property FillFactor must be in range (0.0, 1.0) for RSTAR index type");
 		fillFactor = var.m_val.dblVal;
 	}
 
@@ -301,7 +301,7 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
 	if (var.m_varType != Tools::VT_EMPTY)
 	{
 		if (var.m_varType != Tools::VT_ULONG || var.m_val.ulVal < 4)
-			throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Property IndexCapacity must be Tools::VT_ULONG and >= 4");
+			throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Property IndexCapacity must be Tools::VT_ULONG and >= 4");
 
 		indexCapacity = var.m_val.ulVal;
 	}
@@ -311,7 +311,7 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
 	if (var.m_varType != Tools::VT_EMPTY)
 	{
 		if (var.m_varType != Tools::VT_ULONG )// || var.m_val.ulVal < 4)
-			throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Property LeafCapacity must be Tools::VT_ULONG and >= 4");
+			throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Property LeafCapacity must be Tools::VT_ULONG and >= 4");
 
 		leafCapacity = var.m_val.ulVal;
 	}
@@ -321,9 +321,9 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
 	if (var.m_varType != Tools::VT_EMPTY)
 	{
 		if (var.m_varType != Tools::VT_ULONG)
-			throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Property Dimension must be Tools::VT_ULONG");
+			throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Property Dimension must be Tools::VT_ULONG");
 		if (var.m_val.ulVal <= 1)
-			throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Property Dimension must be greater than 1");
+			throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Property Dimension must be greater than 1");
 
 		dimension = var.m_val.ulVal;
 	}
@@ -333,9 +333,9 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
 	if (var.m_varType != Tools::VT_EMPTY)
 	{
 		if (var.m_varType != Tools::VT_ULONG)
-			throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Property ExternalSortBufferPageSize must be Tools::VT_ULONG");
+			throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Property ExternalSortBufferPageSize must be Tools::VT_ULONG");
 		if (var.m_val.ulVal <= 1)
-			throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Property ExternalSortBufferPageSize must be greater than 1");
+			throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Property ExternalSortBufferPageSize must be greater than 1");
 
 		pageSize = var.m_val.ulVal;
 	}
@@ -345,34 +345,34 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::createAndBulkLoadNewMBCRTre
 	if (var.m_varType != Tools::VT_EMPTY)
 	{
 		if (var.m_varType != Tools::VT_ULONG)
-			throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Property ExternalSortBufferTotalPages must be Tools::VT_ULONG");
+			throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Property ExternalSortBufferTotalPages must be Tools::VT_ULONG");
 		if (var.m_val.ulVal <= 1)
-			throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Property ExternalSortBufferTotalPages must be greater than 1");
+			throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Property ExternalSortBufferTotalPages must be greater than 1");
 
 		numberOfPages = var.m_val.ulVal;
 	}
 
-	SpatialIndex::ISpatialIndex* tree = createNewMBCRTree(sm, fillFactor, indexCapacity, leafCapacity, dimension, rv, indexIdentifier);
+	SpatialIndex::ISpatialIndex* tree = createNewxRTree(sm, fillFactor, indexCapacity, leafCapacity, dimension, rv, indexIdentifier);
 
 	uint32_t bindex = static_cast<uint32_t>(std::floor(static_cast<double>(indexCapacity * fillFactor)));
 	uint32_t bleaf = static_cast<uint32_t>(std::floor(static_cast<double>(leafCapacity * fillFactor)));
 
-	SpatialIndex::MBCRTree::BulkLoader bl;
+	SpatialIndex::xRTree::BulkLoader bl;
 
 	switch (m)
 	{
 	case BLM_STR:
-		bl.bulkLoadUsingSTR(static_cast<MBCRTree*>(tree), stream, bindex, bleaf, pageSize, numberOfPages);
+		bl.bulkLoadUsingSTR(static_cast<xRTree*>(tree), stream, bindex, bleaf, pageSize, numberOfPages);
 		break;
 	default:
-		throw Tools::IllegalArgumentException("createAndBulkLoadNewMBCRTree: Unknown bulk load method.");
+		throw Tools::IllegalArgumentException("createAndBulkLoadNewxRTree: Unknown bulk load method.");
 		break;
 	}
 
 	return tree;
 }
 
-SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::loadMBCRTree(IStorageManager& sm, id_type indexIdentifier)
+SpatialIndex::ISpatialIndex* SpatialIndex::xRTree::loadxRTree(IStorageManager& sm, id_type indexIdentifier)
 {
 	Tools::Variant var;
 	Tools::PropertySet ps;
@@ -381,10 +381,10 @@ SpatialIndex::ISpatialIndex* SpatialIndex::MBCRTree::loadMBCRTree(IStorageManage
 	var.m_val.llVal = indexIdentifier;
 	ps.setProperty("IndexIdentifier", var);
 
-	return returnMBCRTree(sm, ps);
+	return returnxRTree(sm, ps);
 }
 
-SpatialIndex::MBCRTree::MBCRTree::MBCRTree(IStorageManager& sm, Tools::PropertySet& ps) :
+SpatialIndex::xRTree::xRTree::xRTree(IStorageManager& sm, Tools::PropertySet& ps) :
 	m_pStorageManager(&sm),
 	m_rootID(StorageManager::NewPage),
 	m_headerID(StorageManager::NewPage),
@@ -397,9 +397,9 @@ SpatialIndex::MBCRTree::MBCRTree::MBCRTree(IStorageManager& sm, Tools::PropertyS
 	m_reinsertFactor(0.3),
 	m_dimension(2),
 	m_bTightMBRs(true),
-	m_pointPool(500),
-	m_regionPool(1000),
-    m_mbcPool(1000),
+	m_xPointPool(500),
+	m_xMBRPool(1000),
+    m_xMBCPool(1000),
 	m_indexPool(100),
 	m_leafPool(100)
 {
@@ -413,7 +413,7 @@ SpatialIndex::MBCRTree::MBCRTree::MBCRTree(IStorageManager& sm, Tools::PropertyS
 		if (var.m_varType == Tools::VT_LONGLONG) m_headerID = var.m_val.llVal;
 		else if (var.m_varType == Tools::VT_LONG) m_headerID = var.m_val.lVal;
 			// for backward compatibility only.
-		else throw Tools::IllegalArgumentException("MBCRTree: Property IndexIdentifier must be Tools::VT_LONGLONG");
+		else throw Tools::IllegalArgumentException("xRTree: Property IndexIdentifier must be Tools::VT_LONGLONG");
 
 		initOld(ps);
 	}
@@ -426,7 +426,7 @@ SpatialIndex::MBCRTree::MBCRTree::MBCRTree(IStorageManager& sm, Tools::PropertyS
 	}
 }
 
-SpatialIndex::MBCRTree::MBCRTree::~MBCRTree()
+SpatialIndex::xRTree::xRTree::~xRTree()
 {
 #ifdef HAVE_PTHREAD_H
 	pthread_mutex_destroy(&m_lock);
@@ -439,7 +439,7 @@ SpatialIndex::MBCRTree::MBCRTree::~MBCRTree()
 // ISpatialIndex interface
 //
 
-void SpatialIndex::MBCRTree::MBCRTree::insertData(uint32_t len, const uint8_t* pData, const IShape& shape, id_type id)
+void SpatialIndex::xRTree::xRTree::insertData(uint32_t len, const uint8_t* pData, const IShape& shape, id_type id)
 {
 	if (shape.getDimension() != m_dimension) throw Tools::IllegalArgumentException("insertData: Shape has the wrong number of dimensions.");
 
@@ -447,8 +447,8 @@ void SpatialIndex::MBCRTree::MBCRTree::insertData(uint32_t len, const uint8_t* p
 	Tools::LockGuard lock(&m_lock);
 #endif
 
-	// convert the shape into a Region (R-Trees index regions only; i.e., approximations of the shapes).
-	RegionPtr mbr = m_regionPool.acquire();
+	// convert the shape into a xMBR (R-Trees index xMBRs only; i.e., approximations of the shapes).
+	xMBRPtr mbr = m_xMBRPool.acquire();
 	shape.getMBR(*mbr);
 
 	uint8_t* buffer = 0;
@@ -463,7 +463,7 @@ void SpatialIndex::MBCRTree::MBCRTree::insertData(uint32_t len, const uint8_t* p
 		// the buffer is stored in the tree. Do not delete here.
 }
 
-bool SpatialIndex::MBCRTree::MBCRTree::deleteData(const IShape& shape, id_type id)
+bool SpatialIndex::xRTree::xRTree::deleteData(const IShape& shape, id_type id)
 {
 	if (shape.getDimension() != m_dimension) throw Tools::IllegalArgumentException("deleteData: Shape has the wrong number of dimensions.");
 
@@ -471,7 +471,7 @@ bool SpatialIndex::MBCRTree::MBCRTree::deleteData(const IShape& shape, id_type i
 	Tools::LockGuard lock(&m_lock);
 #endif
 
-	RegionPtr mbr = m_regionPool.acquire();
+	xMBRPtr mbr = m_xMBRPool.acquire();
 	shape.getMBR(*mbr);
 	bool ret = deleteData_impl(*mbr, id);
 
@@ -479,33 +479,33 @@ bool SpatialIndex::MBCRTree::MBCRTree::deleteData(const IShape& shape, id_type i
 }
 
 
-void SpatialIndex::MBCRTree::MBCRTree::containsWhatQuery(const IShape& query, IVisitor& v)
+void SpatialIndex::xRTree::xRTree::containsWhatQuery(const IShape& query, IVisitor& v)
 {
 	throw;
 }
-void SpatialIndex::MBCRTree::MBCRTree::intersectsWithQuery(const IShape& query, IVisitor& v)
+void SpatialIndex::xRTree::xRTree::intersectsWithQuery(const IShape& query, IVisitor& v)
 {
 //	if (query.getDimension() != m_dimension)
 //	    throw Tools::IllegalArgumentException("intersectsWithQuery: Shape has the wrong number of dimensions.");
 	rangeQuery(IntersectionQuery, query, v);
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::pointLocationQuery(const Point& query, IVisitor& v)
+void SpatialIndex::xRTree::xRTree::xPointLocationQuery(const xPoint& query, IVisitor& v)
 {
-	if (query.m_dimension != m_dimension) throw Tools::IllegalArgumentException("pointLocationQuery: Shape has the wrong number of dimensions.");
-	Region r(query, query);
+	if (query.m_dimension != m_dimension) throw Tools::IllegalArgumentException("xPointLocationQuery: Shape has the wrong number of dimensions.");
+	xMBR r(query, query);
 	rangeQuery(IntersectionQuery, r, v);
 }
 
 
 
-void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v, INearestNeighborComparator& nnc)
+void SpatialIndex::xRTree::xRTree::nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v, INearestNeighborComparator& nnc)
 {
 //	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
     const Trajectory *queryTraj;
     if(m_DataType==TrajectoryType) {
         queryTraj = dynamic_cast<const Trajectory *>(&query);
-        if (queryTraj == nullptr||queryTraj->m_points.size()<2) {
+        if (queryTraj == nullptr||queryTraj->m_xPoints.size()<2) {
             std::cerr << "bad query traj\n";
             return;
         }
@@ -517,15 +517,15 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
 //        auto stat=trajStat::instance();
         int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (m_ts->m_timeCount/m_ts->m_segCount));
         segnum=std::max(segnum,10);
-        vector<vector<STPoint>> simpseg;
+        vector<vector<STxPoint>> simpseg;
         try {
-            simpseg = Trajectory::simplifyWithRDPN(queryTraj->m_points,
-                    std::min(segnum,int(std::sqrt(queryTraj->m_points.size()))));
+            simpseg = Trajectory::simplifyWithRDPN(queryTraj->m_xPoints,
+                    std::min(segnum,int(std::sqrt(queryTraj->m_xPoints.size()))));
         }
         catch (...){
-            std::cerr<<"RDPN query has some problem with\n"<< queryTraj<<"with"<<std::min(segnum,int(std::sqrt(queryTraj->m_points.size())))<<"\n";
+            std::cerr<<"RDPN query has some problem with\n"<< queryTraj<<"with"<<std::min(segnum,int(std::sqrt(queryTraj->m_xPoints.size())))<<"\n";
         }
-        vector<STPoint> simpp;
+        vector<STxPoint> simpp;
         for (const auto &s:simpseg) {
             simpp.emplace_back(s.front());
         }
@@ -533,8 +533,8 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
         simpleTraj=Trajectory(simpp);
         delta = queryTraj->getMinimumDistance(simpleTraj);
         simpp.clear();
-        simpp.emplace_back(queryTraj->m_points[0]);
-        simpp.emplace_back(queryTraj->m_points[queryTraj->m_points.size()-1]);
+        simpp.emplace_back(queryTraj->m_xPoints[0]);
+        simpp.emplace_back(queryTraj->m_xPoints[queryTraj->m_xPoints.size()-1]);
         ssTraj=Trajectory(simpp);
         ssdelta = queryTraj->getMinimumDistance(ssTraj);
     }else{
@@ -671,12 +671,12 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                                 ts = n->m_ptrMBR[cChild]->m_pLow[2];
                                 te = n->m_ptrMBR[cChild]->m_pHigh[2];
                             } else {
-                                double d = simpleTraj.getMinimumDistance(*(n->m_ptrMBC[cChild]))/
-                                ((n->m_ptrMBC[cChild])->m_endTime- (n->m_ptrMBC[cChild])->m_startTime)
+                                double d = simpleTraj.getMinimumDistance(*(n->m_ptrxMBC[cChild]))/
+                                ((n->m_ptrxMBC[cChild])->m_endTime- (n->m_ptrxMBC[cChild])->m_startTime)
                                 *(simpleTraj.m_endTime()-simpleTraj.m_startTime());
                                 pd = std::max(0.0, d);
-                                ts = n->m_ptrMBC[cChild]->m_startTime;
-                                te = n->m_ptrMBC[cChild]->m_endTime;
+                                ts = n->m_ptrxMBC[cChild]->m_startTime;
+                                te = n->m_ptrxMBC[cChild]->m_endTime;
                             }
                             leafInfo *e = new leafInfo();
                             e->m_page = n->m_pageNum[cChild];
@@ -725,7 +725,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
     m_stats.m_doubleExactQueryResults+=knearest;
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v)
+void SpatialIndex::xRTree::xRTree::nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v)
 {
 //	if (query.getDimension() != m_dimension) throw Tools::IllegalArgumentException("nearestNeighborQuery: Shape has the wrong number of dimensions.");
 	NNComparator nnc;
@@ -733,7 +733,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
 }
 
 
-void SpatialIndex::MBCRTree::MBCRTree::selfJoinQuery(const IShape& query, IVisitor& v)
+void SpatialIndex::xRTree::xRTree::selfJoinQuery(const IShape& query, IVisitor& v)
 {
 	if (query.getDimension() != m_dimension)
 		throw Tools::IllegalArgumentException("selfJoinQuery: Shape has the wrong number of dimensions.");
@@ -742,12 +742,12 @@ void SpatialIndex::MBCRTree::MBCRTree::selfJoinQuery(const IShape& query, IVisit
 	Tools::LockGuard lock(&m_lock);
 #endif
 
-	RegionPtr mbr = m_regionPool.acquire();
+	xMBRPtr mbr = m_xMBRPool.acquire();
 	query.getMBR(*mbr);
 	selfJoinQuery(m_rootID, m_rootID, *mbr, v);
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::queryStrategy(IQueryStrategy& qs)
+void SpatialIndex::xRTree::xRTree::queryStrategy(IQueryStrategy& qs)
 {
 #ifdef HAVE_PTHREAD_H
 	Tools::LockGuard lock(&m_lock);
@@ -763,7 +763,7 @@ void SpatialIndex::MBCRTree::MBCRTree::queryStrategy(IQueryStrategy& qs)
 	}
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::getIndexProperties(Tools::PropertySet& out) const
+void SpatialIndex::xRTree::xRTree::getIndexProperties(Tools::PropertySet& out) const
 {
 	Tools::Variant var;
 
@@ -822,18 +822,18 @@ void SpatialIndex::MBCRTree::MBCRTree::getIndexProperties(Tools::PropertySet& ou
 	var.m_val.ulVal = m_leafPool.getCapacity();
 	out.setProperty("LeafPoolCapacity", var);
 
-	// region pool capacity
+	// xMBR pool capacity
 	var.m_varType = Tools::VT_ULONG;
-	var.m_val.ulVal = m_regionPool.getCapacity();
-	out.setProperty("RegionPoolCapacity", var);
+	var.m_val.ulVal = m_xMBRPool.getCapacity();
+	out.setProperty("xMBRPoolCapacity", var);
 
-	// point pool capacity
+	// xPoint pool capacity
 	var.m_varType = Tools::VT_ULONG;
-	var.m_val.ulVal = m_pointPool.getCapacity();
-	out.setProperty("PointPoolCapacity", var);
+	var.m_val.ulVal = m_xPointPool.getCapacity();
+	out.setProperty("xPointPoolCapacity", var);
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::addCommand(ICommand* pCommand, CommandType ct)
+void SpatialIndex::xRTree::xRTree::addCommand(ICommand* pCommand, CommandType ct)
 {
 	switch (ct)
 	{
@@ -849,7 +849,7 @@ void SpatialIndex::MBCRTree::MBCRTree::addCommand(ICommand* pCommand, CommandTyp
 	}
 }
 
-bool SpatialIndex::MBCRTree::MBCRTree::isIndexValid()
+bool SpatialIndex::xRTree::xRTree::isIndexValid()
 {
 	bool ret = true;
 	std::stack<ValidateEntry> st;
@@ -871,27 +871,27 @@ bool SpatialIndex::MBCRTree::MBCRTree::isIndexValid()
 	{
 		e = st.top(); st.pop();
 
-		Region tmpRegion;
-		tmpRegion = m_infiniteRegion;
+		xMBR tmpxMBR;
+		tmpxMBR = m_infinitexMBR;
 
-		for (uint32_t cDim = 0; cDim < tmpRegion.m_dimension; ++cDim)
+		for (uint32_t cDim = 0; cDim < tmpxMBR.m_dimension; ++cDim)
 		{
-			tmpRegion.m_pLow[cDim] = std::numeric_limits<double>::max();
-			tmpRegion.m_pHigh[cDim] = -std::numeric_limits<double>::max();
+			tmpxMBR.m_pLow[cDim] = std::numeric_limits<double>::max();
+			tmpxMBR.m_pHigh[cDim] = -std::numeric_limits<double>::max();
 
 			for (uint32_t cChild = 0; cChild < e.m_pNode->m_children; ++cChild)
 			{
-				tmpRegion.m_pLow[cDim] = std::min(tmpRegion.m_pLow[cDim], e.m_pNode->m_ptrMBR[cChild]->m_pLow[cDim]);
-				tmpRegion.m_pHigh[cDim] = std::max(tmpRegion.m_pHigh[cDim], e.m_pNode->m_ptrMBR[cChild]->m_pHigh[cDim]);
+				tmpxMBR.m_pLow[cDim] = std::min(tmpxMBR.m_pLow[cDim], e.m_pNode->m_ptrMBR[cChild]->m_pLow[cDim]);
+				tmpxMBR.m_pHigh[cDim] = std::max(tmpxMBR.m_pHigh[cDim], e.m_pNode->m_ptrMBR[cChild]->m_pHigh[cDim]);
 			}
 		}
 
-		if (! (tmpRegion == e.m_pNode->m_nodeMBR))
+		if (! (tmpxMBR == e.m_pNode->m_nodeMBR))
 		{
 			std::cerr << "Invalid parent information." << std::endl;
 			ret = false;
 		}
-		else if (! (tmpRegion == e.m_parentMBR))
+		else if (! (tmpxMBR == e.m_parentMBR))
 		{
 			std::cerr << "Error in parent." << std::endl;
 			ret = false;
@@ -941,12 +941,12 @@ bool SpatialIndex::MBCRTree::MBCRTree::isIndexValid()
 	return ret;
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::getStatistics(IStatistics** out) const
+void SpatialIndex::xRTree::xRTree::getStatistics(IStatistics** out) const
 {
 	*out = new Statistics(m_stats);
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::initNew(Tools::PropertySet& ps)
+void SpatialIndex::xRTree::xRTree::initNew(Tools::PropertySet& ps)
 {
 	Tools::Variant var;
 
@@ -959,9 +959,9 @@ void SpatialIndex::MBCRTree::MBCRTree::initNew(Tools::PropertySet& ps)
 			(var.m_val.lVal != RV_LINEAR &&
 			var.m_val.lVal != RV_QUADRATIC &&
 			var.m_val.lVal != RV_RSTAR))
-			throw Tools::IllegalArgumentException("initNew: Property TreeVariant must be Tools::VT_LONG and of MBCRTreeVariant type");
+			throw Tools::IllegalArgumentException("initNew: Property TreeVariant must be Tools::VT_LONG and of xRTreeVariant type");
 
-		m_treeVariant = static_cast<MBCRTreeVariant>(var.m_val.lVal);
+		m_treeVariant = static_cast<xRTreeVariant>(var.m_val.lVal);
 	}
 
 	// fill factor
@@ -1087,27 +1087,27 @@ void SpatialIndex::MBCRTree::MBCRTree::initNew(Tools::PropertySet& ps)
 		m_leafPool.setCapacity(var.m_val.ulVal);
 	}
 
-	// region pool capacity
-	var = ps.getProperty("RegionPoolCapacity");
+	// xMBR pool capacity
+	var = ps.getProperty("xMBRPoolCapacity");
 	if (var.m_varType != Tools::VT_EMPTY)
 	{
 		if (var.m_varType != Tools::VT_ULONG)
-			throw Tools::IllegalArgumentException("initNew: Property RegionPoolCapacity must be Tools::VT_ULONG");
+			throw Tools::IllegalArgumentException("initNew: Property xMBRPoolCapacity must be Tools::VT_ULONG");
 
-		m_regionPool.setCapacity(var.m_val.ulVal);
+		m_xMBRPool.setCapacity(var.m_val.ulVal);
 	}
 
-	// point pool capacity
-	var = ps.getProperty("PointPoolCapacity");
+	// xPoint pool capacity
+	var = ps.getProperty("xPointPoolCapacity");
 	if (var.m_varType != Tools::VT_EMPTY)
 	{
 		if (var.m_varType != Tools::VT_ULONG)
-			throw Tools::IllegalArgumentException("initNew: Property PointPoolCapacity must be Tools::VT_ULONG");
+			throw Tools::IllegalArgumentException("initNew: Property xPointPoolCapacity must be Tools::VT_ULONG");
 
-		m_pointPool.setCapacity(var.m_val.ulVal);
+		m_xPointPool.setCapacity(var.m_val.ulVal);
 	}
 
-	m_infiniteRegion.makeInfinite(m_dimension);
+	m_infinitexMBR.makeInfinite(m_dimension);
 
 	m_stats.m_u32TreeHeight = 1;
 	m_stats.m_nodesInLevel.emplace_back(0);
@@ -1118,7 +1118,7 @@ void SpatialIndex::MBCRTree::MBCRTree::initNew(Tools::PropertySet& ps)
 	storeHeader();
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::initOld(Tools::PropertySet& ps)
+void SpatialIndex::xRTree::xRTree::initOld(Tools::PropertySet& ps)
 {
 	loadHeader();
 
@@ -1136,9 +1136,9 @@ void SpatialIndex::MBCRTree::MBCRTree::initOld(Tools::PropertySet& ps)
 			(var.m_val.lVal != RV_LINEAR &&
 			 var.m_val.lVal != RV_QUADRATIC &&
 			 var.m_val.lVal != RV_RSTAR))
-			throw Tools::IllegalArgumentException("initOld: Property TreeVariant must be Tools::VT_LONG and of MBCRTreeVariant type");
+			throw Tools::IllegalArgumentException("initOld: Property TreeVariant must be Tools::VT_LONG and of xRTreeVariant type");
 
-		m_treeVariant = static_cast<MBCRTreeVariant>(var.m_val.lVal);
+		m_treeVariant = static_cast<xRTreeVariant>(var.m_val.lVal);
 	}
 
 	// near minimum overlap factor
@@ -1202,32 +1202,32 @@ void SpatialIndex::MBCRTree::MBCRTree::initOld(Tools::PropertySet& ps)
 		m_leafPool.setCapacity(var.m_val.ulVal);
 	}
 
-	// region pool capacity
-	var = ps.getProperty("RegionPoolCapacity");
+	// xMBR pool capacity
+	var = ps.getProperty("xMBRPoolCapacity");
 	if (var.m_varType != Tools::VT_EMPTY)
 	{
-		if (var.m_varType != Tools::VT_ULONG) throw Tools::IllegalArgumentException("initOld: Property RegionPoolCapacity must be Tools::VT_ULONG");
+		if (var.m_varType != Tools::VT_ULONG) throw Tools::IllegalArgumentException("initOld: Property xMBRPoolCapacity must be Tools::VT_ULONG");
 
-		m_regionPool.setCapacity(var.m_val.ulVal);
+		m_xMBRPool.setCapacity(var.m_val.ulVal);
 	}
 
-	// point pool capacity
-	var = ps.getProperty("PointPoolCapacity");
+	// xPoint pool capacity
+	var = ps.getProperty("xPointPoolCapacity");
 	if (var.m_varType != Tools::VT_EMPTY)
 	{
-		if (var.m_varType != Tools::VT_ULONG) throw Tools::IllegalArgumentException("initOld: Property PointPoolCapacity must be Tools::VT_ULONG");
+		if (var.m_varType != Tools::VT_ULONG) throw Tools::IllegalArgumentException("initOld: Property xPointPoolCapacity must be Tools::VT_ULONG");
 
-		m_pointPool.setCapacity(var.m_val.ulVal);
+		m_xPointPool.setCapacity(var.m_val.ulVal);
 	}
 
-	m_infiniteRegion.makeInfinite(m_dimension);
+	m_infinitexMBR.makeInfinite(m_dimension);
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::storeHeader()
+void SpatialIndex::xRTree::xRTree::storeHeader()
 {
 	const uint32_t headerSize =
 		sizeof(id_type) +						// m_rootID
-		sizeof(MBCRTreeVariant) +					// m_treeVariant
+		sizeof(xRTreeVariant) +					// m_treeVariant
 		sizeof(double) +						// m_fillFactor
 		sizeof(uint32_t) +						// m_indexCapacity
 		sizeof(uint32_t) +						// m_leafCapacity
@@ -1246,8 +1246,8 @@ void SpatialIndex::MBCRTree::MBCRTree::storeHeader()
 
 	memcpy(ptr, &m_rootID, sizeof(id_type));
 	ptr += sizeof(id_type);
-	memcpy(ptr, &m_treeVariant, sizeof(MBCRTreeVariant));
-	ptr += sizeof(MBCRTreeVariant);
+	memcpy(ptr, &m_treeVariant, sizeof(xRTreeVariant));
+	ptr += sizeof(xRTreeVariant);
 	memcpy(ptr, &m_fillFactor, sizeof(double));
 	ptr += sizeof(double);
 	memcpy(ptr, &m_indexCapacity, sizeof(uint32_t));
@@ -1283,7 +1283,7 @@ void SpatialIndex::MBCRTree::MBCRTree::storeHeader()
 	delete[] header;
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::loadHeader()
+void SpatialIndex::xRTree::xRTree::loadHeader()
 {
 	uint32_t headerSize;
 	uint8_t* header = 0;
@@ -1293,8 +1293,8 @@ void SpatialIndex::MBCRTree::MBCRTree::loadHeader()
 
 	memcpy(&m_rootID, ptr, sizeof(id_type));
 	ptr += sizeof(id_type);
-	memcpy(&m_treeVariant, ptr, sizeof(MBCRTreeVariant));
-	ptr += sizeof(MBCRTreeVariant);
+	memcpy(&m_treeVariant, ptr, sizeof(xRTreeVariant));
+	ptr += sizeof(xRTreeVariant);
 	memcpy(&m_fillFactor, ptr, sizeof(double));
 	ptr += sizeof(double);
 	memcpy(&m_indexCapacity, ptr, sizeof(uint32_t));
@@ -1331,7 +1331,7 @@ void SpatialIndex::MBCRTree::MBCRTree::loadHeader()
 	delete[] header;
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::insertData_impl(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id)
+void SpatialIndex::xRTree::xRTree::insertData_impl(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id)
 {
 	assert(mbr.getDimension() == m_dimension);
 
@@ -1363,7 +1363,7 @@ void SpatialIndex::MBCRTree::MBCRTree::insertData_impl(uint32_t dataLength, uint
 	}
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::insertData_impl(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id, uint32_t level, uint8_t* overflowTable)
+void SpatialIndex::xRTree::xRTree::insertData_impl(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, uint32_t level, uint8_t* overflowTable)
 {
 	assert(mbr.getDimension() == m_dimension);
 
@@ -1381,7 +1381,7 @@ void SpatialIndex::MBCRTree::MBCRTree::insertData_impl(uint32_t dataLength, uint
 	n->insertData(dataLength, pData, mbr, id, pathBuffer, overflowTable);
 }
 
-bool SpatialIndex::MBCRTree::MBCRTree::deleteData_impl(const Region& mbr, id_type id)
+bool SpatialIndex::xRTree::xRTree::deleteData_impl(const xMBR& mbr, id_type id)
 {
 	assert(mbr.m_dimension == m_dimension);
 
@@ -1405,7 +1405,7 @@ bool SpatialIndex::MBCRTree::MBCRTree::deleteData_impl(const Region& mbr, id_typ
 	return false;
 }
 
-SpatialIndex::id_type SpatialIndex::MBCRTree::MBCRTree::writeNode(Node* n)
+SpatialIndex::id_type SpatialIndex::xRTree::xRTree::writeNode(Node* n)
 {
 	uint8_t* buffer;
 	uint32_t dataLength;
@@ -1455,7 +1455,7 @@ SpatialIndex::id_type SpatialIndex::MBCRTree::MBCRTree::writeNode(Node* n)
 	return page;
 }
 
-SpatialIndex::MBCRTree::NodePtr SpatialIndex::MBCRTree::MBCRTree::readNode(id_type page)
+SpatialIndex::xRTree::NodePtr SpatialIndex::xRTree::xRTree::readNode(id_type page)
 {
     m_ts->m_indexIO++;
 	uint32_t dataLength;
@@ -1509,7 +1509,7 @@ SpatialIndex::MBCRTree::NodePtr SpatialIndex::MBCRTree::MBCRTree::readNode(id_ty
 	}
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::deleteNode(Node* n)
+void SpatialIndex::xRTree::xRTree::deleteNode(Node* n)
 {
 	try
 	{
@@ -1530,12 +1530,12 @@ void SpatialIndex::MBCRTree::MBCRTree::deleteNode(Node* n)
 	}
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const IShape& query, IVisitor& v)
+void SpatialIndex::xRTree::xRTree::rangeQuery(RangeQueryType type, const IShape& query, IVisitor& v)
 {
 #ifdef HAVE_PTHREAD_H
     Tools::LockGuard lock(&m_lock);
 #endif
-    const Region *querybr= dynamic_cast<const Region*>(&query);
+    const xMBR *querybr= dynamic_cast<const xMBR*>(&query);
     const Cylinder *querycy= dynamic_cast<const Cylinder*>(&query);
     std::set<id_type > results;
     std::multimap<id_type, storeEntry> pending;
@@ -1564,8 +1564,8 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                         if (type == ContainmentQuery) b = n->m_ptrMBR[cChild]->containsShape(query);
                         else b = n->m_ptrMBR[cChild]->intersectsShape(query);
                     } else {
-                        if (type == ContainmentQuery) b = n->m_ptrMBC[cChild]->containsShape(query);
-                        else b = n->m_ptrMBC[cChild]->intersectsShape(query);
+                        if (type == ContainmentQuery) b = n->m_ptrxMBC[cChild]->containsShape(query);
+                        else b = n->m_ptrxMBC[cChild]->intersectsShape(query);
                     }
                     if (b) {
                         sb+=1;
@@ -1573,15 +1573,15 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                         ++(m_stats.m_u64QueryResults);
                         if (m_DataType == TrajectoryType) {
                             //check if the timed slice is included in query
-                            Region spatialbr(querybr->m_pLow, querybr->m_pHigh, 2);
-                            Region timedbr;
+                            xMBR spatialbr(querybr->m_pLow, querybr->m_pHigh, 2);
+                            xMBR timedbr;
                             if (isSlice) {
                                 if (m_bUsingMBR)
-                                    timedbr = Region((n->m_ptrMBR[cChild])->m_pLow, (n->m_ptrMBR[cChild])->m_pHigh,
+                                    timedbr = xMBR((n->m_ptrMBR[cChild])->m_pLow, (n->m_ptrMBR[cChild])->m_pHigh,
                                                      (n->m_ptrMBR[cChild])->m_dimension - 1);
                                 else
-                                    (n->m_ptrMBC[cChild])->getMBRAtTime(querybr->m_pLow[2], timedbr);
-                                if (spatialbr.containsRegion(timedbr)) {
+                                    (n->m_ptrxMBC[cChild])->getMBRAtTime(querybr->m_pLow[2], timedbr);
+                                if (spatialbr.containsxMBR(timedbr)) {
                                     sbb+=1;
                                     m_stats.m_doubleExactQueryResults += 1;
                                     results.insert(m_ts->getTrajId(data.m_id));
@@ -1595,7 +1595,7 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                                         Trajectory partTraj;
                                         partTraj.loadFromByteArray(ldata);
                                         delete[](load);
-                                        if (partTraj.intersectsRegion(*querybr)) {
+                                        if (partTraj.intersectsxMBR(*querybr)) {
                                             m_stats.m_doubleExactQueryResults += 1;
                                             results.insert(m_ts->getTrajId(data.m_id));
                                             v.visitData(data);
@@ -1605,11 +1605,11 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                                 //time-period range query
                                 bool bb;
                                 if (m_bUsingMBR) {
-                                    timedbr = Region((n->m_ptrMBR[cChild])->m_pLow, (n->m_ptrMBR[cChild])->m_pHigh,
+                                    timedbr = xMBR((n->m_ptrMBR[cChild])->m_pLow, (n->m_ptrMBR[cChild])->m_pHigh,
                                                      (n->m_ptrMBR[cChild])->m_dimension - 1);
-                                    bb = spatialbr.containsRegion(timedbr);
+                                    bb = spatialbr.containsxMBR(timedbr);
                                 } else {
-                                    bb = n->m_ptrMBC[cChild]->prevalidate(*querybr);
+                                    bb = n->m_ptrxMBC[cChild]->prevalidate(*querybr);
                                 }
                                 if (bb) {
                                     sbb+=1;
@@ -1625,7 +1625,7 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                                         Trajectory partTraj;
                                         partTraj.loadFromByteArray(ldata);
                                         delete[](load);
-                                        if (partTraj.intersectsRegion(*querybr)) {
+                                        if (partTraj.intersectsxMBR(*querybr)) {
                                             m_stats.m_doubleExactQueryResults += 1;
                                             results.insert(m_ts->getTrajId(data.m_id));
                                             v.visitData(data);
@@ -1663,7 +1663,7 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
                     if (m_bUsingMBR) {
                         b = querycy->checkRel(*(n->m_ptrMBR[cChild]));
                     } else {
-                        b = querycy->checkRel(*(n->m_ptrMBC[cChild]));
+                        b = querycy->checkRel(*(n->m_ptrxMBC[cChild]));
                     }
                     if (b>0) {
                         sb += 1;
@@ -1739,12 +1739,12 @@ void SpatialIndex::MBCRTree::MBCRTree::rangeQuery(RangeQueryType type, const ISh
     }
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::selfJoinQuery(id_type id1, id_type id2, const Region& r, IVisitor& vis)
+void SpatialIndex::xRTree::xRTree::selfJoinQuery(id_type id1, id_type id2, const xMBR& r, IVisitor& vis)
 {
 	throw;
 }
 
-void SpatialIndex::MBCRTree::MBCRTree::visitSubTree(NodePtr subTree, IVisitor& v)
+void SpatialIndex::xRTree::xRTree::visitSubTree(NodePtr subTree, IVisitor& v)
 {
 	std::stack<NodePtr> st;
 	st.push(subTree);
@@ -1758,7 +1758,7 @@ void SpatialIndex::MBCRTree::MBCRTree::visitSubTree(NodePtr subTree, IVisitor& v
 		{
 			for (uint32_t cChild = 0; cChild < n->m_children; ++cChild)
 			{
-				Data data = Data(0, 0, *(n->m_ptrMBC[cChild]), n->m_pIdentifier[cChild]);
+				Data data = Data(0, 0, *(n->m_ptrxMBC[cChild]), n->m_pIdentifier[cChild]);
 				v.visitData(data);
 				++(m_stats.m_u64QueryResults);
 			}
@@ -1773,7 +1773,7 @@ void SpatialIndex::MBCRTree::MBCRTree::visitSubTree(NodePtr subTree, IVisitor& v
 	}
 }
 
-std::ostream& SpatialIndex::MBCRTree::operator<<(std::ostream& os, const MBCRTree& t)
+std::ostream& SpatialIndex::xRTree::operator<<(std::ostream& os, const xRTree& t)
 {
 	os	<< "Dimension: " << t.m_dimension << std::endl
 		<< "Fill factor: " << t.m_fillFactor << std::endl
@@ -1797,10 +1797,10 @@ std::ostream& SpatialIndex::MBCRTree::operator<<(std::ostream& os, const MBCRTre
 		<< "Leaf pool misses: " << t.m_leafPool.m_misses << std::endl
 		<< "Index pool hits: " << t.m_indexPool.m_hits << std::endl
 		<< "Index pool misses: " << t.m_indexPool.m_misses << std::endl
-		<< "Region pool hits: " << t.m_regionPool.m_hits << std::endl
-		<< "Region pool misses: " << t.m_regionPool.m_misses << std::endl
-        << "Point pool hits: " << t.m_pointPool.m_hits << std::endl
-        << "Point pool misses: " << t.m_pointPool.m_misses << std::endl;
+		<< "xMBR pool hits: " << t.m_xMBRPool.m_hits << std::endl
+		<< "xMBR pool misses: " << t.m_xMBRPool.m_misses << std::endl
+        << "xPoint pool hits: " << t.m_xPointPool.m_hits << std::endl
+        << "xPoint pool misses: " << t.m_xPointPool.m_misses << std::endl;
 #endif
     return os;
 }

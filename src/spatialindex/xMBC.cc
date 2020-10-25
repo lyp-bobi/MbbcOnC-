@@ -88,6 +88,13 @@ void xMBC::storeToByteArray(uint8_t **data, uint32_t &len) {
 void xMBC::getVMBR(xMBR& out) const{
 }
 void xMBC::getMBRAtTime(double t, SpatialIndex::xMBR &out) const {
+    auto c = getCenterRdAtTime(t);
+    out.m_xmin = c.first.m_x - c.second;
+    out.m_xmax = c.first.m_x + c.second;
+    out.m_ymin = c.first.m_y - c.second;
+    out.m_ymax = c.first.m_y + c.second;
+    out.m_tmin = c.first.m_t;
+    out.m_tmax = c.first.m_t;
 }
 
 
@@ -291,7 +298,7 @@ bool xMBC::intersectsxMBR(const SpatialIndex::xMBR &in) const {
 
 inline bool xMBC::intersectsxMBC(const xMBC& in) const{throw Tools::NotSupportedException("xMBC::intersectsxMBC");}
 
-std::pair<double,double> getIntersectPeriod(
+static std::pair<double,double> getIntersectPeriod(
         double xs,double xe,double ts,double te,
         double xlow,double xhigh){
     //assume the time dimension of xlow and xhigh is infinity
@@ -410,7 +417,18 @@ void xMBC::getCenter(Point& out) const{
     out=Point(p3d,3);
 }
 uint32_t xMBC::getDimension() const{return 3;}
-void xMBC::getMBR(Region& out) const{
+void xMBC::getxMBR(xMBR& out) const{
+    out.makeInfinite(2);
+    if(m_rv>1e-9) {
+        double ts = m_rd / m_rv;
+        xMBR tmpbr;
+        getMBRAtTime(m_ps.m_t + ts, tmpbr);
+        out.combinexMBR(tmpbr);
+        getMBRAtTime(m_pe.m_t - ts, tmpbr);
+        out.combinexMBR(tmpbr);
+    }
+    out.combinexPoint(m_ps);
+    out.combinexPoint(m_pe);
 }
 
 double xMBC::getArea() const{
@@ -458,3 +476,4 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const xMBC& r)
     os<<r.m_ps<<","<<r.m_pe<<","<<r.m_rd<<","<<r.m_rv;
     return os;
 }
+

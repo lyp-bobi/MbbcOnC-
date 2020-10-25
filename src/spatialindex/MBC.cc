@@ -392,7 +392,7 @@ bool MBC::intersectsRegion(const SpatialIndex::Region &in) const {
 
 inline bool MBC::intersectsMBC(const MBC& in) const{throw Tools::NotSupportedException("MBC::intersectsMBC");}
 
-std::pair<double,double> getIntersectPeriod(
+static std::pair<double,double> getIntersectPeriod(
         double xs,double xe,double ts,double te,
         double xlow,double xhigh){
     //assume the time dimension of xlow and xhigh is infinity
@@ -515,7 +515,7 @@ void MBC::getMBR(Region& out) const{
     //return a 3d mbr
     Region br;
     br.makeInfinite(m_dimension);
-    if(std::isfinite(m_rv)) {
+    if(m_rv>1e-9) {
         double ts = m_rd / m_rv;
         Region tmpbr;
         getMBRAtTime(m_startTime + ts, tmpbr);

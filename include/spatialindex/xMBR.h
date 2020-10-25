@@ -29,12 +29,12 @@
 
 namespace SpatialIndex
 {
-	class SIDX_DLL xMBR : public Tools::IObject, public virtual IShape
+	class SIDX_DLL xMBR : public Tools::IObject, public virtual IxShape
 	{
 	public:
-		xMBR();
+		xMBR(){}
 		xMBR(const xMBR& p);
-		virtual ~xMBR();
+		virtual ~xMBR(){}
 
 
 		virtual xMBR& operator=(const xMBR& r);
@@ -60,7 +60,7 @@ namespace SpatialIndex
 		virtual bool touchesShape(const IShape& in) const;
 		virtual void getCenter(Point& out) const;
 		virtual uint32_t getDimension() const;
-		virtual void getMBR(Region& out) const;
+		virtual void getxMBR(xMBR& out) const;
 		virtual double getArea() const;
 		virtual double getMinimumDistance(const IShape& in) const;
 
@@ -91,6 +91,20 @@ namespace SpatialIndex
 	public:
         prex m_xmin,m_xmax,m_ymin,m_ymax;
         prex m_tmin, m_tmax;
+
+        prex m_pLow(int i){
+            if(i==0) return m_xmin;
+            if(i==1) return m_ymin;
+            if(i==2) return m_tmin;
+            return 1e300;
+        }
+        prex m_pHigh(int i){
+            if(i==0) return m_xmax;
+            if(i==1) return m_ymax;
+            if(i==2) return m_tmax;
+            return 1e300;
+        }
+
 
 		friend SIDX_DLL std::ostream& operator<<(std::ostream& os, const xMBR& r);
 	}; // xMBR

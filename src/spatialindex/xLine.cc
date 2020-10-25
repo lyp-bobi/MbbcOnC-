@@ -11,8 +11,6 @@
 
 #include <spatialindex/SpatialIndex.h>
 
-extern bool bCompactMBC = false;
-
 using namespace SpatialIndex;
 xLine::xLine()
 {
@@ -68,15 +66,6 @@ void xLine::storeToByteArray(uint8_t **data, uint32_t &len) {
     m_pe.storeToByteArray(&ptr,tmp);
 //    ptr+=tmp;
 }
-
-//
-// IEvolvingShape interface
-//
-void xLine::getVMBR(xMBR& out) const{
-}
-void xLine::getMBRAtTime(double t, SpatialIndex::xMBR &out) const {
-}
-
 
 std::pair<xPoint,double> xLine::getCenterRdAtTime(double t) const {
     if(t<=m_ps.m_t) return std::make_pair(xPoint(m_ps),0);
@@ -137,7 +126,7 @@ bool xLine::intersectsxMBR(const SpatialIndex::xMBR &in) const {
 
 inline bool xLine::intersectsxLine(const xLine& in) const{throw Tools::NotSupportedException("xLine::intersectsxLine");}
 
-std::pair<double,double> getIntersectPeriod(
+static std::pair<double,double> getIntersectPeriod(
         double xs,double xe,double ts,double te,
         double xlow,double xhigh){
     //assume the time dimension of xlow and xhigh is infinity
@@ -156,19 +145,15 @@ bool xLine::touchesShape(const SpatialIndex::IShape& in) const{
     throw Tools::NotSupportedException("xLine:touchesShape");
 }
 void xLine::getCenter(Point& out) const{
-    double t=(m_ps.m_t+m_pe.m_t)/2;
-    xMBR br;
-    getMBRAtTime(t,br);
-    Point p;
-    br.getCenter(p);
-    double p3d[3];
-    p3d[0]=p.m_pCoords[0];
-    p3d[1]=p.m_pCoords[1];
-    p3d[2]=t;
-    out=Point(p3d,3);
 }
 uint32_t xLine::getDimension() const{return 3;}
-void xLine::getMBR(Region& out) const{
+void xLine::getxMBR(xMBR& out) const{
+    out.m_xmin=min(m_ps.m_x, m_pe.m_x);
+    out.m_xmax=max(m_ps.m_x, m_pe.m_x);
+    out.m_ymin=min(m_ps.m_y, m_pe.m_y);
+    out.m_ymax=max(m_ps.m_y, m_pe.m_y);
+    out.m_tmin=min(m_ps.m_t, m_pe.m_t);
+    out.m_tmax=max(m_ps.m_t, m_pe.m_t);
 }
 
 double xLine::getArea() const{

@@ -7,7 +7,7 @@ extern bool bCompactMBC;
 
 namespace SpatialIndex
 {
-    class SIDX_DLL xMBC: public Tools::IObject, public virtual IShape{
+    class SIDX_DLL xMBC: public Tools::IObject, public virtual IxShape{
 
     public:
         xMBC();
@@ -50,7 +50,7 @@ namespace SpatialIndex
         virtual bool touchesShape(const IShape& in) const;
         virtual void getCenter(Point& out) const;
         virtual uint32_t getDimension() const;
-        virtual void getMBR(Region& out) const;
+        virtual void getxMBR(xMBR& out) const;
         virtual double getArea() const;
         virtual double getMinimumDistance(const IShape& in) const;
 

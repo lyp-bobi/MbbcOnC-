@@ -87,6 +87,13 @@ set(SIDX_SPATIALINDEX_CPP
   "${SIDX_SRC_DIR}/spatialindex/STPoint.cc"
   "${SIDX_SRC_DIR}/spatialindex/TimeRegion.cc"
   "${SIDX_SRC_DIR}/spatialindex/ShapeList.cc"
+    "${SIDX_SRC_DIR}/spatialindex/xMBC.cc"
+    "${SIDX_SRC_DIR}/spatialindex/xCylinder.cc"
+    "${SIDX_SRC_DIR}/spatialindex/xTrajectory.cc"
+    "${SIDX_SRC_DIR}/spatialindex/xPoint.cc"
+        "${SIDX_SRC_DIR}/spatialindex/xMBR.cc"
+        "${SIDX_SRC_DIR}/spatialindex/xLine.cc"
+        "${SIDX_SRC_DIR}/spatialindex/xSBB.cc"
 )
 list (APPEND SIDX_CPP ${SIDX_SPATIALINDEX_CPP} )
 
@@ -110,6 +117,26 @@ set(SIDX_MBCRTREE_CPP
         )
 list (APPEND SIDX_CPP ${SIDX_MBCRTREE_CPP})
 
+
+set(SIDX_XRTREE_CPP
+        "${SIDX_SRC_DIR}/xrtree/BulkLoader.cc"
+        "${SIDX_SRC_DIR}/xrtree/BulkLoader.h"
+        "${SIDX_SRC_DIR}/xrtree/Index.cc"
+        "${SIDX_SRC_DIR}/xrtree/Index.h"
+        "${SIDX_SRC_DIR}/xrtree/Leaf.cc"
+        "${SIDX_SRC_DIR}/xrtree/Leaf.h"
+        "${SIDX_SRC_DIR}/xrtree/Node.cc"
+        "${SIDX_SRC_DIR}/xrtree/Node.h"
+        "${SIDX_SRC_DIR}/xrtree/PointerPoolNode.h"
+        "${SIDX_SRC_DIR}/xrtree/xRTree.cc"
+        "${SIDX_SRC_DIR}/xrtree/xRTree.h"
+        "${SIDX_SRC_DIR}/xrtree/Statistics.cc"
+        "${SIDX_SRC_DIR}/xrtree/Statistics.h"
+        "${SIDX_SRC_DIR}/xrtree/TrajStoreRelated.cc"
+        )
+list (APPEND SIDX_CPP ${SIDX_XRTREE_CPP})
+
+
 set(SIDX_STORAGEMANAGER_CPP
   "${SIDX_SRC_DIR}/storagemanager/Buffer.cc"
   "${SIDX_SRC_DIR}/storagemanager/DiskStorageManager.cc"
@@ -119,6 +146,7 @@ set(SIDX_STORAGEMANAGER_CPP
   "${SIDX_SRC_DIR}/storagemanager/RandomEvictionsBuffer.cc"
   "${SIDX_SRC_DIR}/storagemanager/RandomEvictionsBuffer.h"
   "${SIDX_SRC_DIR}/storagemanager/TrajStore.cc"
+  "${SIDX_SRC_DIR}/storagemanager/xStore.cc"
 )
 list (APPEND SIDX_CPP ${SIDX_STORAGEMANAGER_CPP})
 

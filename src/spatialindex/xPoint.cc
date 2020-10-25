@@ -162,8 +162,14 @@ uint32_t xPoint::getDimension() const
     return 3;
 }
 
-void xPoint::getMBR(Region& out) const
+void xPoint::getxMBR(xMBR& out) const
 {
+    out.m_xmin=m_x;
+    out.m_xmax=m_x;
+    out.m_ymin=m_y;
+    out.m_ymax=m_y;
+    out.m_tmin=m_t;
+    out.m_tmax=m_t;
 }
 
 double xPoint::getArea() const

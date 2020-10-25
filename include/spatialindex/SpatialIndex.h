@@ -31,6 +31,9 @@
 #include "tools/MutablePriorityQueue.h"
 #include "tools/DiskMultiMap.h"
 #include <chrono>
+#include "tools/json.hpp"
+
+using json = nlohmann::json;
 
 #ifndef M_PI_2
 #define M_PI_2 1.57079632679489661922
@@ -40,13 +43,16 @@
 #define cube(x) (x)*(x)*(x)
 #define makemidmacro(x1,t1,x2,t2,t) ((t)-(t1))/((t2)-(t1))*(x2)+((t2)-(t))/((t2)-(t1))*(x1)
 
-#define prex double
+#define prex double  //index precision
+
+#define prexp double //storage precision
 
 namespace SpatialIndex
 {
 	class Point;
 	class LineSegment;
 	class Region;
+	class xMBR;
 
 	struct DISTE{
 	    double opt=0;
@@ -54,12 +60,20 @@ namespace SpatialIndex
 	    double e=0;
 	    bool infer = false;
 	    DISTE(){};
-	    DISTE(double optimistic,double pessimistic,double error, bool isinferred)
+	    explicit DISTE(double optimistic,double pessimistic,double error, bool isinferred)
 	    {opt=optimistic;pes=pessimistic;e=error;infer=isinferred;}
-	    DISTE(double exact){
+	    explicit DISTE(double exact){
 	        opt=pes=exact;
 	        e=0;
 	        infer = false;
+	    }
+	    DISTE operator+(const DISTE &d2) const{
+	        DISTE res;
+            res.opt=opt+d2.opt;
+            res.pes=pes+d2.pes;
+            res.e = e+d2.e;
+            res.infer = infer||d2.infer;
+            return res;
 	    }
 	};
 
@@ -100,6 +114,14 @@ namespace SpatialIndex
 		virtual double getMinimumDistance(const IShape& in) const = 0;
 		virtual ~IShape() {}
 	}; // IShape
+
+
+    class SIDX_DLL IxShape : public IShape
+    {
+    public:
+        void getMBR(Region& out) const {;}
+        virtual void getxMBR(xMBR& out) const = 0;
+    }; // IShape
 
 	class SIDX_DLL ITimeShape : public Tools::IInterval
 	{
@@ -271,6 +293,212 @@ namespace SpatialIndex
 	//
 	SIDX_DLL  std::ostream& operator<<(std::ostream&, const ISpatialIndex&);
 	SIDX_DLL  std::ostream& operator<<(std::ostream&, const IStatistics&);
+
+
+	class trajStat{
+	private:
+		trajStat(){};
+		~trajStat(){delete singleton;}
+		static trajStat* singleton;
+	public:
+		double bt=0;
+		double M=0;//total time
+		long lineCount=0;
+		long trajCount=0;
+		double tl=0;//time len of a segment
+		double jt=0;
+		double v=0;
+		double vmax = 0;
+		double minx=1e300,maxx=-1e300,miny=1e300,maxy=-1e300,mint=1e300,maxt=-1e300;
+		double Dx=0,Dy=0,Dt=0;
+		double Sr=0;
+		double P=0;
+		double dist=0;
+		double Df =2;
+		double f = 50,fp=170;
+		string dataset = "";
+		static trajStat* instance();
+		void init(){
+			bt=0;
+			M=0;
+			long lineCount=0;
+			long trajCount=0;
+			tl=0;//time len of a segment
+			jt=0;
+			v=0;
+			minx=1e300,maxx=-1e300,miny=1e300,maxy=-1e300,mint=1e300,maxt=-1e300;
+			Dx=0,Dy=0,Dt=0;
+			Sr=0;
+			P=0;
+			dist=0;
+			Df =2;
+			f = 50;
+			vmax=0;
+		}
+		void usedata(string str){
+			dataset = str;
+			if (dataset == "gl"){
+				M = 1.31808e+08;
+				lineCount = 20069299;
+				trajCount = 20619;
+				tl = 6.56764;
+				jt = 6392.55;
+				Sr = 0.5;
+				Df = 1.25;
+				P = 60000;
+				std::cerr<<"use gl sta\n";
+			}else if(dataset == "td"){
+				M = 5.20574e+09;
+				lineCount = 16205956;
+				trajCount = 10267;
+				tl = 321.224;
+				jt = 507037;
+				Sr = 0.5;
+				Df = 1.56;
+				P = 533315;
+				std::cerr<<"use td sta\n";
+			}
+			else if (dataset == "od"){
+				Sr = 10000;
+				Df = 1.4;
+				P = 5000;
+				std::cerr<<"use od sta\n";
+			}
+		}
+
+		double rd(double x){
+			if (dataset == "gl"){
+				return 2e-05 * x + 0.0023;
+			}else if(dataset == "td"){
+				return 1E-05 * x + 0.0003;
+			}
+			else if (dataset == "od"){
+				return -0.0326 * x*x + 20.289*x - 78.702;
+			}
+			return vv()*x;
+		}
+
+		double dd(double x){
+			if (dataset == "gl"){
+				return 4.5e-5*x - 1e-5/4000*x*x;
+			}else if(dataset == "td"){
+				return 4e-5*x;
+			}
+			else if (dataset == "od"){
+				return 55*x;
+			}
+			return vv()*x;
+		}
+
+		double vv(){
+			if (dataset == "gl"){
+				return dd(bt)/bt;
+			}else if(dataset == "td"){
+				return dd(bt)/bt;
+			}
+			else if (dataset == "od"){
+				return dd(bt)/bt;
+			}
+			return v;
+		}
+
+		double Lx(){
+			if (dataset == "gl"){
+
+			}else if(dataset == "td"){
+
+			}
+			else if (dataset == "od"){
+
+			}else{
+				return pow(M_PI*Sr*Sr*P*M*dd(bt)/bt/bt/f,0.33) + dd(bt);
+			}
+		}
+
+		double Lt(){
+			if (dataset == "gl"){
+
+			}else if(dataset == "td"){
+
+			}
+			else if (dataset == "od"){
+
+			}else{
+				return (pow(M_PI*Sr*Sr*P*M*dd(bt)/bt/bt/f,0.33) + dd(bt))*bt/dd(bt);
+			}
+		}
+
+		double knncost(double _bt,int k,double qt, bool out = false){
+			bt = _bt;
+			double leafs = M/bt/f;
+			double nt = pow(leafs * sq(vv())*sq(P) / sq((M_PI * sq(Sr))),1.0/3);
+			double ltc = P/nt;
+			double lt = ltc+bt;
+			double lxc = ltc * vv();
+			double lx = lt * vv();
+			double Nq = min(1.0,(qt+jt) /P)  * trajCount;
+			double rk =  pow(k/Nq, Df/2)*Sr;
+			double Rk = rk*qt/2 + qt/4* sqrt(2*sq(dd(qt)+4*sq(rk)));
+			double Rnq = Rk +rd(bt)*qt;
+
+			double nmin = k;
+			double nmax = 100*k;
+			while (nmax - nmin > 0.1) {
+				double mid = (nmax + nmin) / 2;
+				double rn =  pow(mid/Nq, Df/2)*Sr;
+				double Rn = rn*qt/2 + qt/4* sqrt(2*sq(dd(qt)+4*sq(rn)));
+				if (Rn > Rnq) {
+					nmax = mid;
+				} else {
+					nmin = mid;
+				}
+			}
+			double nq = (nmax+nmin)/2;
+
+			double pruneCost = sq(lx + 2*Rk/qt + dd(qt))*(lt+qt)   *(M/bt/f/P/pow(M_PI*sq(Sr),Df/2));
+			double filterCost = nq*(1+qt/fp/lt);
+			if (out){
+				std::cerr<<"nt "<<nt <<" lt "<<lt<<" lx "<<lx<<"\n";
+				std::cerr<<"expect cost is "<<pruneCost<<"\t"<<filterCost<<"\n";
+			}
+			return pruneCost+filterCost/8;
+		}
+		void set(double _bt, double _M, long _lineCount, long _trajCount,
+				 double _tl, double _jt, double _v, double _minx, double _maxx,
+				 double _miny, double _maxy, double _mint, double _maxt,
+				 double _Dx, double _Dy, double _Dt, double _dist)
+		{
+			bt=_bt; M=_M; lineCount=_lineCount; trajCount=_trajCount;
+			tl=_tl; jt=_jt; v=_v; minx=_minx; maxx=_maxx;
+			miny=_miny; maxy=_maxy; mint=_mint; maxt=_maxt;
+			Dx=_Dx; Dy=_Dy; Dt=_Dt; dist=_dist;
+		}
+		void output(){
+			std::cerr<<bt<<","<< M<<","<< lineCount<<","<< trajCount<<","<<
+					 tl<<","<< jt<<","<< v<<","<< minx<<","<< maxx<<","<<
+					 miny<<","<< maxy<<","<< mint<<","<< maxt<<","<<
+					 Dx<<","<< Dy<<","<< Dt<<","<< dist<<"\n";
+		}
+		string toString(){
+			ostringstream ostream;
+			ostream<<bt<<" "<< M<<" "<< lineCount<<" "<< trajCount<<" "<<
+				   tl<<" "<< jt<<" "<< v<<" "<< minx<<" "<< maxx<<" "<<
+				   miny<<" "<< maxy<<" "<< mint<<" "<< maxt<<" "<<
+				   Dx<<" "<< Dy<<" "<< Dt<<" "<< dist<<Sr<<" "<<P<<" "
+				<<Df<<" "<<f<<" "<<vmax;
+			return ostream.str();
+		}
+		void fromString(string s){
+			istringstream istream(s);
+			istream>>bt>> M>> lineCount>> trajCount>>
+				   tl>> jt>> v>> minx>> maxx>>
+				   miny>> maxy>> mint>> maxt>>
+				   Dx>> Dy>> Dt>> dist>>Sr>>P>>Df>>f>>vmax;
+			return;
+		}
+		friend SIDX_DLL std::ostream& operator<<(std::ostream& os,const trajStat &r);
+	};
+	SIDX_DLL std::ostream& operator<<(std::ostream& os, const trajStat& r);
 }
 
 #include "Point.h"
@@ -291,10 +519,12 @@ namespace SpatialIndex
 #include "xMBR.h"
 #include "xLine.h"
 #include "xMBC.h"
+#include "xSBB.h"
 #include "xCylinder.h"
 #include "xTrajectory.h"
 
 #include "MBCRTree.h"
+#include "xRTree.h"
 #include "Version.h"
 
 

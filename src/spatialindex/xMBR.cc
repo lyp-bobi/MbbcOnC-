@@ -177,8 +177,9 @@ uint32_t xMBR::getDimension() const
 	return 2;
 }
 
-void xMBR::getMBR(Region& out) const
+void xMBR::getxMBR(xMBR& out) const
 {
+    out = *this;
 }
 
 double xMBR::getArea() const
@@ -351,7 +352,7 @@ void xMBR::getCombinedxMBR(xMBR& out, const xMBR& in) const
 
 void xMBR::makeInfinite(uint32_t dimension)
 {
-	m_xmin=m_ymax=m_tmin= 1e30;
+	m_xmin=m_ymin=m_tmin= 1e30;
 	m_xmax=m_ymax=m_tmax = -1e30;
 }
 

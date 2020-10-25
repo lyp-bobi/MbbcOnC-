@@ -954,7 +954,6 @@ inline double Trajectory::line2MBCDistance(const SpatialIndex::STPoint &ps, cons
 }
 
 double Trajectory::getMinimumDistance(const IShape& s) const{
-    //using Integrative Squared Euclidean Distance
     const Trajectory* pTrajectory = dynamic_cast<const Trajectory*>(&s);
     if (pTrajectory != nullptr) return getMinimumDistance(*pTrajectory);
 
@@ -1355,10 +1354,10 @@ DISTE Trajectory::getMidIED(const SpatialIndex::Region &sbr, const SpatialIndex:
         }
     }else{
         double ds = pos(ints).getMinimumDistance(Region(sbr.m_pLow,sbr.m_pHigh,sbr.m_dimension-1));
-        double de = pos(ints).getMinimumDistance(Region(sbr.m_pLow,sbr.m_pHigh,sbr.m_dimension-1));
+        double de = pos(inte).getMinimumDistance(Region(ebr.m_pLow,ebr.m_pHigh,ebr.m_dimension-1));
         double to=(ints+inte+(de-ds)/(2*MaxVelocity))/2;
         double tp = (ints+inte+(ds-de)/(2*MaxVelocity))/2;
-        opti=ldd(ds,-2*MaxVelocity,to-ints)+ldd(de,2*MaxVelocity,inte-to);
+        opti= ldd(ds,-2*MaxVelocity,to-ints)+ldd(de,2*MaxVelocity,inte-to);
         pessi = ldd(ds,2*MaxVelocity,tp-ints)+ldd(de,-2*MaxVelocity,inte-tp);
     }
     return DISTE(opti,pessi,0,true);
@@ -1568,88 +1567,7 @@ double Trajectory::getInterTime(const STPoint &ps, const STPoint &pe,Region &r,d
     }
 }
 
-double Trajectory::getInferredNodeMinimumIED(const SpatialIndex::Region &in, double MaxVelocity,double queryMaxVelocity) const {
-
-
-    Region sembr=in,mbr2d(in.m_pLow,in.m_pHigh,in.m_dimension-1);
-    double vmax=std::max(MaxVelocity,queryMaxVelocity);
-    double t0=in.m_pLow[in.m_dimension-1],t3=in.m_pHigh[in.m_dimension-1];
-    double tmid=(t0+t3)/2;
-    double d1=m_points.front().getMinimumDistance(mbr2d)-vmax*(m_points.front().m_time-t0);
-    double d2=m_points.back().getMinimumDistance(mbr2d)-vmax*(t3-m_points.back().m_time);
-    if(d1>0&&d2>0){//if it has no chance to intersect
-        double pd=getStaticIED(in,m_startTime(),m_endTime());
-        double minus;
-        if(m_endTime()<tmid){//only lower side
-            minus=(m_endTime()-m_startTime())*((2*t3-m_points.front().m_time-m_points.back().m_time)*vmax)/2;
-        }else if(m_startTime()>tmid){//only higher side
-            minus=(m_endTime()-m_startTime())*((m_points.front().m_time+m_points.back().m_time-2*t0))*vmax/2;
-        }else{//two sides
-            minus=(m_endTime()-tmid)*(vmax*(t3-t0)/2+vmax*(m_points.back().m_time-t0)*vmax)/2+
-                    (tmid-m_startTime())*(vmax*t3-t0+vmax*(t3-m_points.front().m_time)*vmax)/2;
-        }
-        return pd-minus;
-    }
-    if(m_startTime()>tmid&&d1<0) return 0;
-    if(m_endTime()<tmid&&d2<0) return 0;
-    double ts=std::max(t0,m_startTime()),te=std::min(t3,m_endTime());
-    if(ts>=te) return 1e300; //the distance could be measured, but this means "some other part is better related"
-    double inter1=m_startTime(),inter2=m_endTime();//the period that have positive distance
-    for(int i=0;i<m_points.size()-1;i++) {
-        double t1=m_points[i].m_time,t2=m_points[i+1].m_time;
-        if(t1>inter2||t2<inter1) break;
-        double l1 = (t1 - t0) * vmax,//smaller
-                l2 = (t2 - t0) * vmax, //larger
-                h1 = (t3 - t1) * vmax,//larger
-                h2 = (t3 - t2) * vmax;//smaller
-        double ds1=m_points[i].getMinimumDistance(mbr2d),
-                ds2=m_points[i+1].getMinimumDistance(mbr2d);
-        if(t1<tmid&&tmid<t2){
-            double x,y;
-            x=makemidmacro(m_points[i].m_pCoords[0],m_points[i].m_time,
-                           m_points[i+1].m_pCoords[0],m_points[i+1].m_time,tmid);
-            y=makemidmacro(m_points[i].m_pCoords[1],m_points[i].m_time,
-                           m_points[i+1].m_pCoords[1],m_points[i+1].m_time,tmid);
-            STPoint pt(x,y,tmid);
-            double dm=pt.getMinimumDistance(mbr2d)-vmax*(te-ts)/2;
-            if(dm<=0) return 0;
-            else{
-                if(ds1-h1<=0) inter1=getInterTime(m_points[i],pt,mbr2d,t3,-vmax);
-                if(ds2-l2<=0) inter2=getInterTime(pt,m_points[i+1],mbr2d,t0,vmax);
-            }
-        }
-        if(t2>tmid){// inter2 might be updated
-            if(ds2-l2<=0&&ds1-l1>=0){
-                inter2=getInterTime(m_points[i],m_points[i+1],mbr2d,t0,vmax);
-            }
-        }
-        if(t1<tmid){// inter1 might be updated
-            if(ds2-h2>=0&&ds1-h1<=0){
-                inter1=getInterTime(m_points[i],m_points[i+1],mbr2d,t3,-vmax);
-            }
-        }
-    }
-    fakeTpVector timedTraj(&m_points,inter1,inter2);
-    sembr.m_pLow[sembr.m_dimension-1]=inter1;
-    sembr.m_pHigh[sembr.m_dimension-1]=inter2;
-    double sum = 0;
-    for (int i = 0; i < timedTraj.m_size-1; i++) {
-        double pd = line2MBRDistance(timedTraj[i],timedTraj[i+1],sembr);
-        sum+=pd;
-    }
-    double minus;
-    if(inter2<tmid){//only lower side
-        minus=(inter2-inter1)*((2*t3-timedTraj.front().m_time-timedTraj.back().m_time)*vmax)/2;
-    }else if(inter1>tmid){//only higher side
-        minus=(inter2-inter1)*((timedTraj.front().m_time+timedTraj.back().m_time-2*t0))*vmax/2;
-    }else{//two sides
-        minus=(inter2-tmid)*(vmax*(t3-t0)/2+vmax*(timedTraj.back().m_time-t0)*vmax)/2+
-              (tmid-inter1)*(vmax*t3-t0+vmax*(t3-timedTraj.front().m_time)*vmax)/2;
-    }
-    return sum-minus;
-}
-
-double Trajectory::getNodeMinimumDistance(const SpatialIndex::Region &in,double MaxVelocity) const {
+double Trajectory:: getNodeMinimumDistance(const SpatialIndex::Region &in,double MaxVelocity) const {
     if(m_startTime()>=in.m_pHigh[in.m_dimension-1]||m_endTime()<=in.m_pLow[in.m_dimension-1]) return 1e300;
     if(disttype==0){
         double ints=std::max(m_startTime(),in.m_pLow[in.m_dimension-1]),
@@ -1785,26 +1703,6 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const Trajectory& r) {
 
 //    os<<"Trajectory length:"<<r.m_points.size()<<"\n"<<"m_points are"<< "\n"<<r.m_points.front()<<"\t"<<r.m_points.back()<<endl;
     return os;
-}
-
-
-
-std::vector<std::string> split(const std::string &strtem,char a)
-{
-    std::vector<std::string> strvec;
-
-    std::string::size_type pos1, pos2;
-    pos2 = strtem.find(a);
-    pos1 = 0;
-    while (std::string::npos != pos2)
-    {
-        strvec.emplace_back(strtem.substr(pos1, pos2 - pos1));
-
-        pos1 = pos2 + 1;
-        pos2 = strtem.find(a, pos1);
-    }
-    strvec.emplace_back(strtem.substr(pos1));
-    return strvec;
 }
 
 std::string Trajectory::toString() const{

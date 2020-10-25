@@ -30,10 +30,8 @@
 #include "Statistics.h"
 #include "Node.h"
 #include "PointerPoolNode.h"
-#include "storagemanager/TrajStore.h"
+#include "storagemanager/xStore.h"
 #include <cmath>
-#include <thread>
-#include <mutex>
 
 extern bool bUsingSimp;
 extern bool bUsingSBBD;
@@ -89,14 +87,14 @@ public:
 
 namespace SpatialIndex
 {
-	namespace MBCRTree
+	namespace xRTree
 	{
-		class MBCRTree : public ISpatialIndex
+		class xRTree : public ISpatialIndex
 		{
                   //class NNEntry;
 
 		public:
-			MBCRTree(IStorageManager&, Tools::PropertySet&);
+			xRTree(IStorageManager&, Tools::PropertySet&);
 				// String                   Value     Description
 				// ----------------------------------------------
 				// IndexIndentifier         VT_LONG   If specified an existing index will be openened from the supplied
@@ -113,12 +111,12 @@ namespace SpatialIndex
 				// EnsureTightMBRs          VT_BOOL   Default is true
 				// IndexPoolCapacity        VT_LONG   Default is 100
 				// LeafPoolCapacity         VT_LONG   Default is 100
-				// RegionPoolCapacity       VT_LONG   Default is 1000
-				// PointPoolCapacity        VT_LONG   Default is 500
+				// xMBRPoolCapacity       VT_LONG   Default is 1000
+				// xPointPoolCapacity        VT_LONG   Default is 500
                 // todo:DataType                 VT_LONG   Can be BoundingBox and Trajectory
 
 
-            virtual ~MBCRTree();
+            virtual ~xRTree();
 
 
 
@@ -129,7 +127,7 @@ namespace SpatialIndex
 			virtual bool deleteData(const IShape& shape, id_type id);
 			virtual void containsWhatQuery(const IShape& query, IVisitor& v);
 			virtual void intersectsWithQuery(const IShape& query, IVisitor& v);
-			virtual void pointLocationQuery(const Point& query, IVisitor& v);
+			virtual void xPointLocationQuery(const xPoint& query, IVisitor& v);
 			virtual void nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v, INearestNeighborComparator&);
 			virtual void nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v);
 			virtual void selfJoinQuery(const IShape& s, IVisitor& v);
@@ -145,29 +143,33 @@ namespace SpatialIndex
 			void storeHeader();
 			void loadHeader();
 
-			void insertData_impl(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id);
-			void insertData_impl(uint32_t dataLength, uint8_t* pData, Region& mbr, id_type id, uint32_t level, uint8_t* overflowTable);
-			bool deleteData_impl(const Region& mbr, id_type id);
+			void insertData_impl(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id);
+			void insertData_impl(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, uint32_t level, uint8_t* overflowTable);
+			bool deleteData_impl(const xMBR& mbr, id_type id);
 
 			id_type writeNode(Node*);
 			NodePtr readNode(id_type page);
 			void deleteNode(Node*);
 
 			void rangeQuery(RangeQueryType type, const IShape& query, IVisitor& v);
-			void selfJoinQuery(id_type id1, id_type id2, const Region& r, IVisitor& vis);
+			void selfJoinQuery(id_type id1, id_type id2, const xMBR& r, IVisitor& vis);
             void visitSubTree(NodePtr subTree, IVisitor& v);
         public:
-            bool m_bUsingMBR=false;
+            bool m_bUsingMBR=false;//for TBTree
+            bool m_bUsingMBC=false;//for SBBRTree
+            bool m_bUsingMBL=false;//for STR-Tree
+
             bool m_bStoringLinks = true;
 
-            TrajStore *m_ts=nullptr;
+
+            xStore *m_ts=nullptr;
 
         private:
 			IStorageManager* m_pStorageManager;
 
 			id_type m_rootID, m_headerID;
 
-			MBCRTreeVariant m_treeVariant;
+			xRTreeVariant m_treeVariant;
 
         private:
 
@@ -180,29 +182,29 @@ namespace SpatialIndex
 			uint32_t m_nearMinimumOverlapFactor;
 				// The R*-Tree 'p' constant, for calculating nearly minimum overlap cost.
 				// [Beckmann, Kriegel, Schneider, Seeger 'The R*-tree: An efficient and Robust Access Method
-				// for Points and Rectangles', Section 4.1]
+				// for xPoints and Rectangles', Section 4.1]
 
 			double m_splitDistributionFactor;
 				// The R*-Tree 'm' constant, for calculating spliting distributions.
 				// [Beckmann, Kriegel, Schneider, Seeger 'The R*-tree: An efficient and Robust Access Method
-				// for Points and Rectangles', Section 4.2]
+				// for xPoints and Rectangles', Section 4.2]
 
 			double m_reinsertFactor;
 				// The R*-Tree 'p' constant, for removing entries at reinserts.
 				// [Beckmann, Kriegel, Schneider, Seeger 'The R*-tree: An efficient and Robust Access Method
-				//  for Points and Rectangles', Section 4.3]
+				//  for xPoints and Rectangles', Section 4.3]
 
 			uint32_t m_dimension;
 
-			Region m_infiniteRegion;
+			xMBR m_infinitexMBR;
 
 			Statistics m_stats;
 
 			bool m_bTightMBRs;
 
-			Tools::PointerPool<Point> m_pointPool;
-			Tools::PointerPool<Region> m_regionPool;
-            Tools::PointerPool<MBC> m_mbcPool;
+			Tools::PointerPool<xPoint> m_xPointPool;
+			Tools::PointerPool<xMBR> m_xMBRPool;
+            Tools::PointerPool<xMBC> m_xMBCPool;
 			Tools::PointerPool<Node> m_indexPool;
 			Tools::PointerPool<Node> m_leafPool;
 
@@ -272,9 +274,9 @@ namespace SpatialIndex
 			class ValidateEntry
 			{
 			public:
-				ValidateEntry(Region& r, NodePtr& pNode) : m_parentMBR(r), m_pNode(pNode) {}
+				ValidateEntry(xMBR& r, NodePtr& pNode) : m_parentMBR(r), m_pNode(pNode) {}
 
-				Region m_parentMBR;
+				xMBR m_parentMBR;
 				NodePtr m_pNode;
 			}; // ValidateEntry
 
@@ -341,8 +343,8 @@ namespace SpatialIndex
                 public:
                     PartsStore* m_ps;
                     std::set<id_type> m_missingLeaf, m_loadedLeaf;
-                    std::list<Region> m_mbrs;
-                    std::list<MBC> m_mbcs;
+                    std::list<xMBR> m_mbrs;
+                    std::list<xMBC> m_xMBCs;
                     std::map<std::pair<double,double>,DISTE> m_computedDist;
                     std::map<double,storeEntry> m_entries;
                     double m_calcMin=0;
@@ -350,7 +352,7 @@ namespace SpatialIndex
                     bool m_hasPrev=true,m_hasNext=true;
                     double m_computedTime=0,m_loadedTime=0;
                     Parts(PartsStore* ps= nullptr):m_ps(ps){}
-                    void insert(Region &r,id_type prev,id_type next,storeEntry &entry){
+                    void insert(xMBR &r,id_type prev,id_type next,storeEntry &entry){
                         if(m_mbrs.empty()) m_mbrs.emplace_back(r);
                         else{
                             auto j=m_mbrs.begin();
@@ -376,12 +378,12 @@ namespace SpatialIndex
                         if(next>=0&&m_loadedLeaf.count(next)==0) m_missingLeaf.insert(next);
                         m_entries[r.m_pLow[m_ps->m_dimension]]=entry;
                     }
-                    void insert(MBC &r,id_type prev,id_type next,storeEntry &entry){
-                        if(m_mbcs.empty()) m_mbcs.emplace_back(r);
+                    void insert(xMBC &r,id_type prev,id_type next,storeEntry &entry){
+                        if(m_xMBCs.empty()) m_xMBCs.emplace_back(r);
                         else{
-                            auto j=m_mbcs.begin();
-                            for(;j!=m_mbcs.end()&&(*j).m_startTime<r.m_startTime;j++);
-                            m_mbcs.insert(j,r);
+                            auto j=m_xMBCs.begin();
+                            for(;j!=m_xMBCs.end()&&(*j).m_startTime<r.m_startTime;j++);
+                            m_xMBCs.insert(j,r);
                         }
                         m_loadedTime+=r.m_endTime-r.m_startTime;
                         if(r.m_endTime>m_maxtime){
@@ -411,19 +413,19 @@ namespace SpatialIndex
                 bool m_useMBR=false;
                 Trajectory m_query;
                 double m_error;
-                TrajStore* m_ts;
+                xStore* m_ts;
                 poppq m_pes;
                 trajStat* stat = trajStat::instance();
                 std::map<id_type ,Parts> m_parts;
                 int m_dimension=2;
                 std::set<id_type > loadedLeaf;
-                void insert(id_type id, Region &br,id_type prev,id_type next,storeEntry &entry){
+                void insert(id_type id, xMBR &br,id_type prev,id_type next,storeEntry &entry){
                     if(m_parts.count(id)==0){
                         m_parts[id]=Parts(this);
                     }
                     m_parts[id].insert(br,prev,next,entry);
                 }
-                void insert(id_type id, MBC &bc,id_type prev,id_type next,storeEntry &entry){
+                void insert(id_type id, xMBC &bc,id_type prev,id_type next,storeEntry &entry){
                     if(m_parts.count(id)==0){
                         m_parts[id]=Parts(this);
                     }
@@ -462,7 +464,7 @@ namespace SpatialIndex
                                 pessi +=pd.pes;
                             }
                             //mid dist
-                            const Region *prev= nullptr;
+                            const xMBR *prev= nullptr;
                             for (const auto &box:parts->m_mbrs) {
                                 //this box
                                 timeInterval.first=box.m_pLow[m_dimension];
@@ -530,14 +532,14 @@ namespace SpatialIndex
                                     pd= parts->m_computedDist[timeInterval];
                                 } else {
                                     if (parts->m_hasPrev) {
-                                        pd = m_query.getFrontIED(parts->m_mbcs.front().m_pLow[0],
-                                                                 parts->m_mbcs.front().m_pLow[1],
-                                                                 parts->m_mbcs.front().m_startTime,
+                                        pd = m_query.getFrontIED(parts->m_xMBCs.front().m_pLow[0],
+                                                                 parts->m_xMBCs.front().m_pLow[1],
+                                                                 parts->m_xMBCs.front().m_startTime,
                                                                  stat->vmax);
                                         parts->m_computedDist[timeInterval] = pd;
                                     } else {
-                                        pd = m_query.getStaticIED(parts->m_mbcs.front().m_pLow[0],
-                                                                  parts->m_mbcs.front().m_pLow[1],
+                                        pd = m_query.getStaticIED(parts->m_xMBCs.front().m_pLow[0],
+                                                                  parts->m_xMBCs.front().m_pLow[1],
                                                                   m_query.m_startTime(), parts->m_mintime);
                                         parts->m_computedDist[timeInterval] = pd;
                                         computedTime += timeInterval.second - timeInterval.first;
@@ -550,8 +552,8 @@ namespace SpatialIndex
                                 pessi += pd.pes;
                             }
                             //mid dist
-                            const MBC *prev= nullptr;
-                            for (const auto &box:parts->m_mbcs) {
+                            const xMBC *prev= nullptr;
+                            for (const auto &box:parts->m_xMBCs) {
                                 //this box
                                 timeInterval.first=box.m_startTime;
                                 timeInterval.second=box.m_endTime;
@@ -565,7 +567,7 @@ namespace SpatialIndex
                                 pessi += pd.pes;
                                 computedTime += timeInterval.second - timeInterval.first;
                                 //the gap
-                                if (box.m_startTime != parts->m_mbcs.front().m_startTime) {//not first
+                                if (box.m_startTime != parts->m_xMBCs.front().m_startTime) {//not first
                                     if (prev->m_endTime < box.m_startTime) {
                                         timeInterval.first=prev->m_endTime;
                                         timeInterval.second=box.m_startTime;
@@ -592,13 +594,13 @@ namespace SpatialIndex
                                     pd= parts->m_computedDist[timeInterval];
                                 } else {
                                     if (parts->m_hasNext) {
-                                        pd = m_query.getBackIED(parts->m_mbcs.back().m_pHigh[0],
-                                                                 parts->m_mbcs.back().m_pHigh[1],
-                                                                 parts->m_mbcs.back().m_endTime, stat->vmax);
+                                        pd = m_query.getBackIED(parts->m_xMBCs.back().m_pHigh[0],
+                                                                 parts->m_xMBCs.back().m_pHigh[1],
+                                                                 parts->m_xMBCs.back().m_endTime, stat->vmax);
                                         parts->m_computedDist[timeInterval] = pd;
                                     } else {
-                                        pd = m_query.getStaticIED(parts->m_mbcs.back().m_pHigh[0],
-                                                                  parts->m_mbcs.back().m_pHigh[1], parts->m_maxtime,
+                                        pd = m_query.getStaticIED(parts->m_xMBCs.back().m_pHigh[0],
+                                                                  parts->m_xMBCs.back().m_pHigh[1], parts->m_maxtime,
                                                                   m_query.m_endTime());
                                         parts->m_computedDist[timeInterval] = pd;
                                         computedTime += timeInterval.second - timeInterval.first;
@@ -654,11 +656,11 @@ namespace SpatialIndex
                             }
 
                         }else{
-                            double bts=n.m_ptrMBC[i]->m_startTime,bte=n.m_ptrMBC[i]->m_endTime;
+                            double bts=n.m_ptrxMBC[i]->m_startTime,bte=n.m_ptrxMBC[i]->m_endTime;
                             if(bts>=m_query.m_endTime()||
                                bte<=m_query.m_startTime()){}
                             else {
-                                insert(trajid, *n.m_ptrMBC[i],
+                                insert(trajid, *n.m_ptrxMBC[i],
                                        (m_query.m_startTime()<bts)?n.m_prevNode[i]:-1
                                         , (m_query.m_endTime()>bte)?n.m_nextNode[i]:-1,
                                         entry);
@@ -736,14 +738,14 @@ namespace SpatialIndex
                 }
                 auto getMissingPart(id_type id){return m_parts[id].m_missingLeaf;}
 
-                PartsStore(Trajectory &traj,double error,TrajStore* ts,bool useMBR)
+                PartsStore(Trajectory &traj,double error,xStore* ts,bool useMBR)
                 :m_query(traj),m_error(error),m_useMBR(useMBR),m_ts(ts){}
                 ~PartsStore(){}
                 Trajectory getTraj(id_type id){
-                    vector<STPoint> buff;
+                    vector<STxPoint> buff;
                     m_ts->m_loadedTraj+=1;
 //                    std::cerr<<"start getting traj\n";
-//                    for(auto &bc:m_parts[id].m_mbcs){
+//                    for(auto &bc:m_parts[id].m_xMBCs){
 //                        std::cerr<<*bc<<"\n";
 //                    }
                     std::vector<storeEntry> toload;
@@ -783,7 +785,7 @@ namespace SpatialIndex
                         unsigned long size;
                         memcpy(&size, ptr, sizeof(unsigned long));
                         ptr += sizeof(unsigned long);
-                        STPoint  p;
+                        STxPoint  p;
                         for(int i=0;i<size;i++){
                             p.makeDimension(m_dimension);
                             memcpy(&p.m_time, ptr, sizeof(double));
@@ -848,7 +850,7 @@ namespace SpatialIndex
                 bool m_useMBR=false;
                 Trajectory m_query;
                 double m_error;
-                TrajStore* m_ts;
+                xStore* m_ts;
                 trajStat* stat = trajStat::instance();
                 std::map<id_type ,Parts> m_parts;
                 int m_dimension=2;
@@ -859,8 +861,8 @@ namespace SpatialIndex
                     }
 //                    m_parts[id].insert(r,prev,next,entry);
                     Trajectory tmp;
-                    tmp.m_points.emplace_back(r.m_points[0]);
-                    tmp.m_points.emplace_back(r.m_points[r.m_points.size()-1]);
+                    tmp.m_xPoints.emplace_back(r.m_xPoints[0]);
+                    tmp.m_xPoints.emplace_back(r.m_xPoints[r.m_xPoints.size()-1]);
                     m_parts[id].m_computedDist[std::make_pair(r.m_startTime(),r.m_endTime())]
                         = DISTE( r.getMinimumDistance(m_query));
                     m_parts[id].insert(tmp,prev,next,entry);
@@ -888,14 +890,14 @@ namespace SpatialIndex
                                     pd= parts->m_computedDist[timeInterval];
                             } else {
                                 if (parts->m_hasPrev) {
-                                    pd = m_query.getFrontIED(parts->m_pTrajs.front().m_points.front().m_pCoords[0],
-                                                             parts->m_pTrajs.front().m_points.front().m_pCoords[0],
+                                    pd = m_query.getFrontIED(parts->m_pTrajs.front().m_xPoints.front().m_pCoords[0],
+                                                             parts->m_pTrajs.front().m_xPoints.front().m_pCoords[0],
                                                              parts->m_pTrajs.front().m_startTime(),
                                                              stat->vmax);
                                     parts->m_computedDist[timeInterval] = pd.opt;
                                 } else {
-                                    pd = m_query.getStaticIED(parts->m_pTrajs.front().m_points.front().m_pCoords[0],
-                                                              parts->m_pTrajs.front().m_points.front().m_pCoords[1],
+                                    pd = m_query.getStaticIED(parts->m_pTrajs.front().m_xPoints.front().m_pCoords[0],
+                                                              parts->m_pTrajs.front().m_xPoints.front().m_pCoords[1],
                                                               m_query.m_startTime(), parts->m_mintime);
                                     parts->m_computedDist[timeInterval] = pd;
                                     computedTime += timeInterval.second - timeInterval.first;
@@ -935,7 +937,7 @@ namespace SpatialIndex
                                     if (parts->m_computedDist.count(timeInterval) > 0) {
                                         pd= parts->m_computedDist[timeInterval];
                                     } else {
-                                        pd = m_query.getMidIED(prev->m_points.back(), traj.m_points.front(), stat->vmax);
+                                        pd = m_query.getMidIED(prev->m_xPoints.back(), traj.m_xPoints.front(), stat->vmax);
                                         parts->m_computedDist[timeInterval] = pd;
                                     }
                                     if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty())
@@ -955,13 +957,13 @@ namespace SpatialIndex
                                 pd= parts->m_computedDist[timeInterval];
                             } else {
                                 if (parts->m_hasNext) {
-                                    pd = m_query.getBackIED(parts->m_pTrajs.back().m_points.back().m_pCoords[0],
-                                                             parts->m_pTrajs.back().m_points.back().m_pCoords[1],
+                                    pd = m_query.getBackIED(parts->m_pTrajs.back().m_xPoints.back().m_pCoords[0],
+                                                             parts->m_pTrajs.back().m_xPoints.back().m_pCoords[1],
                                                              parts->m_pTrajs.back().m_endTime(), stat->vmax);
                                     parts->m_computedDist[timeInterval] = pd;
                                 } else {
-                                    pd = m_query.getStaticIED(parts->m_pTrajs.back().m_points.back().m_pCoords[0],
-                                                              parts->m_pTrajs.back().m_points.back().m_pCoords[1], parts->m_maxtime,
+                                    pd = m_query.getStaticIED(parts->m_pTrajs.back().m_xPoints.back().m_pCoords[0],
+                                                              parts->m_pTrajs.back().m_xPoints.back().m_pCoords[1], parts->m_maxtime,
                                                               m_query.m_endTime());
                                     parts->m_computedDist[timeInterval] = pd;
                                     computedTime += timeInterval.second - timeInterval.first;
@@ -1007,12 +1009,12 @@ namespace SpatialIndex
                     tmpTraj.loadFromByteArray(data);
                     delete[] load;
                     id_type trajid = m_ts->getTrajId(id);
-                    if(m_except.count(trajid)>0) return;
                     storeEntry ee;
                     Trajectory inter;
+
                     tmpTraj.getPartialTrajectory(max(m_query.m_startTime(),e->m_ts),
                                                  min(m_query.m_endTime(),e->m_te),inter);
-                    if(inter.m_points.size()==0){
+                    if(inter.m_xPoints.size()==0){
                         auto ee=m_mpq.top();
                         string q = m_query.toString();
                         auto s = m_parts[ee->m_id];
@@ -1058,7 +1060,7 @@ namespace SpatialIndex
                 }
 
                 auto empty(){return m_mpq.empty()&&m_nodespq.empty();}
-                PartsStoreBFMST(Trajectory &traj,double error,TrajStore* ts,bool useMBR)
+                PartsStoreBFMST(Trajectory &traj,double error,xStore* ts,bool useMBR)
                         :m_query(traj),m_error(error),m_useMBR(useMBR),m_ts(ts){}
                 ~PartsStoreBFMST(){}
             };//PartStoreBFMST
@@ -1068,9 +1070,9 @@ namespace SpatialIndex
 			friend class Index;
 			friend class BulkLoader;
 
-			friend std::ostream& operator<<(std::ostream& os, const MBCRTree& t);
-		}; // MBCRTree
+			friend std::ostream& operator<<(std::ostream& os, const xRTree& t);
+		}; // xRTree
 
-		std::ostream& operator<<(std::ostream& os, const MBCRTree& t);
+		std::ostream& operator<<(std::ostream& os, const xRTree& t);
 	}
 }

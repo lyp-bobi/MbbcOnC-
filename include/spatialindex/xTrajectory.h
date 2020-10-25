@@ -8,9 +8,6 @@
 #define subTrajFile "./subTrajFile.stj"
 
 #define random(x, y) (((double)rand()/RAND_MAX)*(y-x)+x)
-extern double calcuTime[10];
-extern int testPhase;
-extern int disttype;
 
 #define Tristat
 
@@ -23,7 +20,8 @@ using namespace SpatialIndex;
 
 namespace SpatialIndex
 {
-    class SIDX_DLL xTrajectory: public Tools::IObject, public virtual IShape{
+
+    class SIDX_DLL xTrajectory: public Tools::IObject, public virtual IxShape{
 
         public:
         class fakeTpVector{
@@ -111,61 +109,35 @@ namespace SpatialIndex
         virtual bool touchesShape(const IShape& in) const;
         virtual void getCenter(Point& out) const;
         virtual uint32_t getDimension() const;
-        virtual void getMBR(Region& out) const;
+        virtual void getxMBR(xMBR& out) const;
 
         virtual void getPartialxTrajectory(double tstart, double tend, SpatialIndex::xTrajectory &out) const;
 
         virtual double getArea() const;
         virtual double getMinimumDistance(const IShape& in) const;
 
-
-
-        virtual double getMinimumDistance(const xPoint& in) const;
-        virtual double getMinimumDistance(const xMBR& in) const;
-        virtual double getMaxSED(const xMBR& in) const;
-        virtual double getMaxSED(const xMBC& in) const;
-        virtual double getMinimumDistance(const xMBC& in) const;
-        virtual double getMinimumDistance(const xTrajectory& in) const;
-        virtual double getMinimumDistanceInner(const xTrajectory& in) const;
-
         static double line2lineIED(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
         static double line2lineMinSED(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
-        static double line2MBRDistance(const xPoint &ps,const xPoint &pe,const xMBR &r);
+        static DISTE line2MBRDistance(const xPoint &ps,const xPoint &pe,const xMBR &r);
         static double line2MBRIED_impl(const xPoint &ps, const xPoint &pe, const xMBR &r, int sr);
         static double line2MBRMinSED(const xPoint &ps, const xPoint &pe, const xMBR &r);
         static double line2MBRMaxSED(const xPoint &ps, const xPoint &pe, const xMBR &r);
         static double line2MBRMinSED_impl(const xPoint &ps, const xPoint &pe, const xMBR &r, int sr);
-        static double line2MBCDistance(const xPoint &ps,const xPoint &pe,const xMBC &r);
+        static DISTE line2MBCDistance(const xPoint &ps,const xPoint &pe,const xMBC &r);
 
-        virtual double getFrontIED(xMBR smbr, double MaxVelocity) const;
-        virtual double getBackIED(xMBR embr, double MaxVelocity) const;
-        virtual double getFrontIED(double x,double y,double ts, double MaxVelocity) const;
-        virtual double getBackIED(double x,double y,double te, double MaxVelocity) const;
+        double getStaticIED(double x, double y, double t1, double t2) const;
+        double getStaticIED(SpatialIndex::xMBR in,double ints, double inte) const;
+        double getMinimumDistance(const SpatialIndex::xTrajectory &in) const;
 
-        virtual double getMidIED(const xMBR &sbr,const xMBR &ebr,double MaxVelocity,double queryVelocity=-1);
-        virtual double getMidIED(const xMBC &sbc, const xMBC &ebc,double MaxVelocity,double queryVelocity=-1);
-        virtual double getMidIED(const xPoint &sp, const xPoint &ep,double MaxVelocity,double queryVelocity=-1);
-
-        virtual double getStaticIED(double x, double y, double t1, double t2) const;
-        virtual double getStaticIED(xMBR in,double ints, double inte) const;
-        virtual double getStaticMaxSED(double x, double y, double t1, double t2) const;
-        virtual double getStaticMaxSED(xMBR in,double ints, double inte) const;
-
-        virtual double getInferredNodeMinimumIED(const xMBR &in, double MaxVelocity,double queryMaxVelocity=0) const;
-
-        virtual double getNodeMinimumDistance(const xMBR &in,double MaxVelocity) const;
-        virtual double getLeafMinimumDistance(const xMBR &in, double MaxVelocity) const;
-        virtual double getLeafMinimumDistance(const xMBC &in, double MaxVelocity) const;
+        double nodeDist(const xSBB &b) const;
+        DISTE sbbDist(const xSBB &b) const;
+        DISTE frontDist(const xSBB &b, double vmax) const;
+        DISTE backDist(const xSBB &b, double vmax) const;
+        DISTE gapDist(const xSBB &prev, xSBB &next, double vmax) const;
 
 
         virtual bool intersectsxMBR(const xMBR& in) const;
         virtual bool intersectsxCylinder(const xCylinder& in) const;
-        virtual bool intersectsxTrajectory(const xTrajectory& in) const;
-
-        virtual void combinexTrajectory(const xTrajectory& in);
-        virtual bool containsxTrajectory(const xTrajectory& in);
-        virtual void getCombinedxTrajectory(xTrajectory& out, const xTrajectory& in) const;
-        double getInterTime(const xPoint &ps, const xPoint &pe,xMBR &r,double t_o, double vmax) const;
 
         virtual void getxMBC(xMBC& out) const;
         xPoint getPointAtTime(double time) const;
@@ -182,6 +154,8 @@ namespace SpatialIndex
         std::vector<xTrajectory> getItself() const;
 
         void linkxTrajectory(xTrajectory &other);
+
+        double maxSpeed() const;
 
         static int cutTrajsIntoFile(std::vector<std::pair<id_type, xTrajectory> > &trajs,double segLen, int strat=0,std::string filename=subTrajFile);
         class subTrajStream{
@@ -267,4 +241,3 @@ namespace SpatialIndex
 typedef Tools::PoolPointer<xTrajectory> xTrajectoryPtr;
 SIDX_DLL std::ostream& operator<<(std::ostream& os, const xTrajectory& r);
 }
-std::vector<std::string> split(const std::string &strtem,char a);
