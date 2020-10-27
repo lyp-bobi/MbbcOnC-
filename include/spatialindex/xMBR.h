@@ -64,6 +64,8 @@ namespace SpatialIndex
 		virtual double getArea() const;
 		virtual double getMinimumDistance(const IShape& in) const;
 
+
+		virtual void getCenter(xPoint& out) const;
 		virtual bool intersectsxMBR(const xMBR& in) const;
 		virtual bool containsxMBR(const xMBR& in) const;
 		virtual bool touchesxMBR(const xMBR& in) const;
@@ -92,17 +94,15 @@ namespace SpatialIndex
         prex m_xmin,m_xmax,m_ymin,m_ymax;
         prex m_tmin, m_tmax;
 
-        prex m_pLow(int i){
+        prex& m_pLow(int i){
             if(i==0) return m_xmin;
             if(i==1) return m_ymin;
             if(i==2) return m_tmin;
-            return 1e300;
         }
-        prex m_pHigh(int i){
+        prex& m_pHigh(int i){
             if(i==0) return m_xmax;
             if(i==1) return m_ymax;
             if(i==2) return m_tmax;
-            return 1e300;
         }
 
 

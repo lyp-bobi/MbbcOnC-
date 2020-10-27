@@ -966,7 +966,7 @@ double xTrajectory::getStaticIED(SpatialIndex::xMBR in,double ints, double inte)
     fakeTpVector timedTraj(&m_points,ints,inte);
     double sum = 0;
     for (int i = 0; i < timedTraj.m_size-1; i++) {
-        double pd = line2MBRDistance(timedTraj[i],timedTraj[i+1],in);
+        double pd = line2MBRDistance(timedTraj[i],timedTraj[i+1],in).opt;
         sum+=pd;
     }
     return sum;

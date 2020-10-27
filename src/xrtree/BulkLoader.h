@@ -39,6 +39,7 @@ namespace SpatialIndex
 			public:
 				Record();
 				Record(const xSBBData& shape, uint32_t s,uint32_t level);
+                Record(const id_type &id, const xMBR &r, uint32_t s,uint32_t level);
 				~Record();
 
 				bool operator<(const Record& r) const;
@@ -58,7 +59,9 @@ namespace SpatialIndex
 			public:
                 uint32_t m_level;
 				uint32_t m_s;
-                xSBBData m_b;
+				xMBR m_r;
+                id_type m_id; //for inner node
+                xSBBData m_b; //for leaf node
 			};
 
 		public:

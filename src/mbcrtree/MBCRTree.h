@@ -219,7 +219,7 @@ namespace SpatialIndex
                 simpleData(id_type id,double dist):m_id(id),m_dist(dist){}
                 id_type m_id;
                 double m_dist;
-                virtual Data* clone(){throw Tools::NotSupportedException(".");}
+                virtual simpleData* clone(){throw Tools::NotSupportedException(".");}
                 virtual id_type getIdentifier() const{return m_id;}
                 virtual void getShape(IShape** out) const{ *out= nullptr;}
                 virtual void getData(uint32_t& len, uint8_t** data) const{len=0;*data= nullptr;}
@@ -449,8 +449,8 @@ namespace SpatialIndex
                                         pd = m_query.getFrontIED(parts->m_mbrs.front(), stat->vmax);
                                         parts->m_computedDist[timeInterval] = pd;
                                     } else {
-                                        pd = m_query.getStaticIED(parts->m_mbrs.front(), m_query.m_startTime(),
-                                                                  parts->m_mintime);
+                                        pd = DISTE(m_query.getStaticIED(parts->m_mbrs.front(), m_query.m_startTime(),
+                                                                  parts->m_mintime));
                                         parts->m_computedDist[timeInterval] = pd;
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
@@ -470,7 +470,7 @@ namespace SpatialIndex
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
                                     pd = parts->m_computedDist[timeInterval];
                                 } else {
-                                    pd = m_query.getMinimumDistance(box);
+                                    pd = DISTE(m_query.getMinimumDistance(box));
                                     parts->m_computedDist[timeInterval] = pd;
                                 }
                                 sum += pd.opt;
@@ -507,8 +507,8 @@ namespace SpatialIndex
                                         pd = m_query.getBackIED(parts->m_mbrs.back(), stat->vmax);
                                         parts->m_computedDist[timeInterval] = pd;
                                     } else {
-                                        pd = m_query.getStaticIED(parts->m_mbrs.back(), parts->m_maxtime,
-                                                                  m_query.m_endTime());
+                                        pd = DISTE(m_query.getStaticIED(parts->m_mbrs.back(), parts->m_maxtime,
+                                                                  m_query.m_endTime()));
                                         parts->m_computedDist[timeInterval] = pd;
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
@@ -536,9 +536,9 @@ namespace SpatialIndex
                                                                  stat->vmax);
                                         parts->m_computedDist[timeInterval] = pd;
                                     } else {
-                                        pd = m_query.getStaticIED(parts->m_mbcs.front().m_pLow[0],
+                                        pd = DISTE(m_query.getStaticIED(parts->m_mbcs.front().m_pLow[0],
                                                                   parts->m_mbcs.front().m_pLow[1],
-                                                                  m_query.m_startTime(), parts->m_mintime);
+                                                                  m_query.m_startTime(), parts->m_mintime));
                                         parts->m_computedDist[timeInterval] = pd;
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
@@ -558,7 +558,7 @@ namespace SpatialIndex
                                 if (parts->m_computedDist.count(timeInterval) > 0) {
                                     pd = parts->m_computedDist[timeInterval];
                                 } else {
-                                    pd = m_query.getMinimumDistance(box);
+                                    pd = DISTE(m_query.getMinimumDistance(box));
                                     parts->m_computedDist[timeInterval] = pd;
                                 }
                                 sum += pd.opt;
@@ -597,9 +597,9 @@ namespace SpatialIndex
                                                                  parts->m_mbcs.back().m_endTime, stat->vmax);
                                         parts->m_computedDist[timeInterval] = pd;
                                     } else {
-                                        pd = m_query.getStaticIED(parts->m_mbcs.back().m_pHigh[0],
+                                        pd = DISTE(m_query.getStaticIED(parts->m_mbcs.back().m_pHigh[0],
                                                                   parts->m_mbcs.back().m_pHigh[1], parts->m_maxtime,
-                                                                  m_query.m_endTime());
+                                                                  m_query.m_endTime()));
                                         parts->m_computedDist[timeInterval] = pd;
                                         computedTime += timeInterval.second - timeInterval.first;
                                     }
@@ -892,11 +892,11 @@ namespace SpatialIndex
                                                              parts->m_pTrajs.front().m_points.front().m_pCoords[0],
                                                              parts->m_pTrajs.front().m_startTime(),
                                                              stat->vmax);
-                                    parts->m_computedDist[timeInterval] = pd.opt;
+                                    parts->m_computedDist[timeInterval] = pd;
                                 } else {
-                                    pd = m_query.getStaticIED(parts->m_pTrajs.front().m_points.front().m_pCoords[0],
+                                    pd = DISTE(m_query.getStaticIED(parts->m_pTrajs.front().m_points.front().m_pCoords[0],
                                                               parts->m_pTrajs.front().m_points.front().m_pCoords[1],
-                                                              m_query.m_startTime(), parts->m_mintime);
+                                                              m_query.m_startTime(), parts->m_mintime));
                                     parts->m_computedDist[timeInterval] = pd;
                                     computedTime += timeInterval.second - timeInterval.first;
                                 }
@@ -960,9 +960,9 @@ namespace SpatialIndex
                                                              parts->m_pTrajs.back().m_endTime(), stat->vmax);
                                     parts->m_computedDist[timeInterval] = pd;
                                 } else {
-                                    pd = m_query.getStaticIED(parts->m_pTrajs.back().m_points.back().m_pCoords[0],
+                                    pd = DISTE(m_query.getStaticIED(parts->m_pTrajs.back().m_points.back().m_pCoords[0],
                                                               parts->m_pTrajs.back().m_points.back().m_pCoords[1], parts->m_maxtime,
-                                                              m_query.m_endTime());
+                                                              m_query.m_endTime()));
                                     parts->m_computedDist[timeInterval] = pd;
                                     computedTime += timeInterval.second - timeInterval.first;
                                 }

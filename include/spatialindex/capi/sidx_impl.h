@@ -41,6 +41,4 @@
 #include "BoundsQuery.h"
 #include "LeafQuery.h"
 #include "Error.h"
-#include "DataStream.h"
-#include "Index.h"
 #include "CustomStorage.h"

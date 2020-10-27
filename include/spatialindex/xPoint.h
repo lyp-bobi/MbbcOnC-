@@ -57,6 +57,6 @@ namespace SpatialIndex
         static xPoint makemid(const xPoint &tp1,const xPoint &tp2,double t);
 		friend SIDX_DLL std::ostream& operator<<(std::ostream& os, const xPoint& pt);
 	}; // xPoint
-
+    typedef Tools::PoolPointer<xPoint> xPointPtr;
 	SIDX_DLL std::ostream& operator<<(std::ostream& os, const xPoint& pt);
 }

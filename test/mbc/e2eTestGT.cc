@@ -14,7 +14,6 @@ int main() {
     try {
         calcuTime[0] = 0;
         srand(0);
-        rsimpli = false;
         bUsingSimp = true;
         string name0 = "name0", name1 = "name1", name2 = "name2";
         id_type indexIdentifier0, indexIdentifier1, indexIdentifier2;

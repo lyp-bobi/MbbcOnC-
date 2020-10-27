@@ -29,6 +29,7 @@ namespace SpatialIndex
             xStoreEntry m_se;
             xSBB m_b;
             id_type m_sbbid;
+            xSBBData()=default;
             xSBBData(id_type sbbid,xStoreEntry &entry,xSBB &b)
                 :m_sbbid(sbbid),m_se(entry),m_b(b){}
             virtual xSBBData* clone(){
@@ -79,6 +80,10 @@ namespace SpatialIndex
             }
 
             void loadTraj(xTrajectory &out, const xStoreEntry &e);
+            pair<bool,bool> checkpvnt(xStoreEntry &e){
+                return make_pair(e.m_s != 0,
+                                 e.m_e != m_trajIdx[e.m_id]->m_npoint);
+            }
 
             json m_property;
             std::map<id_type,xTrajEntry*> m_trajIdx;

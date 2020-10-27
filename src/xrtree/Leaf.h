@@ -42,7 +42,7 @@ namespace SpatialIndex
 			virtual NodePtr chooseSubtree(const xMBR& mbr, uint32_t level, std::stack<id_type>& pathBuffer);
 			virtual NodePtr findLeaf(const xMBR& mbr, id_type id, std::stack<id_type>& pathBuffer);
 
-			virtual void split(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, NodePtr& left, NodePtr& right);
+			virtual void split(xMBR& mbr, id_type id, NodePtr& left, NodePtr& right);
 
 			virtual void deleteData(id_type id, std::stack<id_type>& pathBuffer);
 

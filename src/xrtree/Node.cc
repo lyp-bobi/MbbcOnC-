@@ -51,78 +51,52 @@ Tools::IObject* Node::clone()
 //
 uint32_t Node::getByteArraySize() const
 {
-    double len;
-    if(m_level>0||m_pTree->m_bUsingMBR)
-        len=
-                (sizeof(uint32_t) +
-                 sizeof(uint32_t) +2 * m_pTree->m_dimension * sizeof(double)+
-                 m_children * (m_pTree->m_dimension * sizeof(double) * 2 + sizeof(id_type)));
-    else
-        len=
-                (sizeof(uint32_t) +
-                 sizeof(uint32_t) +2 * m_pTree->m_dimension * sizeof(double)+
-                 m_children * (m_pTree->m_dimension * sizeof(double) * 2+ sizeof(double)*2 + sizeof(id_type)));
-    if(m_level==0)
-        len=len+m_children *(2* sizeof(id_type)+ sizeof(id_type)+ 2*sizeof(uint32_t));
-    //std::cerr<<len<<"\n";
-    return len;
+    return 4096; //i'm lazy.
 }
 
 
 
 void Node::loadFromByteArray(const uint8_t* ptr)
 {
-    m_nodeMBR=m_pTree->m_infinitexMBR;
+    m_nodeMBR.makeInfinite(2);
     memcpy(&m_level, ptr, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
 
     memcpy(&m_children, ptr, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
 
-    for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
-        memcpy(&(m_pIdentifier[u32Child]), ptr, sizeof(id_type));
-        ptr += sizeof(id_type);
-        if(m_level==0){
-            memcpy(&(m_prevNode[u32Child]), ptr, sizeof(id_type));
+    if(m_level >0) {//inner
+        for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
+            memcpy(&(m_pIdentifier[u32Child]), ptr, sizeof(id_type));
             ptr += sizeof(id_type);
-            memcpy(&(m_nextNode[u32Child]), ptr, sizeof(id_type));
-            ptr += sizeof(id_type);
-            memcpy(&(m_pageNum[u32Child]), ptr, sizeof(id_type));
-            ptr += sizeof(id_type);
-            memcpy(&(m_pageOff[u32Child]), ptr, sizeof(uint32_t));
-            ptr += sizeof(uint32_t);
-            memcpy(&(m_dataLen[u32Child]), ptr, sizeof(uint32_t));
-            ptr += sizeof(uint32_t);
-        }
-        if(m_level>0||m_pTree->m_bUsingMBR) {
             m_ptrMBR[u32Child] = m_pTree->m_xMBRPool.acquire();
-            *(m_ptrMBR[u32Child]) = m_pTree->m_infinitexMBR;
-            memcpy(m_ptrMBR[u32Child]->m_pLow, ptr, m_pTree->m_dimension * sizeof(double));
-            ptr += m_pTree->m_dimension * sizeof(double);
-            memcpy(m_ptrMBR[u32Child]->m_pHigh, ptr, m_pTree->m_dimension * sizeof(double));
-            ptr += m_pTree->m_dimension * sizeof(double);
+            (m_ptrMBR[u32Child])->loadFromByteArray(ptr);
+            ptr += (m_ptrMBR[u32Child])->getByteArraySize();
         }
-        else{
-            m_ptrxMBC[u32Child] = m_pTree->m_xMBCPool.acquire();
-            xMBC bc=xMBC();bc.makeInfinite(m_pTree->m_dimension-1);
-            *(m_ptrxMBC[u32Child]) = bc;
-            memcpy(m_ptrxMBC[u32Child]->m_pLow, ptr, (m_pTree->m_dimension-1) * sizeof(double));
-            ptr += (m_pTree->m_dimension-1) * sizeof(double);
-            memcpy(m_ptrxMBC[u32Child]->m_pHigh, ptr, (m_pTree->m_dimension-1) * sizeof(double));
-            ptr += (m_pTree->m_dimension-1) * sizeof(double);
-            memcpy(&m_ptrxMBC[u32Child]->m_startTime,ptr, sizeof(double));
-            ptr+= sizeof(double);
-            memcpy(&m_ptrxMBC[u32Child]->m_endTime,ptr, sizeof(double));
-            ptr+= sizeof(double);
-            memcpy(&m_ptrxMBC[u32Child]->m_rd,ptr, sizeof(double));
-            ptr+= sizeof(double);
-            memcpy(&m_ptrxMBC[u32Child]->m_rv,ptr, sizeof(double));
-            ptr+= sizeof(double);
+    }else{//leaf
+        for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
+            memcpy(&(m_pIdentifier[u32Child]), ptr, sizeof(id_type));
+            ptr += sizeof(id_type);
+            if(m_pTree->m_bStoringLinks) {
+                memcpy(&(m_prevNode[u32Child]), ptr, sizeof(id_type));
+                ptr += sizeof(id_type);
+                memcpy(&(m_nextNode[u32Child]), ptr, sizeof(id_type));
+                ptr += sizeof(id_type);
+            }
+            if(m_pTree->m_bUsingMBR){
+                m_ptrxSBB[u32Child]->br->loadFromByteArray(ptr);
+                ptr+=m_ptrxSBB[u32Child]->br->getByteArraySize();
+            }else if(m_pTree->m_bUsingMBC){
+                m_ptrxSBB[u32Child]->bc->loadFromByteArray(ptr);
+                ptr+=m_ptrxSBB[u32Child]->bc->getByteArraySize();
+            }else if(m_pTree->m_bUsingMBL){
+                m_ptrxSBB[u32Child]->bl->loadFromByteArray(ptr);
+                ptr+=m_ptrxSBB[u32Child]->bl->getByteArraySize();
+            }
         }
     }
-    memcpy(m_nodeMBR.m_pLow, ptr, m_pTree->m_dimension * sizeof(double));
-    ptr += m_pTree->m_dimension * sizeof(double);
-    memcpy(m_nodeMBR.m_pHigh, ptr, m_pTree->m_dimension * sizeof(double));
+    m_nodeMBR.loadFromByteArray(ptr);
+//    ptr+= m_nodeMBR.getByteArraySize();
 }
 
 void Node::storeToByteArray(uint8_t** data, uint32_t& len)
@@ -138,47 +112,40 @@ void Node::storeToByteArray(uint8_t** data, uint32_t& len)
     memcpy(ptr, &m_children, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
 
-    for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
-        memcpy(ptr, &(m_pIdentifier[u32Child]), sizeof(id_type));
-        ptr += sizeof(id_type);
-        if(m_level==0){
-            memcpy(ptr, &(m_prevNode[u32Child]), sizeof(id_type));
+
+    if(m_level >0) {//inner
+        for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
+            memcpy(ptr, &(m_pIdentifier[u32Child]), sizeof(id_type));
             ptr += sizeof(id_type);
-            memcpy(ptr, &(m_nextNode[u32Child]), sizeof(id_type));
-            ptr += sizeof(id_type);
-            memcpy(ptr,&(m_pageNum[u32Child]),  sizeof(id_type));
-            ptr += sizeof(id_type);
-            memcpy(ptr,&(m_pageOff[u32Child]), sizeof(uint32_t));
-            ptr += sizeof(uint32_t);
-            memcpy(ptr,&(m_dataLen[u32Child]), sizeof(uint32_t));
-            ptr += sizeof(uint32_t);
+            m_ptrMBR[u32Child] = m_pTree->m_xMBRPool.acquire();
+            (m_ptrMBR[u32Child])->storeToByteArray(&ptr,len);
+            ptr += (m_ptrMBR[u32Child])->getByteArraySize();
         }
-        if(m_level>0||m_pTree->m_bUsingMBR){
-            memcpy(ptr, m_ptrMBR[u32Child]->m_pLow, m_pTree->m_dimension * sizeof(double));
-            ptr += m_pTree->m_dimension * sizeof(double);
-            memcpy(ptr, m_ptrMBR[u32Child]->m_pHigh, m_pTree->m_dimension * sizeof(double));
-            ptr += m_pTree->m_dimension * sizeof(double);
-        }
-        else{
-            memcpy(ptr, m_ptrxMBC[u32Child]->m_pLow, (m_pTree->m_dimension-1) * sizeof(double));
-            ptr += (m_pTree->m_dimension-1) * sizeof(double);
-            memcpy(ptr, m_ptrxMBC[u32Child]->m_pHigh, (m_pTree->m_dimension-1) * sizeof(double));
-            ptr += (m_pTree->m_dimension-1) * sizeof(double);
-            memcpy(ptr,&m_ptrxMBC[u32Child]->m_startTime, sizeof(double));
-            ptr+= sizeof(double);
-            memcpy(ptr,&m_ptrxMBC[u32Child]->m_endTime,sizeof(double));
-            ptr+= sizeof(double);
-            memcpy(ptr,&m_ptrxMBC[u32Child]->m_rd,sizeof(double));
-            ptr+= sizeof(double);
-            memcpy(ptr,&m_ptrxMBC[u32Child]->m_rv, sizeof(double));
-            ptr+= sizeof(double);
+    }else{//leaf
+        for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
+            memcpy(&(m_pIdentifier[u32Child]), ptr, sizeof(id_type));
+            ptr += sizeof(id_type);
+            if(m_pTree->m_bStoringLinks) {
+                memcpy(ptr, &(m_prevNode[u32Child]), sizeof(id_type));
+                ptr += sizeof(id_type);
+                memcpy(ptr, &(m_nextNode[u32Child]), sizeof(id_type));
+                ptr += sizeof(id_type);
+            }
+            if(m_pTree->m_bUsingMBR){
+                m_ptrxSBB[u32Child]->br->storeToByteArray(&ptr,len);
+                ptr+=m_ptrxSBB[u32Child]->br->getByteArraySize();
+            }else if(m_pTree->m_bUsingMBC){
+                m_ptrxSBB[u32Child]->bc->storeToByteArray(&ptr,len);
+                ptr+=m_ptrxSBB[u32Child]->bc->getByteArraySize();
+            }else if(m_pTree->m_bUsingMBL){
+                m_ptrxSBB[u32Child]->bl->storeToByteArray(&ptr,len);
+                ptr+=m_ptrxSBB[u32Child]->bl->getByteArraySize();
+            }
         }
     }
-    memcpy(ptr, m_nodeMBR.m_pLow, m_pTree->m_dimension * sizeof(double));
-    ptr += m_pTree->m_dimension * sizeof(double);
-    memcpy(ptr, m_nodeMBR.m_pHigh, m_pTree->m_dimension * sizeof(double));
-    //ptr += tmplen;
-    assert(len == (ptr - *data)+m_pTree->m_dimension*sizeof(double));
+    m_nodeMBR.storeToByteArray(&ptr,len);
+    ptr+= m_nodeMBR.getByteArraySize();
+//    assert(len == (ptr - *data)+m_pTree->m_dimension*sizeof(double));
 }
 
 //
@@ -250,37 +217,24 @@ Node::Node(SpatialIndex::xRTree::xRTree* pTree, id_type id, uint32_t level, uint
 	m_capacity(capacity),
     m_prevNode(nullptr),
     m_nextNode(nullptr),
-    m_pageNum(nullptr),
-    m_pageOff(nullptr),
-    m_dataLen(nullptr),
+    m_se(nullptr),
 	m_ptrMBR(nullptr),
-    m_ptrxMBC(nullptr),
+    m_ptrxSBB(nullptr),
 	m_pIdentifier(nullptr)
 {
 	m_nodeMBR.makeInfinite(m_pTree->m_dimension);
 
 	try
 	{
-//		if(m_level>0||m_pTree->m_bUsingMBR)
-//            m_ptrMBR = new xMBRPtr[m_capacity + 1];
-//		else
-//            m_ptrxMBC = new xMBCPtr[m_capacity + 1];
         m_ptrMBR = new xMBRPtr[m_capacity + 1];
-        if(!m_pTree->m_bUsingMBR){
-            m_ptrxMBC = new xMBCPtr[m_capacity + 1];
-        }
+        m_ptrxSBB = new xSBBPtr[m_capacity + 1];
 		if(m_level==0){
 		    m_prevNode=new id_type[m_capacity+1];
 		    m_nextNode=new id_type[m_capacity+1];
-            m_pageNum=new id_type[m_capacity+1];
-            m_pageOff = new uint32_t[m_capacity+1];
-            m_dataLen=new uint32_t[m_capacity+1];
+            m_se=new xStoreEntry[m_capacity+1];
 		    for(int i=0;i<m_capacity+1;i++){
 		        m_prevNode[i]=-1;
                 m_nextNode[i]=-1;
-                m_pageNum[i]=-1;
-                m_pageOff[i]=0;
-                m_dataLen[i]=0;
 		    }
 		}
 		m_pIdentifier = new id_type[m_capacity + 1];
@@ -288,27 +242,23 @@ Node::Node(SpatialIndex::xRTree::xRTree* pTree, id_type id, uint32_t level, uint
 	catch (...)
 	{
 		delete[] m_ptrMBR;
-        delete[] m_ptrxMBC;
+        delete[] m_ptrxSBB;
 		delete[] m_pIdentifier;
 		delete[] m_prevNode;
 		delete[] m_nextNode;
-        delete[] m_pageNum;
-        delete[] m_pageOff;
-        delete[] m_dataLen;
+        delete[] m_se;
 		throw;
 	}
 }
 
 Node::~Node()
 {
-	delete[] m_ptrMBR;
-    delete[] m_ptrxMBC;
-	delete[] m_pIdentifier;
+    delete[] m_ptrMBR;
+    delete[] m_ptrxSBB;
+    delete[] m_pIdentifier;
     delete[] m_prevNode;
     delete[] m_nextNode;
-    delete[] m_pageNum;
-    delete[] m_pageOff;
-    delete[] m_dataLen;
+    delete[] m_se;
 }
 
 Node& Node::operator=(const Node&)
@@ -317,34 +267,23 @@ Node& Node::operator=(const Node&)
 }
 
 
-void Node::insertEntry(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id)
-{
-	assert(m_children < m_capacity);
-
-	m_ptrMBR[m_children] = m_pTree->m_xMBRPool.acquire();
-	*(m_ptrMBR[m_children]) = mbr;
-	m_pIdentifier[m_children] = id;
-
-	++m_children;
-
-	m_nodeMBR.combinexMBR(mbr);
-}
-
-void Node::insertEntry(uint32_t dataLength, uint8_t *pData,xMBR& mbr, xMBC &xMBC, SpatialIndex::id_type id) {
+void Node::insertEntry(xMBR& mbr,id_type id, xSBB* sbb, xStoreEntry *e) {
     assert(m_children < m_capacity);
-    if(m_pTree->m_bUsingMBR){
-        m_ptrMBR[m_children] = m_pTree->m_xMBRPool.acquire();
-        *(m_ptrMBR[m_children]) = mbr;
-    }else {
-        m_ptrxMBC[m_children] = m_pTree->m_xMBCPool.acquire();
-        *(m_ptrxMBC[m_children]) = xMBC;
+    m_ptrMBR[m_children] = m_pTree->m_xMBRPool.acquire();
+    *(m_ptrMBR[m_children]) = mbr;
+    if(sbb!= nullptr) {    //for leaf
+        m_ptrxSBB[m_children] = m_pTree->m_xSBBPool.acquire();
+        *(m_ptrxSBB[m_children]) = *sbb;
+        m_se[m_children] = *e;
+    }else{//for inner
+        m_pIdentifier[m_children] = id;
     }
-    m_pIdentifier[m_children] = id;
-
     ++m_children;
 
     m_nodeMBR.combinexMBR(mbr);
 }
+
+
 
 void Node::deleteEntry(uint32_t index)
 {
@@ -366,25 +305,25 @@ void Node::deleteEntry(uint32_t index)
 
 	if (m_children == 0)
 	{
-		m_nodeMBR = m_pTree->m_infinitexMBR;
+		m_nodeMBR.makeInfinite(2);
 	}
 	else if (m_pTree->m_bTightMBRs && m_nodeMBR.touchesxMBR(*ptrR))
 	{
-		for (uint32_t cDim = 0; cDim < m_nodeMBR.m_dimension; ++cDim)
+		for (uint32_t cDim = 0; cDim < 3; ++cDim)
 		{
-			m_nodeMBR.m_pLow[cDim] = std::numeric_limits<double>::max();
-			m_nodeMBR.m_pHigh[cDim] = -std::numeric_limits<double>::max();
+			m_nodeMBR.m_pLow(cDim) = std::numeric_limits<double>::max();
+			m_nodeMBR.m_pHigh(cDim) = -std::numeric_limits<double>::max();
 
 			for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child)
 			{
-				m_nodeMBR.m_pLow[cDim] = std::min(m_nodeMBR.m_pLow[cDim], m_ptrMBR[u32Child]->m_pLow[cDim]);
-				m_nodeMBR.m_pHigh[cDim] = std::max(m_nodeMBR.m_pHigh[cDim], m_ptrMBR[u32Child]->m_pHigh[cDim]);
+				m_nodeMBR.m_pLow(cDim) = std::min(m_nodeMBR.m_pLow(cDim), m_ptrMBR[u32Child]->m_pLow(cDim));
+				m_nodeMBR.m_pHigh(cDim) = std::max(m_nodeMBR.m_pHigh(cDim), m_ptrMBR[u32Child]->m_pHigh(cDim));
 			}
 		}
 	}
 }
 
-bool Node::insertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, std::stack<id_type>& pathBuffer, uint8_t* overflowTable)
+bool Node::insertData(xMBR& mbr, id_type id, std::stack<id_type>& pathBuffer, uint8_t* overflowTable)
 {
 	if (m_children < m_capacity)
 	{
@@ -393,7 +332,7 @@ bool Node::insertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id
 		// this has to happen before insertEntry modifies m_nodeMBR.
 		bool b = m_nodeMBR.containsxMBR(mbr);
 
-		insertEntry(dataLength, pData, mbr, id);
+		insertEntry(mbr, id);
 		m_pTree->writeNode(this);
 
 		if ((! b) && (! pathBuffer.empty()))
@@ -412,7 +351,7 @@ bool Node::insertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id
 		overflowTable[m_level] = 1;
 
 		std::vector<uint32_t> vReinsert, vKeep;
-		reinsertData(dataLength, pData, mbr, id, vReinsert, vKeep);
+		reinsertData(mbr, id, vReinsert, vKeep);
 
 		uint32_t lReinsert = static_cast<uint32_t>(vReinsert.size());
 		uint32_t lKeep = static_cast<uint32_t>(vKeep.size());
@@ -470,23 +409,21 @@ bool Node::insertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id
 		delete[] m_pIdentifier;
         delete[] m_prevNode;
         delete[] m_nextNode;
-        delete[] m_pageNum;
-        delete[] m_pageOff;
-        delete[] m_dataLen;
+        delete[] m_se;
 
 		m_ptrMBR = keepmbr;
 		m_pIdentifier = keepid;
 		m_children = lKeep;
 
-		for (uint32_t cDim = 0; cDim < m_nodeMBR.m_dimension; ++cDim)
+		for (uint32_t cDim = 0; cDim < 3; ++cDim)
 		{
-			m_nodeMBR.m_pLow[cDim] = std::numeric_limits<double>::max();
-			m_nodeMBR.m_pHigh[cDim] = -std::numeric_limits<double>::max();
+			m_nodeMBR.m_pLow(cDim) = std::numeric_limits<double>::max();
+			m_nodeMBR.m_pHigh(cDim) = -std::numeric_limits<double>::max();
 
 			for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child)
 			{
-				m_nodeMBR.m_pLow[cDim] = std::min(m_nodeMBR.m_pLow[cDim], m_ptrMBR[u32Child]->m_pLow[cDim]);
-				m_nodeMBR.m_pHigh[cDim] = std::max(m_nodeMBR.m_pHigh[cDim], m_ptrMBR[u32Child]->m_pHigh[cDim]);
+				m_nodeMBR.m_pLow(cDim) = std::min(m_nodeMBR.m_pLow(cDim), m_ptrMBR[u32Child]->m_pLow(cDim));
+				m_nodeMBR.m_pHigh(cDim) = std::max(m_nodeMBR.m_pHigh(cDim), m_ptrMBR[u32Child]->m_pHigh(cDim));
 			}
 		}
 
@@ -503,7 +440,6 @@ bool Node::insertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id
 		for (cIndex = 0; cIndex < lReinsert; ++cIndex)
 		{
 			m_pTree->insertData_impl(
-				reinsertlen[cIndex], reinsertdata[cIndex],
 				*(reinsertmbr[cIndex]), reinsertid[cIndex],
 				m_level, overflowTable);
 		}
@@ -519,7 +455,7 @@ bool Node::insertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id
 	{
 		NodePtr n;
 		NodePtr nn;
-		split(dataLength, pData, mbr, id, n, nn);
+		split(mbr, id, n, nn);
 
 		if (pathBuffer.empty())
 		{
@@ -540,11 +476,11 @@ bool Node::insertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id
 				//ptrR->m_pTree = m_pTree;
 				ptrR->m_identifier = m_pTree->m_rootID;
 				ptrR->m_level = m_level + 1;
-				ptrR->m_nodeMBR = m_pTree->m_infinitexMBR;
+				ptrR->m_nodeMBR.makeInfinite(2);
 			}
 
-			ptrR->insertEntry(0, 0, n->m_nodeMBR, n->m_identifier);
-			ptrR->insertEntry(0, 0, nn->m_nodeMBR, nn->m_identifier);
+			ptrR->insertEntry(n->m_nodeMBR, n->m_identifier);
+			ptrR->insertEntry(nn->m_nodeMBR, nn->m_identifier);
 
 			m_pTree->writeNode(ptrR.get());
 
@@ -572,7 +508,7 @@ bool Node::insertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id
 	}
 }
 
-void Node::reinsertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, std::vector<uint32_t>& reinsert, std::vector<uint32_t>& keep)
+void Node::reinsertData(xMBR& mbr, id_type id, std::vector<uint32_t>& reinsert, std::vector<uint32_t>& keep)
 {
 	ReinsertEntry** v = new ReinsertEntry*[m_capacity + 1];
 
@@ -600,9 +536,9 @@ void Node::reinsertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type 
 		m_ptrMBR[u32Child]->getCenter(*c);
 
 		// calculate relative distance of every entry from the node MBR (ignore square root.)
-		for (uint32_t cDim = 0; cDim < m_nodeMBR.m_dimension; ++cDim)
+		for (uint32_t cDim = 0; cDim < 3; ++cDim)
 		{
-			double d = nc->m_pCoords[cDim] - c->m_pCoords[cDim];
+			double d = nc->m_pCoords(cDim) - c->m_pCoords(cDim);
 			v[u32Child]->m_dist += d * d;
 		}
 	}
@@ -629,7 +565,7 @@ void Node::reinsertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type 
 	delete[] v;
 }
 
-void Node::xRTreeSplit(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, std::vector<uint32_t>& group1, std::vector<uint32_t>& group2)
+void Node::xRTreeSplit(xMBR& mbr, id_type id, std::vector<uint32_t>& group1, std::vector<uint32_t>& group2)
 {
 	uint32_t u32Child;
 	uint32_t minimumLoad = static_cast<uint32_t>(std::floor(m_capacity * m_pTree->m_fillFactor));
@@ -781,7 +717,7 @@ void Node::xRTreeSplit(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type i
 	delete[] mask;
 }
 
-void Node::rstarSplit(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, std::vector<uint32_t>& group1, std::vector<uint32_t>& group2)
+void Node::rstarSplit(xMBR& mbr, id_type id, std::vector<uint32_t>& group1, std::vector<uint32_t>& group2)
 {
 	RstarSplitEntry** dataLow = 0;
 	RstarSplitEntry** dataHigh = 0;
@@ -965,25 +901,25 @@ void Node::pickSeeds(uint32_t& index1, uint32_t& index2)
 		case RV_RSTAR:
 			for (cDim = 0; cDim < m_pTree->m_dimension; ++cDim)
 			{
-				double leastLower = m_ptrMBR[0]->m_pLow[cDim];
-				double greatestUpper = m_ptrMBR[0]->m_pHigh[cDim];
+				double leastLower = m_ptrMBR[0]->m_pLow(cDim);
+				double greatestUpper = m_ptrMBR[0]->m_pHigh(cDim);
 				uint32_t greatestLower = 0;
 				uint32_t leastUpper = 0;
 				double width;
 
 				for (u32Child = 1; u32Child <= m_capacity; ++u32Child)
 				{
-					if (m_ptrMBR[u32Child]->m_pLow[cDim] > m_ptrMBR[greatestLower]->m_pLow[cDim]) greatestLower = u32Child;
-					if (m_ptrMBR[u32Child]->m_pHigh[cDim] < m_ptrMBR[leastUpper]->m_pHigh[cDim]) leastUpper = u32Child;
+					if (m_ptrMBR[u32Child]->m_pLow(cDim) > m_ptrMBR[greatestLower]->m_pLow(cDim)) greatestLower = u32Child;
+					if (m_ptrMBR[u32Child]->m_pHigh(cDim) < m_ptrMBR[leastUpper]->m_pHigh(cDim)) leastUpper = u32Child;
 
-					leastLower = std::min(m_ptrMBR[u32Child]->m_pLow[cDim], leastLower);
-					greatestUpper = std::max(m_ptrMBR[u32Child]->m_pHigh[cDim], greatestUpper);
+					leastLower = std::min(m_ptrMBR[u32Child]->m_pLow(cDim), leastLower);
+					greatestUpper = std::max(m_ptrMBR[u32Child]->m_pHigh(cDim), greatestUpper);
 				}
 
 				width = greatestUpper - leastLower;
 				if (width <= 0) width = 1;
 
-				double f = (m_ptrMBR[greatestLower]->m_pLow[cDim] - m_ptrMBR[leastUpper]->m_pHigh[cDim]) / width;
+				double f = (m_ptrMBR[greatestLower]->m_pLow(cDim) - m_ptrMBR[leastUpper]->m_pHigh(cDim)) / width;
 
 				if (f > separation)
 				{
@@ -1081,15 +1017,15 @@ void Node::condenseTree(std::stack<NodePtr>& toReinsert, std::stack<id_type>& pa
 			// due to data removal.
 			if (m_pTree->m_bTightMBRs)
 			{
-				for (uint32_t cDim = 0; cDim < p->m_nodeMBR.m_dimension; ++cDim)
+				for (uint32_t cDim = 0; cDim < 3; ++cDim)
 				{
-					p->m_nodeMBR.m_pLow[cDim] = std::numeric_limits<double>::max();
-					p->m_nodeMBR.m_pHigh[cDim] = -std::numeric_limits<double>::max();
+					p->m_nodeMBR.m_pLow(cDim) = std::numeric_limits<double>::max();
+					p->m_nodeMBR.m_pHigh(cDim) = -std::numeric_limits<double>::max();
 
 					for (uint32_t u32Child = 0; u32Child < p->m_children; ++u32Child)
 					{
-						p->m_nodeMBR.m_pLow[cDim] = std::min(p->m_nodeMBR.m_pLow[cDim], p->m_ptrMBR[u32Child]->m_pLow[cDim]);
-						p->m_nodeMBR.m_pHigh[cDim] = std::max(p->m_nodeMBR.m_pHigh[cDim], p->m_ptrMBR[u32Child]->m_pHigh[cDim]);
+						p->m_nodeMBR.m_pLow(cDim) = std::min(p->m_nodeMBR.m_pLow(cDim), p->m_ptrMBR[u32Child]->m_pLow(cDim));
+						p->m_nodeMBR.m_pHigh(cDim) = std::max(p->m_nodeMBR.m_pHigh(cDim), p->m_ptrMBR[u32Child]->m_pHigh(cDim));
 					}
 				}
 			}

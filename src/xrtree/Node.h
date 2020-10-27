@@ -27,6 +27,8 @@
 
 #pragma once
 
+#include "storagemanager/xStore.h"
+
 namespace SpatialIndex
 {
 	namespace xRTree
@@ -79,15 +81,14 @@ namespace SpatialIndex
 			virtual Node& operator=(const Node&);
 
 //            virtual void insertEntry(uint32_t dataLength, uint8_t* pData, IShape& shape, id_type id);
-			virtual void insertEntry(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id);
-            virtual void insertEntry(uint32_t dataLength, uint8_t* pData,xMBR& mbr, xMBC& xMBC, id_type id);
+			virtual void insertEntry(xMBR& mbr,id_type id, xSBB* sbb= nullptr,xStoreEntry *e= nullptr);
 			virtual void deleteEntry(uint32_t index);
 
-			virtual bool insertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, std::stack<id_type>& pathBuffer, uint8_t* overflowTable);
-			virtual void reinsertData(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, std::vector<uint32_t>& reinsert, std::vector<uint32_t>& keep);
+			virtual bool insertData(xMBR& mbr, id_type id, std::stack<id_type>& pathBuffer, uint8_t* overflowTable);
+			virtual void reinsertData(xMBR& mbr, id_type id, std::vector<uint32_t>& reinsert, std::vector<uint32_t>& keep);
 
-			virtual void xRTreeSplit(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, std::vector<uint32_t>& group1, std::vector<uint32_t>& group2);
-			virtual void rstarSplit(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, std::vector<uint32_t>& group1, std::vector<uint32_t>& group2);
+			virtual void xRTreeSplit(xMBR& mbr, id_type id, std::vector<uint32_t>& group1, std::vector<uint32_t>& group2);
+			virtual void rstarSplit(xMBR& mbr, id_type id, std::vector<uint32_t>& group1, std::vector<uint32_t>& group2);
 
 			virtual void pickSeeds(uint32_t& index1, uint32_t& index2);
 
@@ -96,7 +97,7 @@ namespace SpatialIndex
 			virtual NodePtr chooseSubtree(const xMBR& mbr, uint32_t level, std::stack<id_type>& pathBuffer) = 0;
 			virtual NodePtr findLeaf(const xMBR& mbr, id_type id, std::stack<id_type>& pathBuffer) = 0;
 
-			virtual void split(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, NodePtr& left, NodePtr& right) = 0;
+			virtual void split(xMBR& mbr, id_type id, NodePtr& left, NodePtr& right) = 0;
 
 			xRTree* m_pTree;
 				// Parent of all nodes.
@@ -118,7 +119,7 @@ namespace SpatialIndex
 				// The minimum bounding xMBR enclosing all data contained in the node.
 
 			xMBRPtr* m_ptrMBR= nullptr;
-            xMBCPtr* m_ptrxMBC= nullptr;
+            xSBBPtr* m_ptrxSBB= nullptr;
 				// The corresponding data MBRs.
 
 
@@ -128,9 +129,7 @@ namespace SpatialIndex
             id_type* m_prevNode= nullptr;
             id_type* m_nextNode = nullptr;
 
-            id_type* m_pageNum= nullptr;
-            uint32_t* m_pageOff= nullptr;
-            uint32_t* m_dataLen= nullptr;
+            xStoreEntry* m_se;
 
 			class RstarSplitEntry
 			{
@@ -149,8 +148,8 @@ namespace SpatialIndex
 
 					assert(pe1->m_sortDim == pe2->m_sortDim);
 
-					if (pe1->m_pxMBR->m_pLow[pe1->m_sortDim] < pe2->m_pxMBR->m_pLow[pe2->m_sortDim]) return -1;
-					if (pe1->m_pxMBR->m_pLow[pe1->m_sortDim] > pe2->m_pxMBR->m_pLow[pe2->m_sortDim]) return 1;
+					if (pe1->m_pxMBR->m_pLow(pe1->m_sortDim) < pe2->m_pxMBR->m_pLow(pe2->m_sortDim)) return -1;
+					if (pe1->m_pxMBR->m_pLow(pe1->m_sortDim) > pe2->m_pxMBR->m_pLow(pe2->m_sortDim)) return 1;
 					return 0;
 				}
 
@@ -161,8 +160,8 @@ namespace SpatialIndex
 
 					assert(pe1->m_sortDim == pe2->m_sortDim);
 
-					if (pe1->m_pxMBR->m_pHigh[pe1->m_sortDim] < pe2->m_pxMBR->m_pHigh[pe2->m_sortDim]) return -1;
-					if (pe1->m_pxMBR->m_pHigh[pe1->m_sortDim] > pe2->m_pxMBR->m_pHigh[pe2->m_sortDim]) return 1;
+					if (pe1->m_pxMBR->m_pHigh(pe1->m_sortDim) < pe2->m_pxMBR->m_pHigh(pe2->m_sortDim)) return -1;
+					if (pe1->m_pxMBR->m_pHigh(pe1->m_sortDim) > pe2->m_pxMBR->m_pHigh(pe2->m_sortDim)) return 1;
 					return 0;
 				}
 			}; // RstarSplitEntry

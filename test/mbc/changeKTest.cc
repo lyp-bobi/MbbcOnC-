@@ -14,7 +14,6 @@ int main() {
         vector<pair<id_type, vector<Trajectory>>> segs1, segs2;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
-        rsimpli = false;
         bUsingSimp = true;
         vector<IShape *> queries;
         auto stat = trajStat::instance();
@@ -103,7 +102,6 @@ int main() {
         vector<pair<id_type, vector<Trajectory>>> segs1, segs2;
         vector<pair<id_type, vector<Trajectory>>> emptyseg;
         int maxseg = 0;
-        rsimpli = false;
         bUsingSimp = true;
         vector<IShape *> queries;
         auto stat = trajStat::instance();

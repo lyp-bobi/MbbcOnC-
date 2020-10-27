@@ -63,6 +63,7 @@ int main() {
                 IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096),
                         *diskfile1 = StorageManager::createNewDiskStorageManager(name1, 4096),
                         *diskfile2 = StorageManager::createNewDiskStorageManager(name2, 4096);
+
                 // Create a new storage manager with the provided base name and a 4K page size.
                 StorageManager::IBuffer *file0 = StorageManager::createNewRandomEvictionsBuffer(*diskfile0, 10, false),
                         *file1 = StorageManager::createNewRandomEvictionsBuffer(*diskfile1, 10, false),

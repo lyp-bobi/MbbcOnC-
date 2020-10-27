@@ -36,6 +36,7 @@
 #include <spatialindex/SpatialIndex.h>
 
 #include "xRTree.h"
+#include "Node.h"
 #include "Leaf.h"
 #include "Index.h"
 #include "BulkLoader.h"
@@ -47,10 +48,12 @@ using namespace SpatialIndex::xRTree;
 //
 // ExternalSorter::Record
 //
-ExternalSorter::Record::Record()
-:{}
+ExternalSorter::Record::Record(){}
 ExternalSorter::Record::Record(const xSBBData &shape, uint32_t s, uint32_t level)
 : m_s(s),m_level(level),m_b(shape)
+{}
+ExternalSorter::Record::Record(const id_type &id, const xMBR &r, uint32_t s, uint32_t level)
+        : m_s(s),m_level(level),m_id(id), m_r(r)
 {}
 
 ExternalSorter::Record::~Record()
@@ -76,6 +79,7 @@ void ExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)
     f.write(m_b.m_se.m_s);
     f.write(m_b.m_se.m_e);
     f.write(m_b.m_b.toString());
+    f.write(static_cast<uint64_t>(m_id));
 }
 
 void ExternalSorter::Record::loadFromFile(Tools::TemporaryFile& f)
@@ -87,6 +91,7 @@ void ExternalSorter::Record::loadFromFile(Tools::TemporaryFile& f)
 	m_b.m_se.m_s = f.readUInt32();
     m_b.m_se.m_e = f.readUInt32();
 	m_b.m_b.loadFromString(f.readString());
+    m_id =static_cast<id_type>(f.readUInt64());
 }
 
 //
@@ -306,7 +311,7 @@ void BulkLoader::bulkLoadUsingSTR(
 		throw Tools::IllegalArgumentException(
 			"xRTree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
 		);
-
+    auto stat=trajStat::instance();
 	NodePtr n = pTree->readNode(pTree->m_rootID);
 	pTree->deleteNode(n.get());
 
@@ -354,10 +359,10 @@ void BulkLoader::bulkLoadUsingSTR(
 		if (es->getTotalEntries() == 1) break;
 		es->sort();
 	}
-#ifdef Tristat
-	std::cerr<<"Lx is "<<calcuTime[0]/calcuTime[1]<<"\n";
-    std::cerr<<"Lt is "<<calcuTime[2]/calcuTime[1]<<"\n";
-#endif
+	pTree->m_part2node.clear();
+    std::map<id_type,id_type> empty;
+    pTree->m_part2node.swap(empty);
+    pTree->m_ts->m_property[pTree->m_name+std::to_string(stat->bt)]=pTree->m_rootID;
 	pTree->m_stats.m_u32TreeHeight = level;
 	pTree->storeHeader();
 }
@@ -405,12 +410,12 @@ void BulkLoader::createLevel(
 				Node* n = createNode(pTree, node, level);
 				node.clear();
 				pTree->writeNode(n);
-				es2->insert(new ExternalSorter::Record(n->m_nodeMBR, n->m_identifier, 0, 0, 0,level));
+				es2->insert(new ExternalSorter::Record(n->m_identifier,n->m_nodeMBR,0,level));
 				pTree->m_rootID = n->m_identifier;
                 if(level==0){
                     //state the storage place of bounding boxes
                     for(int i=0;i<n->m_children;i++){
-                        pTree->m_ts->m_part2node[n->m_pIdentifier[i]]=n->m_identifier;
+                        pTree->m_part2node[n->m_pIdentifier[i]]=n->m_identifier;
                     }
                 }
                 else if(level==1){
@@ -419,34 +424,21 @@ void BulkLoader::createLevel(
                         NodePtr child=pTree->readNode(n->m_pIdentifier[i]);
                         for(int j=0;j<child->m_children;j++){
                             id_type id=child->m_pIdentifier[j];
-                            xStore::Entry *entry;
-                            if(pTree->m_ts->m_stream!= nullptr){
-                                auto it=pTree->m_ts->
-                                        m_dentries.search(std::to_string(id));
-                                DiskMultiMap::MultiMapTuple tuple = *it;
-                                entry=new xStore::Entry(tuple.value);
-                            }else{
-                                entry=pTree->m_ts->m_entries[id];
-                            }
-                            id_type pvId=entry->m_pvId;
-                            if(pvId>=0){
-                                auto store=pTree->m_ts->m_part2node[pvId];
+                            pair<bool,bool> pvnt= pTree->m_ts->checkpvnt(*(child->m_se));
+                            if(pvnt.first){
+                                auto store=pTree->m_part2node[id-1];
                                 child->m_prevNode[j]=store;
 //                                std::cerr<<"linked"<<id<<"to"<<pvId<<"\n";
                             }else{
                                 child->m_prevNode[j]=-1;
                             }
-                            id_type ntId=entry->m_ntId;
-                            if(ntId>=0){
-                                auto store=pTree->m_ts->m_part2node[ntId];
+                            if(pvnt.second){
+                                auto store=pTree->m_part2node[id+1];
                                 child->m_nextNode[j]=store;
 //                                std::cerr<<"linked"<<id<<"to"<<ntId<<"\n";
                             }else{
                                 child->m_nextNode[j]=-1;
                             }
-                            child->m_pageNum[j]=entry->m_page;
-                            child->m_pageOff[j]=entry->m_start;
-                            child->m_dataLen[j]=entry->m_len;
 //                            std::cerr<<store->m_page<<" "<<store->m_start<<" "<<store->m_len<<"\n";
                         }
                         pTree->writeNode(child.get());
@@ -461,12 +453,12 @@ void BulkLoader::createLevel(
 		{
 			Node* n = createNode(pTree, node, level);
 			pTree->writeNode(n);
-			es2->insert(new ExternalSorter::Record(n->m_nodeMBR, n->m_identifier, 0, 0, 0,level));
+			es2->insert(new ExternalSorter::Record( n->m_identifier,n->m_nodeMBR, 0,level));
 			pTree->m_rootID = n->m_identifier;
             if(level==0){
                 //state the storage place of bounding boxes
                 for(int i=0;i<n->m_children;i++){
-                    pTree->m_ts->m_part2node[n->m_pIdentifier[i]]=n->m_identifier;
+                    pTree->m_part2node[n->m_pIdentifier[i]]=n->m_identifier;
                 }
             }
             else if(level==1){
@@ -475,34 +467,21 @@ void BulkLoader::createLevel(
                     NodePtr child=pTree->readNode(n->m_pIdentifier[i]);
                     for(int j=0;j<child->m_children;j++){
                         id_type id=child->m_pIdentifier[j];
-                        xStore::Entry *entry;
-                        if(pTree->m_ts->m_stream!= nullptr){
-                            auto it=pTree->m_ts->
-                                    m_dentries.search(std::to_string(id));
-                            DiskMultiMap::MultiMapTuple tuple = *it;
-                            entry=new xStore::Entry(tuple.value);
-                        }else{
-                            entry=pTree->m_ts->m_entries[id];
-                        }
-                        id_type pvId=entry->m_pvId;
-                        if(pvId>=0){
-                            auto store=pTree->m_ts->m_part2node[pvId];
+                        pair<bool,bool> pvnt= pTree->m_ts->checkpvnt(*(child->m_se));
+                        if(pvnt.first){
+                            auto store=pTree->m_part2node[id-1];
                             child->m_prevNode[j]=store;
 //                                std::cerr<<"linked"<<id<<"to"<<pvId<<"\n";
                         }else{
                             child->m_prevNode[j]=-1;
                         }
-                        id_type ntId=entry->m_ntId;
-                        if(ntId>=0){
-                            auto store=pTree->m_ts->m_part2node[ntId];
+                        if(pvnt.second){
+                            auto store=pTree->m_part2node[id+1];
                             child->m_nextNode[j]=store;
 //                                std::cerr<<"linked"<<id<<"to"<<ntId<<"\n";
                         }else{
                             child->m_nextNode[j]=-1;
                         }
-                        child->m_pageNum[j]=entry->m_page;
-                        child->m_pageOff[j]=entry->m_start;
-                        child->m_dataLen[j]=entry->m_len;
 //                            std::cerr<<store->m_page<<" "<<store->m_start<<" "<<store->m_len<<"\n";
                     }
                     pTree->writeNode(child.get());
@@ -524,7 +503,6 @@ void BulkLoader::createLevel(
         }
 		while (bMore)
 		{
-		    double lastTime;
 			Tools::SmartPointer<ExternalSorter> es3 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
             pR->m_s = dimension + 1;
             es3->insert(pR);
@@ -536,7 +514,6 @@ void BulkLoader::createLevel(
                     break;
                 }
                 pR->m_s = dimension + 1;
-                lastTime=(pR->m_r.m_pLow[2]+pR->m_r.m_pHigh[2])/2;
                 es3->insert(pR);
             }
             try { pR = es->getNextRecord(); }
@@ -573,17 +550,10 @@ Node* BulkLoader::createNode(SpatialIndex::xRTree::xRTree* pTree, std::vector<Ex
 
 	for (size_t cChild = 0; cChild < e.size(); ++cChild)
 	{
-        if (level == 0) n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData,e[cChild]->m_r, e[cChild]->m_xMBC, e[cChild]->m_id);
-        else n->insertEntry(e[cChild]->m_len, e[cChild]->m_pData, e[cChild]->m_r, e[cChild]->m_id);
-	    e[cChild]->m_pData = 0;
+        if (level == 0) n->insertEntry(e[cChild]->m_r,e[cChild]->m_b.m_sbbid,
+                                       &(e[cChild]->m_b.m_b),&(e[cChild]->m_b.m_se));
+        else n->insertEntry(e[cChild]->m_r,e[cChild]->m_id);
 		delete e[cChild];
 	}
-#ifdef Tristat
-    if(level==0){
-        calcuTime[0]+=(n->m_nodeMBR.m_pHigh[0]-n->m_nodeMBR.m_pLow[0]);
-        calcuTime[2]+=(n->m_nodeMBR.m_pHigh[2]-n->m_nodeMBR.m_pLow[2]);
-        calcuTime[1]+=1;
-    }
-#endif
 	return n;
 }

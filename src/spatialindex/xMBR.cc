@@ -172,6 +172,13 @@ void xMBR::getCenter(Point& out) const
 {
 }
 
+void xMBR::getCenter(xPoint& out) const
+{
+    out.m_x=(m_xmin+m_xmax)/2;
+    out.m_y=(m_ymin+m_ymax)/2;
+    out.m_t=(m_tmin+m_tmax)/2;
+}
+
 uint32_t xMBR::getDimension() const
 {
 	return 2;

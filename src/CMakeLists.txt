@@ -46,13 +46,11 @@ set(SIDX_CAPI_HPP
   "${SIDX_HEADERS_CAPI_DIR}/BoundsQuery.h"
   "${SIDX_HEADERS_CAPI_DIR}/CountVisitor.h"
   "${SIDX_HEADERS_CAPI_DIR}/CustomStorage.h"
-  "${SIDX_HEADERS_CAPI_DIR}/DataStream.h"
   "${SIDX_HEADERS_CAPI_DIR}/Error.h"
   "${SIDX_HEADERS_CAPI_DIR}/IdVisitor.h"
-  "${SIDX_HEADERS_CAPI_DIR}/Index.h"
   "${SIDX_HEADERS_CAPI_DIR}/LeafQuery.h"
   "${SIDX_HEADERS_CAPI_DIR}/ObjVisitor.h"
-  "${SIDX_HEADERS_CAPI_DIR}/sidx_api.h"
+#  "${SIDX_HEADERS_CAPI_DIR}/sidx_api.h"
   "${SIDX_HEADERS_CAPI_DIR}/sidx_config.h"
   "${SIDX_HEADERS_CAPI_DIR}/sidx_impl.h"
   "${SIDX_HEADERS_CAPI_DIR}/Utility.h"
@@ -63,13 +61,11 @@ set(SIDX_CAPI_CPP
   "${SIDX_CAPI_DIR}/BoundsQuery.cc"
   "${SIDX_CAPI_DIR}/CountVisitor.cc"
   "${SIDX_CAPI_DIR}/CustomStorage.cc"
-  "${SIDX_CAPI_DIR}/DataStream.cc"
   "${SIDX_CAPI_DIR}/Error.cc"
   "${SIDX_CAPI_DIR}/IdVisitor.cc"
-  "${SIDX_CAPI_DIR}/Index.cc"
   "${SIDX_CAPI_DIR}/LeafQuery.cc"
   "${SIDX_CAPI_DIR}/ObjVisitor.cc"
-  "${SIDX_CAPI_DIR}/sidx_api.cc"
+#  "${SIDX_CAPI_DIR}/sidx_api.cc"
   "${SIDX_CAPI_DIR}/Utility.cc")
 
 
@@ -132,7 +128,7 @@ set(SIDX_XRTREE_CPP
         "${SIDX_SRC_DIR}/xrtree/xRTree.h"
         "${SIDX_SRC_DIR}/xrtree/Statistics.cc"
         "${SIDX_SRC_DIR}/xrtree/Statistics.h"
-        "${SIDX_SRC_DIR}/xrtree/TrajStoreRelated.cc"
+        "${SIDX_SRC_DIR}/xrtree/IndexBuildHelper.cc"
         )
 list (APPEND SIDX_CPP ${SIDX_XRTREE_CPP})
 

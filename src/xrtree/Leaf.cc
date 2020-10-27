@@ -64,7 +64,7 @@ NodePtr Leaf::findLeaf(const xMBR& mbr, id_type id, std::stack<id_type>&)
 	return NodePtr();
 }
 
-void Leaf::split(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, NodePtr& pLeft, NodePtr& pRight)
+void Leaf::split(xMBR& mbr, id_type id, NodePtr& pLeft, NodePtr& pRight)
 {
 	++(m_pTree->m_stats.m_u64Splits);
 
@@ -74,10 +74,10 @@ void Leaf::split(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, Nod
 	{
 		case RV_LINEAR:
 		case RV_QUADRATIC:
-			xRTreeSplit(dataLength, pData, mbr, id, g1, g2);
+			xRTreeSplit(mbr, id, g1, g2);
 			break;
 		case RV_RSTAR:
-			rstarSplit(dataLength, pData, mbr, id, g1, g2);
+			rstarSplit(mbr, id, g1, g2);
 			break;
 		default:
 			throw Tools::NotSupportedException("Leaf::split: Tree variant not supported.");
@@ -89,20 +89,20 @@ void Leaf::split(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, Nod
 	if (pLeft.get() == 0) pLeft = NodePtr(new Leaf(m_pTree, -1), &(m_pTree->m_leafPool));
 	if (pRight.get() == 0) pRight = NodePtr(new Leaf(m_pTree, -1), &(m_pTree->m_leafPool));
 
-	pLeft->m_nodeMBR = m_pTree->m_infinitexMBR;
-	pRight->m_nodeMBR = m_pTree->m_infinitexMBR;
+	pLeft->m_nodeMBR.makeInfinite(2);
+	pRight->m_nodeMBR.makeInfinite(2);
 
 	uint32_t cIndex;
 
 	for (cIndex = 0; cIndex < g1.size(); ++cIndex)
 	{
-		pLeft->insertEntry(0, 0, *(m_ptrMBR[g1[cIndex]]), m_pIdentifier[g1[cIndex]]);
+		pLeft->insertEntry( *(m_ptrMBR[g1[cIndex]]), m_pIdentifier[g1[cIndex]]);
 		// we don't want to delete the data array from this node's destructor!
 	}
 
 	for (cIndex = 0; cIndex < g2.size(); ++cIndex)
 	{
-		pRight->insertEntry(0, 0, *(m_ptrMBR[g2[cIndex]]), m_pIdentifier[g2[cIndex]]);
+		pRight->insertEntry(*(m_ptrMBR[g2[cIndex]]), m_pIdentifier[g2[cIndex]]);
 		// we don't want to delete the data array from this node's destructor!
 	}
 }
@@ -135,7 +135,7 @@ void Leaf::deleteData(id_type id, std::stack<id_type>& pathBuffer)
 			// keep this in the for loop. The tree height might change after insertions.
 			uint8_t* overflowTable = new uint8_t[m_pTree->m_stats.m_u32TreeHeight];
 			memset(overflowTable, 0, m_pTree->m_stats.m_u32TreeHeight);
-			m_pTree->insertData_impl(0, 0, *(n->m_ptrMBR[cChild]), n->m_pIdentifier[cChild], n->m_level, overflowTable);
+			m_pTree->insertData_impl(*(n->m_ptrMBR[cChild]), n->m_pIdentifier[cChild], n->m_level, overflowTable);
 			delete[] overflowTable;
 		}
 		if (n.get() == this) n.relinquish();

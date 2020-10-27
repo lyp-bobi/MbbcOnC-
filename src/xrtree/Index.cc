@@ -102,7 +102,7 @@ NodePtr Index::findLeaf(const xMBR& mbr, id_type id, std::stack<id_type>& pathBu
 	return NodePtr();
 }
 
-void Index::split(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, NodePtr& ptrLeft, NodePtr& ptrRight)
+void Index::split(xMBR& mbr, id_type id, NodePtr& ptrLeft, NodePtr& ptrRight)
 {
 	++(m_pTree->m_stats.m_u64Splits);
 
@@ -112,10 +112,10 @@ void Index::split(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, No
 	{
 		case RV_LINEAR:
 		case RV_QUADRATIC:
-			xRTreeSplit(dataLength, pData, mbr, id, g1, g2);
+			xRTreeSplit(mbr, id, g1, g2);
 			break;
 		case RV_RSTAR:
-			rstarSplit(dataLength, pData, mbr, id, g1, g2);
+			rstarSplit(mbr, id, g1, g2);
 			break;
 		default:
 			throw Tools::NotSupportedException("Index::split: Tree variant not supported.");
@@ -127,19 +127,19 @@ void Index::split(uint32_t dataLength, uint8_t* pData, xMBR& mbr, id_type id, No
 	if (ptrLeft.get() == 0) ptrLeft = NodePtr(new Index(m_pTree, m_identifier, m_level), &(m_pTree->m_indexPool));
 	if (ptrRight.get() == 0) ptrRight = NodePtr(new Index(m_pTree, -1, m_level), &(m_pTree->m_indexPool));
 
-	ptrLeft->m_nodeMBR = m_pTree->m_infinitexMBR;
-	ptrRight->m_nodeMBR = m_pTree->m_infinitexMBR;
+	ptrLeft->m_nodeMBR.makeInfinite(2);
+	ptrRight->m_nodeMBR.makeInfinite(2);
 
 	uint32_t cIndex;
 
 	for (cIndex = 0; cIndex < g1.size(); ++cIndex)
 	{
-		ptrLeft->insertEntry(0, 0, *(m_ptrMBR[g1[cIndex]]), m_pIdentifier[g1[cIndex]]);
+		ptrLeft->insertEntry(*(m_ptrMBR[g1[cIndex]]), m_pIdentifier[g1[cIndex]]);
 	}
 
 	for (cIndex = 0; cIndex < g2.size(); ++cIndex)
 	{
-		ptrRight->insertEntry(0, 0, *(m_ptrMBR[g2[cIndex]]), m_pIdentifier[g2[cIndex]]);
+		ptrRight->insertEntry(*(m_ptrMBR[g2[cIndex]]), m_pIdentifier[g2[cIndex]]);
 	}
 }
 
@@ -302,15 +302,15 @@ void Index::adjustTree(Node* n, std::stack<id_type>& pathBuffer)
 
 	if (bRecompute)
 	{
-		for (uint32_t cDim = 0; cDim < m_nodeMBR.m_dimension; ++cDim)
+		for (uint32_t cDim = 0; cDim <3; ++cDim)
 		{
-			m_nodeMBR.m_pLow[cDim] = std::numeric_limits<double>::max();
-			m_nodeMBR.m_pHigh[cDim] = -std::numeric_limits<double>::max();
+			m_nodeMBR.m_pLow(cDim) = std::numeric_limits<double>::max();
+			m_nodeMBR.m_pHigh(cDim) = -std::numeric_limits<double>::max();
 
 			for (uint32_t cChild = 0; cChild < m_children; ++cChild)
 			{
-				m_nodeMBR.m_pLow[cDim] = std::min(m_nodeMBR.m_pLow[cDim], m_ptrMBR[cChild]->m_pLow[cDim]);
-				m_nodeMBR.m_pHigh[cDim] = std::max(m_nodeMBR.m_pHigh[cDim], m_ptrMBR[cChild]->m_pHigh[cDim]);
+				m_nodeMBR.m_pLow(cDim) = std::min(m_nodeMBR.m_pLow(cDim), m_ptrMBR[cChild]->m_pLow(cDim));
+				m_nodeMBR.m_pHigh(cDim) = std::max(m_nodeMBR.m_pHigh(cDim), m_ptrMBR[cChild]->m_pHigh(cDim));
 			}
 		}
 	}
@@ -348,15 +348,15 @@ void Index::adjustTree(Node* n1, Node* n2, std::stack<id_type>& pathBuffer, uint
 
 	if (bRecompute)
 	{
-		for (uint32_t cDim = 0; cDim < m_nodeMBR.m_dimension; ++cDim)
+		for (uint32_t cDim = 0; cDim < 3; ++cDim)
 		{
-			m_nodeMBR.m_pLow[cDim] = std::numeric_limits<double>::max();
-			m_nodeMBR.m_pHigh[cDim] = -std::numeric_limits<double>::max();
+			m_nodeMBR.m_pLow(cDim) = std::numeric_limits<double>::max();
+			m_nodeMBR.m_pHigh(cDim) = -std::numeric_limits<double>::max();
 
 			for (uint32_t cChild = 0; cChild < m_children; ++cChild)
 			{
-				m_nodeMBR.m_pLow[cDim] = std::min(m_nodeMBR.m_pLow[cDim], m_ptrMBR[cChild]->m_pLow[cDim]);
-				m_nodeMBR.m_pHigh[cDim] = std::max(m_nodeMBR.m_pHigh[cDim], m_ptrMBR[cChild]->m_pHigh[cDim]);
+				m_nodeMBR.m_pLow(cDim) = std::min(m_nodeMBR.m_pLow(cDim), m_ptrMBR[cChild]->m_pLow(cDim));
+				m_nodeMBR.m_pHigh(cDim) = std::max(m_nodeMBR.m_pHigh(cDim), m_ptrMBR[cChild]->m_pHigh(cDim));
 			}
 		}
 	}
@@ -364,7 +364,7 @@ void Index::adjustTree(Node* n1, Node* n2, std::stack<id_type>& pathBuffer, uint
 	// No write necessary here. insertData will write the node if needed.
 	//m_pTree->writeNode(this);
 
-	bool bAdjusted = insertData(0, 0, n2->m_nodeMBR, n2->m_identifier, pathBuffer, overflowTable);
+	bool bAdjusted = insertData(n2->m_nodeMBR, n2->m_identifier, pathBuffer, overflowTable);
 
 	// if n2 is contained in the node and there was no split or reinsert,
 	// we need to adjust only if recalculation took place.
