@@ -14,6 +14,8 @@ namespace SpatialIndex
         xSBB(xMBR &r);
         xSBB(xMBC &r);
         xSBB(xLine &r);
+        xSBB(xMBR &r,xMBC &r2);
+        xSBB(xMBR &r,xLine &r2);
         ~xSBB();
         xSBB &operator=(const xSBB &r);
 
@@ -32,12 +34,14 @@ namespace SpatialIndex
         bool hasbc=false;
         bool hasbl=false;
 
-        xMBR *br;
-        xMBC *bc;
-        xLine *bl;
+        xMBR br;
+        xMBC bc;
+        xLine bl;
 
         std::string toString() const ;
         void loadFromString(std::string s);
+
+        void init();
 
     private:
     };

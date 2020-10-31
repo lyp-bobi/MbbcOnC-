@@ -53,6 +53,8 @@ namespace SpatialIndex
 	class LineSegment;
 	class Region;
 	class xMBR;
+    class xTrajectory;
+
 
 	struct DISTE{
 	    double opt=0;
@@ -301,7 +303,7 @@ namespace SpatialIndex
 		~trajStat(){delete singleton;}
 		static trajStat* singleton;
 	public:
-		double bt=0;
+		double bt=10000;
 		double M=0;//total time
 		long lineCount=0;
 		long trajCount=0;

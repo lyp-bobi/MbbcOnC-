@@ -121,8 +121,27 @@ void xMBR::storeToByteArray(uint8_t** data, uint32_t& len)
     memcpy(ptr, &m_tmin, sizeof(double));
     ptr += sizeof(double);
     memcpy(ptr, &m_tmax, sizeof(double));
+//    ptr += sizeof(double);
+}
+
+
+void xMBR::storeToByteArrayE(uint8_t** data, uint32_t& len)
+{
+    len = getByteArraySize();
+    uint8_t* ptr = *data;
+
+    memcpy(ptr, &m_xmin, sizeof(double));
     ptr += sizeof(double);
-    
+    memcpy(ptr, &m_xmax, sizeof(double));
+    ptr += sizeof(double);
+    memcpy(ptr, &m_ymin, sizeof(double));
+    ptr += sizeof(double);
+    memcpy(ptr, &m_ymax, sizeof(double));
+    ptr += sizeof(double);
+    memcpy(ptr, &m_tmin, sizeof(double));
+    ptr += sizeof(double);
+    memcpy(ptr, &m_tmax, sizeof(double));
+//    ptr += sizeof(double);
 }
 //
 // IShape interface

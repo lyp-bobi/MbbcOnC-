@@ -5,11 +5,11 @@
 
 #pragma once
 #include <cmath>
+#include "storagemanager/xStore.h"
 #define subTrajFile "./subTrajFile.stj"
 
 #define random(x, y) (((double)rand()/RAND_MAX)*(y-x)+x)
 
-#define Tristat
 
 #define bip auto start = std::chrono::system_clock::now();
 #define bbip auto end = std::chrono::system_clock::now();auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);calcuTime[testPhase]+=double(duration.count()) * std::chrono::microseconds::period::num/ std::chrono::microseconds::period::den;
@@ -99,6 +99,8 @@ namespace SpatialIndex
 
         virtual void storeToByteArray(uint8_t **data, uint32_t &len);
 
+        virtual void storeToByteArrayE(uint8_t** data, uint32_t& len);
+
 
 
         //
@@ -144,6 +146,8 @@ namespace SpatialIndex
         static std::vector<std::vector<SpatialIndex::xPoint>> simplifyWithRDPN(const std::vector<SpatialIndex::xPoint>& Points, int numPart);
         static std::vector<SpatialIndex::xPoint> simplifyWithRDP(const std::vector<SpatialIndex::xPoint>& Points, double threshold);
         std::vector<xTrajectory> cuttraj(std::vector<SpatialIndex::xPoint>);
+
+
         std::vector<xTrajectory> getSegments(double len) const;
         std::vector<xTrajectory> getHybridSegments(double len) const;
         std::vector<xTrajectory> getRDPSegments(double len) const;
@@ -152,6 +156,8 @@ namespace SpatialIndex
         std::vector<xTrajectory> getFixedSegments(int len=169) const;
         std::vector<xTrajectory> getGlobalSegmentsCut(double len) const;
         std::vector<xTrajectory> getItself() const;
+
+        static list<CUTENTRY> GLL(xTrajectory &traj);
 
         void linkxTrajectory(xTrajectory &other);
 

@@ -37,10 +37,10 @@
 #include "xRTree.h"
 
 
-using namespace SpatialIndex::xRTree;
+using namespace SpatialIndex::xRTreeNsp;
 using namespace SpatialIndex;
 
-SpatialIndex::xRTree::xRTree::xRTree(IStorageManager& sm, Tools::PropertySet& ps) :
+SpatialIndex::xRTreeNsp::xRTree::xRTree(IStorageManager& sm, Tools::PropertySet& ps) :
 	m_pStorageManager(&sm),
 	m_rootID(StorageManager::NewPage),
 	m_headerID(StorageManager::NewPage),
@@ -82,7 +82,7 @@ SpatialIndex::xRTree::xRTree::xRTree(IStorageManager& sm, Tools::PropertySet& ps
 	}
 }
 
-SpatialIndex::xRTree::xRTree::~xRTree()
+SpatialIndex::xRTreeNsp::xRTree::~xRTree()
 {
 #ifdef HAVE_PTHREAD_H
 	pthread_mutex_destroy(&m_lock);
@@ -92,7 +92,7 @@ SpatialIndex::xRTree::xRTree::~xRTree()
 }
 
 
-void SpatialIndex::xRTree::xRTree::getIndexProperties(Tools::PropertySet& out) const
+void SpatialIndex::xRTreeNsp::xRTree::getIndexProperties(Tools::PropertySet& out) const
 {
 	Tools::Variant var;
 
@@ -162,12 +162,12 @@ void SpatialIndex::xRTree::xRTree::getIndexProperties(Tools::PropertySet& out) c
 	out.setProperty("xPointPoolCapacity", var);
 }
 
-void SpatialIndex::xRTree::xRTree::getStatistics(IStatistics** out) const
+void SpatialIndex::xRTreeNsp::xRTree::getStatistics(IStatistics** out) const
 {
 	*out = new Statistics(m_stats);
 }
 
-void SpatialIndex::xRTree::xRTree::initNew(Tools::PropertySet& ps)
+void SpatialIndex::xRTreeNsp::xRTree::initNew(Tools::PropertySet& ps)
 {
 	Tools::Variant var;
 
@@ -337,7 +337,7 @@ void SpatialIndex::xRTree::xRTree::initNew(Tools::PropertySet& ps)
 	storeHeader();
 }
 
-void SpatialIndex::xRTree::xRTree::initOld(Tools::PropertySet& ps)
+void SpatialIndex::xRTreeNsp::xRTree::initOld(Tools::PropertySet& ps)
 {
 	loadHeader();
 
@@ -440,7 +440,7 @@ void SpatialIndex::xRTree::xRTree::initOld(Tools::PropertySet& ps)
 	}
 }
 
-void SpatialIndex::xRTree::xRTree::storeHeader()
+void SpatialIndex::xRTreeNsp::xRTree::storeHeader()
 {
 	const uint32_t headerSize =
 		sizeof(id_type) +						// m_rootID
@@ -500,7 +500,7 @@ void SpatialIndex::xRTree::xRTree::storeHeader()
 	delete[] header;
 }
 
-void SpatialIndex::xRTree::xRTree::loadHeader()
+void SpatialIndex::xRTreeNsp::xRTree::loadHeader()
 {
 	uint32_t headerSize;
 	uint8_t* header = 0;
@@ -548,11 +548,13 @@ void SpatialIndex::xRTree::xRTree::loadHeader()
 	delete[] header;
 }
 
-SpatialIndex::id_type SpatialIndex::xRTree::xRTree::writeNode(Node* n)
+SpatialIndex::id_type SpatialIndex::xRTreeNsp::xRTree::writeNode(Node* n)
 {
 	uint8_t* buffer;
 	uint32_t dataLength;
 	n->storeToByteArray(&buffer, dataLength);
+
+	n->loadFromByteArray(buffer);
 
 	id_type page;
 	if (n->m_identifier < 0) page = StorageManager::NewPage;
@@ -594,7 +596,7 @@ SpatialIndex::id_type SpatialIndex::xRTree::xRTree::writeNode(Node* n)
 	return page;
 }
 
-SpatialIndex::xRTree::NodePtr SpatialIndex::xRTree::xRTree::readNode(id_type page)
+SpatialIndex::xRTreeNsp::NodePtr SpatialIndex::xRTreeNsp::xRTree::readNode(id_type page)
 {
     m_ts->m_indexIO++;
 	uint32_t dataLength;
@@ -643,7 +645,7 @@ SpatialIndex::xRTree::NodePtr SpatialIndex::xRTree::xRTree::readNode(id_type pag
 	}
 }
 
-void SpatialIndex::xRTree::xRTree::deleteNode(Node* n)
+void SpatialIndex::xRTreeNsp::xRTree::deleteNode(Node* n)
 {
     try
     {
@@ -662,7 +664,7 @@ void SpatialIndex::xRTree::xRTree::deleteNode(Node* n)
 
 
 
-std::ostream& SpatialIndex::xRTree::operator<<(std::ostream& os, const xRTree& t)
+std::ostream& SpatialIndex::xRTreeNsp::operator<<(std::ostream& os, const xRTree& t)
 {
 	os	<< "Dimension: " << t.m_dimension << std::endl
 		<< "Fill factor: " << t.m_fillFactor << std::endl
@@ -700,7 +702,7 @@ std::ostream& SpatialIndex::xRTree::operator<<(std::ostream& os, const xRTree& t
 
 
 
-void SpatialIndex::xRTree::xRTree::insertData_impl(xMBR& mbr, id_type id)
+void SpatialIndex::xRTreeNsp::xRTree::insertData_impl(xMBR& mbr, id_type id)
 {
     assert(mbr.getDimension() == m_dimension);
 
@@ -732,7 +734,7 @@ void SpatialIndex::xRTree::xRTree::insertData_impl(xMBR& mbr, id_type id)
     }
 }
 
-void SpatialIndex::xRTree::xRTree::insertData_impl(xMBR& mbr, id_type id, uint32_t level, uint8_t* overflowTable)
+void SpatialIndex::xRTreeNsp::xRTree::insertData_impl(xMBR& mbr, id_type id, uint32_t level, uint8_t* overflowTable)
 {
     assert(mbr.getDimension() == m_dimension);
 
@@ -750,7 +752,7 @@ void SpatialIndex::xRTree::xRTree::insertData_impl(xMBR& mbr, id_type id, uint32
     n->insertData(mbr, id, pathBuffer, overflowTable);
 }
 
-bool SpatialIndex::xRTree::xRTree::deleteData_impl(const xMBR& mbr, id_type id)
+bool SpatialIndex::xRTreeNsp::xRTree::deleteData_impl(const xMBR& mbr, id_type id)
 {
     std::stack<id_type> pathBuffer;
     NodePtr root = readNode(m_rootID);

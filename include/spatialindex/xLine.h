@@ -30,6 +30,8 @@ namespace SpatialIndex
 
         virtual void storeToByteArray(uint8_t **data, uint32_t &len);
 
+        virtual void storeToByteArrayE(uint8_t** data, uint32_t& len);
+
         virtual std::pair<xPoint,double> getCenterRdAtTime(double t) const;
 
 

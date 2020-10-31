@@ -51,6 +51,7 @@ namespace SpatialIndex
 		virtual uint32_t getByteArraySize() const;
 		virtual void loadFromByteArray(const uint8_t* data);
 		virtual void storeToByteArray(uint8_t** data, uint32_t& length);
+        virtual void storeToByteArrayE(uint8_t** data, uint32_t& len);
 
 		//
 		// IShape interface

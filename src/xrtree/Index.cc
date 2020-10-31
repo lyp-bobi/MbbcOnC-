@@ -34,13 +34,13 @@
 #include "Index.h"
 
 using namespace SpatialIndex;
-using namespace SpatialIndex::xRTree;
+using namespace SpatialIndex::xRTreeNsp;
 
 Index::~Index()
 {
 }
 
-Index::Index(SpatialIndex::xRTree::xRTree* pTree, id_type id, uint32_t level) : Node(pTree, id, level, pTree->m_indexCapacity)
+Index::Index(SpatialIndex::xRTreeNsp::xRTree* pTree, id_type id, uint32_t level) : Node(pTree, id, level, pTree->m_indexCapacity)
 {
 }
 

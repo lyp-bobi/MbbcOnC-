@@ -29,8 +29,9 @@
 
 namespace SpatialIndex
 {
-	namespace xRTree
+	namespace xRTreeNsp
 	{
+#define PageSizeDefault 4096
 		SIDX_DLL enum xRTreeVariant
 		{
 			RV_LINEAR = 0x0,
@@ -54,5 +55,14 @@ namespace SpatialIndex
 			ContainmentQuery = 0x1,
 			IntersectionQuery = 0x2
 		};
+        class xRTree;
+        xRTree* createNewxRTree(IStorageManager* store,long indexfan, long leaffan);
+
+        SIDX_DLL xRTree* buildMBRRTree(IStorageManager* store,const CUTFUNC &f);
+//        xRTree* buildMBCRTree(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
+//        xRTree* buildTBTree2(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
+//        xRTree* buildTBTree(xStore* store);
+//        xRTree* build3DRTree(xStore* store);
+//        xRTree* buildSTRTree(xStore* store);
 	}
 }

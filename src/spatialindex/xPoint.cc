@@ -86,7 +86,21 @@ void xPoint::storeToByteArray(uint8_t** data, uint32_t& len)
     memcpy(ptr, &m_y, sizeof(prex));
     ptr += sizeof(prex);
 	memcpy(ptr, &m_t, sizeof(prex));
-//	ptr += sizeof(double);
+//	ptr += sizeof(prex);
+
+}
+
+void xPoint::storeToByteArrayE(uint8_t** data, uint32_t& len)
+{
+    len = getByteArraySize();
+    uint8_t* ptr = *data;
+
+    memcpy(ptr, &m_x, sizeof(prex));
+    ptr += sizeof(prex);
+    memcpy(ptr, &m_y, sizeof(prex));
+    ptr += sizeof(prex);
+    memcpy(ptr, &m_t, sizeof(prex));
+//	ptr += sizeof(prex);
 
 }
 

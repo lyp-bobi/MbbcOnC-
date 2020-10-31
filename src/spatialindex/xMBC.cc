@@ -71,16 +71,36 @@ void xMBC::storeToByteArray(uint8_t **data, uint32_t &len) {
     *data = new uint8_t[len];
     uint8_t* ptr = *data;
     uint32_t tmp;
-    m_ps.storeToByteArray(&ptr,tmp);
+    m_ps.storeToByteArrayE(&ptr,tmp);
     ptr+=tmp;
-    m_pe.storeToByteArray(&ptr,tmp);
+    m_pe.storeToByteArrayE(&ptr,tmp);
     ptr+=tmp;
     memcpy(ptr, &m_rd, sizeof(double));
     ptr += sizeof(double);
     memcpy(ptr, &m_rv, sizeof(double));
+    len = getByteArraySize();
 //    ptr += sizeof(double);
     //ptr += m_dimension * sizeof(double);
 }
+
+
+
+void xMBC::storeToByteArrayE(uint8_t **data, uint32_t &len) {
+    len = getByteArraySize();
+    uint8_t* ptr = *data;
+    uint32_t tmp;
+    m_ps.storeToByteArrayE(&ptr,tmp);
+    ptr+=tmp;
+    m_pe.storeToByteArrayE(&ptr,tmp);
+    ptr+=tmp;
+    memcpy(ptr, &m_rd, sizeof(double));
+    ptr += sizeof(double);
+    memcpy(ptr, &m_rv, sizeof(double));
+    len = getByteArraySize();
+//    ptr += sizeof(double);
+    //ptr += m_dimension * sizeof(double);
+}
+
 
 //
 // IEvolvingShape interface

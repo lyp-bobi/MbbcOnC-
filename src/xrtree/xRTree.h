@@ -86,7 +86,7 @@ public:
 
 namespace SpatialIndex
 {
-	namespace xRTree
+	namespace xRTreeNsp
 	{
 		class xRTree
 		{
@@ -138,8 +138,6 @@ namespace SpatialIndex
             bool m_bUsingMBL=false;//for STR-Tree
 
             bool m_bStoringLinks = true;
-
-            std::map<id_type,id_type> m_part2node;
 
             xStore *m_ts=nullptr;
 
@@ -314,14 +312,6 @@ namespace SpatialIndex
 
 			friend std::ostream& operator<<(std::ostream& os, const xRTree& t);
 		}; // xRTree
-        xRTree* createNewxRTree(xStore* store,long indexfan, long leaffan);
-
-//		xRTree* buildMBRRTree(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
-//        xRTree* buildMBCRTree(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
-//        xRTree* buildTBTree2(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
-//        xRTree* buildTBTree(xStore* store);
-//        xRTree* build3DRTree(xStore* store);
-//        xRTree* buildSTRTree(xStore* store);
 
 
 

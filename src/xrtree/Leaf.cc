@@ -35,13 +35,13 @@
 #include "Leaf.h"
 
 using namespace SpatialIndex;
-using namespace SpatialIndex::xRTree;
+using namespace SpatialIndex::xRTreeNsp;
 
 Leaf::~Leaf()
 {
 }
 
-Leaf::Leaf(SpatialIndex::xRTree::xRTree* pTree, id_type id): Node(pTree, id, 0, pTree->m_leafCapacity)
+Leaf::Leaf(SpatialIndex::xRTreeNsp::xRTree* pTree, id_type id): Node(pTree, id, 0, pTree->m_leafCapacity)
 {
 }
 

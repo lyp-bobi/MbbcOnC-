@@ -31,7 +31,7 @@
 
 namespace SpatialIndex
 {
-	namespace xRTree
+	namespace xRTreeNsp
 	{
 		class xRTree;
 		class Leaf;
@@ -99,6 +99,8 @@ namespace SpatialIndex
 
 			virtual void split(xMBR& mbr, id_type id, NodePtr& left, NodePtr& right) = 0;
 
+			string toString();
+
 			xRTree* m_pTree;
 				// Parent of all nodes.
 
@@ -130,6 +132,7 @@ namespace SpatialIndex
             id_type* m_nextNode = nullptr;
 
             xStoreEntry* m_se;
+
 
 			class RstarSplitEntry
 			{

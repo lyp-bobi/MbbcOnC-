@@ -36,7 +36,7 @@
 #include "Index.h"
 
 using namespace SpatialIndex;
-using namespace SpatialIndex::xRTree;
+using namespace SpatialIndex::xRTreeNsp;
 
 //
 // Tools::IObject interface
@@ -51,7 +51,7 @@ Tools::IObject* Node::clone()
 //
 uint32_t Node::getByteArraySize() const
 {
-    return 4096; //i'm lazy.
+    return PageSizeDefault; //i'm lazy.
 }
 
 
@@ -77,21 +77,24 @@ void Node::loadFromByteArray(const uint8_t* ptr)
         for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
             memcpy(&(m_pIdentifier[u32Child]), ptr, sizeof(id_type));
             ptr += sizeof(id_type);
+            memcpy(&(m_se[u32Child]), ptr, sizeof(xStoreEntry));
+            ptr += sizeof(xStoreEntry);
             if(m_pTree->m_bStoringLinks) {
                 memcpy(&(m_prevNode[u32Child]), ptr, sizeof(id_type));
                 ptr += sizeof(id_type);
                 memcpy(&(m_nextNode[u32Child]), ptr, sizeof(id_type));
                 ptr += sizeof(id_type);
             }
+            m_ptrxSBB[u32Child] = m_pTree->m_xSBBPool.acquire();
             if(m_pTree->m_bUsingMBR){
-                m_ptrxSBB[u32Child]->br->loadFromByteArray(ptr);
-                ptr+=m_ptrxSBB[u32Child]->br->getByteArraySize();
+                m_ptrxSBB[u32Child]->br.loadFromByteArray(ptr);
+                ptr+=m_ptrxSBB[u32Child]->br.getByteArraySize();
             }else if(m_pTree->m_bUsingMBC){
-                m_ptrxSBB[u32Child]->bc->loadFromByteArray(ptr);
-                ptr+=m_ptrxSBB[u32Child]->bc->getByteArraySize();
+                m_ptrxSBB[u32Child]->bc.loadFromByteArray(ptr);
+                ptr+=m_ptrxSBB[u32Child]->bc.getByteArraySize();
             }else if(m_pTree->m_bUsingMBL){
-                m_ptrxSBB[u32Child]->bl->loadFromByteArray(ptr);
-                ptr+=m_ptrxSBB[u32Child]->bl->getByteArraySize();
+                m_ptrxSBB[u32Child]->bl.loadFromByteArray(ptr);
+                ptr+=m_ptrxSBB[u32Child]->bl.getByteArraySize();
             }
         }
     }
@@ -118,13 +121,15 @@ void Node::storeToByteArray(uint8_t** data, uint32_t& len)
             memcpy(ptr, &(m_pIdentifier[u32Child]), sizeof(id_type));
             ptr += sizeof(id_type);
             m_ptrMBR[u32Child] = m_pTree->m_xMBRPool.acquire();
-            (m_ptrMBR[u32Child])->storeToByteArray(&ptr,len);
+            (m_ptrMBR[u32Child])->storeToByteArrayE(&ptr,len);
             ptr += (m_ptrMBR[u32Child])->getByteArraySize();
         }
     }else{//leaf
         for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
-            memcpy(&(m_pIdentifier[u32Child]), ptr, sizeof(id_type));
+            memcpy(ptr,&(m_pIdentifier[u32Child]),  sizeof(id_type));
             ptr += sizeof(id_type);
+            memcpy(ptr,&(m_se[u32Child]),  sizeof(xStoreEntry));
+            ptr += sizeof(xStoreEntry);
             if(m_pTree->m_bStoringLinks) {
                 memcpy(ptr, &(m_prevNode[u32Child]), sizeof(id_type));
                 ptr += sizeof(id_type);
@@ -132,19 +137,20 @@ void Node::storeToByteArray(uint8_t** data, uint32_t& len)
                 ptr += sizeof(id_type);
             }
             if(m_pTree->m_bUsingMBR){
-                m_ptrxSBB[u32Child]->br->storeToByteArray(&ptr,len);
-                ptr+=m_ptrxSBB[u32Child]->br->getByteArraySize();
+                m_ptrxSBB[u32Child]->br.storeToByteArrayE(&ptr,len);
+                ptr+=m_ptrxSBB[u32Child]->br.getByteArraySize();
             }else if(m_pTree->m_bUsingMBC){
-                m_ptrxSBB[u32Child]->bc->storeToByteArray(&ptr,len);
-                ptr+=m_ptrxSBB[u32Child]->bc->getByteArraySize();
+                m_ptrxSBB[u32Child]->bc.storeToByteArrayE(&ptr,len);
+                ptr+=m_ptrxSBB[u32Child]->bc.getByteArraySize();
             }else if(m_pTree->m_bUsingMBL){
-                m_ptrxSBB[u32Child]->bl->storeToByteArray(&ptr,len);
-                ptr+=m_ptrxSBB[u32Child]->bl->getByteArraySize();
+                m_ptrxSBB[u32Child]->bl.storeToByteArrayE(&ptr,len);
+                ptr+=m_ptrxSBB[u32Child]->bl.getByteArraySize();
             }
         }
     }
-    m_nodeMBR.storeToByteArray(&ptr,len);
+    m_nodeMBR.storeToByteArrayE(&ptr,len);
     ptr+= m_nodeMBR.getByteArraySize();
+    len = getByteArraySize();
 //    assert(len == (ptr - *data)+m_pTree->m_dimension*sizeof(double));
 }
 
@@ -209,7 +215,7 @@ bool Node::isIndex() const
 
 Node::Node()=default;
 
-Node::Node(SpatialIndex::xRTree::xRTree* pTree, id_type id, uint32_t level, uint32_t capacity) :
+Node::Node(SpatialIndex::xRTreeNsp::xRTree* pTree, id_type id, uint32_t level, uint32_t capacity) :
 	m_pTree(pTree),
 	m_level(level),
 	m_identifier(id),
@@ -1036,4 +1042,26 @@ void Node::condenseTree(std::stack<NodePtr>& toReinsert, std::stack<id_type>& pa
 
 		p->condenseTree(toReinsert, pathBuffer, ptrParent);
 	}
+}
+
+
+string Node::toString() {
+    stringstream os;
+    os<<m_level<<" "<<m_children<<"\n";
+
+    if(m_level >0) {//inner
+        for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
+            os<<(m_pIdentifier[u32Child])<<*m_ptrMBR[u32Child]<<"\n";
+        }
+    }else{//leaf
+        for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
+            os<<(m_pIdentifier[u32Child])<<" "<<m_prevNode[u32Child]<<" "
+            <<m_nextNode[u32Child]<<"\n";
+            os<<m_se[u32Child].m_id<<" "<<m_se[u32Child].m_s<<" "
+                <<m_se[u32Child].m_e<<"\n";
+            os<<m_ptrxSBB[u32Child]->toString()<<"\n";
+        }
+    }
+    os<< m_nodeMBR<<"\n";
+    return os.str();
 }

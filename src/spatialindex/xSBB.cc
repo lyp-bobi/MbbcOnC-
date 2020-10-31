@@ -12,56 +12,54 @@
 #include <spatialindex/SpatialIndex.h>
 
 using namespace SpatialIndex;
-xSBB::xSBB(){}
+xSBB::xSBB(){
+}
 xSBB::xSBB(const SpatialIndex::xSBB &in)
 :hasbr(in.hasbr),hasbc(in.hasbc),hasbl(in.hasbl){
     if(hasbr){
-        br=new xMBR(*in.br);
+        br=in.br;
     }
     if(hasbc){
-        bc=new xMBC(*in.bc);
+        bc=in.bc;
     }
     if(hasbl){
-        bl=new xLine(*in.bl);
+        bl=in.bl;
     }
 }
 xSBB::xSBB(xMBR &r){
     hasbr=true;
-    br=new xMBR(r);
+    br=r;
 }
 xSBB::xSBB(xMBC &r){
     hasbc=true;
-    bc=new xMBC(r);
+    bc=r;
 }
 xSBB::xSBB(xLine &r){
     hasbl=true;
-    bl=new xLine(r);
+    bl=r;
+}
+xSBB::xSBB(xMBR &r, xMBC &r2) {
+    hasbr=true;
+    br=r;
+    hasbc=true;
+    bc=r2;
+}
+xSBB::xSBB(xMBR &r, xLine &r2) {
+    hasbr=true;
+    br=r;
+    hasbl=true;
+    bl=r2;
 }
 xSBB::~xSBB(){
-    if(hasbr){
-        delete br;
-    }
-    if(hasbc){
-        delete bc;
-    }
-    if(hasbl){
-        delete bl;
-    }
 }
 
 
 xSBB& xSBB::operator=(const xSBB& in)
 {
     hasbr=in.hasbr;hasbc=in.hasbc;hasbl=in.hasbl;
-    if(hasbr){
-        br=new xMBR(*in.br);
-    }
-    if(hasbc){
-        bc=new xMBC(*in.bc);
-    }
-    if(hasbl){
-        bl=new xLine(*in.bl);
-    }
+    br = in.br;
+    bc=in.bc;
+    bl=in.bl;
     return *this;
 }
 
@@ -79,58 +77,55 @@ xSBB* xSBB::clone() {
 }
 
 void xSBB::loadbr(xMBR &r) {
-    if(hasbr) delete br;
     hasbr=true;
-    br = new xMBR(r);
+    br = r;
 }
 
 void xSBB::loadbc(xMBC &r) {
-    if(hasbc) delete bc;
     hasbc=true;
-    bc = new xMBC(r);
+    bc = r;
 }
 
 void xSBB::loadbl(xLine &r) {
-    if(hasbl) delete bl;
     hasbl=true;
-    bl = new xLine(r);
+    bl = r;
 }
 
 double xSBB::tdist(const xPoint &p) const {
     if(hasbr){
-        return br->getMinimumDistance(p);
+        return br.getMinimumDistance(p);
     }
     if(hasbc){
-        return bc->getMinimumDistance(p);
+        return bc.getMinimumDistance(p);
     }
     if(hasbl){
-        return bl->getMinimumDistance(p);
+        return bl.getMinimumDistance(p);
     }
     return 0;
 }
 
 double xSBB::startTime() const {
     if(hasbr){
-        return br->m_tmin;
+        return br.m_tmin;
     }
     if(hasbc){
-        return bc->m_ps.m_t;
+        return bc.m_ps.m_t;
     }
     if(hasbl){
-        return bl->m_ps.m_t;
+        return bl.m_ps.m_t;
     }
     return 0;
 }
 
 double xSBB::endTime() const {
     if(hasbr){
-        return br->m_tmax;
+        return br.m_tmax;
     }
     if(hasbc){
-        return bc->m_pe.m_t;
+        return bc.m_pe.m_t;
     }
     if(hasbl){
-        return bl->m_pe.m_t;
+        return bl.m_pe.m_t;
     }
     return 0;
 }
@@ -139,22 +134,25 @@ double xSBB::endTime() const {
 std::string xSBB::toString() const {
     std::string s ="";
     if(hasbr) s += "1 ";
+    else s+= "0 ";
     if(hasbc) s += "1 ";
+    else s+= "0 ";
     if(hasbl) s += "1 ";
+    else s+= "0 ";
     if(hasbr){
-        s += std::to_string(br->m_xmin) + " " + std::to_string(br->m_ymin) + " "
-                +std::to_string(br->m_tmin);
-        s += std::to_string(br->m_xmax) + " " + std::to_string(br->m_ymax) + " "
-             +std::to_string(br->m_tmax);
+        s += std::to_string(br.m_xmin) + " " + std::to_string(br.m_ymin) + " "
+                +std::to_string(br.m_tmin);
+        s += std::to_string(br.m_xmax) + " " + std::to_string(br.m_ymax) + " "
+             +std::to_string(br.m_tmax);
     }
     if(hasbc) {
-        s += std::to_string(bc->m_ps.m_x) + " " + std::to_string(bc->m_ps.m_y) + " " + std::to_string(bc->m_ps.m_t) + " ";
-        s += std::to_string(bc->m_pe.m_x) + " " + std::to_string(bc->m_pe.m_y) + " " + std::to_string(bc->m_pe.m_t) + " ";
-        s += std::to_string(bc->m_rd) + " " + std::to_string(bc->m_rv);
+        s += std::to_string(bc.m_ps.m_x) + " " + std::to_string(bc.m_ps.m_y) + " " + std::to_string(bc.m_ps.m_t) + " ";
+        s += std::to_string(bc.m_pe.m_x) + " " + std::to_string(bc.m_pe.m_y) + " " + std::to_string(bc.m_pe.m_t) + " ";
+        s += std::to_string(bc.m_rd) + " " + std::to_string(bc.m_rv);
     }
     if(hasbc) {
-        s += std::to_string(bc->m_ps.m_x) + " " + std::to_string(bc->m_ps.m_y) + " " + std::to_string(bc->m_ps.m_t) + " ";
-        s += std::to_string(bc->m_pe.m_x) + " " + std::to_string(bc->m_pe.m_y) + " " + std::to_string(bc->m_pe.m_t) + " ";
+        s += std::to_string(bc.m_ps.m_x) + " " + std::to_string(bc.m_ps.m_y) + " " + std::to_string(bc.m_ps.m_t) + " ";
+        s += std::to_string(bc.m_pe.m_x) + " " + std::to_string(bc.m_pe.m_y) + " " + std::to_string(bc.m_pe.m_t) + " ";
     }
     return s;
 }
@@ -165,35 +163,35 @@ void xSBB::loadFromString(std::string s) {
     if(std::stod(nums[cur++])==1) hasbc =true;
     if(std::stod(nums[cur++])==1) hasbl =true;
     if(hasbr){
-        if(br!= nullptr) delete br;
-        br=new xMBR();
-        br->m_xmin=std::stod(nums[cur++]);
-        br->m_ymin=std::stod(nums[cur++]);
-        br->m_tmin=std::stod(nums[cur++]);
-        br->m_xmax=std::stod(nums[cur++]);
-        br->m_ymax=std::stod(nums[cur++]);
-        br->m_tmax=std::stod(nums[cur++]);
+        br.m_xmin=std::stod(nums[cur++]);
+        br.m_ymin=std::stod(nums[cur++]);
+        br.m_tmin=std::stod(nums[cur++]);
+        br.m_xmax=std::stod(nums[cur++]);
+        br.m_ymax=std::stod(nums[cur++]);
+        br.m_tmax=std::stod(nums[cur++]);
     }
     if(hasbc) {
-        if(bc!= nullptr) delete bc;
-        bc=new xMBC();
-        bc->m_ps.m_x = std::stod(nums[cur++]);
-        bc->m_ps.m_y = std::stod(nums[cur++]);
-        bc->m_ps.m_t = std::stod(nums[cur++]);
-        bc->m_pe.m_x = std::stod(nums[cur++]);
-        bc->m_pe.m_y = std::stod(nums[cur++]);
-        bc->m_pe.m_t = std::stod(nums[cur++]);
-        bc->m_rd = std::stod(nums[cur++]);
-        bc->m_rv = std::stod(nums[cur++]);
+        bc.m_ps.m_x = std::stod(nums[cur++]);
+        bc.m_ps.m_y = std::stod(nums[cur++]);
+        bc.m_ps.m_t = std::stod(nums[cur++]);
+        bc.m_pe.m_x = std::stod(nums[cur++]);
+        bc.m_pe.m_y = std::stod(nums[cur++]);
+        bc.m_pe.m_t = std::stod(nums[cur++]);
+        bc.m_rd = std::stod(nums[cur++]);
+        bc.m_rv = std::stod(nums[cur++]);
     }
     if(hasbl) {
-        if(bl!= nullptr) delete bl;
-        bl=new xLine();
-        bl->m_ps.m_x = std::stod(nums[cur++]);
-        bl->m_ps.m_y = std::stod(nums[cur++]);
-        bl->m_ps.m_t = std::stod(nums[cur++]);
-        bl->m_pe.m_x = std::stod(nums[cur++]);
-        bl->m_pe.m_y = std::stod(nums[cur++]);
-        bl->m_pe.m_t = std::stod(nums[cur++]);
+        bl.m_ps.m_x = std::stod(nums[cur++]);
+        bl.m_ps.m_y = std::stod(nums[cur++]);
+        bl.m_ps.m_t = std::stod(nums[cur++]);
+        bl.m_pe.m_x = std::stod(nums[cur++]);
+        bl.m_pe.m_y = std::stod(nums[cur++]);
+        bl.m_pe.m_t = std::stod(nums[cur++]);
     }
+}
+
+void xSBB::init() {
+    hasbr=false;
+    hasbc=false;
+    hasbl=false;
 }

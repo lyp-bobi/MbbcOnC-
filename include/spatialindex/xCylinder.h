@@ -33,7 +33,7 @@ namespace SpatialIndex
 
     virtual void storeToByteArray(uint8_t **data, uint32_t &len);
 
-
+    virtual void storeToByteArrayE(uint8_t** data, uint32_t& len);
     //
     // IShape interface
     //

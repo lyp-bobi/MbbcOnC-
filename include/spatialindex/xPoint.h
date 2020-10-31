@@ -26,6 +26,8 @@ namespace SpatialIndex
 		virtual void loadFromByteArray(const uint8_t* data);
 		virtual void storeToByteArray(uint8_t** data, uint32_t& len);
 
+        virtual void storeToByteArrayE(uint8_t** data, uint32_t& len);
+
 		virtual void makeInfinite(uint32_t dimension);
 		virtual void makeDimension(uint32_t dimension);
 

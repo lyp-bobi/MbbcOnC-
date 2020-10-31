@@ -61,9 +61,21 @@ void xLine::storeToByteArray(uint8_t **data, uint32_t &len) {
     *data = new uint8_t[len];
     uint8_t* ptr = *data;
     uint32_t tmp;
-    m_ps.storeToByteArray(&ptr,tmp);
+    m_ps.storeToByteArrayE(&ptr,tmp);
     ptr+=tmp;
-    m_pe.storeToByteArray(&ptr,tmp);
+    m_pe.storeToByteArrayE(&ptr,tmp);
+    len = getByteArraySize();
+//    ptr+=tmp;
+}
+
+void xLine::storeToByteArrayE(uint8_t **data, uint32_t &len) {
+    len = getByteArraySize();
+    uint8_t* ptr = *data;
+    uint32_t tmp;
+    m_ps.storeToByteArrayE(&ptr,tmp);
+    ptr+=tmp;
+    m_pe.storeToByteArrayE(&ptr,tmp);
+    len = getByteArraySize();
 //    ptr+=tmp;
 }
 

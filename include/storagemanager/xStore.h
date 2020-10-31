@@ -4,7 +4,8 @@
 
 #pragma once
 
-
+#define CUTENTRY pair<pair<int,int>,xSBB>
+#define CUTFUNC function<list<CUTENTRY>(xTrajectory&)>
 #include <spatialindex/SpatialIndex.h>
 #include <cstring>
 
@@ -30,7 +31,7 @@ namespace SpatialIndex
             xSBB m_b;
             id_type m_sbbid;
             xSBBData()=default;
-            xSBBData(id_type sbbid,xStoreEntry &entry,xSBB &b)
+            xSBBData(const id_type sbbid,const xStoreEntry &entry,const xSBB &b)
                 :m_sbbid(sbbid),m_se(entry),m_b(b){}
             virtual xSBBData* clone(){
                 return new xSBBData(m_sbbid,m_se,m_b);
@@ -46,7 +47,7 @@ namespace SpatialIndex
         class xTrajEntry{
         public:
             id_type m_page;
-            long m_npoint;
+            uint32_t m_npoint;
             xTrajEntry(id_type page,uint32_t len);
             std::string toString();
             xTrajEntry(string &s);
@@ -55,7 +56,7 @@ namespace SpatialIndex
         class SIDX_DLL xStore:public IStorageManager{
         public:
             ~xStore();
-            xStore(string &myname, string &file);
+            xStore(string myname, string file, bool forceNew=false);
             void flush();
             void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
                 auto start = std::chrono::system_clock::now();
@@ -101,17 +102,18 @@ namespace SpatialIndex
             double m_timeCount=0;
             double m_IOtime=0;
         };
+
         class xSBBStream:public IDataStream{
         public:
-            function<void(xTrajectory&,list<xSBB>&)> m_cutFunc;
-            list<xSBB> m_buf;
+            CUTFUNC m_cutFunc;
+            list<CUTENTRY> m_buf;
             xStore *m_pstore;
             //tmp recorder for split sbbs
-            xStoreEntry m_curse;
+            id_type m_id;
             std::map<id_type,xTrajEntry*>::iterator m_it;
             id_type m_count=0;
 
-            xSBBStream(xStore *p, function<void(xTrajectory&,list<xSBB>&)>f);
+            xSBBStream(xStore *p, CUTFUNC f);
             bool hasNext();
             uint32_t size() override;
             xSBBData* getNext() override ;

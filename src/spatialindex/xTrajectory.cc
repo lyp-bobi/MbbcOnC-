@@ -105,13 +105,34 @@ void xTrajectory::storeToByteArray(uint8_t **data, uint32_t &len) {
     memcpy(ptr, &size, sizeof(unsigned long));
     ptr += sizeof(unsigned long);
     for(int i=0;i<size;i++){
-        m_points[i].storeToByteArray(&ptr,tmp);
+        m_points[i].storeToByteArrayE(&ptr,tmp);
         if(i!=size-1){
             ptr += tmp;
         }
     }
+    len = getByteArraySize();
 }
 
+
+void xTrajectory::storeToByteArrayE(uint8_t **data, uint32_t &len) {
+    len = getByteArraySize();
+    uint8_t* ptr = *data;
+    uint32_t tmp;
+    memcpy(ptr, &m_fakehead, sizeof(bool));
+    ptr += sizeof(bool);
+    memcpy(ptr, &m_fakeback, sizeof(bool));
+    ptr += sizeof(bool);
+    unsigned long size=m_points.size();
+    memcpy(ptr, &size, sizeof(unsigned long));
+    ptr += sizeof(unsigned long);
+    for(int i=0;i<size;i++){
+        m_points[i].storeToByteArrayE(&ptr,tmp);
+        if(i!=size-1){
+            ptr += tmp;
+        }
+    }
+    len = getByteArraySize();
+}
 
 //
 // IShape interface
@@ -975,17 +996,16 @@ double xTrajectory::getStaticIED(SpatialIndex::xMBR in,double ints, double inte)
 
 double xTrajectory::nodeDist(const xSBB &b) const {
     assert(b.hasbr);
-    xMBR* n = b.br;
-    if(m_startTime()>=n->m_tmax||m_endTime()<=n->m_tmin) return 1e300;
-    double ints=std::max(m_startTime(),n->m_tmin),
-            inte=std::min(m_endTime(),n->m_tmax);
-    xMBR copy(*n);
-    copy.m_tmin=ints;
-    copy.m_tmax=inte;
+    xMBR n = b.br;
+    if(m_startTime()>=n.m_tmax||m_endTime()<=n.m_tmin) return 1e300;
+    double ints=std::max(m_startTime(),n.m_tmin),
+            inte=std::min(m_endTime(),n.m_tmax);
+    n.m_tmin=ints;
+    n.m_tmax=inte;
     double min=1e300;
     fakeTpVector timedTraj(&m_points,ints,inte);
     for (int i = 0; i < timedTraj.m_size-1; i++) {
-        double pd = line2MBRMinSED(timedTraj[i],timedTraj[i+1],copy);
+        double pd = line2MBRMinSED(timedTraj[i], timedTraj[i+1], n);
         min=std::min(min,pd);
     }
     if(min>=1e300) return 0;
@@ -1001,15 +1021,15 @@ DISTE xTrajectory::sbbDist(const xSBB &b) const {
     DISTE res;
     if(b.hasbr){
         for (int i = 0; i < timedTraj.m_size-1; i++) {
-            res = res + line2MBRDistance(timedTraj[i], timedTraj[i + 1], *b.br);
+            res = res + line2MBRDistance(timedTraj[i], timedTraj[i + 1], b.br);
         }
     }else if(b.hasbc){
         for (int i = 0; i < timedTraj.m_size-1; i++) {
-            res = res + line2MBCDistance(timedTraj[i], timedTraj[i + 1], *b.bc);
+            res = res + line2MBCDistance(timedTraj[i], timedTraj[i + 1], b.bc);
         }
     }else if(b.hasbl){
         for (int i = 0; i < timedTraj.m_size-1; i++) {
-            res = res + DISTE(line2lineIED(timedTraj[i], timedTraj[i + 1], b.bl->m_ps,b.bl->m_pe));
+            res = res + DISTE(line2lineIED(timedTraj[i], timedTraj[i + 1], b.bl.m_ps,b.bl.m_pe));
         }
     }
     return res;
@@ -1091,12 +1111,12 @@ std::vector<std::string> split(const std::string &strtem,char a)
 }
 
 std::string xTrajectory::toString() const{
-    std::string s;
+    std::string s="";
     for (const auto &p:m_points) {
         s += std::to_string(p.m_x) + "," + std::to_string(p.m_y) +
              "," + std::to_string(p.m_t) + " ";
     }
-    s.pop_back();
+    if(s.length()>0) s[s.length()-1]='\0';
     return s;
 }
 
@@ -1214,6 +1234,97 @@ double xTrajectory::maxSpeed() const {
         double v = m_points[i].getMinimumDistance(m_points[i+1]) /
                    (m_points[i+1].m_t - m_points[i].m_t);
         res= max(v,res);
+    }
+    return res;
+}
+
+# define looseFactor 0.3
+
+list<CUTENTRY> xTrajectory::GLL(xTrajectory &traj) {
+    vector<xPoint> seg;
+    list<CUTENTRY> res;
+    xTrajectory subtraj;
+    xMBR tmpbr;
+    xMBC tmpbc;
+    bool fakehead=false,fakeback=false;
+    int ms=0,me=0;
+    if(traj.m_points.size()<2) {
+        throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
+    }
+    auto stat=trajStat::instance();
+    double segStart=double(int(stat->mint));
+    double len = stat->bt;
+    seg.emplace_back(traj.m_points[0]);
+    while(segStart+len<traj.m_points[0].m_t+1e-7) segStart+=len;
+    for(int i=1;i<traj.m_points.size();i++) {
+        if (traj.m_points[i].m_t < segStart + len) {
+            seg.emplace_back(traj.m_points[i]);
+        } else if (fabs(traj.m_points[i].m_t - segStart - len) < 1e-7) {
+            fakeback = false;
+            seg.emplace_back(traj.m_points[i]);
+            subtraj=xTrajectory(fakehead, fakeback, seg);
+            me=i;
+            subtraj.getxMBR(tmpbr);
+            subtraj.getxMBC(tmpbc);
+            res.emplace_back(make_pair(make_pair(ms,me)
+                                       ,xSBB(tmpbr,tmpbc)));
+            ms = i;
+            fakehead = false;
+            seg.clear();
+            seg.emplace_back(traj.m_points[i]);
+            segStart += len;
+        }
+        else{
+            if(traj.m_points[i-1].m_t>segStart+(1-looseFactor)*len){
+                subtraj=xTrajectory(fakehead, fakeback, seg);
+                me=i-1;
+                subtraj.getxMBR(tmpbr);
+                subtraj.getxMBC(tmpbc);
+                res.emplace_back(make_pair(make_pair(ms,me)
+                        ,xSBB(tmpbr,tmpbc)));
+                ms = i-1;
+                fakehead=false;
+                seg.clear();
+                seg.emplace_back(traj.m_points[i-1]);
+            }else if (traj.m_points[i].m_t<segStart+(1+looseFactor)*len){
+                subtraj=xTrajectory(fakehead, fakeback, seg);
+                me=i;
+                subtraj.getxMBR(tmpbr);
+                subtraj.getxMBC(tmpbc);
+                res.emplace_back(make_pair(make_pair(ms,me)
+                        ,xSBB(tmpbr,tmpbc)));
+                ms = i;
+                seg.emplace_back(traj.m_points[i]);
+                fakehead=false;
+                seg.clear();
+                seg.emplace_back(traj.m_points[i]);
+            }else{
+                xPoint mid=xPoint::makemid(traj.m_points[i-1],traj.m_points[i],segStart+len);
+                fakeback=true;
+                seg.emplace_back(mid);
+                subtraj=xTrajectory(fakehead, fakeback, seg);
+                me=i;
+                subtraj.getxMBR(tmpbr);
+                subtraj.getxMBC(tmpbc);
+                res.emplace_back(make_pair(make_pair(ms,me)
+                        ,xSBB(tmpbr,tmpbc)));
+                ms = i;
+                fakehead=true;
+                seg.clear();
+                seg.emplace_back(mid);
+            }
+            segStart+=len;
+            i--;
+        }
+    }
+    if(seg.size()>1){
+        me=traj.m_points.size()-1;
+        subtraj=xTrajectory(fakehead, false, seg);
+        subtraj.getxMBR(tmpbr);
+        subtraj.getxMBC(tmpbc);
+        res.emplace_back(make_pair(make_pair(ms,me)
+                ,xSBB(tmpbr,tmpbc)));
+        seg.clear();
     }
     return res;
 }

@@ -33,7 +33,7 @@
 namespace Tools
 {
 	using namespace SpatialIndex;
-	template<> class PointerPool<xRTree::Node>
+	template<> class PointerPool<xRTreeNsp::Node>
 	{
 	public:
 		explicit PointerPool(uint32_t capacity) : m_capacity(capacity)
@@ -51,7 +51,7 @@ namespace Tools
 
 			while (! m_pool.empty())
 			{
-				xRTree::Node* x = m_pool.top(); m_pool.pop();
+				xRTreeNsp::Node* x = m_pool.top(); m_pool.pop();
 				#ifndef NDEBUG
 				--m_PointerCount;
 				#endif
@@ -63,16 +63,16 @@ namespace Tools
 			#endif
 		}
 
-		PoolPointer<xRTree::Node> acquire()
+		PoolPointer<xRTreeNsp::Node> acquire()
 		{
 			if (! m_pool.empty())
 			{
-				xRTree::Node* p = m_pool.top(); m_pool.pop();
+				xRTreeNsp::Node* p = m_pool.top(); m_pool.pop();
 				#ifndef NDEBUG
 				++m_hits;
 				#endif
 
-				return PoolPointer<xRTree::Node>(p, this);
+				return PoolPointer<xRTreeNsp::Node>(p, this);
 			}
 			#ifndef NDEBUG
 			else
@@ -83,10 +83,10 @@ namespace Tools
 			}
 			#endif
 
-			return PoolPointer<xRTree::Node>();
+			return PoolPointer<xRTreeNsp::Node>();
 		}
 
-		void release(xRTree::Node* p)
+		void release(xRTreeNsp::Node* p)
 		{
 			if (p != 0)
 			{
@@ -118,7 +118,7 @@ namespace Tools
 
 	protected:
 		uint32_t m_capacity;
-		std::stack<xRTree::Node*> m_pool;
+		std::stack<xRTreeNsp::Node*> m_pool;
 
 	#ifndef NDEBUG
 	public:

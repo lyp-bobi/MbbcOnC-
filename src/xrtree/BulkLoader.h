@@ -29,7 +29,7 @@
 
 namespace SpatialIndex
 {
-	namespace xRTree
+	namespace xRTreeNsp
 	{
 		class ExternalSorter
 		{
@@ -116,6 +116,7 @@ namespace SpatialIndex
 			);
 
 		protected:
+            std::map<id_type,id_type> m_part2node;
 			void createLevel(
 				xRTree* pTree,
 				Tools::SmartPointer<ExternalSorter> es,

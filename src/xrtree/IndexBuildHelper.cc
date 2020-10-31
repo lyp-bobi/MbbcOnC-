@@ -4,15 +4,16 @@
 //
 #include <spatialindex/SpatialIndex.h>
 #include "xRTree.h"
+#include "BulkLoader.h"
 #include "storagemanager/xStore.h"
+using namespace SpatialIndex::xRTreeNsp;
 
-
-SpatialIndex::xRTree::xRTree * SpatialIndex::xRTree::createNewxRTree(xStore *store, long indexfan, long leaffan) {
+SpatialIndex::xRTreeNsp::xRTree * SpatialIndex::xRTreeNsp::createNewxRTree(IStorageManager *store, long indexfan, long leaffan) {
     Tools::Variant var;
     Tools::PropertySet ps;
 
     var.m_varType = Tools::VT_DOUBLE;
-    var.m_val.dblVal = 1;
+    var.m_val.dblVal = 0.99;
     ps.setProperty("FillFactor", var);
 
     var.m_varType = Tools::VT_ULONG;
@@ -28,11 +29,12 @@ SpatialIndex::xRTree::xRTree * SpatialIndex::xRTree::createNewxRTree(xStore *sto
     ps.setProperty("Dimension", var);
 
     var.m_varType = Tools::VT_LONG;
-    var.m_val.lVal = SpatialIndex::xRTree::RV_RSTAR;
+    var.m_val.lVal = SpatialIndex::xRTreeNsp::RV_RSTAR;
     ps.setProperty("TreeVariant", var);
 
-    SpatialIndex::xRTree::xRTree *ret = new SpatialIndex::xRTree::xRTree(*store, ps);
+    SpatialIndex::xRTreeNsp::xRTree *ret = new SpatialIndex::xRTreeNsp::xRTree(*store, ps);
 
+    ret->m_ts= static_cast<xStore *>(store);
 //    var.m_varType = Tools::VT_LONGLONG;
 //    var = ps.getProperty("IndexIdentifier");
 //    indexIdentifier = var.m_val.llVal;
@@ -40,11 +42,32 @@ SpatialIndex::xRTree::xRTree * SpatialIndex::xRTree::createNewxRTree(xStore *sto
     return ret;
 }
 
-//SpatialIndex::xRTree::xRTree * xRTree::buildMBRRTree(xStore *store, function<void(xTrajectory &, list<xSBB> &)> cut) {
-//    auto stream = new xSBBStream(store,cut);
-//
-//}
-//
+inline int idsize(){return 8;}
+inline int mbrsize(){return 48;}
+inline int mbcsize(){
+    if(bCompactMBC) return 56;
+    else return 64;
+}
+inline int linesize(){return 48;}
+inline int pointersize(){return 16;}
+inline int entrysize(){return 32;}
+
+xRTree * xRTreeNsp::buildMBRRTree(IStorageManager *mng,
+                                  const CUTFUNC &f) {
+    auto store=static_cast<xStore*>(mng);
+    auto stream = new xSBBStream(store,f);
+    int bindex= PageSizeDefault/(idsize()+mbrsize()),
+            bleaf=PageSizeDefault/(idsize()+mbrsize()+pointersize()+entrysize());
+    xRTree* r = createNewxRTree(store,bindex,bleaf);
+    r->m_bUsingMBR=true;
+    BulkLoader bl;
+    bl.bulkLoadUsingSTR(r,*stream,bindex,bleaf,PageSizeDefault*10,100000);
+    return r;
+}
+
+
+
+
 //ISpatialIndex* SpatialIndex::xRTree::createAndBulkLoadNewRTreeWithxStore(IStorageManager *tsm,
 //                                                                                 uint32_t pageSize, uint32_t dimension,
 //                                                                                 id_type &indexIdentifier) {

@@ -80,6 +80,23 @@ void xCylinder::storeToByteArray(uint8_t **data, uint32_t &len) {
     ptr += sizeof(prex);
 }
 
+
+
+void xCylinder::storeToByteArrayE(uint8_t **data, uint32_t &len) {
+    len = getByteArraySize();
+    uint8_t* ptr = *data;
+
+    memcpy(ptr, &(m_p.m_x), sizeof(prex));
+    ptr += sizeof(prex);
+    memcpy(ptr, &(m_p.m_y), sizeof(prex));
+    ptr += sizeof(prex);
+    memcpy(ptr, &m_r, sizeof(prex));
+    ptr += sizeof(prex);
+    memcpy(ptr, &m_startTime, sizeof(prex));
+    ptr += sizeof(prex);
+    memcpy(ptr, &m_endTime, sizeof(prex));
+//    ptr += sizeof(prex);
+}
 //
 // IShape interface
 //

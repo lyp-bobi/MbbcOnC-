@@ -29,7 +29,7 @@
 
 namespace SpatialIndex
 {
-	namespace xRTree
+	namespace xRTreeNsp
 	{
 		class Leaf : public Node
 		{

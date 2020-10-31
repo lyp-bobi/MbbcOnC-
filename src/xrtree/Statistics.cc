@@ -29,7 +29,7 @@
 
 #include "Statistics.h"
 
-using namespace SpatialIndex::xRTree;
+using namespace SpatialIndex::xRTreeNsp;
 
 Statistics::Statistics()
 {
@@ -161,7 +161,7 @@ void Statistics::reset()
     m_nodesInLevel.clear();
 }
 
-std::ostream& SpatialIndex::xRTree::operator<<(std::ostream& os, const Statistics& s)
+std::ostream& SpatialIndex::xRTreeNsp::operator<<(std::ostream& os, const Statistics& s)
 {
     os	<< "Reads: " << s.m_u64Reads << std::endl
           << "Writes: " << s.m_u64Writes << std::endl
