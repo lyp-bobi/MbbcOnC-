@@ -43,6 +43,7 @@ SpatialIndex::xRTreeNsp::xRTree * SpatialIndex::xRTreeNsp::createNewxRTree(IStor
 }
 
 inline int idsize(){return 8;}
+inline int nodeheadersize(){return 56;} //node id+mbr
 inline int mbrsize(){return 48;}
 inline int mbcsize(){
     if(bCompactMBC) return 56;
@@ -55,14 +56,22 @@ inline int entrysize(){return 32;}
 xRTree * xRTreeNsp::buildMBRRTree(IStorageManager *mng,
                                   const CUTFUNC &f) {
     auto store=static_cast<xStore*>(mng);
+    auto stat = trajStat::instance();
     auto stream = new xSBBStream(store,f);
-    int bindex= PageSizeDefault/(idsize()+mbrsize()),
-            bleaf=PageSizeDefault/(idsize()+mbrsize()+pointersize()+entrysize());
-    xRTree* r = createNewxRTree(store,bindex,bleaf);
-    r->m_bUsingMBR=true;
-    BulkLoader bl;
-    bl.bulkLoadUsingSTR(r,*stream,bindex,bleaf,PageSizeDefault*10,100000);
-    return r;
+    string name ="MBR"+std::to_string(stat->bt);
+    if(store->m_property.contains(name)){
+
+    }
+    else {
+        int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
+                bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize() + pointersize() + entrysize());
+        xRTree *r = createNewxRTree(store, bindex, bleaf);
+        r->m_bUsingMBR = true;
+        store->m_property[name] = r->m_rootID;
+        BulkLoader bl;
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        return r;
+    }
 }
 
 

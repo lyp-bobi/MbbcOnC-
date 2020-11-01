@@ -366,7 +366,6 @@ void BulkLoader::bulkLoadUsingSTR(
 //	m_part2node.clear();
 //    std::map<id_type,id_type> empty;
 //    m_part2node.swap(empty);
-    pTree->m_ts->m_property[pTree->m_name+std::to_string(stat->bt)]=pTree->m_rootID;
 	pTree->m_stats.m_u32TreeHeight = level;
 	pTree->storeHeader();
 }

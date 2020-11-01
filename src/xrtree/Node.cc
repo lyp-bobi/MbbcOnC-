@@ -150,6 +150,7 @@ void Node::storeToByteArray(uint8_t** data, uint32_t& len)
     }
     m_nodeMBR.storeToByteArrayE(&ptr,len);
     ptr+= m_nodeMBR.getByteArraySize();
+    assert(ptr-*data<PageSizeDefault);
     len = getByteArraySize();
 //    assert(len == (ptr - *data)+m_pTree->m_dimension*sizeof(double));
 }

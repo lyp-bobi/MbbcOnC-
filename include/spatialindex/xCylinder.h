@@ -57,6 +57,7 @@ namespace SpatialIndex
     int checkRel(const xLine &bc) const;
     int checkRel(const xMBC &bc) const;
     int checkRel(const xMBR &br) const;
+    int checkRel(const xSBB &b) const;
 
 //        virtual void combinexCylinder(const xCylinder& in);
 //        virtual bool containsxCylinder(const xCylinder& in);

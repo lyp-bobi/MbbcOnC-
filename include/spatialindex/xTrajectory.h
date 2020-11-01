@@ -135,7 +135,15 @@ namespace SpatialIndex
         DISTE sbbDist(const xSBB &b) const;
         DISTE frontDist(const xSBB &b, double vmax) const;
         DISTE backDist(const xSBB &b, double vmax) const;
-        DISTE gapDist(const xSBB &prev, xSBB &next, double vmax) const;
+        DISTE gapDist(const xSBB &prev,const xSBB &next, double vmax) const;
+        DISTE frontDistStatic(const xSBB &b) const;
+        DISTE backDistStatic(const xSBB &b) const;
+
+        DISTE frontDist(const xPoint &b, double vmax) const;
+        DISTE backDist(const xPoint &b, double vmax) const;
+        DISTE gapDist(const xPoint &prev,const xPoint &next, double vmax) const;
+        DISTE frontDistStatic(const xPoint &b) const;
+        DISTE backDistStatic(const xPoint &b) const;
 
 
         virtual bool intersectsxMBR(const xMBR& in) const;

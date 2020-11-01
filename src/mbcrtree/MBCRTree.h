@@ -35,9 +35,6 @@
 #include <thread>
 #include <mutex>
 
-extern bool bUsingSimp;
-extern bool bUsingSBBD;
-
 class poppq{
 public:
     std::list<std::pair<double,id_type>> m_pq;

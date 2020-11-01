@@ -1058,7 +1058,7 @@ DISTE xTrajectory::backDist(const xSBB &b, double v) const {
     return DISTE(opti,pessi,0,true);
 }
 
-DISTE xTrajectory::gapDist(const xSBB &prev, xSBB &next, double v) const{
+DISTE xTrajectory::gapDist(const xSBB &prev,const xSBB &next, double v) const{
     double opti=0,pessi=0;
     double ints=prev.endTime(),inte=next.startTime();
     double ds = prev.tdist(getPointAtTime(ints));
@@ -1068,6 +1068,67 @@ DISTE xTrajectory::gapDist(const xSBB &prev, xSBB &next, double v) const{
     opti=ldd(ds,-v,to-ints)+ldd(de,v,inte-to);
     pessi = ldd(ds,v,tp-ints)+ldd(de,v,inte-tp);
     return DISTE(opti,pessi,0,true);
+}
+
+
+DISTE xTrajectory::frontDistStatic(const xSBB &b) const {
+    if(b.hasbc) {
+        return DISTE(getStaticIED(b.bc.m_ps.m_x, b.bc.m_ps.m_y, m_startTime(), b.bc.m_ps.m_t));
+    } else if (b.hasbl){
+        return DISTE(getStaticIED(b.bl.m_ps.m_x, b.bl.m_ps.m_y, m_startTime(), b.bl.m_ps.m_t));
+    }else{
+        return DISTE(getStaticIED(b.br,m_startTime(),b.br.m_tmin));
+    }
+}
+
+DISTE xTrajectory::backDistStatic(const xSBB &b) const {
+    if(b.hasbc) {
+        return DISTE(getStaticIED(b.bc.m_ps.m_x, b.bc.m_ps.m_y, b.bc.m_ps.m_t, m_endTime()));
+    } else if (b.hasbl){
+        return DISTE(getStaticIED(b.bl.m_ps.m_x, b.bl.m_ps.m_y, b.bl.m_ps.m_t, m_endTime()));
+    }else{
+        return DISTE(getStaticIED(b.br,b.br.m_tmax, m_endTime()));
+    }
+}
+
+
+DISTE xTrajectory::frontDist(const xPoint &b, double v) const {
+    double opti=0,pessi=0;
+    double ints=b.m_t;
+    double ds = b.getMinimumDistance(getPointAtTime(ints););
+    opti= ldd(ds,v,ints-m_startTime());
+    pessi= ldd(ds,v,ints-m_startTime());
+    return DISTE(opti,pessi,0,true);
+}
+
+DISTE xTrajectory::backDist(const xPoint &b, double v) const {
+    double opti=0,pessi=0;
+    double inte=b.m_t;
+    double de = b.getMinimumDistance(getPointAtTime(inte));
+    opti= ldd(de,v,m_endTime()-inte);
+    pessi= ldd(de,v,m_endTime()-inte);
+    return DISTE(opti,pessi,0,true);
+}
+
+DISTE xTrajectory::gapDist(const xPoint &prev,const xPoint &next, double v) const{
+    double opti=0,pessi=0;
+    double ints=prev.m_t,inte=next.m_t;
+    double ds = prev.getMinimumDistance(getPointAtTime(ints));
+    double de = prev.getMinimumDistance(getPointAtTime(inte));
+    double to=(ints+inte+(de-ds)/(v))/2;
+    double tp = (ints+inte+(ds-de)/(v))/2;
+    opti=ldd(ds,-v,to-ints)+ldd(de,v,inte-to);
+    pessi = ldd(ds,v,tp-ints)+ldd(de,v,inte-tp);
+    return DISTE(opti,pessi,0,true);
+}
+
+
+DISTE xTrajectory::frontDistStatic(const xPoint &b) const {
+    return DISTE(getStaticIED(b.m_x, b.m_y, m_startTime(), b.m_t));
+}
+
+DISTE xTrajectory::backDistStatic(const xPoint &b) const {
+    return DISTE(getStaticIED(b.m_x, b.m_y, b.m_t, m_endTime()));
 }
 
 

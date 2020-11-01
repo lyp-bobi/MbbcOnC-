@@ -354,3 +354,10 @@ int xCylinder::checkRel(const xMBC &bc) const {
         return tmpRes;
     }
 }
+
+
+int xCylinder::checkRel(const xSBB &b) const {
+    if(b.hasbl) return checkRel(b.bl);
+    else if(b.hasbc) return checkRel(b.bc);
+    else return checkRel(b.br);
+}

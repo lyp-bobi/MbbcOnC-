@@ -176,7 +176,6 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
     id_type pagee = te->m_page + int(ceil(1.0*me/fp))-1;
     id_type cur = ms/fp*fp;
     uint8_t *data, *ptr;
-
     uint32_t len;
     int ps,pe;
     prexp x,y,t;
@@ -195,6 +194,7 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
             ptr+=sizeof(prexp);
             out.m_points.emplace_back(xPoint(x, y, t));
         }
+        delete data;
     }
     out.m_fakehead = (ms!=0);
     out.m_fakeback = (me==te->m_npoint-1);

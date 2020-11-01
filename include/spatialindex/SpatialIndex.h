@@ -47,6 +47,9 @@ using json = nlohmann::json;
 
 #define prexp double //storage precision
 
+extern bool bUsingSimp;
+extern bool bUsingSBBD;
+
 namespace SpatialIndex
 {
 	class Point;
@@ -77,6 +80,10 @@ namespace SpatialIndex
             res.infer = infer||d2.infer;
             return res;
 	    }
+
+        bool operator<(const DISTE &d2) const{
+            return opt<d2.opt;
+        }
 	};
 
 	typedef int64_t id_type;
