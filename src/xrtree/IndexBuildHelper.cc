@@ -8,6 +8,7 @@
 #include "storagemanager/xStore.h"
 using namespace SpatialIndex::xRTreeNsp;
 
+
 SpatialIndex::xRTreeNsp::xRTree * SpatialIndex::xRTreeNsp::createNewxRTree(IStorageManager *store, long indexfan, long leaffan) {
     Tools::Variant var;
     Tools::PropertySet ps;
@@ -59,19 +60,31 @@ xRTree * xRTreeNsp::buildMBRRTree(IStorageManager *mng,
     auto stat = trajStat::instance();
     auto stream = new xSBBStream(store,f);
     string name ="MBR"+std::to_string(stat->bt);
+    xRTree * r;
     if(store->m_property.contains(name)){
-
+        Tools::Variant var;
+        Tools::PropertySet ps;
+        id_type id = store->m_property[name];
+        var.m_varType = Tools::VT_LONGLONG;
+        var.m_val.llVal = id;
+        ps.setProperty("IndexIdentifier", var);
+        r = new xRTree(*mng,ps);
+        r->m_bUsingMBR = true;
+        r->m_ts=store;
+        std::cerr<<"load existing "<<name<<"\n";
     }
     else {
         int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
                 bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize() + pointersize() + entrysize());
-        xRTree *r = createNewxRTree(store, bindex, bleaf);
+        r = createNewxRTree(store, bindex, bleaf);
         r->m_bUsingMBR = true;
-        store->m_property[name] = r->m_rootID;
+        store->m_property[name] = r->m_headerID;
         BulkLoader bl;
         bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
-        return r;
+        std::cerr<<"build new "<<name<<"\n";
     }
+    std::cerr<<r->m_headerID<<" "<<r->m_rootID<<endl;
+    return r;
 }
 
 

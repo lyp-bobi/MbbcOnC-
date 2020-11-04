@@ -165,7 +165,7 @@ namespace SpatialIndex
         std::vector<xTrajectory> getGlobalSegmentsCut(double len) const;
         std::vector<xTrajectory> getItself() const;
 
-        static list<CUTENTRY> GLL(xTrajectory &traj);
+        static list<CUTENTRY> ISS(xTrajectory &traj);
 
         void linkxTrajectory(xTrajectory &other);
 

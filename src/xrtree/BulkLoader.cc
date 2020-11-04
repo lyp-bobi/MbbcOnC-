@@ -550,7 +550,6 @@ Node* BulkLoader::createNode(SpatialIndex::xRTreeNsp::xRTree* pTree, std::vector
 	Node* n;
 	if (level == 0) n = new Leaf(pTree, -1);
 	else n = new Index(pTree, -1, level);
-
 	for (size_t cChild = 0; cChild < e.size(); ++cChild)
 	{
         if (level == 0) n->insertEntry(e[cChild]->m_r,e[cChild]->m_b.m_sbbid,

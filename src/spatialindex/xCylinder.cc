@@ -19,9 +19,8 @@ xCylinder::xCylinder(const SpatialIndex::xCylinder &in) {
     m_startTime=in.m_startTime;
     m_endTime=in.m_endTime;
 }
-xCylinder::xCylinder(const double *p,double r,double sTime,double eTime, uint32_t dimension){
-    m_p.m_x=p[0];
-    m_p.m_y = p[1];
+xCylinder::xCylinder(const xPoint&p,double r,double sTime,double eTime, uint32_t dimension){
+    m_p=p;
     m_startTime=sTime;
     m_endTime=eTime;
     m_r=r;
@@ -191,7 +190,7 @@ std::ostream& SpatialIndex::operator<<(std::ostream& os, const xCylinder& r)
 {
     uint32_t i;
 
-    os<<r.m_p.m_x<<r.m_p.m_y<<r.m_r<<r.m_startTime<<r.m_endTime;
+    os<<r.m_p.m_x<<" "<<r.m_p.m_y<<" "<<r.m_r<<" "<<r.m_startTime<<" "<<r.m_endTime;
     return os;
 }
 

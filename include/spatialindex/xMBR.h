@@ -99,11 +99,13 @@ namespace SpatialIndex
             if(i==0) return m_xmin;
             if(i==1) return m_ymin;
             if(i==2) return m_tmin;
+            throw Tools::IllegalStateException("error plow index");
         }
         prex& m_pHigh(int i){
             if(i==0) return m_xmax;
             if(i==1) return m_ymax;
             if(i==2) return m_tmax;
+            throw Tools::IllegalStateException("error phigh index");
         }
 
 

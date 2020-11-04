@@ -77,8 +77,8 @@ namespace SpatialIndex
 			virtual void getIndexProperties(Tools::PropertySet& out) const;
 			virtual void getStatistics(IStatistics** out) const;
 
-            virtual void intersectsWithQuery(const IShape& query, IVisitor& v);
-            virtual void nearestNeighborQuery(uint32_t k, const IShape& query, IVisitor& v);
+            virtual void intersectsWithQuery(const xCylinder& query, IVisitor& v);
+            virtual void nearestNeighborQuery(uint32_t k, const xTrajectory& query, IVisitor& v);
 
 		private:
 			void initNew(Tools::PropertySet&);
@@ -198,7 +198,7 @@ namespace SpatialIndex
             DISTE m_dist;
             leafInfo* m_pEntry = nullptr;
 
-            NNEntry(id_type id, double f, uint32_t type)
+            NNEntry(id_type id, DISTE f, uint32_t type)
                     : m_id(id), m_dist(f), m_type(type) {
             }
             NNEntry(id_type id, leafInfo* e, double f, uint32_t type)
@@ -502,7 +502,7 @@ namespace SpatialIndex
                     m_parts[rid].m_missingLeaf.erase(n.m_identifier);
                     m_parts[rid].m_loadedLeaf.insert(n.m_identifier);
                     if(m_handlers.count(rid)==0){
-                        auto handle = m_mpq.push(new NNEntry(rid, dist, 2));
+                        auto handle = m_mpq.push(new NNEntry(rid, DISTE(dist), 2));
                         m_handlers[rid] = handle;
                     }
                 }
@@ -736,7 +736,7 @@ namespace SpatialIndex
                     res.opt -= m_error;
                     res.pes += m_error;
                     if (m_handlers.count(id) == 0) {
-                        auto handle = m_mpq.push(new NNEntry(id,nullptr, res, type));
+                        auto handle = m_mpq.push(new NNEntry(id, res, type));
                         m_handlers[id] = handle;
                     } else {
                         m_mpq.update(m_handlers[id], id, res, type);

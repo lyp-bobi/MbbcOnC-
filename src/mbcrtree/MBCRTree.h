@@ -621,6 +621,7 @@ namespace SpatialIndex
                         Tools::IllegalStateException("MaxSED is no longer supported now");
                     }
                     else throw Tools::IllegalStateException("");
+                    return 0;
                 }
 
             public:

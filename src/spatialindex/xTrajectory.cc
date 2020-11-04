@@ -1095,7 +1095,7 @@ DISTE xTrajectory::backDistStatic(const xSBB &b) const {
 DISTE xTrajectory::frontDist(const xPoint &b, double v) const {
     double opti=0,pessi=0;
     double ints=b.m_t;
-    double ds = b.getMinimumDistance(getPointAtTime(ints););
+    double ds = b.getMinimumDistance(getPointAtTime(ints));
     opti= ldd(ds,v,ints-m_startTime());
     pessi= ldd(ds,v,ints-m_startTime());
     return DISTE(opti,pessi,0,true);
@@ -1301,7 +1301,7 @@ double xTrajectory::maxSpeed() const {
 
 # define looseFactor 0.3
 
-list<CUTENTRY> xTrajectory::GLL(xTrajectory &traj) {
+list<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
     vector<xPoint> seg;
     list<CUTENTRY> res;
     xTrajectory subtraj;
@@ -1313,30 +1313,32 @@ list<CUTENTRY> xTrajectory::GLL(xTrajectory &traj) {
         throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
     }
     auto stat=trajStat::instance();
-    double segStart=double(int(stat->mint));
+    double segStart=traj.m_points[0].m_t;
     double len = stat->bt;
     seg.emplace_back(traj.m_points[0]);
-    while(segStart+len<traj.m_points[0].m_t+1e-7) segStart+=len;
+
     for(int i=1;i<traj.m_points.size();i++) {
-        if (traj.m_points[i].m_t < segStart + len) {
-            seg.emplace_back(traj.m_points[i]);
-        } else if (fabs(traj.m_points[i].m_t - segStart - len) < 1e-7) {
-            fakeback = false;
-            seg.emplace_back(traj.m_points[i]);
-            subtraj=xTrajectory(fakehead, fakeback, seg);
-            me=i;
-            subtraj.getxMBR(tmpbr);
-            subtraj.getxMBC(tmpbc);
-            res.emplace_back(make_pair(make_pair(ms,me)
-                                       ,xSBB(tmpbr,tmpbc)));
-            ms = i;
-            fakehead = false;
-            seg.clear();
-            seg.emplace_back(traj.m_points[i]);
-            segStart += len;
-        }
-        else{
-            if(traj.m_points[i-1].m_t>segStart+(1-looseFactor)*len){
+        if (traj.m_points[i].m_t < segStart + len) {// pass point
+            if(ms!=i) seg.emplace_back(traj.m_points[i]);
+        } else{//make seg
+            if (fabs(traj.m_points[i].m_t - segStart - len) < 1e-7) {
+                // if it stops exactly at some point
+                fakeback = false;
+                seg.emplace_back(traj.m_points[i]);
+                subtraj=xTrajectory(fakehead, fakeback, seg);
+                me=i;
+                subtraj.getxMBR(tmpbr);
+                subtraj.getxMBC(tmpbc);
+                res.emplace_back(make_pair(make_pair(ms,me)
+                                           ,xSBB(tmpbr,tmpbc)));
+                ms = i;
+                fakehead = false;
+                seg.clear();
+                seg.emplace_back(traj.m_points[i]);
+                segStart += len;
+            }
+            else if(traj.m_points[i-1].m_t>segStart+(1-looseFactor)*len){
+                //previous point is acceptable, so choose it.
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i-1;
                 subtraj.getxMBR(tmpbr);
@@ -1348,6 +1350,8 @@ list<CUTENTRY> xTrajectory::GLL(xTrajectory &traj) {
                 seg.clear();
                 seg.emplace_back(traj.m_points[i-1]);
             }else if (traj.m_points[i].m_t<segStart+(1+looseFactor)*len){
+                // this point( the next one) is acceptable, so choose it
+                seg.emplace_back(traj.m_points[i]);
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i;
                 subtraj.getxMBR(tmpbr);
@@ -1360,6 +1364,7 @@ list<CUTENTRY> xTrajectory::GLL(xTrajectory &traj) {
                 seg.clear();
                 seg.emplace_back(traj.m_points[i]);
             }else{
+                //we have to create a new point by interpolation
                 xPoint mid=xPoint::makemid(traj.m_points[i-1],traj.m_points[i],segStart+len);
                 fakeback=true;
                 seg.emplace_back(mid);
@@ -1369,7 +1374,7 @@ list<CUTENTRY> xTrajectory::GLL(xTrajectory &traj) {
                 subtraj.getxMBC(tmpbc);
                 res.emplace_back(make_pair(make_pair(ms,me)
                         ,xSBB(tmpbr,tmpbc)));
-                ms = i;
+                ms = i-1;
                 fakehead=true;
                 seg.clear();
                 seg.emplace_back(mid);

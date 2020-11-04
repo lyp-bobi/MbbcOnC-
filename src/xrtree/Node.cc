@@ -86,13 +86,17 @@ void Node::loadFromByteArray(const uint8_t* ptr)
                 ptr += sizeof(id_type);
             }
             m_ptrxSBB[u32Child] = m_pTree->m_xSBBPool.acquire();
+            m_ptrxSBB[u32Child]->hasbr=m_ptrxSBB[u32Child]->hasbc=m_ptrxSBB[u32Child]->hasbl=false;
             if(m_pTree->m_bUsingMBR){
+                m_ptrxSBB[u32Child]->hasbr=true;
                 m_ptrxSBB[u32Child]->br.loadFromByteArray(ptr);
                 ptr+=m_ptrxSBB[u32Child]->br.getByteArraySize();
             }else if(m_pTree->m_bUsingMBC){
+                m_ptrxSBB[u32Child]->hasbc=true;
                 m_ptrxSBB[u32Child]->bc.loadFromByteArray(ptr);
                 ptr+=m_ptrxSBB[u32Child]->bc.getByteArraySize();
             }else if(m_pTree->m_bUsingMBL){
+                m_ptrxSBB[u32Child]->hasbl=true;
                 m_ptrxSBB[u32Child]->bl.loadFromByteArray(ptr);
                 ptr+=m_ptrxSBB[u32Child]->bl.getByteArraySize();
             }

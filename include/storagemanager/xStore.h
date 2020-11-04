@@ -85,6 +85,7 @@ namespace SpatialIndex
                 return make_pair(e.m_s != 0,
                                  e.m_e != m_trajIdx[e.m_id]->m_npoint);
             }
+            xPoint randomPoint();
 
             json m_property;
             std::map<id_type,xTrajEntry*> m_trajIdx;

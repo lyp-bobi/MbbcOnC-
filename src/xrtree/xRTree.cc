@@ -698,10 +698,6 @@ std::ostream& SpatialIndex::xRTreeNsp::operator<<(std::ostream& os, const xRTree
 
 
 
-
-
-
-
 void SpatialIndex::xRTreeNsp::xRTree::insertData_impl(xMBR& mbr, id_type id)
 {
     assert(mbr.getDimension() == m_dimension);
@@ -775,8 +771,8 @@ bool SpatialIndex::xRTreeNsp::xRTree::deleteData_impl(const xMBR& mbr, id_type i
 }
 
 
-void xRTree::intersectsWithQuery(const IShape &query, IVisitor &v) {
-    const xCylinder *querycy= dynamic_cast<const xCylinder*>(&query);
+void xRTree::intersectsWithQuery(const xCylinder &query, IVisitor &v) {
+    const xCylinder *querycy= &query;
     std::set<id_type > results;
     std::multimap<id_type, xStoreEntry> pending;
     bool isSlice=(querycy->m_startTime==querycy->m_endTime);
@@ -850,8 +846,8 @@ void xRTree::intersectsWithQuery(const IShape &query, IVisitor &v) {
     }
 }
 
-void xRTree::nearestNeighborQuery(uint32_t k, const IShape &query, IVisitor &v) {
-    const xTrajectory *queryTraj;
+void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor &v) {
+    const xTrajectory *queryTraj= &query;
     xTrajectory simpleTraj;
     xTrajectory ssTraj;
     double delta=0, ssdelta= 0;
@@ -888,7 +884,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const IShape &query, IVisitor &v) 
     /*SBB-Driven*/
     if(bUsingSBBD == true) {
         PartsStore ps(simpleTraj, delta, m_ts);
-        ps.push(new NNEntry(m_rootID, 0, 0));
+        ps.push(new NNEntry(m_rootID, DISTE(0), 0));
 
         uint32_t count = 0;
 
@@ -917,9 +913,9 @@ void xRTree::nearestNeighborQuery(uint32_t k, const IShape &query, IVisitor &v) 
                         }
                         if (pd < 1e300) {
                             if (n->m_level == 1)
-                                ps.push(new NNEntry(n->m_pIdentifier[cChild], pd, 1));
+                                ps.push(new NNEntry(n->m_pIdentifier[cChild], DISTE(pd), 1));
                             else
-                                ps.push(new NNEntry(n->m_pIdentifier[cChild], pd, 0));
+                                ps.push(new NNEntry(n->m_pIdentifier[cChild], DISTE(pd), 0));
                         }
                     }
                     delete pFirst;
@@ -954,7 +950,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const IShape &query, IVisitor &v) 
 //                std::cerr<<"trajIO"<<m_ts->m_trajIO<<"\n";
 //                std::cerr<<"getTraj"<<traj<<"\n";
 //                xTrajectory traj = m_ts->getTrajByTime(pFirst->m_id, queryTraj->m_startTime(), queryTraj->m_endTime());
-                    ps.push(new NNEntry(pFirst->m_id, queryTraj->getMinimumDistance(traj), 4));
+                    ps.push(new NNEntry(pFirst->m_id, DISTE(queryTraj->getMinimumDistance(traj)), 4));
                     delete pFirst;
                     break;
                 }
@@ -977,7 +973,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const IShape &query, IVisitor &v) 
     else{/*BFMST*/
         PartsStoreBFMST ps(simpleTraj,0,m_ts,true);
         string str = queryTraj->toString();
-        ps.push(new NNEntry(m_rootID, 0, 0));
+        ps.push(new NNEntry(m_rootID, DISTE(0), 0));
 
         uint32_t count = 0;
         double knearest = 0.0;
@@ -1004,9 +1000,9 @@ void xRTree::nearestNeighborQuery(uint32_t k, const IShape &query, IVisitor &v) 
                             double pd;
                             double ts, te;
 //                            if (m_bUsingMBR) {
-                            pd = std::max(0.0, simpleTraj.nodeDist(*(n->m_ptrMBR[cChild])));
-                            ts = n->m_ptrMBR[cChild]->m_tmin;
-                            te = n->m_ptrMBR[cChild]->m_tmax;
+                            pd = std::max(0.0, simpleTraj.nodeDist(n->m_ptrxSBB[cChild]->br));
+                            ts = n->m_ptrxSBB[cChild]->br.m_tmin;
+                            te = n->m_ptrxSBB[cChild]->br.m_tmax;
 //                            } else {
 //                                double d = simpleTraj.getMinimumDistance(*(n->m_ptrMBC[cChild]))/
 //                                           ((n->m_ptrMBC[cChild])->m_endTime- (n->m_ptrMBC[cChild])->m_startTime)
@@ -1042,7 +1038,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const IShape &query, IVisitor &v) 
                     ++(m_stats.m_u64QueryResults);
                     ++count;
                     knearest = pFirst->m_dist.opt;
-                    simpleData d(pFirst->m_id, pFirst->m_dist);
+                    simpleData d(pFirst->m_id, pFirst->m_dist.opt);
                     v.visitData(d);
                     delete pFirst;
                     break;

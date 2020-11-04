@@ -58,6 +58,7 @@ namespace SpatialIndex
         class xRTree;
         xRTree* createNewxRTree(IStorageManager* store,long indexfan, long leaffan);
 
+
         SIDX_DLL xRTree* buildMBRRTree(IStorageManager* store,const CUTFUNC &f);
 //        xRTree* buildMBCRTree(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
 //        xRTree* buildTBTree2(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);

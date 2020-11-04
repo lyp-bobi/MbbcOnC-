@@ -194,10 +194,26 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
             ptr+=sizeof(prexp);
             out.m_points.emplace_back(xPoint(x, y, t));
         }
+        cur+=fp;
         delete data;
     }
     out.m_fakehead = (ms!=0);
     out.m_fakeback = (me==te->m_npoint-1);
+}
+
+xPoint xStore::randomPoint() {
+    int rnd = random(0,m_trajIdx.size()-1);
+    int rnd2;
+    int i=0;
+    xTrajectory tj;
+    for(auto key:m_trajIdx){
+        if(i==rnd) {
+            rnd2 = random(0,key.second->m_npoint-1);
+            loadTraj(tj,xStoreEntry(key.first,0,rnd2));
+            return tj.m_points.front();
+        }
+    }
+
 }
 
 void xStore::flush() {
@@ -244,3 +260,4 @@ void xSBBStream::rewind() {
     m_it = m_pstore->m_trajIdx.begin();
     m_count = 0;
 }
+
