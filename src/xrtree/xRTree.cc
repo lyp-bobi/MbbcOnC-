@@ -554,8 +554,6 @@ SpatialIndex::id_type SpatialIndex::xRTreeNsp::xRTree::writeNode(Node* n)
 	uint32_t dataLength;
 	n->storeToByteArray(&buffer, dataLength);
 
-	n->loadFromByteArray(buffer);
-
 	id_type page;
 	if (n->m_identifier < 0) page = StorageManager::NewPage;
 	else page = n->m_identifier;
@@ -979,7 +977,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
         double knearest = 0.0;
         int iternum=0;
         std::map<id_type ,int> insertedTrajId;
-
+        auto stat= trajStat::instance();
         while (! ps.empty()) {
             iternum++;
             NNEntry *pFirst = ps.top();
@@ -1000,7 +998,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                             double pd;
                             double ts, te;
 //                            if (m_bUsingMBR) {
-                            pd = std::max(0.0, simpleTraj.nodeDist(n->m_ptrxSBB[cChild]->br));
+                            pd = std::max(0.0, simpleTraj.sbbDistInfer(n->m_ptrxSBB[cChild]->br,stat->vmax).opt);
                             ts = n->m_ptrxSBB[cChild]->br.m_tmin;
                             te = n->m_ptrxSBB[cChild]->br.m_tmax;
 //                            } else {

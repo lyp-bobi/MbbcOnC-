@@ -80,7 +80,7 @@ namespace SpatialIndex
 			virtual Node& operator=(const Node&);
 
 //            virtual void insertEntry(uint32_t dataLength, uint8_t* pData, IShape& shape, id_type id);
-			virtual void insertEntry(xMBR& mbr,id_type id, xSBB* sbb= nullptr,xStoreEntry *e= nullptr);
+			virtual void insertEntry(xMBR& mbr,id_type id, xSBBData *sbb=nullptr);
 			virtual void deleteEntry(uint32_t index);
 
 			virtual bool insertData(xMBR& mbr, id_type id, std::stack<id_type>& pathBuffer, uint8_t* overflowTable);
@@ -98,7 +98,7 @@ namespace SpatialIndex
 
 			virtual void split(xMBR& mbr, id_type id, NodePtr& left, NodePtr& right) = 0;
 
-			string toString();
+			string toString() const;
 
 			xRTree* m_pTree;
 				// Parent of all nodes.

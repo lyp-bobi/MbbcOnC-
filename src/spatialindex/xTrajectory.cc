@@ -1035,6 +1035,14 @@ DISTE xTrajectory::sbbDist(const xSBB &b) const {
     return res;
 }
 
+DISTE xTrajectory::sbbDistInfer(const xSBB &b, double v) const {
+    DISTE res = sbbDist(b);
+    if(res.opt==1e300) return res;
+    if(m_startTime()<b.startTime()) res = res + frontDist(b,v);
+    if(m_endTime()>b.endTime()) res = res + backDist(b,v);
+    return res;
+}
+
 static double ldd(double d,double v,double dt){
     if(d+v*dt>0) return dt*(d+v*dt/2);
     else return d*d/2*std::fabs(v);
@@ -1044,7 +1052,7 @@ DISTE xTrajectory::frontDist(const xSBB &b, double v) const {
     double ints=b.startTime();
     xPoint p = getPointAtTime(ints);
     double ds = b.tdist(p);
-    opti= ldd(ds,v,ints-m_startTime());
+    opti= ldd(ds,-v,ints-m_startTime());
     pessi= ldd(ds,v,ints-m_startTime());
     return DISTE(opti,pessi,0,true);
 }
@@ -1053,7 +1061,7 @@ DISTE xTrajectory::backDist(const xSBB &b, double v) const {
     double opti=0,pessi=0;
     double inte=b.endTime();
     double de = b.tdist(getPointAtTime(inte));
-    opti= ldd(de,v,m_endTime()-inte);
+    opti= ldd(de,-v,m_endTime()-inte);
     pessi= ldd(de,v,m_endTime()-inte);
     return DISTE(opti,pessi,0,true);
 }
@@ -1096,7 +1104,7 @@ DISTE xTrajectory::frontDist(const xPoint &b, double v) const {
     double opti=0,pessi=0;
     double ints=b.m_t;
     double ds = b.getMinimumDistance(getPointAtTime(ints));
-    opti= ldd(ds,v,ints-m_startTime());
+    opti= ldd(ds,-v,ints-m_startTime());
     pessi= ldd(ds,v,ints-m_startTime());
     return DISTE(opti,pessi,0,true);
 }
@@ -1105,7 +1113,7 @@ DISTE xTrajectory::backDist(const xPoint &b, double v) const {
     double opti=0,pessi=0;
     double inte=b.m_t;
     double de = b.getMinimumDistance(getPointAtTime(inte));
-    opti= ldd(de,v,m_endTime()-inte);
+    opti= ldd(de,-v,m_endTime()-inte);
     pessi= ldd(de,v,m_endTime()-inte);
     return DISTE(opti,pessi,0,true);
 }
@@ -1244,9 +1252,9 @@ void xTrajectory::getPartialxTrajectory(double tstart, double tend, SpatialIndex
     }
     if(ie!=m_points.size()-1&&m_points[ie].m_t!=tend){
         x=makemidmacro(m_points[ie].m_x,m_points[ie].m_t,
-                       m_points[ie+1].m_x,m_points[ie+1].m_t,tstart);
+                       m_points[ie+1].m_x,m_points[ie+1].m_t,tend);
         y=makemidmacro(m_points[ie].m_y,m_points[ie].m_t,
-                       m_points[ie+1].m_y,m_points[ie+1].m_t,tstart);
+                       m_points[ie+1].m_y,m_points[ie+1].m_t,tend);
         out.m_points.push_back(xPoint(x,y,tend));
     }
 }

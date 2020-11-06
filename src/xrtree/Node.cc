@@ -124,8 +124,7 @@ void Node::storeToByteArray(uint8_t** data, uint32_t& len)
         for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
             memcpy(ptr, &(m_pIdentifier[u32Child]), sizeof(id_type));
             ptr += sizeof(id_type);
-            m_ptrMBR[u32Child] = m_pTree->m_xMBRPool.acquire();
-            (m_ptrMBR[u32Child])->storeToByteArrayE(&ptr,len);
+            m_ptrMBR[u32Child]->storeToByteArrayE(&ptr,len);
             ptr += (m_ptrMBR[u32Child])->getByteArraySize();
         }
     }else{//leaf
@@ -278,19 +277,19 @@ Node& Node::operator=(const Node&)
 }
 
 
-void Node::insertEntry(xMBR& mbr,id_type id, xSBB* sbb, xStoreEntry *e) {
+void Node::insertEntry(xMBR& mbr,id_type id, xSBBData* sbd) {
     assert(m_children < m_capacity);
     m_ptrMBR[m_children] = m_pTree->m_xMBRPool.acquire();
     *(m_ptrMBR[m_children]) = mbr;
-    if(sbb!= nullptr) {    //for leaf
+    m_pIdentifier[m_children] = id;
+    if(sbd!= nullptr) {    //for leaf
         m_ptrxSBB[m_children] = m_pTree->m_xSBBPool.acquire();
-        *(m_ptrxSBB[m_children]) = *sbb;
-        m_se[m_children] = *e;
-    }else{//for inner
-        m_pIdentifier[m_children] = id;
+        *(m_ptrxSBB[m_children]) = sbd->m_b;
+        m_se[m_children] = sbd->m_se;
+        m_prevNode[m_children] = sbd->m_hasPrev;
+        m_nextNode[m_children] = sbd->m_hasNext;
     }
     ++m_children;
-
     m_nodeMBR.combinexMBR(mbr);
 }
 
@@ -1050,21 +1049,21 @@ void Node::condenseTree(std::stack<NodePtr>& toReinsert, std::stack<id_type>& pa
 }
 
 
-string Node::toString() {
+string Node::toString() const{
     stringstream os;
-    os<<m_level<<" "<<m_children<<"\n";
+    os<<m_identifier<<" "<<m_level<<" "<<m_children<<"\n";
 
     if(m_level >0) {//inner
-        for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
-            os<<(m_pIdentifier[u32Child])<<*m_ptrMBR[u32Child]<<"\n";
+        for (uint32_t u32Child = 0; u32Child < m_children; u32Child++) {
+            os<<(m_pIdentifier[u32Child])<<" "<<*m_ptrMBR[u32Child]<<"\n";
         }
     }else{//leaf
-        for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
-            os<<(m_pIdentifier[u32Child])<<" "<<m_prevNode[u32Child]<<" "
+        for (uint32_t u32Child = 0; u32Child < m_children; u32Child++) {
+            os<<"idprevnext "<<(m_pIdentifier[u32Child])<<" "<<m_prevNode[u32Child]<<" "
             <<m_nextNode[u32Child]<<"\n";
-            os<<m_se[u32Child].m_id<<" "<<m_se[u32Child].m_s<<" "
+            os<<"storeEntry"<<m_se[u32Child].m_id<<" "<<m_se[u32Child].m_s<<" "
                 <<m_se[u32Child].m_e<<"\n";
-            os<<m_ptrxSBB[u32Child]->toString()<<"\n";
+            os<<"SBB "<<m_ptrxSBB[u32Child]->toString()<<"\n";
         }
     }
     os<< m_nodeMBR<<"\n";

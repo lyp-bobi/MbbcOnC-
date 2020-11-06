@@ -213,7 +213,7 @@ xPoint xStore::randomPoint() {
             return tj.m_points.front();
         }
     }
-
+    throw Tools::IllegalStateException("...");
 }
 
 void xStore::flush() {
@@ -239,17 +239,19 @@ bool xSBBStream::hasNext() {
     return false;
 }
 xSBBData * xSBBStream::getNext() {
+    bool isFirst=false;
     if(m_buf.empty()){
         xTrajectory tj;
         m_pstore->loadTraj(tj, xStoreEntry(m_it->first,0,m_it->second->m_npoint));
         m_buf = m_cutFunc(tj);
         m_id = m_it->first;
         m_it++;
+        isFirst=true;
     }
     auto b = m_buf.front();
     m_buf.pop_front();
     return new xSBBData(m_count++,
-                        xStoreEntry(m_id,b.first.first,b.first.second),b.second);
+                        xStoreEntry(m_id,b.first.first,b.first.second),b.second, !isFirst, !m_buf.empty());
 }
 
 uint32_t xSBBStream::size() {

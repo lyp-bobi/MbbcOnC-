@@ -80,6 +80,8 @@ void ExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)
 	f.write(m_level);
     f.write(static_cast<uint64_t>(m_b.m_sbbid));
 	f.write(static_cast<uint64_t>(m_b.m_se.m_id));
+	f.write(static_cast<uint32_t>(m_b.m_hasPrev?1:0));
+    f.write(static_cast<uint32_t>(m_b.m_hasNext?1:0));
     f.write(m_b.m_se.m_s);
     f.write(m_b.m_se.m_e);
     f.write(m_b.m_b.toString());
@@ -92,6 +94,8 @@ void ExternalSorter::Record::loadFromFile(Tools::TemporaryFile& f)
 	m_level=f.readUInt32();
     m_b.m_sbbid =static_cast<id_type>(f.readUInt64());
 	m_b.m_se.m_id =static_cast<id_type>(f.readUInt64());
+	m_b.m_hasPrev = (f.readUInt32()==1);
+    m_b.m_hasNext = (f.readUInt32()==1);
 	m_b.m_se.m_s = f.readUInt32();
     m_b.m_se.m_e = f.readUInt32();
 	m_b.m_b.loadFromString(f.readString());
@@ -418,6 +422,7 @@ void BulkLoader::createLevel(
                 if(level==0){
                     //state the storage place of bounding boxes
                     for(int i=0;i<n->m_children;i++){
+//                        id_type tmpid = n->m_se[i].m_id;
                         m_part2node[n->m_pIdentifier[i]]=n->m_identifier;
                     }
                 }
@@ -427,7 +432,7 @@ void BulkLoader::createLevel(
                         NodePtr child=pTree->readNode(n->m_pIdentifier[i]);
                         for(int j=0;j<child->m_children;j++){
                             id_type id=child->m_pIdentifier[j];
-                            pair<bool,bool> pvnt= pTree->m_ts->checkpvnt(*(child->m_se));
+                            pair<bool,bool> pvnt= make_pair(child->m_prevNode[j], child->m_nextNode[j]);
                             if(pvnt.first){
                                 auto store=m_part2node[id-1];
                                 child->m_prevNode[j]=store;
@@ -470,7 +475,7 @@ void BulkLoader::createLevel(
                     NodePtr child=pTree->readNode(n->m_pIdentifier[i]);
                     for(int j=0;j<child->m_children;j++){
                         id_type id=child->m_pIdentifier[j];
-                        pair<bool,bool> pvnt= pTree->m_ts->checkpvnt(child->m_se[j]);
+                        pair<bool,bool> pvnt= make_pair(child->m_prevNode[j], child->m_nextNode[j]);
                         if(pvnt.first){
                             auto store=m_part2node[id-1];
                             child->m_prevNode[j]=store;
@@ -488,7 +493,11 @@ void BulkLoader::createLevel(
 //                            std::cerr<<store->m_page<<" "<<store->m_start<<" "<<store->m_len<<"\n";
                     }
                     pTree->writeNode(child.get());
+                    //test code
+//                    std::cerr<<child->toString();
                 }
+                //test code
+//                std::cerr<<n->toString();
             }
 			delete n;
 		}
@@ -553,7 +562,7 @@ Node* BulkLoader::createNode(SpatialIndex::xRTreeNsp::xRTree* pTree, std::vector
 	for (size_t cChild = 0; cChild < e.size(); ++cChild)
 	{
         if (level == 0) n->insertEntry(e[cChild]->m_r,e[cChild]->m_b.m_sbbid,
-                                       &(e[cChild]->m_b.m_b),&(e[cChild]->m_b.m_se));
+                                       &(e[cChild]->m_b));
         else n->insertEntry(e[cChild]->m_r,e[cChild]->m_id);
 		delete e[cChild];
 	}

@@ -30,11 +30,12 @@ namespace SpatialIndex
             xStoreEntry m_se;
             xSBB m_b;
             id_type m_sbbid;
+            bool m_hasPrev = true, m_hasNext=true;
             xSBBData()=default;
-            xSBBData(const id_type sbbid,const xStoreEntry &entry,const xSBB &b)
-                :m_sbbid(sbbid),m_se(entry),m_b(b){}
+            xSBBData(const id_type sbbid,const xStoreEntry &entry,const xSBB &b, bool pv=true, bool nt=true)
+                :m_sbbid(sbbid),m_se(entry),m_b(b), m_hasPrev(pv), m_hasNext(nt){}
             virtual xSBBData* clone(){
-                return new xSBBData(m_sbbid,m_se,m_b);
+                return new xSBBData(m_sbbid,m_se,m_b,m_hasPrev, m_hasNext);
             }
             virtual id_type getIdentifier() const{
                 return m_sbbid;
@@ -81,10 +82,6 @@ namespace SpatialIndex
             }
 
             void loadTraj(xTrajectory &out, const xStoreEntry &e);
-            pair<bool,bool> checkpvnt(xStoreEntry &e){
-                return make_pair(e.m_s != 0,
-                                 e.m_e != m_trajIdx[e.m_id]->m_npoint);
-            }
             xPoint randomPoint();
 
             json m_property;

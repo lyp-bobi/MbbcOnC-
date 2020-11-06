@@ -380,6 +380,8 @@ namespace SpatialIndex
             void insert(id_type id, xSBB &b,id_type prev,id_type next,xStoreEntry &entry){
                 if(m_parts.count(id)==0){
                     m_parts[id]=Parts(this);
+                    m_parts[id].m_loadedTime = min(b.endTime(),m_query.m_endTime())-
+                            max(b.startTime(),m_query.m_startTime());
                 }
                 m_parts[id].insert(b,prev,next,entry);
             }
@@ -407,9 +409,12 @@ namespace SpatialIndex
                             computedTime += timeInterval.second - timeInterval.first;
                         }
                     }
-                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty())
-                        pd.opt=std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-                                                (timeInterval.second - timeInterval.first) / (m_query.m_endTime()-m_query.m_startTime()));
+                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+                        pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                                                  (timeInterval.second - timeInterval.first) /
+                                                  (m_query.m_endTime() - m_query.m_startTime()));
+                        pd.pes = max(pd.opt,pd.pes);
+                    }
                     res = res + pd;
                 }
                 //mid dist
@@ -437,9 +442,12 @@ namespace SpatialIndex
                                 pd = m_query.gapDist(*prev, box, stat->vmax);
                                 parts->m_computedDist[timeInterval] = pd;
                             }
-                            if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty())
-                                pd.opt=std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-                                                        (timeInterval.second - timeInterval.first) / (m_query.m_endTime()-m_query.m_startTime()));
+                            if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+                                pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                                                          (timeInterval.second - timeInterval.first) /
+                                                          (m_query.m_endTime() - m_query.m_startTime()));
+                                pd.pes = max(pd.opt,pd.pes);
+                            }
                             res = res + pd;
                         }
                     }
@@ -461,9 +469,12 @@ namespace SpatialIndex
                             computedTime += timeInterval.second - timeInterval.first;
                         }
                     }
-                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty())
-                        pd.opt=std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-                                                (timeInterval.second - timeInterval.first) / (m_query.m_endTime()-m_query.m_startTime()));
+                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+                        pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                                                  (timeInterval.second - timeInterval.first) /
+                                                  (m_query.m_endTime() - m_query.m_startTime()));
+                        pd.pes = max(pd.opt,pd.pes);
+                    }
                     res = res + pd;
                 }
                 parts->m_calcMin = res;
@@ -485,7 +496,7 @@ namespace SpatialIndex
                 loadedLeaf.insert(n.m_identifier);
                 std::set<id_type > relatedIds;
                 for(int i=0;i<n.m_children;i++){
-                    id_type trajid=n.m_pIdentifier[i];
+                    id_type trajid=n.m_se[i].m_id;
                     xStoreEntry entry= n.m_se[i];
                     double bts=n.m_ptrxSBB[i]->startTime(),bte=n.m_ptrxSBB[i]->endTime();
                     if(bts>=m_query.m_endTime()||
@@ -496,6 +507,10 @@ namespace SpatialIndex
                                 , (m_query.m_endTime()>bte)?n.m_nextNode[i]:-1,
                                entry);
                         relatedIds.insert(trajid);
+//                        if(m_parts.count(trajid)>0){
+//                            auto s = m_parts[trajid];
+//                            std::cerr<<"";
+//                        }
                     }
                 }
                 for(const auto &rid:relatedIds){
@@ -664,9 +679,12 @@ namespace SpatialIndex
                                 computedTime += timeInterval.second - timeInterval.first;
                             }
                         }
-                        if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty())
-                            pd.opt=std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-                                                    (timeInterval.second - timeInterval.first) / (m_query.m_endTime()-m_query.m_startTime()));
+                        if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+                            pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                                                      (timeInterval.second - timeInterval.first) /
+                                                      (m_query.m_endTime() - m_query.m_startTime()));
+                            pd.pes = max(pd.opt,pd.pes);
+                        }
                         res = res+pd;
                     }
                     //mid dist
@@ -699,9 +717,12 @@ namespace SpatialIndex
                                     pd = m_query.gapDist(prev->m_points.back(), traj.m_points.front(), stat->vmax);
                                     parts->m_computedDist[timeInterval] = pd;
                                 }
-                                if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty())
-                                    pd.opt=std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-                                                            (timeInterval.second - timeInterval.first) / (m_query.m_endTime()-m_query.m_startTime()));
+                                if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()) {
+                                    pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                                                              (timeInterval.second - timeInterval.first) /
+                                                              (m_query.m_endTime() - m_query.m_startTime()));
+                                    pd.pes = max(pd.opt,pd.pes);
+                                }
                                 res = res+pd;
                             }
                         }
@@ -723,9 +744,12 @@ namespace SpatialIndex
                                 computedTime += timeInterval.second - timeInterval.first;
                             }
                         }
-                        if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty())
-                            pd.opt=std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-                                                    (timeInterval.second - timeInterval.first) / (m_query.m_endTime()-m_query.m_startTime()));
+                        if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty()){
+                            pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                                                      (timeInterval.second - timeInterval.first) /
+                                                      (m_query.m_endTime() - m_query.m_startTime()));
+                            pd.pes = max(pd.opt,pd.pes);
+                        }
                         res = res+pd;
                     }
 
@@ -747,10 +771,6 @@ namespace SpatialIndex
                     }
                     return res;
                 }
-                else if(disttype==1){
-                    throw Tools::IllegalStateException("maxsed nolonger supported.");
-                }
-                else throw Tools::IllegalStateException("");
             }
         public:
             void loadPartTraj(id_type id, leafInfo * e, double dist){

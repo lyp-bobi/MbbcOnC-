@@ -133,6 +133,7 @@ namespace SpatialIndex
 
         double nodeDist(const xSBB &b) const;
         DISTE sbbDist(const xSBB &b) const;
+        DISTE sbbDistInfer(const xSBB &b, double vmax) const;
         DISTE frontDist(const xSBB &b, double vmax) const;
         DISTE backDist(const xSBB &b, double vmax) const;
         DISTE gapDist(const xSBB &prev,const xSBB &next, double vmax) const;
