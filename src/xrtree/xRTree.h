@@ -660,117 +660,116 @@ namespace SpatialIndex
                 DISTE pd(0);
                 DISTE res;
                 std::pair<double, double> timeInterval;
-                if (disttype == 0) {
-                    //inferred distance(front dist, back dist and mid dist) should be stored as negative values
-                    //front dist
-                    if (parts->m_mintime > m_query.m_startTime()) {
-                        timeInterval.first=m_query.m_startTime();
-                        timeInterval.second=parts->m_mintime;
-                        if (parts->m_computedDist.count(timeInterval) > 0) {
-                            pd= parts->m_computedDist[timeInterval];
+
+                //inferred distance(front dist, back dist and mid dist) should be stored as negative values
+                //front dist
+                if (parts->m_mintime > m_query.m_startTime()) {
+                    timeInterval.first=m_query.m_startTime();
+                    timeInterval.second=parts->m_mintime;
+                    if (parts->m_computedDist.count(timeInterval) > 0) {
+                        pd= parts->m_computedDist[timeInterval];
+                    } else {
+                        if (parts->m_hasPrev) {
+                            pd = m_query.frontDist(parts->m_pTrajs.front().m_points.front(),
+                                                     stat->vmax);
+                            parts->m_computedDist[timeInterval] = pd;
                         } else {
-                            if (parts->m_hasPrev) {
-                                pd = m_query.frontDist(parts->m_pTrajs.front().m_points.front(),
-                                                         stat->vmax);
-                                parts->m_computedDist[timeInterval] = pd;
-                            } else {
-                                pd = m_query.frontDistStatic(parts->m_pTrajs.front().m_points.front());
-                                parts->m_computedDist[timeInterval] = pd;
-                                computedTime += timeInterval.second - timeInterval.first;
-                            }
+                            pd = m_query.frontDistStatic(parts->m_pTrajs.front().m_points.front());
+                            parts->m_computedDist[timeInterval] = pd;
+                            computedTime += timeInterval.second - timeInterval.first;
                         }
-                        if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
-                            pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-                                                      (timeInterval.second - timeInterval.first) /
-                                                      (m_query.m_endTime() - m_query.m_startTime()));
-                            pd.pes = max(pd.opt,pd.pes);
-                        }
-                        res = res+pd;
                     }
-                    //mid dist
-                    const xTrajectory *prev= nullptr;
-                    for (const auto &traj:parts->m_pTrajs) {
-                        //this box
-                        timeInterval.first=traj.m_startTime();
-                        timeInterval.second=traj.m_endTime();
-                        if (parts->m_computedDist.count(timeInterval) > 0) {
-                            if (!parts->m_computedDist[timeInterval].infer) {
-                                pd = parts->m_computedDist[timeInterval];
-                            } else {
-                                pd = DISTE(traj.getMinimumDistance(m_query));
-                                parts->m_computedDist[timeInterval] = pd;
-                            }
+                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+                        pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                                                  (timeInterval.second - timeInterval.first) /
+                                                  (m_query.m_endTime() - m_query.m_startTime()));
+                        pd.pes = max(pd.opt,pd.pes);
+                    }
+                    res = res+pd;
+                }
+                //mid dist
+                const xTrajectory *prev= nullptr;
+                for (const auto &traj:parts->m_pTrajs) {
+                    //this box
+                    timeInterval.first=traj.m_startTime();
+                    timeInterval.second=traj.m_endTime();
+                    if (parts->m_computedDist.count(timeInterval) > 0) {
+                        if (!parts->m_computedDist[timeInterval].infer) {
+                            pd = parts->m_computedDist[timeInterval];
                         } else {
                             pd = DISTE(traj.getMinimumDistance(m_query));
                             parts->m_computedDist[timeInterval] = pd;
                         }
-                        res = res+pd;
-                        computedTime += timeInterval.second - timeInterval.first;
-                        //the gap
-                        if (traj.m_startTime() != parts->m_pTrajs.front().m_startTime()) {//not first
-                            if (prev->m_endTime() < traj.m_startTime()) {
-                                timeInterval.first=prev->m_endTime();
-                                timeInterval.second=traj.m_startTime();
-                                if (parts->m_computedDist.count(timeInterval) > 0) {
-                                    pd= parts->m_computedDist[timeInterval];
-                                } else {
-                                    pd = m_query.gapDist(prev->m_points.back(), traj.m_points.front(), stat->vmax);
-                                    parts->m_computedDist[timeInterval] = pd;
-                                }
-                                if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()) {
-                                    pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-                                                              (timeInterval.second - timeInterval.first) /
-                                                              (m_query.m_endTime() - m_query.m_startTime()));
-                                    pd.pes = max(pd.opt,pd.pes);
-                                }
-                                res = res+pd;
-                            }
-                        }
-                        prev = &traj;
-                    }
-                    //backdist
-                    if (parts->m_maxtime < m_query.m_endTime()) {
-                        timeInterval.first=parts->m_maxtime;
-                        timeInterval.second=m_query.m_endTime();
-                        if (parts->m_computedDist.count(timeInterval) > 0) {
-                            pd= parts->m_computedDist[timeInterval];
-                        } else {
-                            if (parts->m_hasNext) {
-                                pd = m_query.backDist(parts->m_pTrajs.back().m_points.back(),stat->vmax);
-                                parts->m_computedDist[timeInterval] = pd;
-                            } else {
-                                pd = m_query.backDistStatic(parts->m_pTrajs.back().m_points.back());
-                                parts->m_computedDist[timeInterval] = pd;
-                                computedTime += timeInterval.second - timeInterval.first;
-                            }
-                        }
-                        if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty()){
-                            pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-                                                      (timeInterval.second - timeInterval.first) /
-                                                      (m_query.m_endTime() - m_query.m_startTime()));
-                            pd.pes = max(pd.opt,pd.pes);
-                        }
-                        res = res+pd;
-                    }
-
-                    parts->m_calcMin = res;
-                    parts->m_computedTime = computedTime;
-                    int type = 2;
-                    if (parts->m_loadedTime + 1e-7 >= (m_query.m_endTime() - m_query.m_startTime())) type = 3;
-                    res.opt -= m_error;
-                    res.pes += m_error;
-                    if (m_handlers.count(id) == 0) {
-                        auto handle = m_mpq.push(new NNEntry(id, res, type));
-                        m_handlers[id] = handle;
                     } else {
-                        m_mpq.update(m_handlers[id], id, res, type);
+                        pd = DISTE(traj.getMinimumDistance(m_query));
+                        parts->m_computedDist[timeInterval] = pd;
                     }
-                    m_pes.insert(id, res.pes);
-                    if(res.opt>m_pes.threshold()){
-                        m_except.insert(id);
+                    res = res+pd;
+                    computedTime += timeInterval.second - timeInterval.first;
+                    //the gap
+                    if (traj.m_startTime() != parts->m_pTrajs.front().m_startTime()) {//not first
+                        if (prev->m_endTime() < traj.m_startTime()) {
+                            timeInterval.first=prev->m_endTime();
+                            timeInterval.second=traj.m_startTime();
+                            if (parts->m_computedDist.count(timeInterval) > 0) {
+                                pd= parts->m_computedDist[timeInterval];
+                            } else {
+                                pd = m_query.gapDist(prev->m_points.back(), traj.m_points.front(), stat->vmax);
+                                parts->m_computedDist[timeInterval] = pd;
+                            }
+                            if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()) {
+                                pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                                                          (timeInterval.second - timeInterval.first) /
+                                                          (m_query.m_endTime() - m_query.m_startTime()));
+                                pd.pes = max(pd.opt,pd.pes);
+                            }
+                            res = res+pd;
+                        }
                     }
-                    return res;
+                    prev = &traj;
                 }
+                //backdist
+                if (parts->m_maxtime < m_query.m_endTime()) {
+                    timeInterval.first=parts->m_maxtime;
+                    timeInterval.second=m_query.m_endTime();
+                    if (parts->m_computedDist.count(timeInterval) > 0) {
+                        pd= parts->m_computedDist[timeInterval];
+                    } else {
+                        if (parts->m_hasNext) {
+                            pd = m_query.backDist(parts->m_pTrajs.back().m_points.back(),stat->vmax);
+                            parts->m_computedDist[timeInterval] = pd;
+                        } else {
+                            pd = m_query.backDistStatic(parts->m_pTrajs.back().m_points.back());
+                            parts->m_computedDist[timeInterval] = pd;
+                            computedTime += timeInterval.second - timeInterval.first;
+                        }
+                    }
+                    if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty()){
+                        pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                                                  (timeInterval.second - timeInterval.first) /
+                                                  (m_query.m_endTime() - m_query.m_startTime()));
+                        pd.pes = max(pd.opt,pd.pes);
+                    }
+                    res = res+pd;
+                }
+
+                parts->m_calcMin = res;
+                parts->m_computedTime = computedTime;
+                int type = 2;
+                if (parts->m_loadedTime + 1e-7 >= (m_query.m_endTime() - m_query.m_startTime())) type = 3;
+                res.opt -= m_error;
+                res.pes += m_error;
+                if (m_handlers.count(id) == 0) {
+                    auto handle = m_mpq.push(new NNEntry(id, res, type));
+                    m_handlers[id] = handle;
+                } else {
+                    m_mpq.update(m_handlers[id], id, res, type);
+                }
+                m_pes.insert(id, res.pes);
+                if(res.opt>m_pes.threshold()){
+                    m_except.insert(id);
+                }
+                return res;
             }
         public:
             void loadPartTraj(id_type id, leafInfo * e, double dist){
@@ -781,7 +780,10 @@ namespace SpatialIndex
                 xTrajectory inter;
                 tmpTraj.getPartialxTrajectory(max(m_query.m_startTime(),e->m_ts),
                                               min(m_query.m_endTime(),e->m_te),inter);
-                insert(trajid, inter, e->m_hasPrev ? 1 : -1, e->m_hasNext ? 1 : -1, e->m_se);
+                bool pv = e->m_hasPrev, nt = e->m_hasNext;
+                pv = pv && (m_query.m_startTime()<e->m_ts);
+                nt = nt && (m_query.m_endTime()> e->m_te);
+                insert(trajid, inter, pv ? 1 : -1, nt ? 1 : -1, e->m_se);
             }
 
             auto top(){
@@ -791,6 +793,8 @@ namespace SpatialIndex
                         prevtop=m_mpq.top()->m_id;
                         update(prevtop);
                     }
+                    //test code
+//                    std::cerr<<prevtop<<" "<<m_mpq.top()->m_dist.opt<<endl;
                 }
                 if(!m_mpq.empty()&&m_mpq.top()->m_type==3&&(m_nodespq.empty()|| m_mpq.top()->m_dist < m_nodespq.top()->m_dist)){
                     return m_mpq.top();

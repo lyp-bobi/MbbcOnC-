@@ -943,14 +943,25 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                 }
                 case 3: {//complete bounding
                     ps.pop();
-//                    if(ps.top()->m_minDist>pFirst.)
-                    xTrajectory traj = ps.getTraj(pFirst->m_id);
+                    if (pFirst->m_dist.pes < ps.top()->m_dist.opt){
+                        // we judge by sbbs instead of subtraj
+                        ++(m_stats.m_u64QueryResults);
+                        ++count;
+                        knearest = pFirst->m_dist.opt;
+                        simpleData d(pFirst->m_id, pFirst->m_dist.opt);
+                        v.visitData(d);
+                        delete pFirst;
+                        break;
+                    }else{
+                        xTrajectory traj = ps.getTraj(pFirst->m_id);
 //                std::cerr<<"trajIO"<<m_ts->m_trajIO<<"\n";
 //                std::cerr<<"getTraj"<<traj<<"\n";
 //                xTrajectory traj = m_ts->getTrajByTime(pFirst->m_id, queryTraj->m_startTime(), queryTraj->m_endTime());
-                    ps.push(new NNEntry(pFirst->m_id, DISTE(queryTraj->getMinimumDistance(traj)), 4));
-                    delete pFirst;
-                    break;
+                        ps.push(new NNEntry(pFirst->m_id, DISTE(queryTraj->getMinimumDistance(traj)), 4));
+                        delete pFirst;
+                        break;
+                    }
+
                 }
                 case 4: {//exact traj
                     ps.pop();
@@ -997,18 +1008,13 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                         if (n->m_level == 0) {
                             double pd;
                             double ts, te;
-//                            if (m_bUsingMBR) {
+                            //test code
+//                            if(n->m_pIdentifier[cChild]==788){
+//                                std::cerr<<"";
+//                            }
                             pd = std::max(0.0, simpleTraj.sbbDistInfer(n->m_ptrxSBB[cChild]->br,stat->vmax).opt);
                             ts = n->m_ptrxSBB[cChild]->br.m_tmin;
                             te = n->m_ptrxSBB[cChild]->br.m_tmax;
-//                            } else {
-//                                double d = simpleTraj.getMinimumDistance(*(n->m_ptrMBC[cChild]))/
-//                                           ((n->m_ptrMBC[cChild])->m_endTime- (n->m_ptrMBC[cChild])->m_startTime)
-//                                           *(simpleTraj.m_endTime()-simpleTraj.m_startTime());
-//                                pd = std::max(0.0, d);
-//                                ts = n->m_ptrMBC[cChild]->m_startTime;
-//                                te = n->m_ptrMBC[cChild]->m_endTime;
-//                            }
                             leafInfo *e = new leafInfo();
                             e->m_se = n->m_se[cChild];
                             e->m_hasPrev = (n->m_prevNode[cChild] != -1);

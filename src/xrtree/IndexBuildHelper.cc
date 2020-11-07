@@ -83,7 +83,7 @@ xRTree * xRTreeNsp::buildMBRRTree(IStorageManager *mng,
         bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
         std::cerr<<"build new "<<name<<"\n";
     }
-    std::cerr<<r->m_headerID<<" "<<r->m_rootID<<endl;
+//    std::cerr<<r->m_headerID<<" "<<r->m_rootID<<endl;
     return r;
 }
 

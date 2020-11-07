@@ -172,8 +172,8 @@ xStore::xStore(string myname,string file,bool forceNew) {
 void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
     auto te= m_trajIdx[e.m_id];
     uint32_t ms = min(te->m_npoint-1,e.m_s), me=min(te->m_npoint-1,e.m_e);
-    id_type pages = te->m_page + ms/fp;
-    id_type pagee = te->m_page + int(ceil(1.0*me/fp))-1;
+    id_type pages = te->m_page + (ms+1)/fp;
+    id_type pagee = te->m_page + int(ceil(1.0*(me+1)/fp))-1;
     id_type cur = ms/fp*fp;
     uint8_t *data, *ptr;
     uint32_t len;

@@ -54,11 +54,11 @@ public:
 //        cout << *s << endl;
 
         m_lastResult = d.getIdentifier();
-        auto mou=dynamic_cast<const xRTreeNsp::xRTree::simpleData*>(&d);
-        if(mou!=nullptr){
-            m_lastDist=mou->m_dist;
-            cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
-        }
+//        auto mou=dynamic_cast<const xRTreeNsp::xRTree::simpleData*>(&d);
+//        if(mou!=nullptr){
+//            m_lastDist=mou->m_dist;
+//            cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
+//        }
 //        auto mou2=dynamic_cast<const RTree::RTree::simpleData*>(&d);
 //        if(mou2!=nullptr){
 //            m_lastDist=mou2->m_dist;
@@ -98,40 +98,41 @@ public:
 
 using namespace xRTreeNsp;
 int main(){
-    xStore x("test", "D://TRI-framework/dumpedtraj.txt",true);
+    xStore x("test", "D://TRI-framework/dumpedtraj.txt");
     auto stat = trajStat::instance();
-    double querylens[]={100000};
+    double querylens[]={500,1000,2000,100000};
     xCylinder query(xPoint(40,116.327,6516),0.0001,6516,9516,2);
     xTrajectory tj;
     x.loadTraj(tj, xStoreEntry(1850,0,1000));
+//    x.loadTraj(tj, xStoreEntry(3762,0,1000));
     CUTFUNC f=xTrajectory::ISS;
     stat->bt=500;
-    f(tj);
-    bUsingSBBD=false;
-    for(auto querylen:querylens){
-        stat->bt = querylen;
-        MyVisitor vis;
-        vis.ts = &x;
-        auto r = buildMBRRTree(&x,f);
-//        r->intersectsWithQuery(query,vis);
-try{
-        r->nearestNeighborQuery(5,tj,vis);}
-catch (Tools::Exception &e) {
-    cerr << "******ERROR******" << endl;
-    std::string s = e.what();
-    cerr << s << endl;
-    return -1;
-}
-        std::cerr<<vis.m_resultGet<<" "<<vis.m_lastResult<<endl;
+    try {
+        bUsingSBBD = false;
+        for (auto querylen:querylens) {
+            stat->bt = querylen;
+            MyVisitor vis;
+            vis.ts = &x;
+            auto r = buildMBRRTree(&x, f);
+            r->intersectsWithQuery(query, vis);
+            r->nearestNeighborQuery(5, tj, vis);
+            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+        }
+        bUsingSBBD = true;
+        for (auto querylen:querylens) {
+            stat->bt = querylen;
+            MyVisitor vis;
+            vis.ts = &x;
+            auto r = buildMBRRTree(&x, f);
+            r->intersectsWithQuery(query,vis);
+            r->nearestNeighborQuery(5, tj, vis);
+            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+        }
     }
-//    bUsingSBBD=true;
-//    for(auto querylen:querylens){
-//        stat->bt = querylen;
-//        MyVisitor vis;
-//        vis.ts = &x;
-//        auto r = buildMBRRTree(&x,f);
-////        r->intersectsWithQuery(query,vis);
-//        r->nearestNeighborQuery(5,tj,vis);
-//        std::cerr<<vis.m_resultGet<<" "<<vis.m_lastResult<<endl;
-//    }
+    catch (Tools::Exception &e) {
+        cerr << "******ERROR******" << endl;
+        std::string s = e.what();
+        cerr << s << endl;
+        return -1;
+    }
 }
