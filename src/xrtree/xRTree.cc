@@ -824,21 +824,39 @@ void xRTree::intersectsWithQuery(const xCylinder &query, IVisitor &v) {
         }
     }
     if(bUsingSBBD) {
+        id_type previd=pending.begin()->first;
+        uint32_t lower = pending.begin()->second.m_s, higher=pending.begin()->second.m_e;
         while (!pending.empty()) {
             auto iter = pending.begin();
-            xStoreEntry storee = iter->second;
             id_type id = iter->first;
-            xTrajectory partTraj;
-            m_ts->loadTraj(partTraj,storee);
-            if (partTraj.intersectsxCylinder(*querycy)) {
-                m_stats.m_doubleExactQueryResults += 1;
-                results.insert(id);
-                pending.erase(id);
-                simpleData data = simpleData(id, 0);
-                v.visitData(data);
-                ++(m_stats.m_u64QueryResults);
-            } else {
-                pending.erase(iter);
+            xStoreEntry storee = iter->second;
+            pending.erase(iter);
+            if(id!=previd||pending.empty()){ //check last
+                xTrajectory partTraj;
+                m_ts->loadTraj(partTraj,xStoreEntry(previd,lower,higher));
+                if (partTraj.intersectsxCylinder(*querycy)) {
+                    m_stats.m_doubleExactQueryResults += 1;
+                    results.insert(previd);
+                    simpleData data(previd, 0);
+                    v.visitData(data);
+                    ++(m_stats.m_u64QueryResults);
+                }
+                if(id!=previd && pending.empty()){
+                    m_ts->loadTraj(partTraj,storee);
+                    if (partTraj.intersectsxCylinder(*querycy)) {
+                        m_stats.m_doubleExactQueryResults += 1;
+                        results.insert(id);
+                        simpleData data(id, 0);
+                        v.visitData(data);
+                        ++(m_stats.m_u64QueryResults);
+                    }
+                }
+                previd = id;
+                lower = storee.m_s, higher=storee.m_e;
+            }
+            else{//merge
+                lower = min(lower, storee.m_s);
+                higher = max(higher, storee.m_e);
             }
         }
     }
