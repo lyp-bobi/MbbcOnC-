@@ -632,6 +632,7 @@ namespace SpatialIndex
             xTrajectory m_query;
             double m_error;
             xStore* m_ts;
+            double m_lastNodeDist=0; // the top might decrease for sbbs, so we use this
             trajStat* stat = trajStat::instance();
             std::map<id_type ,Parts> m_parts;
             int m_dimension=2;
@@ -680,7 +681,7 @@ namespace SpatialIndex
                         }
                     }
                     if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
-                        pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                        pd.opt = std::max(pd.opt, m_lastNodeDist *
                                                   (timeInterval.second - timeInterval.first) /
                                                   (m_query.m_endTime() - m_query.m_startTime()));
                         pd.pes = max(pd.opt,pd.pes);
@@ -718,7 +719,7 @@ namespace SpatialIndex
                                 parts->m_computedDist[timeInterval] = pd;
                             }
                             if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()) {
-                                pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                                pd.opt = std::max(pd.opt, m_lastNodeDist *
                                                           (timeInterval.second - timeInterval.first) /
                                                           (m_query.m_endTime() - m_query.m_startTime()));
                                 pd.pes = max(pd.opt,pd.pes);
@@ -744,8 +745,8 @@ namespace SpatialIndex
                             computedTime += timeInterval.second - timeInterval.first;
                         }
                     }
-                    if(parts->m_computedDist[timeInterval].infer==true&&!m_nodespq.empty()){
-                        pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+                        pd.opt = std::max(pd.opt, m_lastNodeDist *
                                                   (timeInterval.second - timeInterval.first) /
                                                   (m_query.m_endTime() - m_query.m_startTime()));
                         pd.pes = max(pd.opt,pd.pes);
@@ -807,8 +808,12 @@ namespace SpatialIndex
             auto pop(){
                 if(!m_mpq.empty()&&m_mpq.top()->m_type==3&&(m_nodespq.empty()|| m_mpq.top()->m_dist < m_nodespq.top()->m_dist))
                     return m_mpq.pop();
-                if(!m_nodespq.empty())
+                if(!m_nodespq.empty()) {
+                    if(m_nodespq.top()->m_type==0){
+                        m_lastNodeDist = m_nodespq.top()->m_dist.opt;
+                    }
                     return m_nodespq.pop();
+                }
                 return m_mpq.pop();
             }
 
