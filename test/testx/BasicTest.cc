@@ -98,9 +98,9 @@ public:
 
 using namespace xRTreeNsp;
 int main(){
-    xStore x("test", "D://TRI-framework/dumpedtraj.txt");
+    xStore x("test", "D://TRI-framework/dumpedtraj.txt",true,true);
     auto stat = trajStat::instance();
-    double querylens[]={500,1000,2000,100000};
+    double querylens[]={500,1500,2000,5000,10000};
     xCylinder query(xPoint(40,116.327,6516),0.0001,6516,9516,2);
     xTrajectory tj;
     x.loadTraj(tj, xStoreEntry(1850,0,1000));

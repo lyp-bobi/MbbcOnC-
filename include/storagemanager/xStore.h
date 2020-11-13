@@ -57,7 +57,7 @@ namespace SpatialIndex
         class SIDX_DLL xStore:public IStorageManager{
         public:
             ~xStore();
-            xStore(string myname, string file, bool forceNew=false);
+            xStore(string myname, string file, bool subtrajs=false, bool forceNew=false);
             void flush();
             void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
                 auto start = std::chrono::system_clock::now();
@@ -88,6 +88,7 @@ namespace SpatialIndex
             std::map<id_type,xTrajEntry*> m_trajIdx;
             IStorageManager* m_pStorageManager;
             std::string m_name;
+            bool m_bSubTraj=false;
             uint32_t m_pageSize;
             uint32_t m_maxTrajSegs=100;
 

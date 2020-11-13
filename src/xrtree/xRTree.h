@@ -578,7 +578,7 @@ namespace SpatialIndex
                 xTrajectory res;
                 m_ts->loadTraj(res,xStoreEntry(ses->begin()->second.m_id,
                                             ses->begin()->second.m_s,
-                                            ses->end()->second.m_e));
+                                            ses->rbegin()->second.m_e));
                 return res;
             }
         };//PartStore

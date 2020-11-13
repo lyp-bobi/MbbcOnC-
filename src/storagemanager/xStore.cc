@@ -62,7 +62,7 @@ xStore::~xStore() {
     }
 }
 
-xStore::xStore(string myname,string file,bool forceNew) {
+xStore::xStore(string myname,string file,bool bsubtraj,bool forceNew) {
     m_name=myname;
     m_pageSize = 4096;
 #define fp (int(m_pageSize/sizeof(prexp)/3))
@@ -73,6 +73,7 @@ xStore::xStore(string myname,string file,bool forceNew) {
         propFile>>m_property;
         propFile.close();
         tjstat->fromString(m_property["stat"]);
+        m_bSubTraj = m_property["bSubTraj"];
         ifstream trajidxFile(m_name+".trajidx", ios::in);
         id_type size,id,page,off;
         trajidxFile>>size;
@@ -82,6 +83,7 @@ xStore::xStore(string myname,string file,bool forceNew) {
         }
     }
     else{
+        m_bSubTraj = bsubtraj;
         std::cerr<<"start loading "<< file<<" into "<<myname<<"\n";
         m_pStorageManager = createNewDiskStorageManager(myname,m_pageSize);
         m_property["trajfile"] = file;
@@ -102,6 +104,8 @@ xStore::xStore(string myname,string file,bool forceNew) {
                 id_type id = stoll(str);
                 getline(inFile, str);
                 tj.loadFromString(str);
+                //test code
+//                std::cerr<<"test id"<<id<<endl;
                 if (tj.m_points.size() >= 2) {
                     int rem = tj.m_points.size();
                     int cur=0;
@@ -114,9 +118,11 @@ xStore::xStore(string myname,string file,bool forceNew) {
                         data = new uint8_t[24*plen];
                         ptr = data;
                         for(int i=0;i<plen;i++){
+                            //test code
+//                            std::cerr<<" "<<cur<< tj.m_points[cur]<<endl;
                             p = &(tj.m_points[cur++]);
                             p->storeToByteArrayE(&ptr,len);
-                            if(i!= plen-1) ptr += len;
+                            if(i != plen-1) ptr += len;
                         }
                         ptr=data;
                         id_type newPage = StorageManager::NewPage;
@@ -126,6 +132,10 @@ xStore::xStore(string myname,string file,bool forceNew) {
                             isfirst=false;
                         }
                         rem-=fp;
+                        if(bsubtraj&&rem!=0){
+                            rem++;
+                            cur--;
+                        }
                         delete[] data;
                     }
                     m_trajIdx[id] = new xTrajEntry(firstpage, tj.m_points.size());
@@ -165,6 +175,7 @@ xStore::xStore(string myname,string file,bool forceNew) {
         if (file.find("gl")!=file.npos) tjstat->usedata("gl");
         std::cerr<<tjstat->toString();
         m_property["stat"]= tjstat->toString();
+        m_property["bSubTraj"] = bsubtraj;
     }
 }
 
@@ -172,33 +183,70 @@ xStore::xStore(string myname,string file,bool forceNew) {
 void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
     auto te= m_trajIdx[e.m_id];
     uint32_t ms = min(te->m_npoint-1,e.m_s), me=min(te->m_npoint-1,e.m_e);
-    id_type pages = te->m_page + (ms+1)/fp;
-    id_type pagee = te->m_page + int(ceil(1.0*(me+1)/fp))-1;
-    id_type cur = ms/fp*fp;
-    uint8_t *data, *ptr;
-    uint32_t len;
-    int ps,pe;
-    prexp x,y,t;
-    out.m_points.clear();
-    for(auto i =pages;i<=pagee;i++) {
-        ps = max(0, int(ms - cur));
-        pe = min(fp-1,  int(me - cur));
-        len = 3*sizeof(prexp)*pe;
-        m_pStorageManager->loadByteArray(i,len,&data);
-        for(ptr = data + 3*sizeof(prexp)*ps;ptr-data<len;){
-            x=*((double*)ptr);
-            ptr+=sizeof(prexp);
-            y=*((double*)ptr);
-            ptr+=sizeof(prexp);
-            t=*((double*)ptr);
-            ptr+=sizeof(prexp);
-            out.m_points.emplace_back(xPoint(x, y, t));
+    //test code
+//    std::cerr<<"test id "<<e.m_id<<endl;
+    if(m_bSubTraj){
+        id_type pages = te->m_page + (ms) / (fp-1);
+        id_type pagee = te->m_page + int(ceil(1.0 * (me) / (fp-1))) - 1;
+        if(pages>pagee) pagee++;
+        id_type cur = ms/(fp-1)*(fp-1);
+        uint8_t *data, *ptr;
+        uint32_t len,tmplen;
+        int ps, pe;
+        prexp x, y, t;
+        out.m_points.clear();
+        for (auto i = pages; i <= pagee; i++) {
+            ps = max(0, int(ms - cur));
+            pe = min(fp - 1, int(me - cur));
+            if(i!=pagee && pe == fp-1) pe--;
+            len = 3 * sizeof(prexp) * (pe+1);
+            m_pStorageManager->loadByteArray(i, tmplen, &data);
+            for (ptr = data + 3 * sizeof(prexp) * ps; ptr - data < len;) {
+                x = *((double *) ptr);
+                ptr += sizeof(prexp);
+                y = *((double *) ptr);
+                ptr += sizeof(prexp);
+                t = *((double *) ptr);
+                ptr += sizeof(prexp);
+                out.m_points.emplace_back(xPoint(x, y, t));
+                //test code
+//                std::cerr<< out.m_points.size() << " " << x<<","<<y<<","<<t<<endl;
+            }
+            delete data;
+            cur += pe+1;
         }
-        cur+=fp;
-        delete data;
+        out.m_fakehead = (ms != 0);
+        out.m_fakeback = (me == te->m_npoint - 1);
     }
-    out.m_fakehead = (ms!=0);
-    out.m_fakeback = (me==te->m_npoint-1);
+    else {
+        id_type pages = te->m_page + (ms + 1) / fp;
+        id_type pagee = te->m_page + int(ceil(1.0 * (me + 1) / fp)) - 1;
+        id_type cur = ms / fp * fp;
+        uint8_t *data, *ptr;
+        uint32_t len,tmplen;
+        int ps, pe;
+        prexp x, y, t;
+        out.m_points.clear();
+        for (auto i = pages; i <= pagee; i++) {
+            ps = max(0, int(ms - cur));
+            pe = min(fp - 1, int(me - cur));
+            len = 3 * sizeof(prexp) * (pe+1);
+            m_pStorageManager->loadByteArray(i, tmplen, &data);
+            for (ptr = data + 3 * sizeof(prexp) * ps; ptr - data < len;) {
+                x = *((double *) ptr);
+                ptr += sizeof(prexp);
+                y = *((double *) ptr);
+                ptr += sizeof(prexp);
+                t = *((double *) ptr);
+                ptr += sizeof(prexp);
+                out.m_points.emplace_back(xPoint(x, y, t));
+            }
+            cur += fp;
+            delete data;
+        }
+        out.m_fakehead = (ms != 0);
+        out.m_fakeback = (me == te->m_npoint - 1);
+    }
 }
 
 xPoint xStore::randomPoint() {

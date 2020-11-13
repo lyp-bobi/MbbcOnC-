@@ -30,6 +30,7 @@ xTrajectory::xTrajectory(std::vector<SpatialIndex::xPoint>& in)
 xTrajectory::xTrajectory(bool fakehead, bool fakeback,std::vector<SpatialIndex::xPoint> &in) {
 #ifndef NDEBUG
     if(in.front().m_t>=in.back().m_t){
+        m_points = in;
         std::cerr<<"wrong xTrajectory!\n"<<*this;
     }
 #endif
@@ -1401,4 +1402,38 @@ list<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
         seg.clear();
     }
     return res;
+}
+
+list<CUTENTRY> xTrajectory::FP(xTrajectory &traj, int np) {
+    int ms;
+    vector<xPoint> seg;
+    list<CUTENTRY> res;
+    xTrajectory subtraj;
+    xMBR tmpbr;
+    xMBC tmpbc;
+    bool fakehead=false,fakeback=false;
+    ms = 0;
+    for(int i=0;i<traj.m_points.size();i++){
+        seg.emplace_back(traj.m_points[i]);
+        if(i==traj.m_points.size()-1){
+            subtraj = xTrajectory(seg);
+            subtraj.getxMBR(tmpbr);
+            subtraj.getxMBC(tmpbc);
+            res.emplace_back(make_pair(make_pair(ms,i)
+                    ,xSBB(tmpbr,tmpbc)));
+            ms = i;
+            seg.clear();
+            break;
+        }
+        if(seg.size()>=np){
+            subtraj = xTrajectory(seg);
+            subtraj.getxMBR(tmpbr);
+            subtraj.getxMBC(tmpbc);
+            res.emplace_back(make_pair(make_pair(ms,i)
+                    ,xSBB(tmpbr,tmpbc)));
+            seg.clear();
+            ms = i;
+            seg.emplace_back(traj.m_points[i]);
+        }
+    }
 }

@@ -167,6 +167,7 @@ namespace SpatialIndex
         std::vector<xTrajectory> getItself() const;
 
         static list<CUTENTRY> ISS(xTrajectory &traj);
+        static list<CUTENTRY> FP(xTrajectory &traj, int np);
 
         void linkxTrajectory(xTrajectory &other);
 
