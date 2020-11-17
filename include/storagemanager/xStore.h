@@ -5,7 +5,7 @@
 #pragma once
 
 #define CUTENTRY pair<pair<int,int>,xSBB>
-#define CUTFUNC function<list<CUTENTRY>(xTrajectory&)>
+#define CUTFUNC function<queue<CUTENTRY>(xTrajectory&)>
 #include <spatialindex/SpatialIndex.h>
 #include <cstring>
 
@@ -57,7 +57,7 @@ namespace SpatialIndex
         class SIDX_DLL xStore:public IStorageManager{
         public:
             ~xStore();
-            xStore(string myname, string file, bool subtrajs=false, bool forceNew=false);
+            xStore(string myname, string file, bool subtrajs=true, bool forceNew=false);
             void flush();
             void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
                 auto start = std::chrono::system_clock::now();
@@ -105,7 +105,7 @@ namespace SpatialIndex
         class xSBBStream:public IDataStream{
         public:
             CUTFUNC m_cutFunc;
-            list<CUTENTRY> m_buf;
+            queue<CUTENTRY> m_buf;
             xStore *m_pstore;
             //tmp recorder for split sbbs
             id_type m_id;

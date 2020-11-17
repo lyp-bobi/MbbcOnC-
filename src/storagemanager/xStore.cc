@@ -173,7 +173,7 @@ xStore::xStore(string myname,string file,bool bsubtraj,bool forceNew) {
         std::cerr<<file<<endl;
         if (file.find("td")!=file.npos) tjstat->usedata("td");
         if (file.find("gl")!=file.npos) tjstat->usedata("gl");
-        std::cerr<<tjstat->toString();
+        std::cerr<<tjstat->toString()<<endl;
         m_property["stat"]= tjstat->toString();
         m_property["bSubTraj"] = bsubtraj;
     }
@@ -297,7 +297,7 @@ xSBBData * xSBBStream::getNext() {
         isFirst=true;
     }
     auto b = m_buf.front();
-    m_buf.pop_front();
+    m_buf.pop();
     return new xSBBData(m_count++,
                         xStoreEntry(m_id,b.first.first,b.first.second),b.second, !isFirst, !m_buf.empty());
 }

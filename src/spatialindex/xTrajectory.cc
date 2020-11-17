@@ -1074,7 +1074,7 @@ DISTE xTrajectory::gapDist(const xSBB &prev,const xSBB &next, double v) const{
     double de = prev.tdist(getPointAtTime(inte));
     double to=(ints+inte+(de-ds)/(v))/2;
     double tp = (ints+inte+(ds-de)/(v))/2;
-    opti=ldd(ds,-v,to-ints)+ldd(de,v,inte-to);
+    opti=ldd(ds,-v,to-ints)+ldd(de,-v,inte-to);
     pessi = ldd(ds,v,tp-ints)+ldd(de,v,inte-tp);
     return DISTE(opti,pessi,0,true);
 }
@@ -1092,9 +1092,9 @@ DISTE xTrajectory::frontDistStatic(const xSBB &b) const {
 
 DISTE xTrajectory::backDistStatic(const xSBB &b) const {
     if(b.hasbc) {
-        return DISTE(getStaticIED(b.bc.m_ps.m_x, b.bc.m_ps.m_y, b.bc.m_ps.m_t, m_endTime()));
+        return DISTE(getStaticIED(b.bc.m_pe.m_x, b.bc.m_pe.m_y, b.bc.m_pe.m_t, m_endTime()));
     } else if (b.hasbl){
-        return DISTE(getStaticIED(b.bl.m_ps.m_x, b.bl.m_ps.m_y, b.bl.m_ps.m_t, m_endTime()));
+        return DISTE(getStaticIED(b.bl.m_pe.m_x, b.bl.m_pe.m_y, b.bl.m_pe.m_t, m_endTime()));
     }else{
         return DISTE(getStaticIED(b.br,b.br.m_tmax, m_endTime()));
     }
@@ -1126,7 +1126,7 @@ DISTE xTrajectory::gapDist(const xPoint &prev,const xPoint &next, double v) cons
     double de = prev.getMinimumDistance(getPointAtTime(inte));
     double to=(ints+inte+(de-ds)/(v))/2;
     double tp = (ints+inte+(ds-de)/(v))/2;
-    opti=ldd(ds,-v,to-ints)+ldd(de,v,inte-to);
+    opti=ldd(ds,-v,to-ints)+ldd(de,-v,inte-to);
     pessi = ldd(ds,v,tp-ints)+ldd(de,v,inte-tp);
     return DISTE(opti,pessi,0,true);
 }
@@ -1310,9 +1310,9 @@ double xTrajectory::maxSpeed() const {
 
 # define looseFactor 0.3
 
-list<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
+queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
     vector<xPoint> seg;
-    list<CUTENTRY> res;
+    queue<CUTENTRY> res;
     xTrajectory subtraj;
     xMBR tmpbr;
     xMBC tmpbc;
@@ -1338,7 +1338,7 @@ list<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
                 me=i;
                 subtraj.getxMBR(tmpbr);
                 subtraj.getxMBC(tmpbc);
-                res.emplace_back(make_pair(make_pair(ms,me)
+                res.push(make_pair(make_pair(ms,me)
                                            ,xSBB(tmpbr,tmpbc)));
                 ms = i;
                 fakehead = false;
@@ -1352,7 +1352,7 @@ list<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
                 me=i-1;
                 subtraj.getxMBR(tmpbr);
                 subtraj.getxMBC(tmpbc);
-                res.emplace_back(make_pair(make_pair(ms,me)
+                res.push(make_pair(make_pair(ms,me)
                         ,xSBB(tmpbr,tmpbc)));
                 ms = i-1;
                 fakehead=false;
@@ -1365,7 +1365,7 @@ list<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
                 me=i;
                 subtraj.getxMBR(tmpbr);
                 subtraj.getxMBC(tmpbc);
-                res.emplace_back(make_pair(make_pair(ms,me)
+                res.push(make_pair(make_pair(ms,me)
                         ,xSBB(tmpbr,tmpbc)));
                 ms = i;
                 seg.emplace_back(traj.m_points[i]);
@@ -1381,7 +1381,7 @@ list<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
                 me=i;
                 subtraj.getxMBR(tmpbr);
                 subtraj.getxMBC(tmpbc);
-                res.emplace_back(make_pair(make_pair(ms,me)
+                res.push(make_pair(make_pair(ms,me)
                         ,xSBB(tmpbr,tmpbc)));
                 ms = i-1;
                 fakehead=true;
@@ -1397,17 +1397,17 @@ list<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
         subtraj=xTrajectory(fakehead, false, seg);
         subtraj.getxMBR(tmpbr);
         subtraj.getxMBC(tmpbc);
-        res.emplace_back(make_pair(make_pair(ms,me)
+        res.push(make_pair(make_pair(ms,me)
                 ,xSBB(tmpbr,tmpbc)));
         seg.clear();
     }
     return res;
 }
 
-list<CUTENTRY> xTrajectory::FP(xTrajectory &traj, int np) {
+queue<CUTENTRY> xTrajectory::FP(xTrajectory &traj, int np) {
     int ms;
     vector<xPoint> seg;
-    list<CUTENTRY> res;
+    queue<CUTENTRY> res;
     xTrajectory subtraj;
     xMBR tmpbr;
     xMBC tmpbc;
@@ -1419,7 +1419,7 @@ list<CUTENTRY> xTrajectory::FP(xTrajectory &traj, int np) {
             subtraj = xTrajectory(seg);
             subtraj.getxMBR(tmpbr);
             subtraj.getxMBC(tmpbc);
-            res.emplace_back(make_pair(make_pair(ms,i)
+            res.push(make_pair(make_pair(ms,i)
                     ,xSBB(tmpbr,tmpbc)));
             ms = i;
             seg.clear();
@@ -1429,11 +1429,12 @@ list<CUTENTRY> xTrajectory::FP(xTrajectory &traj, int np) {
             subtraj = xTrajectory(seg);
             subtraj.getxMBR(tmpbr);
             subtraj.getxMBC(tmpbc);
-            res.emplace_back(make_pair(make_pair(ms,i)
+            res.push(make_pair(make_pair(ms,i)
                     ,xSBB(tmpbr,tmpbc)));
             seg.clear();
             ms = i;
             seg.emplace_back(traj.m_points[i]);
         }
     }
+    return  res;
 }

@@ -141,16 +141,16 @@ std::string xSBB::toString() const {
     else s+= "0 ";
     if(hasbr){
         s += std::to_string(br.m_xmin) + " " + std::to_string(br.m_ymin) + " "
-                +std::to_string(br.m_tmin);
+                +std::to_string(br.m_tmin)+ " ";
         s += std::to_string(br.m_xmax) + " " + std::to_string(br.m_ymax) + " "
-             +std::to_string(br.m_tmax);
+             +std::to_string(br.m_tmax) + " ";
     }
     if(hasbc) {
         s += std::to_string(bc.m_ps.m_x) + " " + std::to_string(bc.m_ps.m_y) + " " + std::to_string(bc.m_ps.m_t) + " ";
         s += std::to_string(bc.m_pe.m_x) + " " + std::to_string(bc.m_pe.m_y) + " " + std::to_string(bc.m_pe.m_t) + " ";
-        s += std::to_string(bc.m_rd) + " " + std::to_string(bc.m_rv);
+        s += std::to_string(bc.m_rd) + " " + std::to_string(bc.m_rv)+ " ";
     }
-    if(hasbc) {
+    if(hasbl) {
         s += std::to_string(bc.m_ps.m_x) + " " + std::to_string(bc.m_ps.m_y) + " " + std::to_string(bc.m_ps.m_t) + " ";
         s += std::to_string(bc.m_pe.m_x) + " " + std::to_string(bc.m_pe.m_y) + " " + std::to_string(bc.m_pe.m_t) + " ";
     }

@@ -422,8 +422,6 @@ void BulkLoader::createLevel(
                 if(level==0){
                     //state the storage place of bounding boxes
                     for(int i=0;i<n->m_children;i++){
-                        //test code
-//                        id_type tmpid = n->m_se[i].m_id;
                         m_part2node[n->m_pIdentifier[i]]=n->m_identifier;
                     }
                 }
@@ -494,11 +492,7 @@ void BulkLoader::createLevel(
 //                            std::cerr<<store->m_page<<" "<<store->m_start<<" "<<store->m_len<<"\n";
                     }
                     pTree->writeNode(child.get());
-                    //test code
-//                    std::cerr<<child->toString();
                 }
-                //test code
-//                std::cerr<<n->toString();
             }
 			delete n;
 		}

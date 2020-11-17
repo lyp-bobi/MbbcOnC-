@@ -212,6 +212,7 @@ int xCylinder::checkRel(const xMBR &br) const {
 }
 
 static bool below0(double a,double b,double c,double ts,double te){
+    if(ts>te) return false;
     if(a*ts*ts+b*ts+c<=0||a*te*te+b*te+c<=0) return true;
     double m = -b/2/a;
     if(ts<m && m<te && a*m*m +b*m +c<=0) return true;
@@ -317,9 +318,13 @@ int xCylinder::checkRel(const xMBC &bc) const {
         if (dmid <= bc.m_rd + m_r) tmpRes = 1;
         //else tmpRes=0;
 
+        // to avoid (rt< mr)
+        double donttimelow = bc.m_ps.m_t + m_r/bc.m_rv, donttimehigh = bc.m_pe.m_t - m_r/bc.m_rv;
+
         double d1,d2,d3;
         //lower cone
-        ints=std::max(t0,tlow);inte=std::min(t1,thigh);
+        ints=std::max(t0,tlow);
+        inte=std::min(t1,thigh);
         if(ints<inte){
             double c1=sq(dxs-dxe)+sq(dys-dye),
                     c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
@@ -328,7 +333,7 @@ int xCylinder::checkRel(const xMBC &bc) const {
             d1=c1-sq(c4*bc.m_rv);
             d2=c2+sq(c4)*2*(m_r+bc.m_rv*t0)*bc.m_rv;
             d3=c3-sq(c4*(m_r+bc.m_rv*t0));
-            if(below0(d1,d2,d3,ints,inte)) return 2;
+            if(below0(d1,d2,d3,ints,min(inte,donttimelow))) return 2;
             d2 = c2 - 2*sq(c4)*(m_r - bc.m_rv*t0)*bc.m_rv;
             d3 = c3 - sq(c4*(m_r-bc.m_rv*t0));
             if(below0(d1,d2,d3,ints,inte)) tmpRes = max(1, tmpRes);
@@ -344,7 +349,7 @@ int xCylinder::checkRel(const xMBC &bc) const {
             d1=c1-sq(c4*bc.m_rv);
             d2=c2-sq(c4)*2*(m_r-bc.m_rv*t3)*bc.m_rv;
             d3=c3-sq(c4*(m_r-bc.m_rv*t3));
-            if(below0(d1,d2,d3,ints,inte)) return 2;
+            if(below0(d1,d2,d3,max(ints,donttimehigh),inte)) return 2;
             d2=c2+sq(c4)*2*(m_r+bc.m_rv*t3)*bc.m_rv;
             d3=c3-sq(c4*(m_r+bc.m_rv*t3));
             if(below0(d1,d2,d3,ints,inte)) tmpRes = max(1, tmpRes);

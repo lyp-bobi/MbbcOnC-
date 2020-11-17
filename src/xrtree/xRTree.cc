@@ -590,7 +590,8 @@ SpatialIndex::id_type SpatialIndex::xRTreeNsp::xRTree::writeNode(Node* n)
 	}
 
 	++(m_stats.m_u64Writes);
-
+    //test cost
+//    std:cerr<<n->toString()<<endl;
 	return page;
 }
 
@@ -634,6 +635,8 @@ SpatialIndex::xRTreeNsp::NodePtr SpatialIndex::xRTreeNsp::xRTree::readNode(id_ty
 		++(m_stats.m_u64Reads);
 
 		delete[] buffer;
+        //test code
+//        std:cerr<<n->toString()<<endl;
 		return n;
 	}
 	catch (...)
@@ -796,6 +799,7 @@ void xRTree::intersectsWithQuery(const xCylinder &query, IVisitor &v) {
                         results.insert(n->m_se[cChild].m_id);
                         pending.erase(n->m_se[cChild].m_id);
                         v.visitData(data);
+//                        std::cerr<<*querycy << endl<< (n->m_ptrxSBB[cChild])->toString();
                         ++(m_stats.m_u64QueryResults);
                     } else {
                         if(bUsingSBBD) {
@@ -833,6 +837,10 @@ void xRTree::intersectsWithQuery(const xCylinder &query, IVisitor &v) {
             pending.erase(iter);
             if(id!=previd||pending.empty()){ //check last
                 xTrajectory partTraj;
+                if(id ==previd){
+                    lower = min(lower, storee.m_s);
+                    higher = max(higher, storee.m_e);
+                }
                 m_ts->loadTraj(partTraj,xStoreEntry(previd,lower,higher));
                 if (partTraj.intersectsxCylinder(*querycy)) {
                     m_stats.m_doubleExactQueryResults += 1;
@@ -1010,7 +1018,8 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
         while (! ps.empty()) {
             iternum++;
             NNEntry *pFirst = ps.top();
-//            std::cerr<<"pfirst\t"<<pFirst->m_minDist<<"\n";
+            //test code
+//            std::cerr<<"pfirst\t"<<pFirst->m_dist.opt<<endl;
             // report all nearest neighbors with equal greatest distances.
             // (neighbors can be more than k, if many happen to have the same greatest distance).
             if (count >= k && pFirst->m_dist.opt > knearest) {
@@ -1030,9 +1039,9 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
 //                            if(n->m_pIdentifier[cChild]==788){
 //                                std::cerr<<"";
 //                            }
-                            pd = std::max(0.0, simpleTraj.sbbDistInfer(n->m_ptrxSBB[cChild]->br,stat->vmax).opt);
-                            ts = n->m_ptrxSBB[cChild]->br.m_tmin;
-                            te = n->m_ptrxSBB[cChild]->br.m_tmax;
+                            pd = std::max(0.0, simpleTraj.sbbDistInfer(*n->m_ptrxSBB[cChild],stat->vmax).opt);
+                            ts = n->m_ptrxSBB[cChild]->startTime();
+                            te = n->m_ptrxSBB[cChild]->endTime();
                             leafInfo *e = new leafInfo();
                             e->m_se = n->m_se[cChild];
                             e->m_hasPrev = (n->m_prevNode[cChild] != -1);
