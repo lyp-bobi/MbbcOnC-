@@ -78,7 +78,14 @@ int main(){
             vis.clear();
         }
         {
-            auto r = buildTBTree(&x);
+            auto r = buildTBTreeWP(&x);
+            r->intersectsWithQuery(query, vis);
+            r->nearestNeighborQuery(5, tj, vis);
+            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+            vis.clear();
+        }
+        {
+            auto r = buildSTRTreeWP(&x);
             r->intersectsWithQuery(query, vis);
             r->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
@@ -99,7 +106,14 @@ int main(){
             vis.clear();
         }
         {
-            auto r = buildTBTree(&x);
+            auto r = buildTBTreeWP(&x);
+            r->intersectsWithQuery(query, vis);
+            r->nearestNeighborQuery(5, tj, vis);
+            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+            vis.clear();
+        }
+        {
+            auto r = buildSTRTreeWP(&x);
             r->intersectsWithQuery(query, vis);
             r->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;

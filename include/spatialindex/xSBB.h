@@ -15,7 +15,7 @@ namespace SpatialIndex
         xSBB(xMBC &r);
         xSBB(xLine &r);
         xSBB(xMBR &r,xMBC &r2);
-        xSBB(xMBR &r,xLine &r2);
+        xSBB(xPoint &r1, xPoint &r2);
         ~xSBB();
         xSBB &operator=(const xSBB &r);
 

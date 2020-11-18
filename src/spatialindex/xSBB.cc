@@ -44,11 +44,17 @@ xSBB::xSBB(xMBR &r, xMBC &r2) {
     hasbc=true;
     bc=r2;
 }
-xSBB::xSBB(xMBR &r, xLine &r2) {
+xSBB::xSBB(xPoint &r1, xPoint &r2) {
     hasbr=true;
-    br=r;
     hasbl=true;
-    bl=r2;
+    br.m_xmin = min(r1.m_x, r2.m_x);
+    br.m_xmax = max(r1.m_x, r2.m_x);
+    br.m_ymin = min(r1.m_y, r2.m_y);
+    br.m_ymax = max(r1.m_y, r2.m_y);
+    br.m_tmin = min(r1.m_t, r2.m_t);
+    br.m_tmax = max(r1.m_t, r2.m_t);
+    bl.m_ps = r1;
+    bl.m_pe = r2;
 }
 xSBB::~xSBB(){
 }

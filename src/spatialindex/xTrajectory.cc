@@ -883,6 +883,18 @@ inline DISTE xTrajectory::line2MBCDistance(const SpatialIndex::xPoint &ps, const
     return DISTE(max(0.0,s-sm),s+sm,0,false);
 }
 
+inline DISTE xTrajectory::line2MBLDistance(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
+                                           const SpatialIndex::xLine &r) {
+
+    double x1 = r.m_ps.m_x, y1 = r.m_ps.m_y, t1 = r.m_ps.m_t;
+    double x2 = r.m_pe.m_x, y2 = r.m_pe.m_y, t2 = r.m_pe.m_t;
+    double xts = makemidmacro(x1, t1, x2, t2, ps.m_t), xte = makemidmacro(x1, t1, x2, t2, pe.m_t);
+    double yts = makemidmacro(y1, t1, y2, t2, ps.m_t), yte = makemidmacro(y1, t1, y2, t2, pe.m_t);
+    xPoint p2s(xts,yts, ps.m_t), p2e(xte,yte, pe.m_t);
+    double s = line2lineIED(ps, pe, p2s, p2e);
+    return DISTE(s);
+}
+
 double xTrajectory::getMinimumDistance(const IShape& s) const{
     const xTrajectory* pxTrajectory = dynamic_cast<const xTrajectory*>(&s);
     if (pxTrajectory != nullptr) return getMinimumDistance(*pxTrajectory);
@@ -1030,7 +1042,7 @@ DISTE xTrajectory::sbbDist(const xSBB &b) const {
         }
     }else if(b.hasbl){
         for (int i = 0; i < timedTraj.m_size-1; i++) {
-            res = res + DISTE(line2lineIED(timedTraj[i], timedTraj[i + 1], b.bl.m_ps,b.bl.m_pe));
+            res = res + line2MBLDistance(timedTraj[i], timedTraj[i + 1], b.bl);
         }
     }
     return res;
@@ -1435,6 +1447,18 @@ queue<CUTENTRY> xTrajectory::FP(xTrajectory &traj, int np) {
             ms = i;
             seg.emplace_back(traj.m_points[i]);
         }
+    }
+    return  res;
+}
+
+
+queue<CUTENTRY> xTrajectory::EveryLine(xTrajectory &traj) {
+    int ms;
+    queue<CUTENTRY> res;
+    bool fakehead=false,fakeback=false;
+    ms = 0;
+    for(int i=0;i<traj.m_points.size()-1;i++){
+        res.push(make_pair(make_pair(i,i+1), xSBB(traj.m_points[i],traj.m_points[i+1])));
     }
     return  res;
 }

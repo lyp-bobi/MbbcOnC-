@@ -121,10 +121,10 @@ xRTree * xRTreeNsp::buildMBCRTree(IStorageManager *mng,
     return r;
 }
 
-xRTree * xRTreeNsp::buildTBTree(IStorageManager *mng) {
+xRTree * xRTreeNsp::buildTBTreeWP(IStorageManager *mng) {
     auto store=static_cast<xStore*>(mng);
     auto stream = new xSBBStream(store, [](auto x){return xTrajectory::FP(x, 169);});
-    string name ="TB";
+    string name ="TBWP";
     xRTree * r;
     if(store->m_property.contains(name)){
         Tools::Variant var;
@@ -151,7 +151,35 @@ xRTree * xRTreeNsp::buildTBTree(IStorageManager *mng) {
     return r;
 }
 
-
+xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng) {
+    auto store=static_cast<xStore*>(mng);
+    auto stream = new xSBBStream(store, xTrajectory::EveryLine);
+    string name ="STRWP";
+    xRTree * r;
+    if(store->m_property.contains(name)){
+        Tools::Variant var;
+        Tools::PropertySet ps;
+        id_type id = store->m_property[name];
+        var.m_varType = Tools::VT_LONGLONG;
+        var.m_val.llVal = id;
+        ps.setProperty("IndexIdentifier", var);
+        r = new xRTree(*mng,ps);
+        r->m_bUsingMBL = true;
+        r->m_ts=store;
+        std::cerr<<"load existing "<<name<<"\n";
+    }
+    else {
+        int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
+                bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + linesize() + pointersize() + entrysize());
+        r = createNewxRTree(store, bindex, bleaf);
+        r->m_bUsingMBL = true;
+        store->m_property[name] = r->m_headerID;
+        BulkLoader bl;
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        std::cerr<<"build new "<<name<<"\n";
+    }
+    return r;
+}
 
 //ISpatialIndex* SpatialIndex::xRTree::createAndBulkLoadNewRTreeWithxStore(IStorageManager *tsm,
 //                                                                                 uint32_t pageSize, uint32_t dimension,

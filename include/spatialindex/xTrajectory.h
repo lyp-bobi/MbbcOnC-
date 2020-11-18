@@ -126,6 +126,7 @@ namespace SpatialIndex
         static double line2MBRMaxSED(const xPoint &ps, const xPoint &pe, const xMBR &r);
         static double line2MBRMinSED_impl(const xPoint &ps, const xPoint &pe, const xMBR &r, int sr);
         static DISTE line2MBCDistance(const xPoint &ps,const xPoint &pe,const xMBC &r);
+        static DISTE line2MBLDistance(const xPoint &ps,const xPoint &pe,const xLine &r);
 
         double getStaticIED(double x, double y, double t1, double t2) const;
         double getStaticIED(SpatialIndex::xMBR in,double ints, double inte) const;
@@ -168,6 +169,7 @@ namespace SpatialIndex
 
         static queue<CUTENTRY> ISS(xTrajectory &traj);
         static queue<CUTENTRY> FP(xTrajectory &traj, int np);
+        static queue<CUTENTRY> EveryLine(xTrajectory &traj);
 
         void linkxTrajectory(xTrajectory &other);
 
