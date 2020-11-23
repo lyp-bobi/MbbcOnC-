@@ -49,10 +49,12 @@ using namespace xRTreeNsp;
 int main(){
     xStore x("test", "D://TRI-framework/dumpedtraj.txt",true);
     auto stat = trajStat::instance();
-    double querylens[]={50,100,200,400,8000,1600,10000};
+    double querylens[]={50,100,200,400,800,1600,10000};
     xCylinder query(xPoint(40,116.327,6516),0.0001,6516,9516,2);
-    xTrajectory tj;
+    xTrajectory tj,tj2;
     x.loadTraj(tj, xStoreEntry(1850,0,1000));
+    x.loadTraj(tj2,xStoreEntry(1858,0, 10000));
+    tj.getMinimumDistance(tj2);
 //    x.loadTraj(tj, xStoreEntry(4337,0,1000));
     tj.intersectsxCylinder(query);
     CUTFUNC f=xTrajectory::ISS;
@@ -66,26 +68,26 @@ int main(){
         bUsingSBBD = false;
         for (auto querylen:querylens) {
             stat->bt = querylen;
-            auto r = buildMBCRTree(&x, f);
+            auto r = buildMBCRTreeWoP(&x, f);
             r->intersectsWithQuery(query, vis);
             r->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
             vis.clear();
-            auto r2 = buildMBRRTree(&x, f);
+            auto r2 = buildMBRRTreeWoP(&x, f);
             r2->intersectsWithQuery(query, vis);
             r2->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
             vis.clear();
         }
         {
-            auto r = buildTBTreeWP(&x);
+            auto r = buildTBTreeWoP(&x);
             r->intersectsWithQuery(query, vis);
             r->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
             vis.clear();
         }
         {
-            auto r = buildSTRTreeWP(&x);
+            auto r = buildSTRTreeWoP(&x);
             r->intersectsWithQuery(query, vis);
             r->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
@@ -94,26 +96,26 @@ int main(){
         bUsingSBBD = true;
         for (auto querylen:querylens) {
             stat->bt = querylen;
-            auto r = buildMBCRTree(&x, f);
+            auto r = buildMBCRTreeWoP(&x, f);
             r->intersectsWithQuery(query, vis);
             r->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
             vis.clear();
-            auto r2 = buildMBRRTree(&x, f);
+            auto r2 = buildMBRRTreeWoP(&x, f);
             r2->intersectsWithQuery(query, vis);
             r2->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
             vis.clear();
         }
         {
-            auto r = buildTBTreeWP(&x);
+            auto r = buildTBTreeWoP(&x);
             r->intersectsWithQuery(query, vis);
             r->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
             vis.clear();
         }
         {
-            auto r = buildSTRTreeWP(&x);
+            auto r = buildSTRTreeWoP(&x);
             r->intersectsWithQuery(query, vis);
             r->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;

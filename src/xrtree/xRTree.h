@@ -35,6 +35,7 @@
 #include "PointerPoolNode.h"
 #include <cmath>
 
+
 class poppq;
 class PartsStore;
 class PartsStoreBFMST;
@@ -368,11 +369,11 @@ namespace SpatialIndex
             std::map<id_type ,MutablePriorityQueue<NNEntry>::handle_type > m_handlers;
             EntryMPQ m_mpq;
             EntryMPQ m_nodespq;
-//    bool m_useMBR=false;
             xTrajectory m_query;
             double m_error;
             xStore* m_ts;
             poppq m_pes;
+            xRTree * m_pTree;
             trajStat* stat = trajStat::instance();
             std::map<id_type ,Parts> m_parts;
             int m_dimension=2;
@@ -409,12 +410,13 @@ namespace SpatialIndex
                             computedTime += timeInterval.second - timeInterval.first;
                         }
                     }
-                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
-                        pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-                                                  (timeInterval.second - timeInterval.first) /
-                                                  (m_query.m_endTime() - m_query.m_startTime()));
-                        pd.pes = max(pd.opt,pd.pes);
-                    }
+                    //we don't know if it has sbbs, so can't use
+//                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+//                        pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+//                                                  (timeInterval.second - timeInterval.first) /
+//                                                  (m_query.m_endTime() - m_query.m_startTime()));
+//                        pd.pes = max(pd.opt,pd.pes);
+//                    }
                     res = res + pd;
                 }
                 //mid dist
@@ -469,12 +471,13 @@ namespace SpatialIndex
                             computedTime += timeInterval.second - timeInterval.first;
                         }
                     }
-                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
-                        pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-                                                  (timeInterval.second - timeInterval.first) /
-                                                  (m_query.m_endTime() - m_query.m_startTime()));
-                        pd.pes = max(pd.opt,pd.pes);
-                    }
+                    //we don't know if it has sbbs, so can't use
+//                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+//                        pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+//                                                  (timeInterval.second - timeInterval.first) /
+//                                                  (m_query.m_endTime() - m_query.m_startTime()));
+//                        pd.pes = max(pd.opt,pd.pes);
+//                    }
                     res = res + pd;
                 }
                 parts->m_calcMin = res;
@@ -566,10 +569,11 @@ namespace SpatialIndex
                 }
                 return (*m_parts[id].m_missingLeaf.begin());
             }
-            auto getMissingPart(id_type id){return m_parts[id].m_missingLeaf;}
 
-             PartsStore(xTrajectory &traj,double error,xStore* ts)
-                    :m_query(traj),m_error(error),m_ts(ts){}
+            auto nodetop(){return m_nodespq.top();}
+
+             PartsStore(xTrajectory &traj,double error, xRTree *r)
+                    :m_query(traj),m_error(error), m_pTree(r),m_ts(r->m_ts){}
             ~PartsStore(){}
             xTrajectory getTraj(id_type id){
                 vector<STPoint> buff;
@@ -628,9 +632,9 @@ namespace SpatialIndex
             EntryMPQ m_nodespq;
             std::set<id_type> m_except;
             poppq m_pes;
-            bool m_useMBR=false;
             xTrajectory m_query;
             double m_error;
+            xRTree * m_pTree;
             xStore* m_ts;
             double m_lastNodeDist=0; // the top might decrease for sbbs, so we use this
             trajStat* stat = trajStat::instance();
@@ -680,12 +684,13 @@ namespace SpatialIndex
                             computedTime += timeInterval.second - timeInterval.first;
                         }
                     }
-                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
-                        pd.opt = std::max(pd.opt, m_lastNodeDist *
-                                                  (timeInterval.second - timeInterval.first) /
-                                                  (m_query.m_endTime() - m_query.m_startTime()));
-                        pd.pes = max(pd.opt,pd.pes);
-                    }
+                    //we don't know if it has sbbs, so can't use
+//                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+//                        pd.opt = std::max(pd.opt, m_lastNodeDist *
+//                                                  (timeInterval.second - timeInterval.first) /
+//                                                  (m_query.m_endTime() - m_query.m_startTime()));
+//                        pd.pes = max(pd.opt,pd.pes);
+//                    }
                     res = res+pd;
                 }
                 //mid dist
@@ -745,12 +750,13 @@ namespace SpatialIndex
                             computedTime += timeInterval.second - timeInterval.first;
                         }
                     }
-                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
-                        pd.opt = std::max(pd.opt, m_lastNodeDist *
-                                                  (timeInterval.second - timeInterval.first) /
-                                                  (m_query.m_endTime() - m_query.m_startTime()));
-                        pd.pes = max(pd.opt,pd.pes);
-                    }
+                    //we don't know if it has sbbs, so can't use
+//                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+//                        pd.opt = std::max(pd.opt, m_lastNodeDist *
+//                                                  (timeInterval.second - timeInterval.first) /
+//                                                  (m_query.m_endTime() - m_query.m_startTime()));
+//                        pd.pes = max(pd.opt,pd.pes);
+//                    }
                     res = res+pd;
                 }
 
@@ -773,17 +779,21 @@ namespace SpatialIndex
                 return res;
             }
         public:
-            void loadPartTraj(id_type id, leafInfo * e, double dist){
+            void loadPartTraj(id_type id, leafInfo * e, double dist) {
                 xTrajectory tmpTraj;
                 id_type trajid = e->m_se.m_id;
-                m_ts->loadTraj(tmpTraj,e->m_se);
-                if(m_except.count(trajid)>0) return;
+                m_ts->loadTraj(tmpTraj, e->m_se);
+                if (m_except.count(trajid) > 0) return;
                 xTrajectory inter;
-                tmpTraj.getPartialxTrajectory(max(m_query.m_startTime(),e->m_ts),
-                                              min(m_query.m_endTime(),e->m_te),inter);
+                tmpTraj.getPartialxTrajectory(max(m_query.m_startTime(), e->m_ts),
+                                              min(m_query.m_endTime(), e->m_te), inter);
                 bool pv = e->m_hasPrev, nt = e->m_hasNext;
-                pv = pv && (m_query.m_startTime()<e->m_ts);
-                nt = nt && (m_query.m_endTime()> e->m_te);
+                if (!m_pTree->m_bStoringLinks) {
+                    pv = e->m_se.m_s > 0 || e->m_ts > tmpTraj.m_startTime();
+                    nt = e->m_se.m_e < m_ts->m_trajIdx[e->m_se.m_id]->m_npoint-1 || e->m_te < tmpTraj.m_endTime();
+                }
+                pv = pv && (m_query.m_startTime() < e->m_ts);
+                nt = nt && (m_query.m_endTime() > e->m_te);
                 insert(trajid, inter, pv ? 1 : -1, nt ? 1 : -1, e->m_se);
             }
 
@@ -794,8 +804,6 @@ namespace SpatialIndex
                         prevtop=m_mpq.top()->m_id;
                         update(prevtop);
                     }
-                    //test code
-//                    std::cerr<<prevtop<<" "<<m_mpq.top()->m_dist.opt<<endl;
                 }
                 if(!m_mpq.empty()&&m_mpq.top()->m_type==3&&(m_nodespq.empty()|| m_mpq.top()->m_dist < m_nodespq.top()->m_dist)){
                     return m_mpq.top();
@@ -830,8 +838,8 @@ namespace SpatialIndex
             }
 
             auto empty(){return m_mpq.empty()&&m_nodespq.empty();}
-            PartsStoreBFMST(xTrajectory &traj,double error,xStore* ts,bool useMBR)
-                    :m_query(traj),m_error(error),m_useMBR(useMBR),m_ts(ts){}
+            PartsStoreBFMST(xTrajectory &traj,double error,xRTree* r)
+                    :m_query(traj),m_error(error), m_pTree(r),m_ts(r->m_ts){}
             ~PartsStoreBFMST(){}
         };//PartStoreBFMST
 	}

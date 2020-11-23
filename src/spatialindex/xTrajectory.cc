@@ -917,12 +917,16 @@ double xTrajectory::getMinimumDistance(const SpatialIndex::xTrajectory &in) cons
         double pd;
         pd= getStaticIED(timedTraj2[0].m_x, timedTraj2[0].m_y, m_startTime(), cut1);
         sum += pd;
+        //test code
+//        std::cerr<<cut1<<" "<<pd<<endl;
     }
     if(m_endTime()>cut2){
         double pd;
         pd= getStaticIED(timedTraj2[timedTraj2.m_size - 1].m_x,
                          timedTraj2[timedTraj2.m_size - 1].m_y, cut2, m_endTime());
         sum += pd;
+        //test code
+//        std::cerr<<m_endTime()<<" "<<pd<<endl;
     }
     if(midTraj.m_size!=0) {
         double newtime = midTraj[0].m_t, lasttime = midTraj[0].m_t;
@@ -958,15 +962,11 @@ double xTrajectory::getMinimumDistance(const SpatialIndex::xTrajectory &in) cons
                 iter2++;
             }
             lasttime = newtime;
-            if(disttype==0) {
-                double pd = line2lineIED(lastp1, newp1, lastp2, newp2);
+            double pd = line2lineIED(lastp1, newp1, lastp2, newp2);
 //                std::cerr<<"distance\n"<<lastp1<<"\t"<<newp1<<"\n"<<lastp2<<"\t"<<newp2<<"\n"<<pd<<"\n";
-                sum += pd;
-            }
-            else if(disttype==1){
-                max=std::max(newp1.getMinimumDistance(newp2),max);
-            }
-            else{throw Tools::NotSupportedException("Wrong distance");}
+            sum += pd;
+            //test code
+//            std::cerr<<newtime<<" "<<pd<<endl;
             lastp1 = newp1;
             lastp2 = newp2;
         }

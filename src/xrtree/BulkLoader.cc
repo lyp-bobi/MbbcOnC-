@@ -419,36 +419,37 @@ void BulkLoader::createLevel(
 				pTree->writeNode(n);
 				es2->insert(new ExternalSorter::Record(n->m_identifier,n->m_nodeMBR,0,level));
 				pTree->m_rootID = n->m_identifier;
-                if(level==0){
-                    //state the storage place of bounding boxes
-                    for(int i=0;i<n->m_children;i++){
-                        m_part2node[n->m_pIdentifier[i]]=n->m_identifier;
-                    }
-                }
-                else if(level==1){
-                    //linking the bounding boxes
-                    for(int i=0;i<n->m_children;i++){
-                        NodePtr child=pTree->readNode(n->m_pIdentifier[i]);
-                        for(int j=0;j<child->m_children;j++){
-                            id_type id=child->m_pIdentifier[j];
-                            pair<bool,bool> pvnt= make_pair(child->m_prevNode[j], child->m_nextNode[j]);
-                            if(pvnt.first){
-                                auto store=m_part2node[id-1];
-                                child->m_prevNode[j]=store;
-//                                std::cerr<<"linked"<<id<<"to"<<pvId<<"\n";
-                            }else{
-                                child->m_prevNode[j]=-1;
-                            }
-                            if(pvnt.second){
-                                auto store=m_part2node[id+1];
-                                child->m_nextNode[j]=store;
-//                                std::cerr<<"linked"<<id<<"to"<<ntId<<"\n";
-                            }else{
-                                child->m_nextNode[j]=-1;
-                            }
-//                            std::cerr<<store->m_page<<" "<<store->m_start<<" "<<store->m_len<<"\n";
+				if(pTree->m_bStoringLinks) {
+                    if (level == 0) {
+                        //state the storage place of bounding boxes
+                        for (int i = 0; i < n->m_children; i++) {
+                            m_part2node[n->m_pIdentifier[i]] = n->m_identifier;
                         }
-                        pTree->writeNode(child.get());
+                    } else if (level == 1) {
+                        //linking the bounding boxes
+                        for (int i = 0; i < n->m_children; i++) {
+                            NodePtr child = pTree->readNode(n->m_pIdentifier[i]);
+                            for (int j = 0; j < child->m_children; j++) {
+                                id_type id = child->m_pIdentifier[j];
+                                pair<bool, bool> pvnt = make_pair(child->m_prevNode[j], child->m_nextNode[j]);
+                                if (pvnt.first) {
+                                    auto store = m_part2node[id - 1];
+                                    child->m_prevNode[j] = store;
+//                                std::cerr<<"linked"<<id<<"to"<<pvId<<"\n";
+                                } else {
+                                    child->m_prevNode[j] = -1;
+                                }
+                                if (pvnt.second) {
+                                    auto store = m_part2node[id + 1];
+                                    child->m_nextNode[j] = store;
+//                                std::cerr<<"linked"<<id<<"to"<<ntId<<"\n";
+                                } else {
+                                    child->m_nextNode[j] = -1;
+                                }
+//                            std::cerr<<store->m_page<<" "<<store->m_start<<" "<<store->m_len<<"\n";
+                            }
+                            pTree->writeNode(child.get());
+                        }
                     }
                 }
 					// special case when the root has exactly bindex entries.
@@ -462,36 +463,37 @@ void BulkLoader::createLevel(
 			pTree->writeNode(n);
 			es2->insert(new ExternalSorter::Record( n->m_identifier,n->m_nodeMBR, 0,level));
 			pTree->m_rootID = n->m_identifier;
-            if(level==0){
-                //state the storage place of bounding boxes
-                for(int i=0;i<n->m_children;i++){
-                    m_part2node[n->m_pIdentifier[i]]=n->m_identifier;
-                }
-            }
-            else if(level==1){
-                //linking the bounding boxes
-                for(int i=0;i<n->m_children;i++){
-                    NodePtr child=pTree->readNode(n->m_pIdentifier[i]);
-                    for(int j=0;j<child->m_children;j++){
-                        id_type id=child->m_pIdentifier[j];
-                        pair<bool,bool> pvnt= make_pair(child->m_prevNode[j], child->m_nextNode[j]);
-                        if(pvnt.first){
-                            auto store=m_part2node[id-1];
-                            child->m_prevNode[j]=store;
-//                                std::cerr<<"linked"<<id<<"to"<<pvId<<"\n";
-                        }else{
-                            child->m_prevNode[j]=-1;
-                        }
-                        if(pvnt.second){
-                            auto store=m_part2node[id+1];
-                            child->m_nextNode[j]=store;
-//                                std::cerr<<"linked"<<id<<"to"<<ntId<<"\n";
-                        }else{
-                            child->m_nextNode[j]=-1;
-                        }
-//                            std::cerr<<store->m_page<<" "<<store->m_start<<" "<<store->m_len<<"\n";
+			if(pTree->m_bStoringLinks) {
+                if (level == 0) {
+                    //state the storage place of bounding boxes
+                    for (int i = 0; i < n->m_children; i++) {
+                        m_part2node[n->m_pIdentifier[i]] = n->m_identifier;
                     }
-                    pTree->writeNode(child.get());
+                } else if (level == 1) {
+                    //linking the bounding boxes
+                    for (int i = 0; i < n->m_children; i++) {
+                        NodePtr child = pTree->readNode(n->m_pIdentifier[i]);
+                        for (int j = 0; j < child->m_children; j++) {
+                            id_type id = child->m_pIdentifier[j];
+                            pair<bool, bool> pvnt = make_pair(child->m_prevNode[j], child->m_nextNode[j]);
+                            if (pvnt.first) {
+                                auto store = m_part2node[id - 1];
+                                child->m_prevNode[j] = store;
+//                                std::cerr<<"linked"<<id<<"to"<<pvId<<"\n";
+                            } else {
+                                child->m_prevNode[j] = -1;
+                            }
+                            if (pvnt.second) {
+                                auto store = m_part2node[id + 1];
+                                child->m_nextNode[j] = store;
+//                                std::cerr<<"linked"<<id<<"to"<<ntId<<"\n";
+                            } else {
+                                child->m_nextNode[j] = -1;
+                            }
+//                            std::cerr<<store->m_page<<" "<<store->m_start<<" "<<store->m_len<<"\n";
+                        }
+                        pTree->writeNode(child.get());
+                    }
                 }
             }
 			delete n;

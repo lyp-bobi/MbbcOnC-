@@ -54,12 +54,12 @@ inline int linesize(){return 48;}
 inline int pointersize(){return 16;}
 inline int entrysize(){return 32;}
 
-xRTree * xRTreeNsp::buildMBRRTree(IStorageManager *mng,
-                                  const CUTFUNC &f) {
-    auto store=static_cast<xStore*>(mng);
+xRTree * xRTreeNsp::buildMBRRTreeWP(IStorageManager *st,
+                                    const CUTFUNC &f) {
+    auto store=static_cast<xStore*>(st);
     auto stat = trajStat::instance();
     auto stream = new xSBBStream(store,f);
-    string name ="MBR"+std::to_string(stat->bt);
+    string name ="MBRWP"+std::to_string(stat->bt);
     xRTree * r;
     if(store->m_property.contains(name)){
         Tools::Variant var;
@@ -68,7 +68,7 @@ xRTree * xRTreeNsp::buildMBRRTree(IStorageManager *mng,
         var.m_varType = Tools::VT_LONGLONG;
         var.m_val.llVal = id;
         ps.setProperty("IndexIdentifier", var);
-        r = new xRTree(*mng,ps);
+        r = new xRTree(*store, ps);
         r->m_bUsingMBR = true;
         r->m_ts=store;
         std::cerr<<"load existing "<<name<<"\n";
@@ -88,12 +88,12 @@ xRTree * xRTreeNsp::buildMBRRTree(IStorageManager *mng,
 }
 
 
-xRTree * xRTreeNsp::buildMBCRTree(IStorageManager *mng,
-                                  const CUTFUNC &f) {
-    auto store=static_cast<xStore*>(mng);
+xRTree * xRTreeNsp::buildMBCRTreeWP(IStorageManager *st,
+                                    const CUTFUNC &f) {
+    auto store=static_cast<xStore*>(st);
     auto stat = trajStat::instance();
     auto stream = new xSBBStream(store,f);
-    string name ="MBC"+std::to_string(stat->bt);
+    string name ="MBCWP"+std::to_string(stat->bt);
     xRTree * r;
     if(store->m_property.contains(name)){
         Tools::Variant var;
@@ -102,7 +102,7 @@ xRTree * xRTreeNsp::buildMBCRTree(IStorageManager *mng,
         var.m_varType = Tools::VT_LONGLONG;
         var.m_val.llVal = id;
         ps.setProperty("IndexIdentifier", var);
-        r = new xRTree(*mng,ps);
+        r = new xRTree(*store, ps);
         r->m_bUsingMBC = true;
         r->m_ts=store;
         std::cerr<<"load existing "<<name<<"\n";
@@ -173,6 +173,143 @@ xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng) {
                 bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + linesize() + pointersize() + entrysize());
         r = createNewxRTree(store, bindex, bleaf);
         r->m_bUsingMBL = true;
+        store->m_property[name] = r->m_headerID;
+        BulkLoader bl;
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        std::cerr<<"build new "<<name<<"\n";
+    }
+    return r;
+}
+
+
+xRTree * xRTreeNsp::buildMBRRTreeWoP(IStorageManager *st,
+                                    const CUTFUNC &f) {
+    auto store=static_cast<xStore*>(st);
+    auto stat = trajStat::instance();
+    auto stream = new xSBBStream(store,f);
+    string name ="MBRWoP"+std::to_string(stat->bt);
+    xRTree * r;
+    if(store->m_property.contains(name)){
+        Tools::Variant var;
+        Tools::PropertySet ps;
+        id_type id = store->m_property[name];
+        var.m_varType = Tools::VT_LONGLONG;
+        var.m_val.llVal = id;
+        ps.setProperty("IndexIdentifier", var);
+        r = new xRTree(*store, ps);
+        r->m_bUsingMBR = true;
+        r->m_bStoringLinks = false;
+        r->m_ts=store;
+        std::cerr<<"load existing "<<name<<"\n";
+    }
+    else {
+        int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
+                bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize() + entrysize());
+        r = createNewxRTree(store, bindex, bleaf);
+        r->m_bUsingMBR = true;
+        r->m_bStoringLinks = false;
+        store->m_property[name] = r->m_headerID;
+        BulkLoader bl;
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        std::cerr<<"build new "<<name<<"\n";
+    }
+//    std::cerr<<r->m_headerID<<" "<<r->m_rootID<<endl;
+    return r;
+}
+
+
+
+xRTree * xRTreeNsp::buildMBCRTreeWoP(IStorageManager *st,
+                                    const CUTFUNC &f) {
+    auto store=static_cast<xStore*>(st);
+    auto stat = trajStat::instance();
+    auto stream = new xSBBStream(store,f);
+    string name ="MBCWoP"+std::to_string(stat->bt);
+    xRTree * r;
+    if(store->m_property.contains(name)){
+        Tools::Variant var;
+        Tools::PropertySet ps;
+        id_type id = store->m_property[name];
+        var.m_varType = Tools::VT_LONGLONG;
+        var.m_val.llVal = id;
+        ps.setProperty("IndexIdentifier", var);
+        r = new xRTree(*store, ps);
+        r->m_bUsingMBC = true;
+        r->m_bStoringLinks = false;
+        r->m_ts=store;
+        std::cerr<<"load existing "<<name<<"\n";
+    }
+    else {
+        int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbcsize()),
+                bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + mbcsize() + entrysize());
+        r = createNewxRTree(store, bindex, bleaf);
+        r->m_bUsingMBC = true;
+        r->m_bStoringLinks = false;
+        store->m_property[name] = r->m_headerID;
+        BulkLoader bl;
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        std::cerr<<"build new "<<name<<"\n";
+    }
+//    std::cerr<<r->m_headerID<<" "<<r->m_rootID<<endl;
+    return r;
+}
+
+xRTree * xRTreeNsp::buildTBTreeWoP(IStorageManager *mng) {
+    auto store=static_cast<xStore*>(mng);
+    auto stream = new xSBBStream(store, [](auto x){return xTrajectory::FP(x, 169);});
+    string name ="TBWoP";
+    xRTree * r;
+    if(store->m_property.contains(name)){
+        Tools::Variant var;
+        Tools::PropertySet ps;
+        id_type id = store->m_property[name];
+        var.m_varType = Tools::VT_LONGLONG;
+        var.m_val.llVal = id;
+        ps.setProperty("IndexIdentifier", var);
+        r = new xRTree(*mng,ps);
+        r->m_bUsingMBR = true;
+        r->m_bStoringLinks = false;
+        r->m_ts=store;
+        std::cerr<<"load existing "<<name<<"\n";
+    }
+    else {
+        int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
+                bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize() + entrysize());
+        r = createNewxRTree(store, bindex, bleaf);
+        r->m_bUsingMBR = true;
+        r->m_bStoringLinks = false;
+        store->m_property[name] = r->m_headerID;
+        BulkLoader bl;
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        std::cerr<<"build new "<<name<<"\n";
+    }
+    return r;
+}
+
+xRTree * xRTreeNsp::buildSTRTreeWoP(IStorageManager *mng) {
+    auto store=static_cast<xStore*>(mng);
+    auto stream = new xSBBStream(store, xTrajectory::EveryLine);
+    string name ="STRWoP";
+    xRTree * r;
+    if(store->m_property.contains(name)){
+        Tools::Variant var;
+        Tools::PropertySet ps;
+        id_type id = store->m_property[name];
+        var.m_varType = Tools::VT_LONGLONG;
+        var.m_val.llVal = id;
+        ps.setProperty("IndexIdentifier", var);
+        r = new xRTree(*mng,ps);
+        r->m_bUsingMBL = true;
+        r->m_bStoringLinks = false;
+        r->m_ts=store;
+        std::cerr<<"load existing "<<name<<"\n";
+    }
+    else {
+        int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
+                bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + linesize() + entrysize());
+        r = createNewxRTree(store, bindex, bleaf);
+        r->m_bUsingMBL = true;
+        r->m_bStoringLinks = false;
         store->m_property[name] = r->m_headerID;
         BulkLoader bl;
         bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);

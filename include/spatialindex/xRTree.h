@@ -59,11 +59,16 @@ namespace SpatialIndex
         xRTree* createNewxRTree(IStorageManager* store,long indexfan, long leaffan);
 
 
-        SIDX_DLL xRTree* buildMBRRTree(IStorageManager* store,const CUTFUNC &f);
-        SIDX_DLL xRTree* buildMBCRTree(IStorageManager* store,const CUTFUNC &f);
+        SIDX_DLL xRTree* buildMBRRTreeWP(IStorageManager* store, const CUTFUNC &f);
+        SIDX_DLL xRTree* buildMBCRTreeWP(IStorageManager* store, const CUTFUNC &f);
         SIDX_DLL xRTree* buildTBTreeWP(IStorageManager* store);
         SIDX_DLL xRTree* buildSTRTreeWP(IStorageManager* store);
-//        xRTree* buildMBCRTree(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
+
+        SIDX_DLL xRTree* buildMBRRTreeWoP(IStorageManager* store, const CUTFUNC &f);
+        SIDX_DLL xRTree* buildMBCRTreeWoP(IStorageManager* store, const CUTFUNC &f);
+        SIDX_DLL xRTree* buildTBTreeWoP(IStorageManager* store);
+        SIDX_DLL xRTree* buildSTRTreeWoP(IStorageManager* store);
+//        xRTree* buildMBCRTreeWP(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
 //        xRTree* buildTBTree2(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
 //        xRTree* buildTBTree(xStore* store);
 //        xRTree* build3DRTree(xStore* store);

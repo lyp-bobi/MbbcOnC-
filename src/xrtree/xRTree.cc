@@ -875,7 +875,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
     xTrajectory simpleTraj;
     xTrajectory ssTraj;
     double delta=0, ssdelta= 0;
-    if(bUsingSBBD==true && bUsingSimp == true) {
+    if(bUsingSBBD&& bUsingSimp && m_bStoringLinks) {
 //        auto stat=trajStat::instance();
         int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (m_ts->m_timeCount/m_ts->m_segCount));
         segnum=std::max(segnum,10);
@@ -905,9 +905,10 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
 
     double knearest = 0.0;
     int iternum = 0;
+    bool btopnode =false;
     /*SBB-Driven*/
-    if(bUsingSBBD == true) {
-        PartsStore ps(simpleTraj, delta, m_ts);
+    if(bUsingSBBD == true && m_bStoringLinks) {
+        PartsStore ps(simpleTraj, delta, this);
         ps.push(new NNEntry(m_rootID, DISTE(0), 0));
 
         uint32_t count = 0;
@@ -915,7 +916,12 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
         std::map<id_type, int> insertedTrajId;
         while (!ps.empty()) {
             iternum++;
-            NNEntry *pFirst = ps.top();
+            NNEntry *pFirst;
+            if(btopnode) {
+                pFirst = ps.nodetop();
+                btopnode = false;
+            }
+            else pFirst=ps.top();
 
             // report all nearest neighbors with equal greatest distances.
             // (neighbors can be more than k, if many happen to have the same greatest distance).
@@ -959,13 +965,18 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                     break;
                 }
                 case 2: {//incomplete bounding
-                    id_type missing = ps.getOneMissingPart(pFirst->m_id);
-                    NodePtr n = readNode(missing);
-                    v.visitNode(*n);
-                    ps.loadLeaf(*n,pFirst->m_dist.opt);
-                    m_ts->m_leaf2 += 1;
-//                n.relinquish();
-                    break;
+                    if(m_bStoringLinks) {
+                        id_type missing;
+                        missing = ps.getOneMissingPart(pFirst->m_id);
+                        NodePtr n = readNode(missing);
+                        v.visitNode(*n);
+                        ps.loadLeaf(*n, pFirst->m_dist.opt);
+                        m_ts->m_leaf2 += 1;
+                        break;
+                    }else{
+                        btopnode = true;
+                        break;
+                    }
                 }
                 case 3: {//complete bounding
                     ps.pop();
@@ -1006,7 +1017,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
         ps.clean();
     }
     else{/*BFMST*/
-        PartsStoreBFMST ps(simpleTraj,0,m_ts,true);
+        PartsStoreBFMST ps(simpleTraj,0, this);
         string str = queryTraj->toString();
         ps.push(new NNEntry(m_rootID, DISTE(0), 0));
 
