@@ -82,6 +82,7 @@ namespace SpatialIndex
             }
 
             void loadTraj(xTrajectory &out, const xStoreEntry &e);
+            xTrajectory randomSubtraj(double len);
             xPoint randomPoint();
 
             json m_property;

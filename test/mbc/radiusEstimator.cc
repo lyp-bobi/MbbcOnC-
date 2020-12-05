@@ -58,7 +58,7 @@ int main() {
             vector<IShape *> queries;
 //            double segattri[]={900,3600,1000000};
             double segattri[] = {1};
-            auto stat = trajStat::instance();
+
             for (auto queryLen:segattri) {
 //                for(int thek=1;thek<=21;thek+=5){
                 for (int thek = 200; thek == 200; thek++) {
@@ -90,9 +90,9 @@ int main() {
                     }
                     queries.clear();
 //                    for(int i=0;i<200;i++){
-//                        double t = int(random(stat->mint, stat->maxt));
-//                        double pLow[3] = {random(stat->minx, stat->maxx), random(stat->miny, stat->maxy), t};
-//                        double pHigh[3] = {pLow[0] + random(stat->Dx/40,stat->Dx*3/40), pLow[1] + random(stat->Dy/40,stat->Dy*3/40), t};
+//                        double t = int(random(tjstat->mint, tjstat->maxt));
+//                        double pLow[3] = {random(tjstat->minx, tjstat->maxx), random(tjstat->miny, tjstat->maxy), t};
+//                        double pHigh[3] = {pLow[0] + random(tjstat->Dx/40,tjstat->Dx*3/40), pLow[1] + random(tjstat->Dy/40,tjstat->Dy*3/40), t};
 //                        Region *rg = new Region(pLow, pHigh, 3);
 //                        queries.emplace_back(rg);
 //                    }

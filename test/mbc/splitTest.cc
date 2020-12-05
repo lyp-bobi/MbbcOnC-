@@ -16,7 +16,7 @@ int main() {
 //        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://TRI-framework/dumpedtraj.txt");
         int maxseg = 0;
         double para[] = {1500};
-        auto stat = trajStat::instance();
+
         double queryLen = 3600;
         vector<IShape *> queries;
         for (int i = 0; i < 1000; i++) {
@@ -28,10 +28,10 @@ int main() {
                 queries.emplace_back(concate);
         }
 //        for (int i = 0; i < 1000; i++) {
-//            double t = int(random(stat->mint, stat->maxt - queryLen));
-//            double pLow[3] = {random(stat->minx, stat->maxx), random(stat->miny, stat->maxy), t};
-//            double pHigh[3] = {pLow[0] + random(stat->Dx / 40, stat->Dx * 3 / 40),
-//                               pLow[1] + random(stat->Dy / 40, stat->Dy * 3 / 40), t + queryLen};
+//            double t = int(random(tjstat->mint, tjstat->maxt - queryLen));
+//            double pLow[3] = {random(tjstat->minx, tjstat->maxx), random(tjstat->miny, tjstat->maxy), t};
+//            double pHigh[3] = {pLow[0] + random(tjstat->Dx / 40, tjstat->Dx * 3 / 40),
+//                               pLow[1] + random(tjstat->Dy / 40, tjstat->Dy * 3 / 40), t + queryLen};
 //            Region *rg = new Region(pLow, pHigh, 3);
 //            queries.emplace_back(rg);
 //        }
@@ -59,7 +59,7 @@ int main() {
                     std::vector<Trajectory> seg;
                     switch (i) {
                         case 0:
-                            seg = traj.second.getFixedSegments(int(std::ceil(segpara / stat->tl) + 1));
+                            seg = traj.second.getFixedSegments(int(std::ceil(segpara / tjstat->tl) + 1));
                             break;
                         case 1:
                             seg = traj.second.getStaticSegments(segpara);

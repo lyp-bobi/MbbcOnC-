@@ -6,9 +6,9 @@
 
 
 int main() {
-    auto stat = trajStat::instance();
-    stat->set(0, 3.35294e+12, 691571277, 764988, 4848.29, 4.383e+06, 8.75481e-07, -90, 90, -180, 179.783, -6.21356e+10,
-              2.22148e+11, 180, 359.783, 2.84283e+11, 2.93544e+06);
+
+    tjstat->set(0, 3.35294e+12, 691571277, 764988, 4848.29, 4.383e+06, 8.75481e-07, -90, 90, -180, 179.783, -6.21356e+10,
+                2.22148e+11, 180, 359.783, 2.84283e+11, 2.93544e+06);
     knncost(1, 5, 3600, 40, true, 0.012);
     double a = biSearchMax(5, 3600, 40, false, 0.012, 1000, 1000000);
     std::cerr << a;
@@ -21,7 +21,7 @@ int main() {
 //        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("D://simp.csv");
         vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/idfb.txt");
 //        vector<pair<id_type, Trajectory> > trajs = loadGTFolder();
-        auto stat = trajStat::instance();
+
         int maxseg = 0;
         //double segLenParas[]={100,200,300,400,500,750,1000,1500,2000,2500,3000,3500,4000};
         double segLenParas[] = {1000};

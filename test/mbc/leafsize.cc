@@ -6,7 +6,7 @@
 
 int main() {
 //    vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://TRI-framework/dumpedtraj.txt");
-    auto stat= trajStat::instance();
+
     vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
     double segLenParas[] = {300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
     int maxseg;
@@ -43,7 +43,7 @@ int main() {
     }
 
     trajs.clear();
-    stat->init();
+    tjstat->init();
     trajs = loadDumpedFiledToTrajs("/root/glfilter.txt");
     for (double segLen:segLenParas) {
         vector<pair<id_type, vector<Trajectory>>> segs;
@@ -76,7 +76,7 @@ int main() {
     }
 
     trajs.clear();
-    stat->init();
+    tjstat->init();
     trajs = loadGTFolder();
     double segLenParas2[] = {10,30,50,70,90,110,130,150};
     for (double segLen:segLenParas2) {

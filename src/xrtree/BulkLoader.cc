@@ -319,7 +319,7 @@ void BulkLoader::bulkLoadUsingSTR(
 		throw Tools::IllegalArgumentException(
 			"xRTree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
 		);
-    auto stat=trajStat::instance();
+
 	NodePtr n = pTree->readNode(pTree->m_rootID);
 	pTree->deleteNode(n.get());
 
@@ -391,9 +391,9 @@ void BulkLoader::createLevel(
     remainDim = pTree->m_dimension - dimension;
     uint64_t S;
     double ltc;
-    auto stat=trajStat::instance();
+
     if(dimension==0){
-        double nt = pow(P * sq(stat->vv())*sq(stat->P) / sq((M_PI * sq(stat->Sr))),1.0/3);
+        double nt = pow(P * sq(tjstat->vv()) * sq(tjstat->P) / sq((M_PI * sq(tjstat->Sr))), 1.0 / 3);
         std::cerr<<"nt is "<<nt<<"\t rest is "<<sqrt(P/nt)<<endl;
         S = max(1,int(floor(nt)));
         if(S>P) S=1;
@@ -501,8 +501,8 @@ void BulkLoader::createLevel(
 	}
 	else
 	{
-	    auto stat=trajStat::instance();
-	    double curt=stat->mint+ltc;
+
+	    double curt= tjstat->mint + ltc;
 		bool bMore = true;
 //        int count1=0;
         ExternalSorter::Record* pR;

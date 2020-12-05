@@ -31,7 +31,7 @@ AM_INIT_AUTOMAKE([dist-bzip2 subdir-objects])
 AC_CHECK_HEADERS(fcntl.h,, [AC_MSG_ERROR([cannot find fcntl.h, bailing out])])
 AC_CHECK_HEADERS(unistd.h,, [AC_MSG_ERROR([cannot find unistd.h, bailing out])])
 AC_CHECK_HEADERS(sys/types.h,, [AC_MSG_ERROR([cannot find sys/types.h, bailing out])])
-AC_CHECK_HEADERS(sys/stat.h,, [AC_MSG_ERROR([cannot find sys/stat.h, bailing out])])
+AC_CHECK_HEADERS(sys/tjstat.h,, [AC_MSG_ERROR([cannot find sys/tjstat.h, bailing out])])
 
 AC_CHECK_HEADERS(pthread.h, [
 #ifndef ANDROID

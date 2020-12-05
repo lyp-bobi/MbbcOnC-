@@ -28,6 +28,28 @@
 
 #include "../mbcrtree/MBCRTree.h"
 
+SpatialIndex::trajStat *tjstat = SpatialIndex::trajStat::instance();
+
+trajStat* trajStat::singleton=nullptr;
+trajStat* trajStat::instance() {
+    if (singleton == nullptr)
+    {
+        singleton = new trajStat();
+    }
+    return singleton;
+}
+SIDX_DLL std::ostream& SpatialIndex::operator<<(std::ostream& os, const trajStat& r) {
+    os<<"Trajectory Statistics:\n";
+    os<<"\ttotal time: "<<r.M<<"\n";
+    os<<"\tline count: "<<r.lineCount<<"\n";
+    os<<"\ttraj count: "<<r.trajCount<<"\n";
+    os<<"\tline length: "<<r.tl<<"\n";
+    os<<"\ttraj length: "<<r.jt<<"\n";
+    os<<"\taverage speed: "<<r.v<<"\n";
+    os<<"\texpanding:"<<r.Dx<<"\t"<<r.Dy<<"\t"<<r.Dt<<"\n";
+    return os;
+}
+
 SpatialIndex::InvalidPageException::InvalidPageException(id_type id)
 {
 	std::ostringstream s;

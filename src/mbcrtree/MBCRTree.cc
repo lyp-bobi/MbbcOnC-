@@ -514,7 +514,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
     Trajectory ssTraj;
     double delta=0, ssdelta= 0;
     if(bUsingSBBD==true && bUsingSimp == true) {
-//        auto stat=trajStat::instance();
+//
         int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (m_ts->m_timeCount/m_ts->m_segCount));
         segnum=std::max(segnum,10);
         vector<vector<STPoint>> simpseg;
@@ -657,7 +657,7 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
 //            std::cerr<<"find minDist"<<knearest<<"\n";
                 break;
             }
-            auto stat = trajStat::instance();
+
             switch (pFirst->m_type) {
                 case 0: {//inner and leaf node
                     ps.pop();
@@ -668,11 +668,11 @@ void SpatialIndex::MBCRTree::MBCRTree::nearestNeighborQuery(uint32_t k, const IS
                             double pd;
                             double ts, te;
                             if (m_bUsingMBR) {
-                                pd = std::max(0.0, simpleTraj.getLeafMinimumDistance(*(n->m_ptrMBR[cChild]),stat->vmax));
+                                pd = std::max(0.0, simpleTraj.getLeafMinimumDistance(*(n->m_ptrMBR[cChild]), tjstat->vmax));
                                 ts = n->m_ptrMBR[cChild]->m_pLow[2];
                                 te = n->m_ptrMBR[cChild]->m_pHigh[2];
                             } else {
-                                double d = simpleTraj.getLeafMinimumDistance(*(n->m_ptrMBC[cChild]),stat->vmax);
+                                double d = simpleTraj.getLeafMinimumDistance(*(n->m_ptrMBC[cChild]), tjstat->vmax);
                                 pd = std::max(0.0, d);
                                 ts = n->m_ptrMBC[cChild]->m_startTime;
                                 te = n->m_ptrMBC[cChild]->m_endTime;

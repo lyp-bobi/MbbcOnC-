@@ -43,7 +43,7 @@ int main() {
             ts2->loadSegments(segs2, true);
             segs1.clear();
             segs2.clear();
-            auto stat = trajStat::instance();
+
             long count = ts1->m_entries.size();
             ISpatialIndex *r = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
             ISpatialIndex *rc = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);

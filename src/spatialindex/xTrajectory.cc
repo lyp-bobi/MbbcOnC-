@@ -402,8 +402,8 @@ std::vector<xTrajectory> xTrajectory::getRDPSegments(double len) const {
 }
 
 std::vector<xTrajectory> xTrajectory::getSegments(double len) const {
-    auto stat=trajStat::instance();
-    stat->bt=len;
+
+    tjstat->bt=len;
     return getGlobalSegmentsCut(len);
 
 //    return getHybridSegments(len);
@@ -482,8 +482,8 @@ std::vector<xTrajectory> xTrajectory::getGlobalSegmentsCut(double len) const {
     if(m_points.size()<2) {
         throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
     }
-    auto stat=trajStat::instance();
-    double segStart=double(int(stat->mint));
+
+    double segStart=double(int(tjstat->mint));
     seg.emplace_back(m_points[0]);
     while(segStart+len<m_points[0].m_t+1e-7) segStart+=len;
     for(int i=1;i<m_points.size();i++){
@@ -1274,8 +1274,8 @@ void xTrajectory::getPartialxTrajectory(double tstart, double tend, SpatialIndex
 
 int xTrajectory::cutTrajsIntoFile(std::vector<std::pair<SpatialIndex::id_type, SpatialIndex::xTrajectory>> &trajs,
                                  double segLen, int strat, std::string filename) {
-    auto stat = trajStat::instance();
-    stat->bt = segLen;
+
+    tjstat->bt = segLen;
     double totallen=0;
     int maxseg=0;
     int totalseg=0;
@@ -1320,22 +1320,28 @@ double xTrajectory::maxSpeed() const {
     return res;
 }
 
+inline xSBB subtrajToSBB(xTrajectory &x){
+    xMBR tmpbr;
+    xMBC tmpbc;
+    x.getxMBR(tmpbr);
+    x.getxMBC(tmpbc);
+    return xSBB(tmpbr,tmpbc);
+}
+
 # define looseFactor 0.3
 
 queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
     vector<xPoint> seg;
     queue<CUTENTRY> res;
     xTrajectory subtraj;
-    xMBR tmpbr;
-    xMBC tmpbc;
     bool fakehead=false,fakeback=false;
     int ms=0,me=0;
     if(traj.m_points.size()<2) {
         throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
     }
-    auto stat=trajStat::instance();
+
     double segStart=traj.m_points[0].m_t;
-    double len = stat->bt;
+    double len = tjstat->bt;
     seg.emplace_back(traj.m_points[0]);
 
     for(int i=1;i<traj.m_points.size();i++) {
@@ -1348,10 +1354,8 @@ queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
                 seg.emplace_back(traj.m_points[i]);
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i;
-                subtraj.getxMBR(tmpbr);
-                subtraj.getxMBC(tmpbc);
                 res.push(make_pair(make_pair(ms,me)
-                                           ,xSBB(tmpbr,tmpbc)));
+                                           ,subtrajToSBB(subtraj)));
                 ms = i;
                 fakehead = false;
                 seg.clear();
@@ -1362,10 +1366,8 @@ queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
                 //previous point is acceptable, so choose it.
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i-1;
-                subtraj.getxMBR(tmpbr);
-                subtraj.getxMBC(tmpbc);
                 res.push(make_pair(make_pair(ms,me)
-                        ,xSBB(tmpbr,tmpbc)));
+                        ,subtrajToSBB(subtraj)));
                 ms = i-1;
                 fakehead=false;
                 seg.clear();
@@ -1375,10 +1377,8 @@ queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
                 seg.emplace_back(traj.m_points[i]);
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i;
-                subtraj.getxMBR(tmpbr);
-                subtraj.getxMBC(tmpbc);
                 res.push(make_pair(make_pair(ms,me)
-                        ,xSBB(tmpbr,tmpbc)));
+                        ,subtrajToSBB(subtraj)));
                 ms = i;
                 seg.emplace_back(traj.m_points[i]);
                 fakehead=false;
@@ -1391,10 +1391,8 @@ queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
                 seg.emplace_back(mid);
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i;
-                subtraj.getxMBR(tmpbr);
-                subtraj.getxMBC(tmpbc);
                 res.push(make_pair(make_pair(ms,me)
-                        ,xSBB(tmpbr,tmpbc)));
+                        ,subtrajToSBB(subtraj)));
                 ms = i-1;
                 fakehead=true;
                 seg.clear();
@@ -1407,11 +1405,119 @@ queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
     if(seg.size()>1){
         me=traj.m_points.size()-1;
         subtraj=xTrajectory(fakehead, false, seg);
-        subtraj.getxMBR(tmpbr);
-        subtraj.getxMBC(tmpbc);
         res.push(make_pair(make_pair(ms,me)
-                ,xSBB(tmpbr,tmpbc)));
+                ,subtrajToSBB(subtraj)));
         seg.clear();
+    }
+    return res;
+}
+
+queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj) {
+    vector<xPoint> seg;
+    queue<CUTENTRY> res;
+    xTrajectory subtraj;
+    bool fakehead=false,fakeback=false;
+    int ms=0,me=0;
+    if(traj.m_points.size()<2) {
+        throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
+    }
+
+    double segStart=tjstat->mint;
+    double len = tjstat->bt;
+    while(segStart + (1.0-looseFactor) * len <= traj.m_points[0].m_t) {
+        segStart += len;
+    }
+    seg.emplace_back(traj.m_points[0]);
+    for(int i=1;i<traj.m_points.size();i++) {
+        if (traj.m_points[i].m_t < segStart + len) {// pass point
+            if(ms!=i) seg.emplace_back(traj.m_points[i]);
+        } else{//make seg
+            if (fabs(traj.m_points[i].m_t - segStart - len) < 1e-7) {
+                // if it stops exactly at some point
+                fakeback = false;
+                seg.emplace_back(traj.m_points[i]);
+                subtraj=xTrajectory(fakehead, fakeback, seg);
+                me=i;
+                res.push(make_pair(make_pair(ms,me)
+                        ,subtrajToSBB(subtraj)));
+                ms = i;
+                fakehead = false;
+                seg.clear();
+                seg.emplace_back(traj.m_points[i]);
+                segStart += len;
+            }
+            else if(traj.m_points[i-1].m_t>segStart+(1-looseFactor)*len){
+                //previous point is acceptable, so choose it.
+                subtraj=xTrajectory(fakehead, fakeback, seg);
+                me=i-1;
+                res.push(make_pair(make_pair(ms,me)
+                        ,subtrajToSBB(subtraj)));
+                ms = i-1;
+                fakehead=false;
+                seg.clear();
+                seg.emplace_back(traj.m_points[i-1]);
+            }else if (traj.m_points[i].m_t<segStart+(1+looseFactor)*len){
+                // this point( the next one) is acceptable, so choose it
+                seg.emplace_back(traj.m_points[i]);
+                subtraj=xTrajectory(fakehead, fakeback, seg);
+                me=i;
+                res.push(make_pair(make_pair(ms,me)
+                        ,subtrajToSBB(subtraj)));
+                ms = i;
+                seg.emplace_back(traj.m_points[i]);
+                fakehead=false;
+                seg.clear();
+                seg.emplace_back(traj.m_points[i]);
+            }else{
+                //we have to create a new point by interpolation
+                xPoint mid=xPoint::makemid(traj.m_points[i-1],traj.m_points[i],segStart+len);
+                fakeback=true;
+                seg.emplace_back(mid);
+                subtraj=xTrajectory(fakehead, fakeback, seg);
+                me=i;
+                res.push(make_pair(make_pair(ms,me)
+                        ,subtrajToSBB(subtraj)));
+                ms = i-1;
+                fakehead=true;
+                seg.clear();
+                seg.emplace_back(mid);
+            }
+            segStart+=len;
+            i--;
+        }
+    }
+    if(seg.size()>1){
+        me=traj.m_points.size()-1;
+        subtraj=xTrajectory(fakehead, false, seg);
+        res.push(make_pair(make_pair(ms,me)
+                ,subtrajToSBB(subtraj)));
+        seg.clear();
+    }
+    return res;
+}
+
+queue<pair<pair<int, int>, xSBB> > xTrajectory::OPTS(xTrajectory &traj) {
+    int segNum=std::ceil((traj.m_endTime()-traj.m_startTime()) / tjstat->bt);
+    queue<CUTENTRY> res;
+    if(segNum == 1) {
+        res.emplace( make_pair(make_pair(0,int(traj.m_points.size()-1)), subtrajToSBB(traj)));
+        return res;
+    }
+    int seg1 = std::min(std::ceil(sqrt(segNum)), std::ceil(sqrt(traj.m_points.size()-1)));
+    auto m=simplifyWithRDPN(traj.m_points,seg1);
+    int pointPrev=0;
+    for(auto pts:m)
+    {
+        xTrajectory subtraj(pts);
+        auto seg=GSS(subtraj);
+        while(!seg.empty()){
+            auto f= seg.front();
+            seg.pop();
+            f.first.first += pointPrev;
+            f.first.second += pointPrev;
+            res.push(f);
+        }
+        pointPrev+=pts.size()-1;
     }
     return res;
 }
@@ -1429,20 +1535,16 @@ queue<CUTENTRY> xTrajectory::FP(xTrajectory &traj, int np) {
         seg.emplace_back(traj.m_points[i]);
         if(i==traj.m_points.size()-1){
             subtraj = xTrajectory(seg);
-            subtraj.getxMBR(tmpbr);
-            subtraj.getxMBC(tmpbc);
             res.push(make_pair(make_pair(ms,i)
-                    ,xSBB(tmpbr,tmpbc)));
+                    ,subtrajToSBB(subtraj)));
             ms = i;
             seg.clear();
             break;
         }
         if(seg.size()>=np){
             subtraj = xTrajectory(seg);
-            subtraj.getxMBR(tmpbr);
-            subtraj.getxMBC(tmpbc);
             res.push(make_pair(make_pair(ms,i)
-                    ,xSBB(tmpbr,tmpbc)));
+                    ,subtrajToSBB(subtraj)));
             seg.clear();
             ms = i;
             seg.emplace_back(traj.m_points[i]);

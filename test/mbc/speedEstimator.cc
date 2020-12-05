@@ -8,7 +8,7 @@ int main() {
     calcuTime[0] = 0;
     srand(0);
 //        vector<pair<id_type, Trajectory> > trajs = loadGTFolder();
-    auto stat = trajStat::instance();
+
     int maxseg = 0;
     double avgSegLen = 100;
     vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");

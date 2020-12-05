@@ -1,5 +1,5 @@
 //
-// Created by Chuang on 2019/9/1.
+// Created by Chuang on 2020/11/24.
 //
 
 #ifndef SPATIALINDEX_TESTFUNCS_H
@@ -19,7 +19,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <strings.h>
-
+#include "storagemanager/xStore.h"
+#include "../../src/xrtree/xRTree.h"
 #if !WIN32
 
 #include <sys/mman.h>
@@ -37,7 +38,7 @@
 #include <spatialindex/SpatialIndex.h>
 
 
-#include "storagemanager/TrajStore.h"
+#include "storagemanager/xStore.h"
 #include "../../src/storagemanager/DiskStorageManager.h"
 #include "../../src/mbcrtree/MBCRTree.h"
 //#define sourceFile "D://t1000.txt"
@@ -54,6 +55,7 @@
 
 using namespace std;
 using namespace SpatialIndex;
+using namespace xRTreeNsp;
 
 int drop_cache(int drop) {
     int ret = 0;
@@ -74,92 +76,41 @@ int drop_cache(int drop) {
 
 }
 
+
 class MyVisitor : public IVisitor {
 public:
-    size_t m_indexIO;
-    size_t m_leafIO;
     size_t m_indexvisited;
     size_t m_leafvisited;
     size_t m_resultGet;
     id_type m_lastResult;
     double m_lastDist = 0;
     IShape *m_query;
-    TrajStore *ts = nullptr;
+    xStore *ts = nullptr;
 
 public:
-    MyVisitor() : m_indexIO(0), m_leafIO(0), m_resultGet(0), m_indexvisited(0), m_leafvisited(0) {}
+    MyVisitor() : m_resultGet(0), m_indexvisited(0), m_leafvisited(0) {}
 
     void visitNode(const INode &n) {
-//        if (n.isLeaf()) m_leafIO++;
-//        else m_indexIO++;
-        uint32_t size = n.getIndexByteArraySize();
-
         if (n.isLeaf()) {
             m_leafvisited++;
-            m_leafIO += size;
         }
         else {
             m_indexvisited++;
-            m_indexIO += size;
+        }
+    }
+    void visitData(std::vector<const IData*>& v){}
+    void visitData(const IData &d) {
+        m_resultGet++;
+        m_lastResult = d.getIdentifier();
+        auto mou=dynamic_cast<const xRTreeNsp::xRTree::simpleData*>(&d);
+        if(mou!=nullptr){
+            m_lastDist=mou->m_dist;
+//            cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
         }
     }
 
-    void visitData(const IData &d) {
-        m_resultGet++;
-        IShape *pS;
-        d.getShape(&pS);
-        // do something.
-        delete pS;
-//        cout<<"data"<<endl;
-
-        // data should be an array of characters representing a Region as a string.
-        uint8_t *pData = 0;
-        uint32_t cLen = 0;
-        d.getData(cLen, &pData);
-        m_leafIO += cLen;
-        // do something.
-//        double *s = reinterpret_cast<double*>(pData);
-//        cout << *s << endl;
-
-        m_lastResult = d.getIdentifier();
-//        cerr << d.getIdentifier()<<std::endl;
-//        auto mou=dynamic_cast<const MBCRTree::MBCRTree::simpleData*>(&d);
-//        if(mou!=nullptr){
-//            m_lastDist=mou->m_dist;
-//            cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
-//        }
-//        auto mou2=dynamic_cast<const RTree::RTree::simpleData*>(&d);
-//        if(mou2!=nullptr){
-//            m_lastDist=mou2->m_dist;
-//            cerr << d.getIdentifier()<<"\t"<<mou2->m_dist << endl;
-//        }
-//        //id of the data
-//        if(ts== nullptr)
-//            cerr << d.getIdentifier() << endl;
-//        else
-//            cerr << d.getIdentifier() /100<< endl;
-//        //the traj
-//        Trajectory traj;
-//        if(ts== nullptr) {
-//            traj.loadFromByteArray(pData);
-//            double mindist=m_query->getMinimumDistance(traj);
-//            cerr<<"traj dist is"<<mindist<<"\n\n";
-//        }
-//        else{
-//            id_type tid=d.getIdentifier();
-//            traj=ts->getTrajByTime(tid,0,1000);
-//            auto brs=ts->getMBRsByTime(tid,0,1000);
-//            auto bcs=ts->getMBCsByTime(tid,0,1000);
-//            cerr<<"traj dist is"<<m_query->getMinimumDistance(traj)<<"\n"
-//                    <<m_query->getMinimumDistance(brs)<<"\n"
-//                    <<m_query->getMinimumDistance(bcs)<<"\n\n";
-//        }
-
-        delete[] pData;
-    }
-
-    void visitData(std::vector<const IData *> &v) {
-        cout << v[0]->getIdentifier() << " " << v[1]->getIdentifier() << endl;
+    void clear(){
+        m_indexvisited = m_leafvisited = m_resultGet=0;
     }
 };
 
@@ -192,7 +143,7 @@ Type stringToNum(const std::string &str) {
     return num;
 }
 
-vector<pair<id_type, Trajectory> > loadGTToTrajs(string filename = genFile) {
+vector<pair<id_type, xTrajectory> > loadGTToTrajs(string filename = genFile) {
     //first level: vector of time period
     //second level: vector of segments in the time period
 #ifndef NDEBUG
@@ -203,7 +154,7 @@ vector<pair<id_type, Trajectory> > loadGTToTrajs(string filename = genFile) {
     string lineStr;
     set<id_type> ids;
     multimap<id_type, xyt> trajs;
-    vector<pair<id_type, Trajectory> > res;
+    vector<pair<id_type, xTrajectory> > res;
     int curLine = 0;
     while (getline(inFile, lineStr) && curLine < maxLinesToRead) {
         try {
@@ -250,17 +201,17 @@ vector<pair<id_type, Trajectory> > loadGTToTrajs(string filename = genFile) {
         }
         trajs.erase(id);
         if (traj.size() >= 2) {
-            vector<STPoint> tps;
+            vector<xPoint> tps;
             xyt lastpoint;
             for (int l = 0; l < traj.size(); l++) {
-                tps.emplace_back(STPoint(traj[l].x, traj[l].y, traj[l].t));
+                tps.emplace_back(xPoint(traj[l].x, traj[l].y, traj[l].t));
                 if (l != 0) {
                     tjstat->dist += std::sqrt(sq(traj[l].x - lastpoint.x) + sq(traj[l].y - lastpoint.y));
                 }
                 lastpoint = traj[l];
             }
             if (!tps.empty()) {
-                Trajectory tmp(tps);
+                xTrajectory tmp(tps);
                 tjstat->lineCount += tps.size() - 1;
                 tjstat->trajCount += 1;
                 tjstat->M += tmp.m_endTime() - tmp.m_startTime();
@@ -280,14 +231,14 @@ vector<pair<id_type, Trajectory> > loadGTToTrajs(string filename = genFile) {
     return res;
 }
 
-vector<pair<id_type, Trajectory> > loadDumpedFiledToTrajs(string filename = genFile) {
+vector<pair<id_type, xTrajectory> > loadDumpedFiledToTrajs(string filename = genFile) {
 
     tjstat->init();
     ifstream inFile(filename, ios::in);
     string lineStr;
     set<id_type> ids;
-    vector<pair<id_type, Trajectory> > res;
-    Trajectory tj;
+    vector<pair<id_type, xTrajectory> > res;
+    xTrajectory tj;
     Region r;
 //    tjstat->fromString(lineStr);
     int curLine = 0;
@@ -341,7 +292,7 @@ vector<pair<id_type, Trajectory> > loadDumpedFiledToTrajs(string filename = genF
 }
 
 
-void dumpToFile(vector<pair<id_type, Trajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
+void dumpToFile(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
     ofstream outFile(filename, ios::out);
 
     outFile << tjstat->toString() << "\n";
@@ -360,7 +311,7 @@ void dumpToFile(vector<pair<id_type, Trajectory> > &trajs, string filename = "du
 }
 
 
-vector<pair<id_type, Trajectory> > loadGLToTrajs(string filename = GLFile) {
+vector<pair<id_type, xTrajectory> > loadGLToTrajs(string filename = GLFile) {
     //first level: vector of time period
     //second level: vector of segments in the time period
     cerr << "loading geolife trajectories from txt to trajectories" << endl;
@@ -369,7 +320,7 @@ vector<pair<id_type, Trajectory> > loadGLToTrajs(string filename = GLFile) {
     string lineStr;
     set<id_type> ids;
     multimap<id_type, xyt> trajs;
-    vector<pair<id_type, Trajectory> > res;
+    vector<pair<id_type, xTrajectory> > res;
     int curLine = 0;
     getline(inFile, lineStr);
 
@@ -415,10 +366,10 @@ vector<pair<id_type, Trajectory> > loadGLToTrajs(string filename = GLFile) {
         }
         trajs.erase(id);
         if (traj.size() >= 2) {
-            vector<STPoint> tps;
+            vector<xPoint> tps;
             xyt lastpoint;
             for (int l = 0; l < traj.size(); l++) {
-                tps.emplace_back(STPoint(traj[l].x, traj[l].y, traj[l].t));
+                tps.emplace_back(xPoint(traj[l].x, traj[l].y, traj[l].t));
                 if (l != 0) {
                     tjstat->dist += std::sqrt(sq(traj[l].x - lastpoint.x) + sq(traj[l].y - lastpoint.y));
                     if (std::sqrt(sq(traj[l].x - lastpoint.x) + sq(traj[l].y - lastpoint.y)) /
@@ -430,7 +381,7 @@ vector<pair<id_type, Trajectory> > loadGLToTrajs(string filename = GLFile) {
                 lastpoint = traj[l];
             }
             if (!tps.empty()) {
-                Trajectory tmp(tps);
+                xTrajectory tmp(tps);
                 tjstat->lineCount += tps.size() - 1;
                 tjstat->trajCount += 1;
                 tjstat->M += tmp.m_endTime() - tmp.m_startTime();
@@ -453,8 +404,8 @@ vector<pair<id_type, Trajectory> > loadGLToTrajs(string filename = GLFile) {
     return res;
 }
 
-vector<pair<id_type, Trajectory> > loadGTFolder(int num = 10, string folder = fileFolder) {
-    vector<pair<id_type, Trajectory> > res;
+vector<pair<id_type, xTrajectory> > loadGTFolder(int num = 10, string folder = fileFolder) {
+    vector<pair<id_type, xTrajectory> > res;
     vector<string> files;
     struct dirent *ptr;
     DIR *dir;
@@ -468,7 +419,7 @@ vector<pair<id_type, Trajectory> > loadGTFolder(int num = 10, string folder = fi
     }
 
     for (auto file:files) {
-        vector<pair<id_type, Trajectory> > tmptrajs = loadGTToTrajs(file);
+        vector<pair<id_type, xTrajectory> > tmptrajs = loadGTToTrajs(file);
         res.insert(res.begin(), tmptrajs.begin(), tmptrajs.end());
     }
     tjstat->usedata("od");
@@ -545,7 +496,7 @@ double biSearchMax(int k, double qt, int f, bool useMBR, double rk = -1, double 
     return bestbt;
 }
 //
-//void TreeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajStore *ts = nullptr, int thennk = 5) {
+//void TreeQueryBatch(xRTree *tree, const vector<IShape *> &queries, xStore *ts = nullptr, int thennk = 5) {
 //    MyVisitor vis;
 //    vis.ts = ts;
 //    auto start = std::chrono::system_clock::now();
@@ -567,10 +518,10 @@ double biSearchMax(int k, double qt, int f, bool useMBR, double rk = -1, double 
 //    time = double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
 //    cerr << "Querying time: " << time << endl;
 //    cerr << "VISIT NODE " << vis.m_indexvisited << "\t" << vis.m_leafvisited << endl;
-//    cerr << "TrajStore Statistic" << ts->m_indexIO << "\t" << ts->m_trajIO << endl;
+//    cerr << "xStore Statistic" << ts->m_indexIO << "\t" << ts->m_trajIO << endl;
 //}
 
-double kNNQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajStore *ts = nullptr, int thennk = 5,
+double kNNQueryBatch(xRTree *tree, const vector<xTrajectory> &queries, xStore *ts = nullptr, int thennk = 5,
                      bool reportEnd = false) {
     ts->cleanStatistic();
     ts->flush();
@@ -583,8 +534,8 @@ double kNNQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajS
     int indio = 0;
     std::vector<int> indios;
     for (int i = 0; i < queries.size(); i++) {
-        vis.m_query = queries[i];
-        tree->nearestNeighborQuery(thennk, *queries[i], vis);
+        vis.m_query = (IShape *) &(queries[i]);
+        tree->nearestNeighborQuery(thennk, queries[i], vis);
         rad += vis.m_lastDist;
         if (reportEnd) std::cerr << "end\n";
         indios.emplace_back(ts->m_indexIO - indio);
@@ -597,7 +548,7 @@ double kNNQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajS
     time = double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
 //    cerr <<"Average Querying time: "<< time/num<<endl;
 //    cerr <<"Averaged VISIT NODE "<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<endl;
-//    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
+//    cerr <<"xStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
 //    sort(indios.begin(), indios.end());
 //    int mid1 = queries.size() * 0.1, mid2 = queries.size() * 0.9;
 //    double sum = 0;
@@ -613,7 +564,7 @@ double kNNQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajS
     return rad;
 }
 
-void rangeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajStore *ts = nullptr, MyVisitor* vis = nullptr) {
+void rangeQueryBatch(xRTree *tree, const vector<xCylinder *> &queries, xStore *ts = nullptr, MyVisitor* vis = nullptr) {
     ts->cleanStatistic();
     int num = queries.size();
     if(vis == nullptr){
@@ -632,7 +583,7 @@ void rangeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajS
     time = double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
 //    cerr <<"Average Querying time: "<< time/num<<endl;
 //    cerr <<"Averaged VISIT NODE "<<1.0*vis.m_indexvisited/num<<"\t"<<1.0*vis.m_leafvisited/num<<endl;
-//    cerr <<"TrajStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
+//    cerr <<"xStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
     cerr << "average time\tIndexVisit\tLeafVisit\tIndexIO\ttrajIO\tprevalidateRate\tinternum\tcontainNum\n";
     cerr << time / num << "\t" << 1.0 * vis->m_indexvisited / num << "\t" << 1.0 * vis->m_leafvisited / num << "\t"
          << 1.0 * ts->m_indexIO / num << "\t" << 1.0 * ts->m_trajIO / num << "\t" << double(sbb) / sb << "\t" << sb
@@ -641,7 +592,7 @@ void rangeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajS
 //    cerr <<time/num<<"\n";
 }
 //
-//int TreeQuery(ISpatialIndex *tree, IShape *query, TrajStore *ts = nullptr) {
+//int TreeQuery(xRTree *tree, IShape *query, xStore *ts = nullptr) {
 //    clock_t start, end;
 //    MyVisitor vis;
 //    if (ts != nullptr)
@@ -661,6 +612,5 @@ void rangeQueryBatch(ISpatialIndex *tree, const vector<IShape *> &queries, TrajS
 //        return vis.m_lastResult;
 //    } else return vis.m_lastResult;
 //}
-
 
 #endif //SPATIALINDEX_TESTFUNCS_H

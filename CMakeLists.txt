@@ -6,6 +6,8 @@
 cmake_minimum_required(VERSION 2.8.4)
 project(spatialindex)
 
+add_definitions(-std=c++14)
+
 #------------------------------------------------------------------------------
 # internal cmake settings
 #------------------------------------------------------------------------------
@@ -42,6 +44,9 @@ set(SIDX_VERSION_STRING "${SIDX_VERSION_MAJOR}.${SIDX_VERSION_MINOR}.${SIDX_VERS
 
 option(SIDX_BUILD_TESTS "Enables integrated test suites" ON)
 
+if (MINGW)
+    add_definitions(-DWIN32)
+endif()
 
 # Name of C++ library
 

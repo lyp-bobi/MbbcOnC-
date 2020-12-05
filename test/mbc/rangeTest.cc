@@ -8,7 +8,7 @@ int main() {
 
     try {
         vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/glfilter.txt");
-        auto stat = trajStat::instance();
+
         int maxseg = 0;
         double segLenParas[] = {100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3000};
         double queryLenParas[] = {3600};

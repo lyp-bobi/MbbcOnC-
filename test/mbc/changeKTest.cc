@@ -16,7 +16,7 @@ int main() {
         int maxseg = 0;
         bUsingSimp = true;
         vector<IShape *> queries;
-        auto stat = trajStat::instance();
+
         double queryLen = 1800;
         for (int i = 0; i < testtime; i++) {
             auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;
@@ -104,7 +104,7 @@ int main() {
         int maxseg = 0;
         bUsingSimp = true;
         vector<IShape *> queries;
-        auto stat = trajStat::instance();
+
         double queryLen = 1800;
         for (int i = 0; i < testtime; i++) {
             auto ori = &trajs[(int(random(0, trajs.size()))) % trajs.size()].second;

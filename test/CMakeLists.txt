@@ -86,11 +86,13 @@ endforeach()
 
 set (DIR testx)
 set (SOURCES
-        BasicTest
+        regressTest
+        knnTest
+        knn-mt
         )
 
 foreach (test ${SOURCES})
-    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
+    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc testx/testFuncsMultithread.h testx/knn-mt.cc)
     target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
     target_link_libraries(test-${DIR}-${test} ${CMAKE_THREAD_LIBS_INIT})
 endforeach()

@@ -168,6 +168,8 @@ namespace SpatialIndex
         std::vector<xTrajectory> getItself() const;
 
         static queue<CUTENTRY> ISS(xTrajectory &traj);
+        static queue<CUTENTRY> GSS(xTrajectory &traj);
+        static queue<CUTENTRY> OPTS(xTrajectory &traj);
         static queue<CUTENTRY> FP(xTrajectory &traj, int np);
         static queue<CUTENTRY> EveryLine(xTrajectory &traj);
 

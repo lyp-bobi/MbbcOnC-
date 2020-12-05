@@ -11,7 +11,7 @@ int main() {
 //        vector<pair<id_type, Trajectory> > trajs = loadGLToTrajs("/root/TD.csv");
         vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
 //        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://geolifeCleaner/tdfilter.txt");
-        auto stat = trajStat::instance();
+
         int maxseg = 0;
 
         maxseg = 3000;

@@ -14,7 +14,7 @@ int main() {
         vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/tdfilter.txt");
 //        vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("D://TRI-framework/dumpedtraj.txt");
 
-        auto stat = trajStat::instance();
+
         int maxseg = 0;
         double queryLen = 3600;
         double queryRadParas[] = {0.02, 0.04, 0.06, 0.08, 0.1};
@@ -51,7 +51,7 @@ int main() {
         }
         bUsingSBBD = true;
         for(double seglen:seglenParas){
-            stat->bt=seglen;
+            tjstat->bt=seglen;
             IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096);
             TrajStore *ts0 = new TrajStore(name0, diskfile0, 4096, maxseg);
             ts0->loadSegments("./tdopts"+to_string(seglen)+".stj",true);
@@ -68,10 +68,10 @@ int main() {
         TrajStore *ts1 = new TrajStore(name1, diskfile1, 4096, maxseg);
         TrajStore *ts2 = new TrajStore(name2, diskfile2, 4096, maxseg);
 
-        stat->bt = stat->tl;
+        tjstat->bt = tjstat->tl;
         ts1->loadSegments("./tdline.stj", true);
         ISpatialIndex *r1 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
-        stat->bt = 170*stat->tl;
+        tjstat->bt = 170 * tjstat->tl;
         ts2->loadSegments("./tdtb.stj", true);
         ISpatialIndex *r2 = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
         ts1->flush();
@@ -109,7 +109,7 @@ int main() {
         calcuTime[0] = 0;
         srand(0);
         vector<pair<id_type, Trajectory> > trajs = loadDumpedFiledToTrajs("/root/glfilter.txt");
-        auto stat = trajStat::instance();
+
         int maxseg = 0;
         double queryLen = 3600;
         double queryRadParas[] = {0.02, 0.04, 0.06, 0.08, 0.1};
@@ -146,7 +146,7 @@ int main() {
 
         bUsingSBBD = true;
         for(double seglen:seglenParas){
-            stat->bt = seglen;
+            tjstat->bt = seglen;
             IStorageManager *diskfile0 = StorageManager::createNewDiskStorageManager(name0, 4096);
             TrajStore *ts0 = new TrajStore(name0, diskfile0, 4096, maxseg);
             ts0->loadSegments("./glopts"+to_string(seglen)+".stj",true);
@@ -163,10 +163,10 @@ int main() {
 
         TrajStore *ts1 = new TrajStore(name1, diskfile1, 4096, maxseg);
         TrajStore *ts2 = new TrajStore(name2, diskfile2, 4096, maxseg);
-        stat->bt=stat->tl;
+        tjstat->bt=tjstat->tl;
         ts1->loadSegments("./glline.stj", true);
         ISpatialIndex *r1 = MBCRTree::createAndBulkLoadNewMBCRTreeWithTrajStore(ts1, 4096, 3, indexIdentifier1);
-        stat->bt = 170*stat->tl;
+        tjstat->bt = 170 * tjstat->tl;
         ts2->loadSegments("./gltb.stj", true);
         ISpatialIndex *r2 = MBCRTree::createAndBulkLoadNewRTreeWithTrajStore(ts2, 4096, 3, indexIdentifier2);
         ts1->flush();

@@ -24,7 +24,7 @@ int main() {
         cerr << "generating queries\n";
         int realtesttime = (QueryType == 2) ? testtime : (100 * testtime);
         double queryLen = 10800;
-        auto stat = trajStat::instance();
+
 //        double mp[2]={38.021442825891902828,114.06330331672108969};
 //        Cylinder cy(mp,0.041490676595355088785,55307,66107,2);
 //        queries.emplace_back(&cy);

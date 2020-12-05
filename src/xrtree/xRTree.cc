@@ -876,7 +876,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
     xTrajectory ssTraj;
     double delta=0, ssdelta= 0;
     if(bUsingSBBD&& bUsingSimp && m_bStoringLinks) {
-//        auto stat=trajStat::instance();
+//
         int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (m_ts->m_timeCount/m_ts->m_segCount));
         segnum=std::max(segnum,10);
         vector<vector<xPoint>> simpseg;
@@ -1025,7 +1025,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
         double knearest = 0.0;
         int iternum=0;
         std::map<id_type ,int> insertedTrajId;
-        auto stat= trajStat::instance();
+
         while (! ps.empty()) {
             iternum++;
             NNEntry *pFirst = ps.top();
@@ -1050,7 +1050,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
 //                            if(n->m_pIdentifier[cChild]==788){
 //                                std::cerr<<"";
 //                            }
-                            pd = std::max(0.0, simpleTraj.sbbDistInfer(*n->m_ptrxSBB[cChild],stat->vmax).opt);
+                            pd = std::max(0.0, simpleTraj.sbbDistInfer(*n->m_ptrxSBB[cChild], tjstat->vmax).opt);
                             ts = n->m_ptrxSBB[cChild]->startTime();
                             te = n->m_ptrxSBB[cChild]->endTime();
                             leafInfo *e = new leafInfo();

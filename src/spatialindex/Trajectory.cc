@@ -457,8 +457,8 @@ std::vector<Trajectory> Trajectory::getRDPSegments(double len) const {
 }
 
 std::vector<Trajectory> Trajectory::getSegments(double len) const {
-    auto stat=trajStat::instance();
-    stat->bt=len;
+
+    tjstat->bt=len;
     return getGlobalSegmentsCut(len);
 
 //    return getHybridSegments(len);
@@ -537,8 +537,8 @@ std::vector<Trajectory> Trajectory::getGlobalSegmentsCut(double len) const {
     if(m_points.size()<2) {
         throw Tools::IllegalStateException("getStatic:seg with 0 or 1 point");
     }
-    auto stat=trajStat::instance();
-    double segStart=double(int(stat->mint));
+
+    double segStart=double(int(tjstat->mint));
     seg.emplace_back(m_points[0]);
     while(segStart+len<m_points[0].m_time+1e-7) segStart+=len;
     for(int i=1;i<m_points.size();i++){
@@ -1804,8 +1804,8 @@ void Trajectory::getPartialTrajectory(double tstart, double tend, SpatialIndex::
 
 int Trajectory::cutTrajsIntoFile(std::vector<std::pair<SpatialIndex::id_type, SpatialIndex::Trajectory>> &trajs,
                                  double segLen, int strat, std::string filename) {
-    auto stat = trajStat::instance();
-    stat->bt = segLen;
+
+    tjstat->bt = segLen;
     double totallen=0;
     int maxseg=0;
     int totalseg=0;

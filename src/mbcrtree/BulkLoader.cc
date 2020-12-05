@@ -436,12 +436,12 @@ void BulkLoader::createLevel(
     remainDim = pTree->m_dimension - dimension;
     uint64_t S;
     double ltc;
-    auto stat=trajStat::instance();
+
     if(dimension==0){
-//        double ltc= pow(M_PI*sq(stat->Sr)*stat->P/P/sq(stat->vv()),1.0/3);
-//        std::cerr<<"space is "<<M_PI*sq(stat->Sr)*stat->P<<"\tP,S is"<<P<<"\t"<<S<<"\tltc is "<<ltc<<endl;
+//        double ltc= pow(M_PI*sq(tjstat->Sr)*tjstat->P/P/sq(tjstat->vv()),1.0/3);
+//        std::cerr<<"space is "<<M_PI*sq(tjstat->Sr)*tjstat->P<<"\tP,S is"<<P<<"\t"<<S<<"\tltc is "<<ltc<<endl;
 //        double nt=P/ltc;
-        double nt = pow(P * sq(stat->vv())*sq(stat->P) / sq((M_PI * sq(stat->Sr))),1.0/3);
+        double nt = pow(P * sq(tjstat->vv()) * sq(tjstat->P) / sq((M_PI * sq(tjstat->Sr))), 1.0 / 3);
         std::cerr<<"nt is "<<nt<<"\t rest is "<<sqrt(P/nt)<<endl;
         S = max(1,int(floor(nt)));
         if(S>P) S=1;
@@ -573,8 +573,8 @@ void BulkLoader::createLevel(
 	}
 	else
 	{
-	    auto stat=trajStat::instance();
-	    double curt=stat->mint+ltc;
+
+	    double curt= tjstat->mint + ltc;
 		bool bMore = true;
 //        int count1=0;
         ExternalSorter::Record* pR;

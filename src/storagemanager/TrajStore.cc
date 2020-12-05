@@ -19,25 +19,7 @@ XZ3Enocder* XZ3Enocder::instance() {
     }
     return singleton;
 }
-trajStat* trajStat::singleton=nullptr;
-trajStat* trajStat::instance() {
-    if (singleton == nullptr)
-    {
-        singleton = new trajStat();
-    }
-    return singleton;
-}
-SIDX_DLL std::ostream& SpatialIndex::operator<<(std::ostream& os, const trajStat& r) {
-    os<<"Trajectory Statistics:\n";
-    os<<"\ttotal time: "<<r.M<<"\n";
-    os<<"\tline count: "<<r.lineCount<<"\n";
-    os<<"\ttraj count: "<<r.trajCount<<"\n";
-    os<<"\tline length: "<<r.tl<<"\n";
-    os<<"\ttraj length: "<<r.jt<<"\n";
-    os<<"\taverage speed: "<<r.v<<"\n";
-    os<<"\texpanding:"<<r.Dx<<"\t"<<r.Dy<<"\t"<<r.Dt<<"\n";
-    return os;
-}
+
 XZ3Enocder::XZ3Enocder()
     :m_xmin(0),m_xmax(1),m_ymin(0),m_ymax(1),m_zmin(0),m_zmax(1),m_length(8)
     {}
@@ -448,10 +430,10 @@ void TrajStore::loadTrajs(vector<std::pair<id_type,Trajectory>> &trajs,double se
     unsigned long count=0;
     for (const auto &traj:trajs) {
         std::vector<Trajectory> seg;
-        auto stat=trajStat::instance();
+
         switch(method){
             case 0:
-                seg = traj.second.getFixedSegments(int(std::ceil(segpara/stat->tl)+1));
+                seg = traj.second.getFixedSegments(int(std::ceil(segpara / tjstat->tl) + 1));
                 break;
             case 1:
                 seg = traj.second.getStaticSegments(segpara);
