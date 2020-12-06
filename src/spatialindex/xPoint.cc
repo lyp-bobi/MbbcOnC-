@@ -49,6 +49,22 @@ bool xPoint::operator==(const xPoint& p) const
 	return true;
 }
 
+xPoint xPoint::operator+(const xPoint &b) const {
+    xPoint res;
+    res.m_x = m_x + b.m_x;
+    res.m_y = m_y + b.m_y;
+    res.m_t = m_t + b.m_t;
+    return res;
+}
+
+xPoint xPoint::operator-(const xPoint &b) const {
+    xPoint res;
+    res.m_x = m_x - b.m_x;
+    res.m_y = m_y - b.m_y;
+    res.m_t = m_t - b.m_t;
+    return res;
+}
+
 //
 // IObject interface
 //
@@ -217,4 +233,12 @@ double xPoint::getMinimumDistance(const xPoint& p) const
     ret += std::pow(m_x - p.m_x, 2.0);
     ret += std::pow(m_y - p.m_y, 2.0);
     return std::sqrt(ret);
+}
+
+xPoint xPoint::rotate(xPoint &center, double angle) {
+    xPoint delta = *this - center;
+    xPoint d2;
+    d2.m_x = delta.m_x * cos(angle) - delta.m_y * sin(angle);
+    d2.m_y = delta.m_x * sin(angle) + delta.m_y * cos(angle);
+    return center + d2;
 }

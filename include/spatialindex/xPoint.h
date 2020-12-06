@@ -14,6 +14,9 @@ namespace SpatialIndex
 		virtual xPoint& operator=(const xPoint& p);
 		virtual bool operator==(const xPoint& p) const;
 
+		xPoint operator+ (const xPoint &b) const;
+        xPoint operator- (const xPoint &b) const;
+
 		//
 		// IObject interface
 		//
@@ -44,6 +47,10 @@ namespace SpatialIndex
         virtual double getMinimumDistance(const IShape& in) const;
 
         virtual double getMinimumDistance(const xPoint& p) const;
+
+
+
+        xPoint rotate(xPoint& center, double angle);
 
 
 

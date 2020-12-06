@@ -302,9 +302,64 @@ void dumpToFile(vector<pair<id_type, xTrajectory> > &trajs, string filename = "d
     else{
         num = min(num,int(trajs.size()));
     }
+    int id=0;
     for(int i=0;i<num;i++){
         auto traj = trajs[i];
-        outFile << traj.first << "\n";
+        outFile << id << "\n";
+        outFile << traj.second.toString() << "\n";
+        id++;
+    }
+    outFile.close();
+}
+
+
+int getLastId(string &s)
+{
+    string filename = s;
+    ifstream fin;
+    fin.open(filename);
+    if(fin.is_open()) {
+        fin.seekg(-1,ios_base::end);                // go to one spot before the EOF
+        for(int i=0;i<2;i++) {
+            bool keepLooping = true;
+            while (keepLooping) {
+                char ch;
+                fin.get(ch);                            // Get current byte's data
+
+                if ((int) fin.tellg() <= 1) {             // If the data was at or before the 0th byte
+                    fin.seekg(0);                       // The first line is the last line
+                    keepLooping = false;                // So stop there
+                } else if (ch == '\n') {                   // If the data was a newline
+                    keepLooping = false;                // Stop at the current position.
+                } else {                                  // If the data was neither a newline nor at the 0 byte
+                    fin.seekg(-2,
+                              ios_base::cur);        // Move to the front of that data, then to the front of the data before it
+                }
+            }
+        }
+        string lastLine;
+        getline(fin,lastLine);                      // Read the current line
+        fin.close();
+        return stol(lastLine);
+    }
+
+    return 0;
+}
+
+void dumpToFile_append(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
+    int id = getLastId(filename);
+    ofstream outFile(filename, ios::app);
+    outFile << tjstat->toString() << "\n";
+    if( num ==-1){
+        num = trajs.size();
+    }
+    else{
+        num = min(num,int(trajs.size()));
+    }
+    for(int i=0;i<num;i++){
+        auto traj = trajs[i];
+        id++;
+        outFile << id << "\n";
         outFile << traj.second.toString() << "\n";
     }
     outFile.close();
@@ -591,26 +646,174 @@ void rangeQueryBatch(xRTree *tree, const vector<xCylinder *> &queries, xStore *t
 //    cerr <<vis->m_resultGet<<"\n";
 //    cerr <<time/num<<"\n";
 }
-//
-//int TreeQuery(xRTree *tree, IShape *query, xStore *ts = nullptr) {
-//    clock_t start, end;
-//    MyVisitor vis;
-//    if (ts != nullptr)
-//        vis.ts = ts;
-//    vis.m_query = query;
-//    start = clock();
-//    if (QueryType == 1) {
-//        tree->intersectsWithQuery(*query, vis);
-//    } else if (QueryType == 2) {
-//        vis.m_query = query;
-//        tree->nearestNeighborQuery(5, *query, vis);
-//    }
-//    end = clock();
-//    if (QueryType == 1) {
-//        return vis.m_resultGet;
-//    } else if (ts != nullptr) {
-//        return vis.m_lastResult;
-//    } else return vis.m_lastResult;
-//}
+
+void affine_transform(vector<pair<id_type, xTrajectory>> &ts, xPoint center, double angle, xPoint trans){
+    for(auto &t:ts){
+        for(auto &p:t.second.m_points){
+            p.rotate(center,angle);
+            p=p+trans;
+        }
+    }
+}
+
+// multithreaded
+
+
+#include <thread>
+
+#define NUMCORE 4
+#define NUMTHREAD (2*NUMCORE)
+
+using namespace std;
+
+struct queryRet{
+    double time=0;
+    double indexVisit=0;
+    double leafVisit=0;
+    double leaf1 = 0;
+    double leaf2 = 0;
+    double indexIO=0;
+    double trajIO=0;
+    queryRet operator+(const queryRet& r) const{
+        queryRet res;
+        res.time= time+r.time;
+        res.indexVisit= indexVisit+r.indexVisit;
+        res.leafVisit= leafVisit+r.leafVisit;
+        res.leaf1= leaf1+r.leaf1;
+        res.leaf2= leaf2+r.leaf2;
+        res.indexIO= indexIO+r.indexIO;
+        res.trajIO= trajIO+r.trajIO;
+        return res;
+    }
+    string toString() const{
+        stringstream s;
+        s<<time<<"\t"<<indexVisit<<"\t"<<leafVisit<<"\t"<<indexIO<<"\t"<<trajIO<<"\n";
+        return s.str();
+    }
+};
+
+
+queryRet average(vector<queryRet> &sum){
+    queryRet res;
+    for(auto &s:sum) res=res+s;
+    res.time/=sum.size();
+    res.indexVisit/=sum.size();
+    res.leafVisit/=sum.size();
+    res.leaf1/=sum.size();
+    res.leaf2/=sum.size();
+    res.indexIO/=sum.size();
+    res.trajIO/=sum.size();
+    return res;
+}
+
+enum queryType{
+    qt_range,
+    qt_knn
+};
+
+struct queryInput{
+    xRTree * tree = nullptr;
+    queryType type = qt_knn;
+    vector<xTrajectory> knn_queries;
+    vector<xCylinder> range_queries;
+    int nnk =5;
+};
+
+
+void QueryBatchThread(queryInput inp, queryRet *res) {
+    xStore * ts = inp.tree->m_ts;
+    ts->cleanStatistic();
+    ts->flush();
+    drop_cache(3);
+    int num = inp.knn_queries.size();
+    MyVisitor vis;
+    vis.ts = ts;
+    auto start = std::chrono::system_clock::now();
+    double rad = 0;
+    int indio = 0;
+    std::vector<int> indios;
+    if(inp.type == qt_knn) {
+        for (int i = 0; i < inp.knn_queries.size(); i++) {
+            vis.m_query = (IShape *) &(inp.knn_queries.at(i));
+            inp.tree->nearestNeighborQuery(inp.nnk, inp.knn_queries.at(i), vis);
+            rad += vis.m_lastDist;
+            indios.emplace_back(ts->m_indexIO - indio);
+            indio = ts->m_indexIO;
+        }
+    }
+    rad /= inp.knn_queries.size();
+    double time;
+    auto end = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    time = double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
+    res->time = time/num;
+    res->indexVisit = 1.0*vis.m_indexvisited/num;
+    res->leafVisit = 1.0 * vis.m_leafvisited/ num;
+    res->leaf1 = 1.0 * ts->m_leaf1/num;
+    res->leaf2 = 1.0 * ts->m_leaf2 / num;
+    res->indexIO = 1.0 * ts->m_indexIO / num;
+    res->trajIO = 1.0 * ts->m_trajIO / num;
+    return;
+}
+
+class MTQ{
+public:
+    vector<xStore*> m_stores;
+    vector<xRTree*> m_trees;
+    vector<queryInput> m_queries;
+    vector<queryRet> m_res;
+    vector<thread> m_ths;
+    int nthread=NUMTHREAD;
+    ~MTQ(){
+        for(auto &a:m_trees){
+            free(a);
+        }
+        for(auto &a:m_stores){
+            free(a);
+        }
+    }
+    void prepareTrees(const function<xStore*(void)> &xstoreBuilder,
+                      const function<xRTree*(IStorageManager*)> &treeBuilder){
+        for(int i=0;i<nthread;i++) {
+            m_stores.emplace_back(xstoreBuilder());
+            m_trees.emplace_back(treeBuilder(m_stores.back()));
+            queryInput q;
+            q.tree = m_trees.back();
+            m_queries.emplace_back(q);
+            m_res.emplace_back(queryRet());
+        }
+    }
+    void appendQueries(vector<xTrajectory> &knnq, int nnk=5){
+        int i=0;
+        for(auto &q:knnq)
+        {
+            m_queries[i % nthread].knn_queries.emplace_back(q);
+            i++;
+        }
+        for(auto &qs:m_queries){
+            qs.nnk = nnk;
+        }
+    }
+    void appendQueries(vector<xCylinder> &rq){
+        int i=0;
+        for(auto &q:rq)
+        {
+            m_queries[i % nthread].range_queries.emplace_back(q);
+            i++;
+        }
+        for(auto &qs:m_queries){
+            qs.type=qt_range;
+        }
+    }
+    queryRet runQueries(){
+        for(int i=0;i<nthread;i++) {
+            m_ths.emplace_back(thread(QueryBatchThread, m_queries[i], &m_res[i]));
+        }
+        for(int i=0;i<nthread;i++) {
+            m_ths[i].join();
+        }
+        return average(m_res);
+    }
+};
 
 #endif //SPATIALINDEX_TESTFUNCS_H
