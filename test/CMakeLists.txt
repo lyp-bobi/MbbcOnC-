@@ -88,12 +88,12 @@ set (DIR testx)
 set (SOURCES
         regressTest
         knnTest
-        #knn-mt
+        knn-mt
         dump
         )
 
 foreach (test ${SOURCES})
-    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc testx/knn-mt.cc)
+    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
     target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
     target_link_libraries(test-${DIR}-${test} ${CMAKE_THREAD_LIBS_INIT})
 endforeach()

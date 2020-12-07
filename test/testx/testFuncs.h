@@ -57,7 +57,7 @@ using namespace std;
 using namespace SpatialIndex;
 using namespace xRTreeNsp;
 
-int drop_cache(int drop) {
+static int drop_cache(int drop) {
     int ret = 0;
 #if !WIN32
     int fd = 0;
@@ -120,7 +120,7 @@ struct xyt {
     double t;
 };
 
-xyt makemid(xyt p1, xyt p2, double t) {
+static xyt makemid(xyt p1, xyt p2, double t) {
     if (t > p2.t)
         cout << p1.x << " " << p2.x << endl <<
              p1.y << " " << p2.y << endl <<
@@ -143,7 +143,7 @@ Type stringToNum(const std::string &str) {
     return num;
 }
 
-vector<pair<id_type, xTrajectory> > loadGTToTrajs(string filename = genFile) {
+static vector<pair<id_type, xTrajectory> > loadGTToTrajs(string filename = genFile) {
     //first level: vector of time period
     //second level: vector of segments in the time period
 #ifndef NDEBUG
@@ -231,7 +231,7 @@ vector<pair<id_type, xTrajectory> > loadGTToTrajs(string filename = genFile) {
     return res;
 }
 
-vector<pair<id_type, xTrajectory> > loadDumpedFiledToTrajs(string filename = genFile) {
+static vector<pair<id_type, xTrajectory> > loadDumpedFiledToTrajs(string filename = genFile) {
 
     tjstat->init();
     ifstream inFile(filename, ios::in);
@@ -292,7 +292,7 @@ vector<pair<id_type, xTrajectory> > loadDumpedFiledToTrajs(string filename = gen
 }
 
 
-void dumpToFile(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
+static void dumpToFile(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
     ofstream outFile(filename, ios::out);
 
     outFile << tjstat->toString() << "\n";
@@ -309,22 +309,24 @@ void dumpToFile(vector<pair<id_type, xTrajectory> > &trajs, string filename = "d
         outFile << traj.second.toString() << "\n";
         id++;
     }
+    outFile.flush();
     outFile.close();
 }
 
 
-int getLastId(string &s)
+static int getLastId(string s)
 {
     string filename = s;
     ifstream fin;
     fin.open(filename);
     if(fin.is_open()) {
-        fin.seekg(-1,ios_base::end);                // go to one spot before the EOF
+        fin.seekg(-2,ios_base::end);                // go to one spot before the EOF
         for(int i=0;i<2;i++) {
+            fin.seekg(-2,ios_base::cur);
             bool keepLooping = true;
             while (keepLooping) {
                 char ch;
-                fin.get(ch);                            // Get current byte's data
+                ch = fin.peek();                            // Get current byte's data
 
                 if ((int) fin.tellg() <= 1) {             // If the data was at or before the 0th byte
                     fin.seekg(0);                       // The first line is the last line
@@ -332,21 +334,22 @@ int getLastId(string &s)
                 } else if (ch == '\n') {                   // If the data was a newline
                     keepLooping = false;                // Stop at the current position.
                 } else {                                  // If the data was neither a newline nor at the 0 byte
-                    fin.seekg(-2,
-                              ios_base::cur);        // Move to the front of that data, then to the front of the data before it
+                    fin.seekg(-2,ios_base::cur);
+                    // Move to the front of that data, then to the front of the data before it
                 }
             }
         }
         string lastLine;
         getline(fin,lastLine);                      // Read the current line
+        getline(fin,lastLine);                      // Read the current line
         fin.close();
-        return stol(lastLine);
+        return stoll(lastLine);
     }
 
     return 0;
 }
 
-void dumpToFile_append(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
+static void dumpToFile_append(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
     int id = getLastId(filename);
     ofstream outFile(filename, ios::app);
     outFile << tjstat->toString() << "\n";
@@ -366,7 +369,7 @@ void dumpToFile_append(vector<pair<id_type, xTrajectory> > &trajs, string filena
 }
 
 
-vector<pair<id_type, xTrajectory> > loadGLToTrajs(string filename = GLFile) {
+static vector<pair<id_type, xTrajectory> > loadGLToTrajs(string filename = GLFile) {
     //first level: vector of time period
     //second level: vector of segments in the time period
     cerr << "loading geolife trajectories from txt to trajectories" << endl;
@@ -459,7 +462,7 @@ vector<pair<id_type, xTrajectory> > loadGLToTrajs(string filename = GLFile) {
     return res;
 }
 
-vector<pair<id_type, xTrajectory> > loadGTFolder(int num = 10, string folder = fileFolder) {
+static vector<pair<id_type, xTrajectory> > loadGTFolder(int num = 10, string folder = fileFolder) {
     vector<pair<id_type, xTrajectory> > res;
     vector<string> files;
     struct dirent *ptr;
@@ -482,14 +485,14 @@ vector<pair<id_type, xTrajectory> > loadGTFolder(int num = 10, string folder = f
     return res;
 }
 
-double rn(double n, double S, double Nq, double qt, double v2) {
+static double rn(double n, double S, double Nq, double qt, double v2) {
     double a = std::sqrt(n * S / M_PI / Nq) * qt / 2;
     double b = qt / 4 * std::sqrt(2 * v2 * qt * v2 * qt + 4 * n * S / M_PI / Nq);
     return a + b;
 }
 
 
-double knncost(double bt, int k, double qt, int f, bool useMBR, double _rk) {
+static double knncost(double bt, int k, double qt, int f, bool useMBR, double _rk) {
 
     double v2 = tjstat->v * 2;
     double Nt = tjstat->trajCount;
@@ -531,7 +534,7 @@ struct d4 {
     double low, high, vlow, vhigh;
 };
 
-double biSearchMax(int k, double qt, int f, bool useMBR, double rk = -1, double low = 50, double high = 10000) {
+static double biSearchMax(int k, double qt, int f, bool useMBR, double rk = -1, double low = 50, double high = 10000) {
 
     double mincost=1e300, bestbt;
     double gap=low;
@@ -576,7 +579,7 @@ double biSearchMax(int k, double qt, int f, bool useMBR, double rk = -1, double 
 //    cerr << "xStore Statistic" << ts->m_indexIO << "\t" << ts->m_trajIO << endl;
 //}
 
-double kNNQueryBatch(xRTree *tree, const vector<xTrajectory> &queries, xStore *ts = nullptr, int thennk = 5,
+static double kNNQueryBatch(xRTree *tree, const vector<xTrajectory> &queries, xStore *ts = nullptr, int thennk = 5,
                      bool reportEnd = false) {
     ts->cleanStatistic();
     ts->flush();
@@ -619,7 +622,7 @@ double kNNQueryBatch(xRTree *tree, const vector<xTrajectory> &queries, xStore *t
     return rad;
 }
 
-void rangeQueryBatch(xRTree *tree, const vector<xCylinder *> &queries, xStore *ts = nullptr, MyVisitor* vis = nullptr) {
+static void rangeQueryBatch(xRTree *tree, const vector<xCylinder *> &queries, xStore *ts = nullptr, MyVisitor* vis = nullptr) {
     ts->cleanStatistic();
     int num = queries.size();
     if(vis == nullptr){
@@ -647,7 +650,7 @@ void rangeQueryBatch(xRTree *tree, const vector<xCylinder *> &queries, xStore *t
 //    cerr <<time/num<<"\n";
 }
 
-void affine_transform(vector<pair<id_type, xTrajectory>> &ts, xPoint center, double angle, xPoint trans){
+static void affine_transform(vector<pair<id_type, xTrajectory>> &ts, xPoint center, double angle, xPoint trans){
     for(auto &t:ts){
         for(auto &p:t.second.m_points){
             p.rotate(center,angle);
@@ -693,7 +696,7 @@ struct queryRet{
 };
 
 
-queryRet average(vector<queryRet> &sum){
+static queryRet average(vector<queryRet> &sum){
     queryRet res;
     for(auto &s:sum) res=res+s;
     res.time/=sum.size();
@@ -720,7 +723,7 @@ struct queryInput{
 };
 
 
-void QueryBatchThread(queryInput inp, queryRet *res) {
+static void QueryBatchThread(queryInput inp, queryRet *res) {
     xStore * ts = inp.tree->m_ts;
     ts->cleanStatistic();
     ts->flush();
