@@ -759,6 +759,9 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
     return;
 }
 
+/**
+ * multi-threaded queries
+ */
 class MTQ{
 public:
     vector<xStore*> m_stores;
@@ -775,10 +778,10 @@ public:
             free(a);
         }
     }
-    void prepareTrees(const function<xStore*(void)> &xstoreBuilder,
+    void prepareTrees(const xStore* x,
                       const function<xRTree*(IStorageManager*)> &treeBuilder){
         for(int i=0;i<nthread;i++) {
-            m_stores.emplace_back(xstoreBuilder());
+            m_stores.emplace_back(x->clone());
             m_trees.emplace_back(treeBuilder(m_stores.back()));
             queryInput q;
             q.tree = m_trees.back();

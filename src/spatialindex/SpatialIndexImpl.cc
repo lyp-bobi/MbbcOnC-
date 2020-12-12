@@ -28,6 +28,9 @@
 
 #include "../mbcrtree/MBCRTree.h"
 
+bool bUsingSimp=true;
+bool bUsingSBBD=true;
+
 SpatialIndex::trajStat *tjstat = SpatialIndex::trajStat::instance();
 
 trajStat* trajStat::singleton=nullptr;

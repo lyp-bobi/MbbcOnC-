@@ -6,6 +6,7 @@
 
 #define CUTENTRY pair<pair<int,int>,xSBB>
 #define CUTFUNC function<queue<CUTENTRY>(xTrajectory&)>
+#define CUTFUNC_PARA function<queue<CUTENTRY>(xTrajectory&, double)>
 #include <spatialindex/SpatialIndex.h>
 #include <cstring>
 
@@ -58,6 +59,7 @@ namespace SpatialIndex
         public:
             ~xStore();
             xStore(string myname, string file, bool subtrajs=true, bool forceNew=false);
+            xStore* clone() const;
             void flush();
             void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
                 auto start = std::chrono::system_clock::now();

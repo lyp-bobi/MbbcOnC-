@@ -1330,7 +1330,7 @@ inline xSBB subtrajToSBB(xTrajectory &x){
 
 # define looseFactor 0.3
 
-queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
+queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj, double len) {
     vector<xPoint> seg;
     queue<CUTENTRY> res;
     xTrajectory subtraj;
@@ -1341,7 +1341,6 @@ queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
     }
 
     double segStart=traj.m_points[0].m_t;
-    double len = tjstat->bt;
     seg.emplace_back(traj.m_points[0]);
 
     for(int i=1;i<traj.m_points.size();i++) {
@@ -1412,7 +1411,7 @@ queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj) {
     return res;
 }
 
-queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj) {
+queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj, double len) {
     vector<xPoint> seg;
     queue<CUTENTRY> res;
     xTrajectory subtraj;
@@ -1423,7 +1422,6 @@ queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj) {
     }
 
     double segStart=tjstat->mint;
-    double len = tjstat->bt;
     while(segStart + (1.0-looseFactor) * len <= traj.m_points[0].m_t) {
         segStart += len;
     }
@@ -1496,8 +1494,8 @@ queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj) {
     return res;
 }
 
-queue<pair<pair<int, int>, xSBB> > xTrajectory::OPTS(xTrajectory &traj) {
-    int segNum=std::ceil((traj.m_endTime()-traj.m_startTime()) / tjstat->bt);
+queue<pair<pair<int, int>, xSBB> > xTrajectory::OPTS(xTrajectory &traj, double len) {
+    int segNum=std::ceil((traj.m_endTime()-traj.m_startTime()) / len);
     queue<CUTENTRY> res;
     if(segNum == 1) {
         res.emplace( make_pair(make_pair(0,int(traj.m_points.size()-1)), subtrajToSBB(traj)));
@@ -1509,7 +1507,7 @@ queue<pair<pair<int, int>, xSBB> > xTrajectory::OPTS(xTrajectory &traj) {
     for(auto pts:m)
     {
         xTrajectory subtraj(pts);
-        auto seg=GSS(subtraj);
+        auto seg=GSS(subtraj,len);
         while(!seg.empty()){
             auto f= seg.front();
             seg.pop();

@@ -16,15 +16,13 @@ int main(){
             querySets.back().emplace_back(x.randomSubtraj(ql));
         }
     }
-    CUTFUNC f=xTrajectory::OPTS;
     MyVisitor vis;
     try {
         for(auto sl:segLens) {
-            tjstat->bt = sl;
+            CUTFUNC f=[](auto tj){return xTrajectory::OPTS(tj,tjstat->bt);};
             for (auto qs:querySets) {
                 bUsingSBBD = false;
                 for (auto querylen:segLens) {
-                    tjstat->bt = querylen;
                     auto r = buildMBCRTreeWP(&x, f);
                     kNNQueryBatch(r, qs, &x, 5);
                     vis.clear();

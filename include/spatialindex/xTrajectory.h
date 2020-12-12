@@ -167,9 +167,9 @@ namespace SpatialIndex
         std::vector<xTrajectory> getGlobalSegmentsCut(double len) const;
         std::vector<xTrajectory> getItself() const;
 
-        static queue<CUTENTRY> ISS(xTrajectory &traj);
-        static queue<CUTENTRY> GSS(xTrajectory &traj);
-        static queue<CUTENTRY> OPTS(xTrajectory &traj);
+        static queue<CUTENTRY> ISS(xTrajectory &traj, double len);
+        static queue<CUTENTRY> GSS(xTrajectory &traj, double len);
+        static queue<CUTENTRY> OPTS(xTrajectory &traj, double len);
         static queue<CUTENTRY> FP(xTrajectory &traj, int np);
         static queue<CUTENTRY> EveryLine(xTrajectory &traj);
 

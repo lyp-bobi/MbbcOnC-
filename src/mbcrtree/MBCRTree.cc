@@ -36,9 +36,6 @@
 #include "BulkLoader.h"
 #include "MBCRTree.h"
 
-
-bool bUsingSimp=true;
-bool bUsingSBBD=false;
 int sbb=0,sb=0;
 
 using namespace SpatialIndex::MBCRTree;

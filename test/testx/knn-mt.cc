@@ -5,18 +5,14 @@
 #include "testFuncs.h"
 using namespace std;
 int main(){
-    vector<xStore*> stores;
-    vector<xRTree*> trees;
-    vector<queryInput> queries;
-    vector<queryRet> res;
-    vector<thread> ths;
     try {
         double queryLen[] = {1000};
         vector<xTrajectory> queries;
+        xStore x("test", "D://TRI-framework/dumpedtraj.txt", true);
         MTQ qmt;
-        qmt.prepareTrees([](){return new xStore("test", "D://TRI-framework/dumpedtraj.txt", true);},
+        qmt.prepareTrees(&x,
                 [](IStorageManager* r){return buildTBTreeWP(r);});
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < testtime; i++) {
             queries.emplace_back(qmt.m_stores[0]->randomSubtraj(queryLen[0]));
         }
         qmt.appendQueries(queries);

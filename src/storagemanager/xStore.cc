@@ -54,7 +54,6 @@ xTrajEntry::xTrajEntry::xTrajEntry(string &s) {
 }
 
 xStore::~xStore() {
-    flush();
     for (auto s:m_trajIdx) {
         delete s.second;
     }
@@ -65,7 +64,7 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
     m_pageSize = 4096;
 #define fp (int(m_pageSize/sizeof(prexp)/3))
     if ((!forceNew) && CheckFilesExists(myname)) {
-        std::cerr << "using existing xStore " << myname << endl;
+//        std::cerr << "using existing xStore " << myname << endl;
         m_pStorageManager = loadDiskStorageManager(myname);
         ifstream propFile(myname + ".property", ios::in);
         propFile >> m_property;
@@ -174,8 +173,12 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
         m_property["tjstat"] = tjstat->toString();
         m_property["bSubTraj"] = bsubtraj;
     }
+    flush();
 }
 
+xStore * xStore::clone() const {
+    return new xStore(m_name, m_property["trajfile"],m_bSubTraj);
+}
 
 void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
     auto te = m_trajIdx[e.m_id];

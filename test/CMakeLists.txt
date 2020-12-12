@@ -87,9 +87,10 @@ endforeach()
 set (DIR testx)
 set (SOURCES
         regressTest
-        knnTest
+        knnCoverageTest
         knn-mt
         dump
+        queryLenVarying
         )
 
 foreach (test ${SOURCES})

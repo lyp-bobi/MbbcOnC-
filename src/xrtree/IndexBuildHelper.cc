@@ -55,11 +55,10 @@ inline int pointersize(){return 16;}
 inline int entrysize(){return 32;}
 
 xRTree * xRTreeNsp::buildMBRRTreeWP(IStorageManager *st,
-                                    const CUTFUNC &f) {
+                                    const CUTFUNC_PARA &f, double len) {
     auto store=static_cast<xStore*>(st);
-
-    auto stream = new xSBBStream(store,f);
-    string name ="MBRWP"+std::to_string(tjstat->bt);
+    auto stream = new xSBBStream(store,[&f,&len](auto &x){return f(x,len);});
+    string name ="MBRWP"+std::to_string(len);
     xRTree * r;
     if(store->m_property.contains(name)){
         Tools::Variant var;
@@ -71,7 +70,7 @@ xRTree * xRTreeNsp::buildMBRRTreeWP(IStorageManager *st,
         r = new xRTree(*store, ps);
         r->m_bUsingMBR = true;
         r->m_ts=store;
-        std::cerr<<"load existing "<<name<<"\n";
+        //std::cerr<<"load existing "<<name<<"\n";
     }
     else {
         int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
@@ -90,11 +89,11 @@ xRTree * xRTreeNsp::buildMBRRTreeWP(IStorageManager *st,
 
 
 xRTree * xRTreeNsp::buildMBCRTreeWP(IStorageManager *st,
-                                    const CUTFUNC &f) {
+                                    const CUTFUNC_PARA &f, double len) {
     auto store=static_cast<xStore*>(st);
 
-    auto stream = new xSBBStream(store,f);
-    string name ="MBCWP"+std::to_string(tjstat->bt);
+    auto stream = new xSBBStream(store,[&f,&len](auto &x){return f(x,len);});
+    string name ="MBCWP"+std::to_string(len);
     xRTree * r;
     if(store->m_property.contains(name)){
         Tools::Variant var;
@@ -106,7 +105,7 @@ xRTree * xRTreeNsp::buildMBCRTreeWP(IStorageManager *st,
         r = new xRTree(*store, ps);
         r->m_bUsingMBC = true;
         r->m_ts=store;
-        std::cerr<<"load existing "<<name<<"\n";
+//        std::cerr<<"load existing "<<name<<"\n";
     }
     else {
         int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbcsize()),
@@ -138,7 +137,7 @@ xRTree * xRTreeNsp::buildTBTreeWP(IStorageManager *mng) {
         r = new xRTree(*mng,ps);
         r->m_bUsingMBR = true;
         r->m_ts=store;
-        std::cerr<<"load existing "<<name<<"\n";
+//        std::cerr<<"load existing "<<name<<"\n";
     }
     else {
         int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
@@ -169,7 +168,7 @@ xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng) {
         r = new xRTree(*mng,ps);
         r->m_bUsingMBL = true;
         r->m_ts=store;
-        std::cerr<<"load existing "<<name<<"\n";
+//        std::cerr<<"load existing "<<name<<"\n";
     }
     else {
         int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
@@ -187,11 +186,11 @@ xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng) {
 
 
 xRTree * xRTreeNsp::buildMBRRTreeWoP(IStorageManager *st,
-                                    const CUTFUNC &f) {
+                                     const CUTFUNC_PARA &f, double len) {
     auto store=static_cast<xStore*>(st);
 
-    auto stream = new xSBBStream(store,f);
-    string name ="MBRWoP"+std::to_string(tjstat->bt);
+    auto stream = new xSBBStream(store,[&f,&len](auto &x){return f(x,len);});
+    string name ="MBRWoP"+std::to_string(len);
     xRTree * r;
     if(store->m_property.contains(name)){
         Tools::Variant var;
@@ -225,11 +224,11 @@ xRTree * xRTreeNsp::buildMBRRTreeWoP(IStorageManager *st,
 
 
 xRTree * xRTreeNsp::buildMBCRTreeWoP(IStorageManager *st,
-                                    const CUTFUNC &f) {
+                                     const CUTFUNC_PARA &f, double len) {
     auto store=static_cast<xStore*>(st);
 
-    auto stream = new xSBBStream(store,f);
-    string name ="MBCWoP"+std::to_string(tjstat->bt);
+    auto stream = new xSBBStream(store,[&f,&len](auto &x){return f(x,len);});
+    string name ="MBCWoP"+std::to_string(len);
     xRTree * r;
     if(store->m_property.contains(name)){
         Tools::Variant var;
