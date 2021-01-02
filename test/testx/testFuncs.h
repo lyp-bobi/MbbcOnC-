@@ -33,6 +33,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#define xRP shared_ptr<xRTree>
 
 
 #include <spatialindex/SpatialIndex.h>
@@ -622,6 +623,11 @@ static double kNNQueryBatch(xRTree *tree, const vector<xTrajectory> &queries, xS
     return rad;
 }
 
+static double kNNQueryBatch(xRP tree, const vector<xTrajectory> &queries, xStore *ts = nullptr, int thennk = 5,
+                            bool reportEnd = false){
+    return kNNQueryBatch(tree.get(), queries,ts,thennk,reportEnd);
+}
+
 static void rangeQueryBatch(xRTree *tree, const vector<xCylinder *> &queries, xStore *ts = nullptr, MyVisitor* vis = nullptr) {
     ts->cleanStatistic();
     int num = queries.size();
@@ -821,5 +827,13 @@ public:
         return average(m_res);
     }
 };
+
+string testFileName(string &s){
+#if (defined _WIN32 || defined _WIN64 || defined WIN32 || defined WIN64)
+    return "D://TRI-framework/dumpedtraj.txt";
+#else
+    return "/root/"+s;
+#endif
+}
 
 #endif //SPATIALINDEX_TESTFUNCS_H

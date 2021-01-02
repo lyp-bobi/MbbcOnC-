@@ -7,8 +7,9 @@
 
 int main(){
     try {
+        string target = "tdfilter";
         double avgQL = 1800;
-        xStore x("test", "D://TRI-framework/dumpedtraj.txt", true);
+        xStore x(target, testFileName(target), true);
         default_random_engine e;
         auto queryLen =normal_distribution<double>(avgQL,500.0);
         vector<xTrajectory> queries;
@@ -28,7 +29,7 @@ int main(){
             q.appendQueries(queries);
             std::cerr<<q.runQueries().toString();
         }
-        double seglens[] ={300,600,900,1200,1500,1800,2100,2400,3000};
+        double seglens[] ={1200,1500,1800,2100,2400,3000};
         for(auto len:seglens)
         {
             MTQ q;

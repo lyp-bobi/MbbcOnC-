@@ -1,7 +1,6 @@
-ip1="root@"$1":~/tri/"
+ip1=$1":~/tri/"
 
 echo $ip1
-scp ./copy.sh ${ip1}
 scp ./CMakeLists.txt ${ip1}
 scp ./COPYING ${ip1}
 scp -r ./src ${ip1}

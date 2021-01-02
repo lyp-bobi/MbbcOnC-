@@ -630,6 +630,7 @@ SpatialIndex::xRTreeNsp::NodePtr SpatialIndex::xRTreeNsp::xRTree::readNode(id_ty
 
 //		n->m_pTree = this;
 		n->m_identifier = page;
+
 		n->loadFromByteArray(buffer);
 
 		++(m_stats.m_u64Reads);

@@ -700,7 +700,7 @@ inline double Trajectory::line2lineMinSED(const SpatialIndex::STPoint &p1s, cons
     }
 }
 
-inline int Trajectory::getPhase(const SpatialIndex::Region &r,const Point &p1,const Point &p2){
+int Trajectory::getPhase(const SpatialIndex::Region &r,const Point &p1,const Point &p2){
     // 7 8 9
     // 4 5 6
     // 1 2 3

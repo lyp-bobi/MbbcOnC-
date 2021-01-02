@@ -202,7 +202,7 @@ bool xMBC::intersectsxMBR(const SpatialIndex::xMBR &in) const {
             if(b.first.getMinimumDistance(in)<=b.second) return true;
             auto part = xTrajectory::cutByPhase(a.first, b.first, in);
             for (const auto &p:part) {
-                int tmpsr = xTrajectory::getPhase(in, p.first, p.second);
+                int tmpsr = getPhase(in, p.first, p.second);
                 if(tmpsr==5) return true;
                 if(tmpsr%2==0) {
                     a = getCenterRdAtTime(p.first.m_t), b = getCenterRdAtTime(p.second.m_t);
@@ -248,7 +248,7 @@ bool xMBC::intersectsxMBR(const SpatialIndex::xMBR &in) const {
             if(b.first.getMinimumDistance(in)<=b.second) return true;
             auto part = xTrajectory::cutByPhase(a.first, b.first, in);
             for (const auto &p:part) {
-                int tmpsr = xTrajectory::getPhase(in, p.first, p.second);
+                int tmpsr = getPhase(in, p.first, p.second);
                 if(tmpsr==5) return true;
                 if(tmpsr%2==0) {
                     a = getCenterRdAtTime(p.first.m_t), b = getCenterRdAtTime(p.second.m_t);

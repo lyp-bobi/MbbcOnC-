@@ -261,7 +261,7 @@ namespace SpatialIndex
         std::string toString() const ;
         void loadFromString(std::string s);
 
-        static int getPhase(const SpatialIndex::Region &r,const Point &p1,const Point &p2);
+        static inline int getPhase(const SpatialIndex::Region &r,const Point &p1,const Point &p2);
         static std::vector<std::pair<STPoint,STPoint>> cutByPhase(const SpatialIndex::STPoint &ps, const SpatialIndex::STPoint &pe,
                                                                   const SpatialIndex::Region &r);
 

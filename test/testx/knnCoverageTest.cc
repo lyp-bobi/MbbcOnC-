@@ -4,9 +4,9 @@
 
 #include "testFuncs.h"
 int main(){
-    xStore x("test", "D://TRI-framework/dumpedtraj.txt",true,true);
+    xStore x("test", "/root/dumpedtraj.txt",true,true);
 
-    double segLens[]={50, 100, 200, 400, 800, 1600, 10000};
+    double segLens[]={ 800, 1600, 10000};
     double queryLen[]={1000};
     vector<vector<xTrajectory>> querySets;
     for(auto ql:queryLen)
@@ -23,22 +23,22 @@ int main(){
             for (auto qs:querySets) {
                 bUsingSBBD = false;
                 for (auto querylen:segLens) {
-                    auto r = buildMBCRTreeWP(&x, f);
+                    xRP r(buildMBCRTreeWP(&x, xTrajectory::ISS,sl));
                     kNNQueryBatch(r, qs, &x, 5);
                     vis.clear();
-                    auto r2 = buildMBRRTreeWP(&x, f);
+                    xRP r2(buildMBRRTreeWP(&x, xTrajectory::ISS,sl));
 
                     kNNQueryBatch(r2, qs, &x, 5);
                     vis.clear();
                 }
                 {
-                    auto r = buildTBTreeWP(&x);
+                    xRP r(buildTBTreeWP(&x));
 
                     kNNQueryBatch(r, qs, &x, 5);
                     vis.clear();
                 }
                 {
-                    auto r = buildSTRTreeWP(&x);
+                    xRP r(buildSTRTreeWP(&x));
 
                     kNNQueryBatch(r, qs, &x, 5);
                     vis.clear();
@@ -46,23 +46,23 @@ int main(){
                 bUsingSBBD = true;
                 for (auto querylen:segLens) {
                     tjstat->bt = querylen;
-                    auto r = buildMBCRTreeWP(&x, f);
+                    xRP r(buildMBCRTreeWP(&x, xTrajectory::ISS,sl));
 
                     kNNQueryBatch(r, qs, &x, 5);
                     vis.clear();
-                    auto r2 = buildMBRRTreeWP(&x, f);
+                    xRP r2(buildMBRRTreeWP(&x, xTrajectory::ISS,sl));
 
                     kNNQueryBatch(r2, qs, &x, 5);
                     vis.clear();
                 }
                 {
-                    auto r = buildTBTreeWP(&x);
+                    xRP r(buildTBTreeWP(&x));
 
                     kNNQueryBatch(r, qs, &x, 5);
                     vis.clear();
                 }
                 {
-                    auto r = buildSTRTreeWP(&x);
+                    xRP r(buildSTRTreeWP(&x));
 
                     kNNQueryBatch(r, qs, &x, 5);
                     vis.clear();

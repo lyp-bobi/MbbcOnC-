@@ -13,7 +13,6 @@ int main(){
     tj.getMinimumDistance(tj2);
 //    x.loadTraj(tj, xStoreEntry(4337,0,1000));
     tj.intersectsxCylinder(query);
-    CUTFUNC f=xTrajectory::ISS;
 //    cerr<<tj.intersectsxCylinder(query);
     tjstat->bt=50;
     xSBB s;
@@ -24,12 +23,12 @@ int main(){
         bUsingSBBD = false;
         for (auto querylen:querylens) {
             tjstat->bt = querylen;
-            auto r = buildMBCRTreeWoP(&x, f);
+            auto r = buildMBCRTreeWoP(&x, xTrajectory::ISS,querylen);
             r->intersectsWithQuery(query, vis);
             r->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
             vis.clear();
-            auto r2 = buildMBRRTreeWoP(&x, f);
+            auto r2 = buildMBRRTreeWoP(&x, xTrajectory::ISS,querylen);
             r2->intersectsWithQuery(query, vis);
             r2->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
@@ -52,12 +51,12 @@ int main(){
         bUsingSBBD = true;
         for (auto querylen:querylens) {
             tjstat->bt = querylen;
-            auto r = buildMBCRTreeWoP(&x, f);
+            auto r = buildMBCRTreeWoP(&x, xTrajectory::ISS,querylen);
             r->intersectsWithQuery(query, vis);
             r->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
             vis.clear();
-            auto r2 = buildMBRRTreeWoP(&x, f);
+            auto r2 = buildMBRRTreeWoP(&x, xTrajectory::ISS,querylen);
             r2->intersectsWithQuery(query, vis);
             r2->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;

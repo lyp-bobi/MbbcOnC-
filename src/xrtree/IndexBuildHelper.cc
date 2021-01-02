@@ -60,6 +60,7 @@ xRTree * xRTreeNsp::buildMBRRTreeWP(IStorageManager *st,
     auto stream = new xSBBStream(store,[&f,&len](auto &x){return f(x,len);});
     string name ="MBRWP"+std::to_string(len);
     xRTree * r;
+    tjstat->bt = len;
     if(store->m_property.contains(name)){
         Tools::Variant var;
         Tools::PropertySet ps;
@@ -84,6 +85,7 @@ xRTree * xRTreeNsp::buildMBRRTreeWP(IStorageManager *st,
         st->flush();
     }
 //    std::cerr<<r->m_headerID<<" "<<r->m_rootID<<endl;
+    delete stream;
     return r;
 }
 
@@ -95,6 +97,7 @@ xRTree * xRTreeNsp::buildMBCRTreeWP(IStorageManager *st,
     auto stream = new xSBBStream(store,[&f,&len](auto &x){return f(x,len);});
     string name ="MBCWP"+std::to_string(len);
     xRTree * r;
+    tjstat->bt = len;
     if(store->m_property.contains(name)){
         Tools::Variant var;
         Tools::PropertySet ps;
@@ -119,6 +122,7 @@ xRTree * xRTreeNsp::buildMBCRTreeWP(IStorageManager *st,
         st->flush();
     }
 //    std::cerr<<r->m_headerID<<" "<<r->m_rootID<<endl;
+    delete stream;
     return r;
 }
 
@@ -127,6 +131,7 @@ xRTree * xRTreeNsp::buildTBTreeWP(IStorageManager *mng) {
     auto stream = new xSBBStream(store, [](auto x){return xTrajectory::FP(x, 169);});
     string name ="TBWP";
     xRTree * r;
+    tjstat->bt = tjstat->tl*170;
     if(store->m_property.contains(name)){
         Tools::Variant var;
         Tools::PropertySet ps;
@@ -150,6 +155,7 @@ xRTree * xRTreeNsp::buildTBTreeWP(IStorageManager *mng) {
         std::cerr<<"build new "<<name<<"\n";
         mng->flush();
     }
+    delete stream;
     return r;
 }
 
@@ -158,6 +164,7 @@ xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng) {
     auto stream = new xSBBStream(store, xTrajectory::EveryLine);
     string name ="STRWP";
     xRTree * r;
+    tjstat->bt = tjstat->tl;
     if(store->m_property.contains(name)){
         Tools::Variant var;
         Tools::PropertySet ps;
@@ -181,6 +188,7 @@ xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng) {
         std::cerr<<"build new "<<name<<"\n";
         mng->flush();
     }
+    delete stream;
     return r;
 }
 
@@ -191,6 +199,7 @@ xRTree * xRTreeNsp::buildMBRRTreeWoP(IStorageManager *st,
 
     auto stream = new xSBBStream(store,[&f,&len](auto &x){return f(x,len);});
     string name ="MBRWoP"+std::to_string(len);
+    tjstat->bt = len;
     xRTree * r;
     if(store->m_property.contains(name)){
         Tools::Variant var;
@@ -218,6 +227,7 @@ xRTree * xRTreeNsp::buildMBRRTreeWoP(IStorageManager *st,
         st->flush();
     }
 //    std::cerr<<r->m_headerID<<" "<<r->m_rootID<<endl;
+    delete stream;
     return r;
 }
 
@@ -230,6 +240,7 @@ xRTree * xRTreeNsp::buildMBCRTreeWoP(IStorageManager *st,
     auto stream = new xSBBStream(store,[&f,&len](auto &x){return f(x,len);});
     string name ="MBCWoP"+std::to_string(len);
     xRTree * r;
+    tjstat->bt = len;
     if(store->m_property.contains(name)){
         Tools::Variant var;
         Tools::PropertySet ps;
@@ -256,6 +267,7 @@ xRTree * xRTreeNsp::buildMBCRTreeWoP(IStorageManager *st,
         st->flush();
     }
 //    std::cerr<<r->m_headerID<<" "<<r->m_rootID<<endl;
+    delete stream;
     return r;
 }
 
@@ -264,6 +276,7 @@ xRTree * xRTreeNsp::buildTBTreeWoP(IStorageManager *mng) {
     auto stream = new xSBBStream(store, [](auto x){return xTrajectory::FP(x, 169);});
     string name ="TBWoP";
     xRTree * r;
+    tjstat->bt = tjstat->tl*170;
     if(store->m_property.contains(name)){
         Tools::Variant var;
         Tools::PropertySet ps;
@@ -289,6 +302,7 @@ xRTree * xRTreeNsp::buildTBTreeWoP(IStorageManager *mng) {
         std::cerr<<"build new "<<name<<"\n";
         mng->flush();
     }
+    delete stream;
     return r;
 }
 
@@ -297,6 +311,7 @@ xRTree * xRTreeNsp::buildSTRTreeWoP(IStorageManager *mng) {
     auto stream = new xSBBStream(store, xTrajectory::EveryLine);
     string name ="STRWoP";
     xRTree * r;
+    tjstat->bt = tjstat->tl;
     if(store->m_property.contains(name)){
         Tools::Variant var;
         Tools::PropertySet ps;
@@ -322,6 +337,7 @@ xRTree * xRTreeNsp::buildSTRTreeWoP(IStorageManager *mng) {
         std::cerr<<"build new "<<name<<"\n";
         mng->flush();
     }
+    delete stream;
     return r;
 }
 

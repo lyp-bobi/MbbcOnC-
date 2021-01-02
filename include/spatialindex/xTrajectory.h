@@ -245,7 +245,7 @@ namespace SpatialIndex
         std::string toString() const ;
         void loadFromString(std::string s);
 
-        static int getPhase(const SpatialIndex::xMBR &r,const xPoint &p1,const xPoint &p2);
+//        static inline int getPhase(const SpatialIndex::xMBR &r,const xPoint &p1,const xPoint &p2);
         static std::vector<std::pair<xPoint,xPoint>> cutByPhase(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
                                                                   const SpatialIndex::xMBR &r);
 
@@ -260,4 +260,28 @@ namespace SpatialIndex
 };
 typedef Tools::PoolPointer<xTrajectory> xTrajectoryPtr;
 SIDX_DLL std::ostream& operator<<(std::ostream& os, const xTrajectory& r);
+}
+
+
+static inline int getPhase(const SpatialIndex::xMBR &r, const xPoint &p1, const xPoint &p2) {
+    // 7 8 9
+    // 4 5 6
+    // 1 2 3
+    double xd1=r.m_xmin,xd2=r.m_xmax,yd1=r.m_ymin,yd2=r.m_ymax;
+    int res=0;
+    if(p1.m_x<=xd2+1e-7&&p2.m_x<=xd2+1e-7&&p1.m_x>=xd1-1e-7&&p2.m_x>=xd1-1e-7)
+        res+=2;
+    else if(p1.m_x<=xd1+1e-7&&p2.m_x<=xd1+1e-7)
+        res+=1;
+    else if(p1.m_x>=xd2-1e-7&&p2.m_x>=xd2-1e-7)
+        res+=3;
+    else return -1;
+    if(p1.m_y<=yd2+1e-7&&p2.m_y<=yd2+1e-7&&p1.m_y>=yd1-1e-7&&p2.m_y>=yd1-1e-7)
+        res+=3;
+    else if(p1.m_y<=yd1+1e-7&&p2.m_y<=yd1+1e-7)
+        res+=0;
+    else if(p1.m_y>=yd2-1e-7&&p2.m_y>=yd2-1e-7)
+        res+=6;
+    else return -1;
+    return res;
 }

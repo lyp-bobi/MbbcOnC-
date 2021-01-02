@@ -57,6 +57,7 @@ xStore::~xStore() {
     for (auto s:m_trajIdx) {
         delete s.second;
     }
+    delete m_pStorageManager;
 }
 
 xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
