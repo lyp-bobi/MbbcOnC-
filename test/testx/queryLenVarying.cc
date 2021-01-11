@@ -7,8 +7,9 @@
 
 int main(){
     try {
-        string target = "tdfilter";
+        string target = "tdfilter.txt";
         double avgQL = 1800;
+        std::cerr<<testFileName(target)<<endl;
         xStore x(target, testFileName(target), true);
         default_random_engine e;
         auto queryLen =normal_distribution<double>(avgQL,500.0);

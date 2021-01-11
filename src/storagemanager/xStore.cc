@@ -173,8 +173,9 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
         std::cerr << tjstat->toString() << endl;
         m_property["tjstat"] = tjstat->toString();
         m_property["bSubTraj"] = bsubtraj;
+        flush();
     }
-    flush();
+
 }
 
 xStore * xStore::clone() const {

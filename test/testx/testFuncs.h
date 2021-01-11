@@ -732,7 +732,6 @@ struct queryInput{
 static void QueryBatchThread(queryInput inp, queryRet *res) {
     xStore * ts = inp.tree->m_ts;
     ts->cleanStatistic();
-    ts->flush();
     drop_cache(3);
     int num = inp.knn_queries.size();
     MyVisitor vis;
@@ -784,8 +783,9 @@ public:
             free(a);
         }
     }
-    void prepareTrees(const xStore* x,
+    void prepareTrees(xStore* x,
                       const function<xRTree*(IStorageManager*)> &treeBuilder){
+        delete treeBuilder(x);
         for(int i=0;i<nthread;i++) {
             m_stores.emplace_back(x->clone());
             m_trees.emplace_back(treeBuilder(m_stores.back()));
