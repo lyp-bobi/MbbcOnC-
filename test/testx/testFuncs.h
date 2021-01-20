@@ -47,7 +47,7 @@
 #define GLFile "/root/GLSC.csv"
 #define fileFolder "/root/out/"
 #define maxLinesToRead 1e10
-#define testtime 100
+#define testtime 1000
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
@@ -296,7 +296,7 @@ static vector<pair<id_type, xTrajectory> > loadDumpedFiledToTrajs(string filenam
 static void dumpToFile(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
     ofstream outFile(filename, ios::out);
 
-    outFile << tjstat->toString() << "\n";
+    //outFile << tjstat->toString() << "\n";
     if( num ==-1){
         num = trajs.size();
     }
@@ -310,7 +310,6 @@ static void dumpToFile(vector<pair<id_type, xTrajectory> > &trajs, string filena
         outFile << traj.second.toString() << "\n";
         id++;
     }
-    outFile.flush();
     outFile.close();
 }
 
@@ -354,8 +353,8 @@ static int getLastId(string s)
 static void dumpToFile_append(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
     int id = getLastId(filename);
     ofstream outFile(filename, ios::app);
-    outFile << tjstat->toString() << "\n";
-    if( num ==-1){
+//    outFile << tjstat->toString() << "\n";
+    if( num == -1){
         num = trajs.size();
     }
     else{

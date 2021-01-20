@@ -92,6 +92,7 @@ set (SOURCES
         dump
         queryLenVarying
         expandData
+        btqtMat
         )
 
 foreach (test ${SOURCES})
