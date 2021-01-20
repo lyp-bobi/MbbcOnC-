@@ -59,13 +59,13 @@ namespace SpatialIndex
         xRTree* createNewxRTree(IStorageManager* store,long indexfan, long leaffan);
 
 
-        SIDX_DLL xRTree* buildMBRRTreeWP(IStorageManager* store, const CUTFUNC_PARA &f, double len);
-        SIDX_DLL xRTree* buildMBCRTreeWP(IStorageManager* store, const CUTFUNC_PARA &f, double len);
+        SIDX_DLL xRTree* buildMBRRTreeWP(IStorageManager* store, const CUTFUNC_PARA &f, double len, string add="");
+        SIDX_DLL xRTree* buildMBCRTreeWP(IStorageManager* store, const CUTFUNC_PARA &f, double len, string add="");
         SIDX_DLL xRTree* buildTBTreeWP(IStorageManager* store);
         SIDX_DLL xRTree* buildSTRTreeWP(IStorageManager* store);
 
-        SIDX_DLL xRTree* buildMBRRTreeWoP(IStorageManager* store, const CUTFUNC_PARA &f, double len);
-        SIDX_DLL xRTree* buildMBCRTreeWoP(IStorageManager* store, const CUTFUNC_PARA &f, double len);
+        SIDX_DLL xRTree* buildMBRRTreeWoP(IStorageManager* store, const CUTFUNC_PARA &f, double len, string add="");
+        SIDX_DLL xRTree* buildMBCRTreeWoP(IStorageManager* store, const CUTFUNC_PARA &f, double len, string add="");
         SIDX_DLL xRTree* buildTBTreeWoP(IStorageManager* store);
         SIDX_DLL xRTree* buildSTRTreeWoP(IStorageManager* store);
 //        xRTree* buildMBCRTreeWP(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);

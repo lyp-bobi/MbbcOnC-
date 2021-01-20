@@ -133,7 +133,7 @@ namespace SpatialIndex
     class SIDX_DLL IxShape : public IShape
     {
     public:
-        void getMBR(Region& out) const {;}
+        void getMBR(Region& out) const {throw Tools::NotSupportedException("Use getxMBR instead!");}
         virtual void getxMBR(xMBR& out) const = 0;
     }; // IShape
 

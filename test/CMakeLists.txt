@@ -91,6 +91,7 @@ set (SOURCES
         knn-mt
         dump
         queryLenVarying
+        expandData
         )
 
 foreach (test ${SOURCES})

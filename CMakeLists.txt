@@ -122,6 +122,8 @@ endif()
 
 set(SIDX_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
+SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
+
 # TODO: Still testing the output paths --mloskot
 set(SIDX_BUILD_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 

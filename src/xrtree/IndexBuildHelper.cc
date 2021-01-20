@@ -55,10 +55,10 @@ inline int pointersize(){return 16;}
 inline int entrysize(){return 32;}
 
 xRTree * xRTreeNsp::buildMBRRTreeWP(IStorageManager *st,
-                                    const CUTFUNC_PARA &f, double len) {
+                                    const CUTFUNC_PARA &f, double len, string add) {
     auto store=static_cast<xStore*>(st);
     auto stream = new xSBBStream(store,[&f,&len](auto &x){return f(x,len);});
-    string name ="MBRWP"+std::to_string(len);
+    string name ="MBRWP"+std::to_string(len)+add;
     xRTree * r;
     tjstat->bt = len;
     if(store->m_property.contains(name)){
@@ -91,11 +91,11 @@ xRTree * xRTreeNsp::buildMBRRTreeWP(IStorageManager *st,
 
 
 xRTree * xRTreeNsp::buildMBCRTreeWP(IStorageManager *st,
-                                    const CUTFUNC_PARA &f, double len) {
+                                    const CUTFUNC_PARA &f, double len, string add) {
     auto store=static_cast<xStore*>(st);
 
     auto stream = new xSBBStream(store,[&f,&len](auto &x){return f(x,len);});
-    string name ="MBCWP"+std::to_string(len);
+    string name ="MBCWP"+std::to_string(len)+add;
     xRTree * r;
     tjstat->bt = len;
     if(store->m_property.contains(name)){
@@ -194,11 +194,11 @@ xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng) {
 
 
 xRTree * xRTreeNsp::buildMBRRTreeWoP(IStorageManager *st,
-                                     const CUTFUNC_PARA &f, double len) {
+                                     const CUTFUNC_PARA &f, double len, string add) {
     auto store=static_cast<xStore*>(st);
 
     auto stream = new xSBBStream(store,[&f,&len](auto &x){return f(x,len);});
-    string name ="MBRWoP"+std::to_string(len);
+    string name ="MBRWoP"+std::to_string(len)+add;
     tjstat->bt = len;
     xRTree * r;
     if(store->m_property.contains(name)){
@@ -234,11 +234,11 @@ xRTree * xRTreeNsp::buildMBRRTreeWoP(IStorageManager *st,
 
 
 xRTree * xRTreeNsp::buildMBCRTreeWoP(IStorageManager *st,
-                                     const CUTFUNC_PARA &f, double len) {
+                                     const CUTFUNC_PARA &f, double len, string add) {
     auto store=static_cast<xStore*>(st);
 
     auto stream = new xSBBStream(store,[&f,&len](auto &x){return f(x,len);});
-    string name ="MBCWoP"+std::to_string(len);
+    string name ="MBCWoP"+std::to_string(len) +add;
     xRTree * r;
     tjstat->bt = len;
     if(store->m_property.contains(name)){

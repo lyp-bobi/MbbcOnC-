@@ -170,7 +170,7 @@ namespace SpatialIndex
         static queue<CUTENTRY> ISS(xTrajectory &traj, double len);
         static queue<CUTENTRY> GSS(xTrajectory &traj, double len);
         static queue<CUTENTRY> OPTS(xTrajectory &traj, double len);
-        static queue<CUTENTRY> FP(xTrajectory &traj, int np);
+        static queue<CUTENTRY> FP(xTrajectory &traj, double np);
         static queue<CUTENTRY> EveryLine(xTrajectory &traj);
 
         void linkxTrajectory(xTrajectory &other);

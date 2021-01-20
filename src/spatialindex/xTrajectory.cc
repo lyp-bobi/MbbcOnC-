@@ -1499,7 +1499,7 @@ queue<pair<pair<int, int>, xSBB> > xTrajectory::OPTS(xTrajectory &traj, double l
     return res;
 }
 
-queue<CUTENTRY> xTrajectory::FP(xTrajectory &traj, int np) {
+queue<CUTENTRY> xTrajectory::FP(xTrajectory &traj, double np) {
     int ms;
     vector<xPoint> seg;
     queue<CUTENTRY> res;

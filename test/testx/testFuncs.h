@@ -240,7 +240,7 @@ static vector<pair<id_type, xTrajectory> > loadDumpedFiledToTrajs(string filenam
     set<id_type> ids;
     vector<pair<id_type, xTrajectory> > res;
     xTrajectory tj;
-    Region r;
+    xMBR r;
 //    tjstat->fromString(lineStr);
     int curLine = 0;
     while (getline(inFile, lineStr) && curLine < maxLinesToRead) {
@@ -255,13 +255,13 @@ static vector<pair<id_type, xTrajectory> > loadDumpedFiledToTrajs(string filenam
                 ids.insert(id);
                 res.emplace_back(make_pair(id, tj));
                 curLine++;
-                tj.getMBR(r);
-                if (r.m_pHigh[0] > tjstat->maxx) tjstat->maxx = r.m_pHigh[0];
-                if (r.m_pLow[0] < tjstat->minx) tjstat->minx = r.m_pLow[0];
-                if (r.m_pHigh[1] > tjstat->maxy) tjstat->maxy = r.m_pHigh[1];
-                if (r.m_pLow[1] < tjstat->miny) tjstat->miny = r.m_pLow[1];
-                if (r.m_pHigh[2] > tjstat->maxt) tjstat->maxt = r.m_pHigh[2];
-                if (r.m_pLow[2] < tjstat->mint) tjstat->mint = r.m_pLow[2];
+                tj.getxMBR(r);
+                if (r.m_xmax > tjstat->maxx) tjstat->maxx = r.m_xmax;
+                if (r.m_xmin < tjstat->minx) tjstat->minx = r.m_xmin;
+                if (r.m_ymax > tjstat->maxy) tjstat->maxy = r.m_ymax;
+                if (r.m_ymin < tjstat->miny) tjstat->miny = r.m_ymin;
+                if (r.m_tmax > tjstat->maxt) tjstat->maxt = r.m_tmax;
+                if (r.m_tmin < tjstat->mint) tjstat->mint = r.m_tmin;
                 tjstat->dist += tj.m_dist();
                 tjstat->lineCount += tj.m_points.size() - 1;
                 tjstat->trajCount += 1;
@@ -319,23 +319,24 @@ static int getLastId(string s)
 {
     string filename = s;
     ifstream fin;
+
     fin.open(filename);
     if(fin.is_open()) {
-        fin.seekg(-2,ios_base::end);                // go to one spot before the EOF
+        fin.seekg(0,ios_base::end);                // go to one spot before the EOF
         for(int i=0;i<2;i++) {
             fin.seekg(-2,ios_base::cur);
             bool keepLooping = true;
             while (keepLooping) {
                 char ch;
                 ch = fin.peek();                            // Get current byte's data
-
-                if ((int) fin.tellg() <= 1) {             // If the data was at or before the 0th byte
+                std::cerr<<ch;
+                if ((long long) fin.tellg() <= 1) {             // If the data was at or before the 0th byte
                     fin.seekg(0);                       // The first line is the last line
                     keepLooping = false;                // So stop there
                 } else if (ch == '\n') {                   // If the data was a newline
                     keepLooping = false;                // Stop at the current position.
                 } else {                                  // If the data was neither a newline nor at the 0 byte
-                    fin.seekg(-2,ios_base::cur);
+                    fin.seekg(-1,ios_base::cur);
                     // Move to the front of that data, then to the front of the data before it
                 }
             }
@@ -363,9 +364,10 @@ static void dumpToFile_append(vector<pair<id_type, xTrajectory> > &trajs, string
     for(int i=0;i<num;i++){
         auto traj = trajs[i];
         id++;
-        outFile << id << "\n";
-        outFile << traj.second.toString() << "\n";
+        outFile << id << endl;
+        outFile << traj.second.toString() << endl;
     }
+    outFile.flush();
     outFile.close();
 }
 
