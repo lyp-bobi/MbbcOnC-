@@ -79,6 +79,7 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
             trajidxFile >> id >> page >> off;
             m_trajIdx[id] = new xTrajEntry(page, off);
         }
+        trajidxFile.close();
     } else {
         m_bSubTraj = bsubtraj;
         std::cerr << "start loading " << file << " into " << myname << "\n";
@@ -168,6 +169,7 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
         tjstat->Sr = (tjstat->Dx + tjstat->Dy) / 2;
         tjstat->P = tjstat->Dt;
         std::cerr << file << endl;
+        inFile.close();
         if (file.find("td") != file.npos) tjstat->usedata("td");
         if (file.find("gl") != file.npos) tjstat->usedata("gl");
         std::cerr << tjstat->toString() << endl;

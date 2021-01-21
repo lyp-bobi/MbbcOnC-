@@ -169,9 +169,17 @@ DiskStorageManager::DiskStorageManager(Tools::PropertySet& ps) : m_pageSize(0), 
             std::ios_base::openmode mode = std::ios::in | std::ios::out | std::ios::binary;
 			m_indexFile.open(sIndexFile.c_str(), mode);
 			m_dataFile.open(sDataFile.c_str(), mode);
-
-			if (m_indexFile.fail() || m_dataFile.fail())
+/*test*/
+            if(m_indexFile.fail()){
+                cerr<<strerror(errno);
+            }
+            if(m_dataFile.fail()){
+                cerr<<strerror(errno);
+            }
+			if (m_indexFile.fail() || m_dataFile.fail()){
+                cerr<< m_indexFile.fail() << m_dataFile.fail()<<strerror(errno);
 				throw Tools::IllegalArgumentException("SpatialIndex::DiskStorageManager: Index/Data file cannot be read/writen.");
+			}
 		}
 		else
 		{

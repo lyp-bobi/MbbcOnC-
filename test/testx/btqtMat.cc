@@ -7,7 +7,7 @@
 
 int main(){
     try {
-        string target = "tdexpand.txt";
+        string target = "tdfilter.txt";
         double qts[] = {300,900,1500,2100,2700,3300,3900,4500};
         for(auto qt:qts) {
             xStore x(target, testFileName(target), true);

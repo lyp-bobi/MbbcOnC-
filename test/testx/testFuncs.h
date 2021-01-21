@@ -228,6 +228,7 @@ static vector<pair<id_type, xTrajectory> > loadGTToTrajs(string filename = genFi
     tjstat->v = tjstat->dist / tjstat->M;
     std::cerr << *tjstat;
     tjstat->usedata("od");
+    inFile.close();
 //    drop_cache(3);
     return res;
 }
@@ -283,6 +284,7 @@ static vector<pair<id_type, xTrajectory> > loadDumpedFiledToTrajs(string filenam
     tjstat->v = tjstat->dist / tjstat->M;
     tjstat->Sr = (tjstat->Dx + tjstat->Dy) / 2;
     tjstat->P = tjstat->Dt;
+    inFile.close();
     std::cerr << *tjstat;
     std::cerr << tjstat->toString();
 //    drop_cache(3);
@@ -460,6 +462,7 @@ static vector<pair<id_type, xTrajectory> > loadGLToTrajs(string filename = GLFil
     tjstat->Dx /= 6.5;
     tjstat->Dy /= 5;
     tjstat->v *= 2.5;
+    inFile.close();
 //    drop_cache(3);
     return res;
 }
