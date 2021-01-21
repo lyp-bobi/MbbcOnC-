@@ -781,10 +781,10 @@ public:
     int nthread=NUMTHREAD;
     ~MTQ(){
         for(auto &a:m_trees){
-            free(a);
+            delete a;
         }
         for(auto &a:m_stores){
-            free(a);
+            delete a;
         }
     }
     void prepareTrees(xStore* x,

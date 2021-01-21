@@ -9,7 +9,12 @@ int main(){
     try {
         string target = "tdfilter.txt";
         double qts[] = {300,900,1500,2100,2700,3300,3900,4500};
+        double seglens[] = {300,900,1500,2100,2700,3300,3900,4500};
+        cerr<<"seglen: ";
+        for(auto len:seglens){cerr<<len<<" ";}
+        cerr<<endl;
         for(auto qt:qts) {
+            cerr<<"qt is " << qt<<endl;
             xStore x(target, testFileName(target), true);
             auto queryLen = qt;
             vector<xTrajectory> queries;
@@ -29,7 +34,6 @@ int main(){
                 q.appendQueries(queries);
                 std::cerr << q.runQueries().toString();
             }
-            double seglens[] = {300,900,1500,2100,2700,3300,3900,4500};
             for (auto len:seglens) {
                 MTQ q;
                 q.prepareTrees(&x, [&len](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, len); });
