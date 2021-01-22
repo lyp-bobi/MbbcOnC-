@@ -53,10 +53,15 @@
 #define leafcap 10000
 //extern int QueryType;
 //1 for range, 2 for 5-NN
-
+#include <thread>
 using namespace std;
 using namespace SpatialIndex;
 using namespace xRTreeNsp;
+
+#define NUMCORE 4
+#define NUMTHREAD (2*NUMCORE)
+extern bool testxfirstOutput = true;
+using namespace std;
 
 static int drop_cache(int drop) {
     int ret = 0;
@@ -672,12 +677,7 @@ static void affine_transform(vector<pair<id_type, xTrajectory>> &ts, xPoint cent
 // multithreaded
 
 
-#include <thread>
 
-#define NUMCORE 4
-#define NUMTHREAD (2*NUMCORE)
-
-using namespace std;
 
 struct queryRet{
     double time=0;
@@ -700,6 +700,10 @@ struct queryRet{
     }
     string toString() const{
         stringstream s;
+        if(testxfirstOutput){
+            testxfirstOutput =false;
+            s<<"time\tindexVisit\tleafVisit\tindexIO\ttrajIO\n";
+        }
         s<<time<<"\t"<<indexVisit<<"\t"<<leafVisit<<"\t"<<indexIO<<"\t"<<trajIO<<"\n";
         return s.str();
     }
@@ -765,6 +769,7 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
     res->leaf2 = 1.0 * ts->m_leaf2 / num;
     res->indexIO = 1.0 * ts->m_indexIO / num;
     res->trajIO = 1.0 * ts->m_trajIO / num;
+    cerr<<"thread "<< res->toString()<<endl;
     return;
 }
 
