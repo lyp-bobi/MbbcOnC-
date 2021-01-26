@@ -7,7 +7,6 @@
 using namespace SpatialIndex;
 
 xPoint::xPoint(prex x, prex y, prex t) {
-    makeInfinite(2);
     m_x=x;
     m_y=y;
     m_t=t;

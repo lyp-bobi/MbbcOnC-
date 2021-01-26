@@ -491,6 +491,14 @@ namespace SpatialIndex
             }
 
         public:
+            string explain(id_type id){
+                stringstream  ss;
+                ss<<"id is "<<id<<endl;
+                for(auto &b:m_parts[id].m_sbbs){
+                    ss<<b.toString()<<endl;
+                }
+                return ss.str();
+            }
             bool isLoaded(id_type id){ return loadedLeaf.count(id)>0;}
             void loadLeaf(const Node &n, double dist = 0){
 //                    std::cerr<<"load leaf"<<n.m_nodeMBR<<"\n";

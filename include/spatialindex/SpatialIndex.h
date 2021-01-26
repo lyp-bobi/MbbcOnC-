@@ -220,6 +220,7 @@ namespace SpatialIndex
 		virtual id_type nextPage(){return 0;}
 		virtual void flush() = 0;
 		virtual ~IStorageManager() {}
+		bool m_isro = false;
 	}; // IStorageManager
 
 	class SIDX_DLL IVisitor
@@ -320,16 +321,16 @@ namespace SpatialIndex
 		long lineCount=0;
 		long trajCount=0;
 		double tl=0;//time len of a segment
-		double jt=0;
-		double v=0;
-		double vmax = 0;
+		double jt=0; // averaged traj len
+		double v=0; //averaged speed
+		double vmax = 0; //maximum speed
 		double minx=1e300,maxx=-1e300,miny=1e300,maxy=-1e300,mint=1e300,maxt=-1e300;
 		double Dx=0,Dy=0,Dt=0;
-		double Sr=0;
-		double P=0;
+		double Sr=0; //radius
+		double P=0; //temporal length
 		double dist=0;
-		double Df =2;
-		double f = 50,fp=170;
+		double Df =2; //fractral dimension
+		double f = 50,fp=170; //fanout, point capacity
 		string dataset = "";
 		static trajStat* instance();
 		void init(){
@@ -361,7 +362,19 @@ namespace SpatialIndex
 				Df = 1.25;
 				P = 60000;
 				std::cerr<<"use gl sta\n";
-			}else if(dataset == "td"){
+			}
+            else if(dataset == "tdexpand"){
+                M = 5.20574e+10;
+                lineCount = 162059560;
+                trajCount = 102670;
+                tl = 321.224;
+                jt = 507037;
+                Sr = 0.5;
+                Df = 1.56;
+                P = 5333150;
+                std::cerr<<"use td sta\n";
+            }
+			else if(dataset == "td"){
 				M = 5.20574e+09;
 				lineCount = 16205956;
 				trajCount = 10267;
@@ -498,7 +511,7 @@ namespace SpatialIndex
 			ostream<<bt<<" "<< M<<" "<< lineCount<<" "<< trajCount<<" "<<
 				   tl<<" "<< jt<<" "<< v<<" "<< minx<<" "<< maxx<<" "<<
 				   miny<<" "<< maxy<<" "<< mint<<" "<< maxt<<" "<<
-				   Dx<<" "<< Dy<<" "<< Dt<<" "<< dist<<Sr<<" "<<P<<" "
+				   Dx<<" "<< Dy<<" "<< Dt<<" "<< dist <<" "<<Sr<<" "<<P<<" "
 				<<Df<<" "<<f<<" "<<vmax;
 			return ostream.str();
 		}

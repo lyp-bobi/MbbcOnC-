@@ -70,7 +70,9 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
         ifstream propFile(myname + ".property", ios::in);
         propFile >> m_property;
         propFile.close();
-        tjstat->fromString(m_property["tjstat"]);
+        if(tjstat->lineCount==0) { /* only load it when not inited*/
+            tjstat->fromString(m_property["tjstat"]);
+        }
         m_bSubTraj = m_property["bSubTraj"];
         ifstream trajidxFile(m_name + ".trajidx", ios::in);
         id_type size, id, page, off;
@@ -181,7 +183,10 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
 }
 
 xStore * xStore::clone() const {
-    return new xStore(m_name, m_property["trajfile"],m_bSubTraj);
+    xStore* res= new xStore(m_name, m_property["trajfile"],m_bSubTraj);
+    res->m_isro = true;
+    res->m_pStorageManager->m_isro=true;
+    return res;
 }
 
 void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
@@ -189,6 +194,8 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
     uint32_t ms = min(te->m_npoint - 1, e.m_s), me = min(te->m_npoint - 1, e.m_e);
     //test code
 //    std::cerr<<"test id "<<e.m_id<<endl;
+    out.m_points.clear();
+    out.m_points.reserve(me-ms+1);
     if (m_bSubTraj) {
         id_type pages = te->m_page + (ms) / (fp - 1);
         id_type pagee = te->m_page + int(ceil(1.0 * (me) / (fp - 1))) - 1;
@@ -199,7 +206,6 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
         uint32_t len, tmplen;
         int ps, pe;
         prexp x, y, t;
-        out.m_points.clear();
         for (auto i = pages; i <= pagee; i++) {
             ps = max(0, int(ms - cur));
             pe = min(fp - 1, int(me - cur));
@@ -217,7 +223,7 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
                 //test code
 //                std::cerr<< out.m_points.size() << " " << x<<","<<y<<","<<t<<endl;
             }
-            delete data;
+            delete[] data;
             cur += pe + 1;
         }
         out.m_fakehead = (ms != 0);
@@ -231,7 +237,6 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
         uint32_t len, tmplen;
         int ps, pe;
         prexp x, y, t;
-        out.m_points.clear();
         for (auto i = pages; i <= pagee; i++) {
             ps = max(0, int(ms - cur));
             pe = min(fp - 1, int(me - cur));
@@ -287,6 +292,7 @@ xPoint xStore::randomPoint() {
 }
 
 void xStore::flush() {
+    if(m_isro) return;
     m_pStorageManager->flush();
     ofstream propFile(m_name + ".property", ios::out);
     propFile << m_property;

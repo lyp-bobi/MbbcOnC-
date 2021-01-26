@@ -59,7 +59,7 @@ using namespace SpatialIndex;
 using namespace xRTreeNsp;
 
 #define NUMCORE 4
-#define NUMTHREAD (2*NUMCORE)
+#define NUMTHREAD (NUMCORE)
 extern bool testxfirstOutput = true;
 using namespace std;
 
@@ -85,8 +85,8 @@ static int drop_cache(int drop) {
 
 class MyVisitor : public IVisitor {
 public:
-    size_t m_indexvisited;
-    size_t m_leafvisited;
+    size_t m_indexvisited=0;
+    size_t m_leafvisited=0;
     size_t m_resultGet;
     id_type m_lastResult;
     double m_lastDist = 0;
@@ -294,8 +294,9 @@ static vector<pair<id_type, xTrajectory> > loadDumpedFiledToTrajs(string filenam
     std::cerr << tjstat->toString();
 //    drop_cache(3);
     std::cerr<<filename<<endl;
-    if (filename.find("td")!=filename.npos) tjstat->usedata("td");
-    if (filename.find("gl")!=filename.npos) tjstat->usedata("gl");
+    if (filename.find("tdexpand")!=filename.npos) tjstat->usedata("tdexpand");
+    else if (filename.find("td")!=filename.npos) tjstat->usedata("td");
+    else if (filename.find("gl")!=filename.npos) tjstat->usedata("gl");
     return res;
 }
 
@@ -795,6 +796,7 @@ public:
     void prepareTrees(xStore* x,
                       const function<xRTree*(IStorageManager*)> &treeBuilder){
         delete treeBuilder(x);
+        cerr<<"tree prepared\n";
         for(int i=0;i<nthread;i++) {
             m_stores.emplace_back(x->clone());
             m_trees.emplace_back(treeBuilder(m_stores.back()));

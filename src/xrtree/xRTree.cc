@@ -442,6 +442,7 @@ void SpatialIndex::xRTreeNsp::xRTree::initOld(Tools::PropertySet& ps)
 
 void SpatialIndex::xRTreeNsp::xRTree::storeHeader()
 {
+    if(m_pStorageManager->m_isro) return;
 	const uint32_t headerSize =
 		sizeof(id_type) +						// m_rootID
 		sizeof(xRTreeVariant) +					// m_treeVariant
@@ -828,7 +829,7 @@ void xRTree::intersectsWithQuery(const xCylinder &query, IVisitor &v) {
             }
         }
     }
-    if(bUsingSBBD) {
+    if(bUsingSBBD && !pending.empty()) {
         id_type previd=pending.begin()->first;
         uint32_t lower = pending.begin()->second.m_s, higher=pending.begin()->second.m_e;
         while (!pending.empty()) {
@@ -878,7 +879,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
     double delta=0, ssdelta= 0;
     if(bUsingSBBD&& bUsingSimp && m_bStoringLinks) {
 //
-        int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (m_ts->m_timeCount/m_ts->m_segCount));
+        int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (tjstat->bt));
         segnum=std::max(segnum,10);
         vector<vector<xPoint>> simpseg;
         try {

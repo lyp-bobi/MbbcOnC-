@@ -323,9 +323,7 @@ void BulkLoader::bulkLoadUsingSTR(
 	NodePtr n = pTree->readNode(pTree->m_rootID);
 	pTree->deleteNode(n.get());
 
-	#ifndef NDEBUG
 	std::cerr << "xRTree::BulkLoader: Sorting data." << std::endl;
-	#endif
 
 	Tools::SmartPointer<ExternalSorter> es = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
 
@@ -367,6 +365,8 @@ void BulkLoader::bulkLoadUsingSTR(
 		if (es->getTotalEntries() == 1) break;
 		es->sort();
 	}
+    std::cerr<<"Lx is "<<calcuTime[0]/calcuTime[1]<<"\n";
+    std::cerr<<"Lt is "<<calcuTime[2]/calcuTime[1]<<"\n";
 //	m_part2node.clear();
 //    std::map<id_type,id_type> empty;
 //    m_part2node.swap(empty);
@@ -394,6 +394,8 @@ void BulkLoader::createLevel(
 
     if(dimension==0){
         double nt = pow(P * sq(tjstat->vv()) * sq(tjstat->P) / sq((M_PI * sq(tjstat->Sr))), 1.0 / 3);
+        /*debug*/
+        cerr<<"P is "<<P<<"vv is "<< tjstat->vv()<<"Time is"<<tjstat->P <<"Sr is"<<tjstat->Sr<<endl;
         std::cerr<<"nt is "<<nt<<"\t rest is "<<sqrt(P/nt)<<endl;
         S = max(1,int(floor(nt)));
         if(S>P) S=1;
@@ -558,10 +560,15 @@ Node* BulkLoader::createNode(SpatialIndex::xRTreeNsp::xRTree* pTree, std::vector
 	else n = new Index(pTree, -1, level);
 	for (size_t cChild = 0; cChild < e.size(); ++cChild)
 	{
-        if (level == 0) n->insertEntry(e[cChild]->m_r,e[cChild]->m_b.m_sbbid,
+        if (level == 0) n->insertEntry(e[cChild]->m_b.m_b.br,e[cChild]->m_b.m_sbbid,
                                        &(e[cChild]->m_b));
         else n->insertEntry(e[cChild]->m_r,e[cChild]->m_id);
 		delete e[cChild];
 	}
+    if(level==0){
+        calcuTime[0]+=(n->m_nodeMBR.m_xmax-n->m_nodeMBR.m_xmin);
+        calcuTime[2]+=(n->m_nodeMBR.m_tmax-n->m_nodeMBR.m_tmin);
+        calcuTime[1]+=1;
+    }
 	return n;
 }

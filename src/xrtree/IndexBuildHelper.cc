@@ -80,7 +80,7 @@ xRTree * xRTreeNsp::buildMBRRTreeWP(IStorageManager *st,
         r->m_bUsingMBR = true;
         store->m_property[name] = r->m_headerID;
         BulkLoader bl;
-        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault , 500);
         std::cerr<<"build new "<<name<<"\n";
         st->flush();
     }
@@ -117,7 +117,7 @@ xRTree * xRTreeNsp::buildMBCRTreeWP(IStorageManager *st,
         r->m_bUsingMBC = true;
         store->m_property[name] = r->m_headerID;
         BulkLoader bl;
-        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault , 500);
         std::cerr<<"build new "<<name<<"\n";
         st->flush();
     }
@@ -151,7 +151,7 @@ xRTree * xRTreeNsp::buildTBTreeWP(IStorageManager *mng) {
         r->m_bUsingMBR = true;
         store->m_property[name] = r->m_headerID;
         BulkLoader bl;
-        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault , 500);
         std::cerr<<"build new "<<name<<"\n";
         mng->flush();
     }
@@ -184,7 +184,7 @@ xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng) {
         r->m_bUsingMBL = true;
         store->m_property[name] = r->m_headerID;
         BulkLoader bl;
-        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault , 500);
         std::cerr<<"build new "<<name<<"\n";
         mng->flush();
     }
@@ -222,7 +222,7 @@ xRTree * xRTreeNsp::buildMBRRTreeWoP(IStorageManager *st,
         r->m_bStoringLinks = false;
         store->m_property[name] = r->m_headerID;
         BulkLoader bl;
-        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault , 500);
         std::cerr<<"build new "<<name<<"\n";
         st->flush();
     }
@@ -262,7 +262,7 @@ xRTree * xRTreeNsp::buildMBCRTreeWoP(IStorageManager *st,
         r->m_bStoringLinks = false;
         store->m_property[name] = r->m_headerID;
         BulkLoader bl;
-        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault , 500);
         std::cerr<<"build new "<<name<<"\n";
         st->flush();
     }
@@ -298,7 +298,7 @@ xRTree * xRTreeNsp::buildTBTreeWoP(IStorageManager *mng) {
         r->m_bStoringLinks = false;
         store->m_property[name] = r->m_headerID;
         BulkLoader bl;
-        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault , 500);
         std::cerr<<"build new "<<name<<"\n";
         mng->flush();
     }
@@ -333,7 +333,7 @@ xRTree * xRTreeNsp::buildSTRTreeWoP(IStorageManager *mng) {
         r->m_bStoringLinks = false;
         store->m_property[name] = r->m_headerID;
         BulkLoader bl;
-        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault * 10, 100000);
+        bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault , 500);
         std::cerr<<"build new "<<name<<"\n";
         mng->flush();
     }

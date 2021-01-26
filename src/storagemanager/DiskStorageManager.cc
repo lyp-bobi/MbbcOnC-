@@ -299,6 +299,7 @@ DiskStorageManager::~DiskStorageManager()
 
 void DiskStorageManager::flush()
 {
+    if(m_isro) return;
 	m_indexFile.seekp(0, std::ios_base::beg);
 	if (m_indexFile.fail())
 		throw Tools::IllegalStateException("SpatialIndex::DiskStorageManager: Corrupted storage manager index file.");

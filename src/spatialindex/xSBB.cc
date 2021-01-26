@@ -157,8 +157,8 @@ std::string xSBB::toString() const {
         s += std::to_string(bc.m_rd) + " " + std::to_string(bc.m_rv)+ " ";
     }
     if(hasbl) {
-        s += std::to_string(bc.m_ps.m_x) + " " + std::to_string(bc.m_ps.m_y) + " " + std::to_string(bc.m_ps.m_t) + " ";
-        s += std::to_string(bc.m_pe.m_x) + " " + std::to_string(bc.m_pe.m_y) + " " + std::to_string(bc.m_pe.m_t) + " ";
+        s += std::to_string(bl.m_ps.m_x) + " " + std::to_string(bl.m_ps.m_y) + " " + std::to_string(bl.m_ps.m_t) + " ";
+        s += std::to_string(bl.m_pe.m_x) + " " + std::to_string(bl.m_pe.m_y) + " " + std::to_string(bl.m_pe.m_t) + " ";
     }
     return s;
 }

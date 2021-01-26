@@ -100,8 +100,6 @@ namespace SpatialIndex
             uint32_t m_trajIO=0,m_indexIO=0;
             uint32_t m_loadedTraj=0;
             uint32_t m_boundingVisited=0;
-            uint32_t m_segCount=0;
-            double m_timeCount=0;
             double m_IOtime=0;
         };
 
