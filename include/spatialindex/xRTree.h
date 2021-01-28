@@ -68,6 +68,7 @@ namespace SpatialIndex
         SIDX_DLL xRTree* buildMBCRTreeWoP(IStorageManager* store, const CUTFUNC_PARA &f, double len, string add="");
         SIDX_DLL xRTree* buildTBTreeWoP(IStorageManager* store);
         SIDX_DLL xRTree* buildSTRTreeWoP(IStorageManager* store);
+		SIDX_DLL xRTree* loadTree(IStorageManager* store, string name);
 //        xRTree* buildMBCRTreeWP(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
 //        xRTree* buildTBTree2(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
 //        xRTree* buildTBTree(xStore* store);

@@ -364,6 +364,7 @@ namespace SpatialIndex
 				std::cerr<<"use gl sta\n";
 			}
             else if(dataset == "tdexpand"){
+                dataset="td";
                 M = 5.20574e+10;
                 lineCount = 162059560;
                 trajCount = 102670;

@@ -341,3 +341,36 @@ xRTree * xRTreeNsp::buildSTRTreeWoP(IStorageManager *mng) {
     return r;
 }
 
+
+
+xRTree * xRTreeNsp::loadTree(IStorageManager *mng, string name) {
+    auto store=static_cast<xStore*>(mng);
+    auto stream = new xSBBStream(store, xTrajectory::EveryLine);
+    xRTree * r=NULL;
+    if(store->m_property.contains(name)){
+        Tools::Variant var;
+        Tools::PropertySet ps;
+        id_type id = store->m_property[name];
+        var.m_varType = Tools::VT_LONGLONG;
+        var.m_val.llVal = id;
+        ps.setProperty("IndexIdentifier", var);
+        r = new xRTree(*mng,ps);
+        if(name.find("MBC")!=name.npos){
+            r->m_bUsingMBC=true;
+        }
+        if(name.find("STR")!=name.npos){
+            r->m_bUsingMBL=true;
+        }
+        if(name.find("WP")!=name.npos){
+            r->m_bStoringLinks = true;
+        }else{
+            r->m_bStoringLinks = false;
+        }
+        r->m_ts=store;
+        std::cerr<<"load existing "<<name<<"\n";
+    }else{
+        cerr<<"could not load the tree with given name"<<name<<endl;
+    }
+    delete stream;
+    return r;
+}

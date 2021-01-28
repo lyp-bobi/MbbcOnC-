@@ -93,6 +93,7 @@ set (SOURCES
         queryLenVarying
         expandData
         btqtMat
+        storeExplorer
         )
 
 foreach (test ${SOURCES})

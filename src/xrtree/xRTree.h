@@ -81,7 +81,7 @@ namespace SpatialIndex
             virtual void intersectsWithQuery(const xCylinder& query, IVisitor& v);
             virtual void nearestNeighborQuery(uint32_t k, const xTrajectory& query, IVisitor& v);
 
-		private:
+        public:
 			void initNew(Tools::PropertySet&);
 			void initOld(Tools::PropertySet& ps);
 			void storeHeader();

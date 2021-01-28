@@ -68,10 +68,7 @@ bool ExternalSorter::Record::operator<(const Record& r) const
     if (m_s != r.m_s)
         throw Tools::IllegalStateException("ExternalSorter::Record::operator<: Incompatible sorting dimensions.");
     Record *ll = const_cast<Record*>(this), *rr = const_cast<Record*>(&r);
-    if (ll->m_r.m_pLow(2-m_s)+ll->m_r.m_pHigh(2-m_s) < rr->m_r.m_pLow(2-m_s)+rr->m_r.m_pHigh(2-m_s))
-        return true;
-    else
-        return false;
+    return ll->m_r.m_pLow(2 - m_s) + ll->m_r.m_pHigh(2 - m_s) < rr->m_r.m_pLow(2 - m_s) + rr->m_r.m_pHigh(2 - m_s);
 }
 
 void ExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)
@@ -404,7 +401,7 @@ void BulkLoader::createLevel(
         S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P), 1.0 / remainDim)));
     }
 //    std::cerr<<"crtlvl at "<<level<<"\t"<<dimension<<"\t"<<P<<"\t"<<S<<"\n";
-	if (S == 1 || remainDim==1 || S * b == es->getTotalEntries())
+	if (P < S || remainDim==1 || S * b == es->getTotalEntries())
 	{
 		std::vector<ExternalSorter::Record*> node;
 		ExternalSorter::Record* r;
@@ -503,7 +500,6 @@ void BulkLoader::createLevel(
 	}
 	else
 	{
-
 	    double curt= tjstat->mint + ltc;
 		bool bMore = true;
 //        int count1=0;
