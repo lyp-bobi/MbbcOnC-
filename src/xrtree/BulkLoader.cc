@@ -50,7 +50,7 @@ using namespace SpatialIndex::xRTreeNsp;
 //
 ExternalSorter::Record::Record(){}
 ExternalSorter::Record::Record(const xSBBData &shape, uint32_t s, uint32_t level)
-: m_s(s),m_level(level),m_b(shape)
+: m_s(s), m_level(level), m_sbbd(shape)
 {
     if(!shape.m_b.hasbr) throw Tools::IllegalStateException("SBBs should have MBR");
     m_r = shape.m_b.br;
@@ -73,30 +73,46 @@ bool ExternalSorter::Record::operator<(const Record& r) const
 
 void ExternalSorter::Record::storeToFile(Tools::TemporaryFile& f)
 {
+    f.write(static_cast<uint64_t>(m_id));
 	f.write(m_s);
 	f.write(m_level);
-    f.write(static_cast<uint64_t>(m_b.m_sbbid));
-	f.write(static_cast<uint64_t>(m_b.m_se.m_id));
-	f.write(static_cast<uint32_t>(m_b.m_hasPrev?1:0));
-    f.write(static_cast<uint32_t>(m_b.m_hasNext?1:0));
-    f.write(m_b.m_se.m_s);
-    f.write(m_b.m_se.m_e);
-    f.write(m_b.m_b.toString());
-    f.write(static_cast<uint64_t>(m_id));
+	f.write(m_r.m_xmin);
+    f.write(m_r.m_xmax);
+    f.write(m_r.m_ymin);
+    f.write(m_r.m_ymax);
+    f.write(m_r.m_tmin);
+    f.write(m_r.m_tmax);
+	if(m_level==0){//leafnode
+        f.write(static_cast<uint64_t>(m_sbbd.m_sbbid));
+        f.write(static_cast<uint64_t>(m_sbbd.m_se.m_id));
+        f.write(static_cast<uint32_t>(m_sbbd.m_hasPrev ? 1 : 0));
+        f.write(static_cast<uint32_t>(m_sbbd.m_hasNext ? 1 : 0));
+        f.write(m_sbbd.m_se.m_s);
+        f.write(m_sbbd.m_se.m_e);
+        f.write(m_sbbd.m_b.toString());
+	}
 }
 
 void ExternalSorter::Record::loadFromFile(Tools::TemporaryFile& f)
 {
+    m_id =static_cast<id_type>(f.readUInt64());
 	m_s = f.readUInt32();
 	m_level=f.readUInt32();
-    m_b.m_sbbid =static_cast<id_type>(f.readUInt64());
-	m_b.m_se.m_id =static_cast<id_type>(f.readUInt64());
-	m_b.m_hasPrev = (f.readUInt32()==1);
-    m_b.m_hasNext = (f.readUInt32()==1);
-	m_b.m_se.m_s = f.readUInt32();
-    m_b.m_se.m_e = f.readUInt32();
-	m_b.m_b.loadFromString(f.readString());
-    m_id =static_cast<id_type>(f.readUInt64());
+    m_r.m_xmin = f.readDouble();
+    m_r.m_xmax = f.readDouble();
+    m_r.m_ymin = f.readDouble();
+    m_r.m_ymax = f.readDouble();
+    m_r.m_tmin = f.readDouble();
+    m_r.m_tmax = f.readDouble();
+	if(m_level==0) {//if leaf node
+        m_sbbd.m_sbbid = static_cast<id_type>(f.readUInt64());
+        m_sbbd.m_se.m_id = static_cast<id_type>(f.readUInt64());
+        m_sbbd.m_hasPrev = (f.readUInt32() == 1);
+        m_sbbd.m_hasNext = (f.readUInt32() == 1);
+        m_sbbd.m_se.m_s = f.readUInt32();
+        m_sbbd.m_se.m_e = f.readUInt32();
+        m_sbbd.m_b.loadFromString(f.readString());
+    }
 }
 
 //
@@ -401,7 +417,7 @@ void BulkLoader::createLevel(
         S = static_cast<uint64_t>(ceil(pow(static_cast<double>(P), 1.0 / remainDim)));
     }
 //    std::cerr<<"crtlvl at "<<level<<"\t"<<dimension<<"\t"<<P<<"\t"<<S<<"\n";
-	if (P < S || remainDim==1 || S * b == es->getTotalEntries())
+	if (remainDim==1||P<=S ||S * b > es->getTotalEntries())//||P<=S|| P/S * b == es->getTotalEntries()
 	{
 		std::vector<ExternalSorter::Record*> node;
 		ExternalSorter::Record* r;
@@ -500,9 +516,7 @@ void BulkLoader::createLevel(
 	}
 	else
 	{
-	    double curt= tjstat->mint + ltc;
 		bool bMore = true;
-//        int count1=0;
         ExternalSorter::Record* pR;
         try { pR = es->getNextRecord(); }
         catch (Tools::EndOfStreamException) {
@@ -556,8 +570,8 @@ Node* BulkLoader::createNode(SpatialIndex::xRTreeNsp::xRTree* pTree, std::vector
 	else n = new Index(pTree, -1, level);
 	for (size_t cChild = 0; cChild < e.size(); ++cChild)
 	{
-        if (level == 0) n->insertEntry(e[cChild]->m_b.m_b.br,e[cChild]->m_b.m_sbbid,
-                                       &(e[cChild]->m_b));
+        if (level == 0) n->insertEntry(e[cChild]->m_sbbd.m_b.br, e[cChild]->m_sbbd.m_sbbid,
+                                       &(e[cChild]->m_sbbd));
         else n->insertEntry(e[cChild]->m_r,e[cChild]->m_id);
 		delete e[cChild];
 	}

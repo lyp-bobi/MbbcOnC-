@@ -60,8 +60,8 @@ namespace SpatialIndex
                 uint32_t m_level;
 				uint32_t m_s;
 				xMBR m_r;
-                id_type m_id; //for inner node
-                xSBBData m_b; //for leaf node
+                id_type m_id;
+                xSBBData m_sbbd; //for leaf node
 			};
 
 		public:

@@ -19,6 +19,8 @@ using std::cout;
 using std::endl;
 using std::sqrt;
 
+double splitSoftThres = 0.3;
+
 xTrajectory::xTrajectory() {
 
 }
@@ -1307,7 +1309,7 @@ inline xSBB subtrajToSBB(xTrajectory &x){
     return xSBB(tmpbr,tmpbc);
 }
 
-# define looseFactor 0.3
+
 
 queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj, double len) {
     vector<xPoint> seg;
@@ -1340,7 +1342,7 @@ queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj, double len) {
                 seg.emplace_back(traj.m_points[i]);
                 segStart += len;
             }
-            else if(traj.m_points[i-1].m_t>segStart+(1-looseFactor)*len){
+            else if(traj.m_points[i-1].m_t>segStart+(1-splitSoftThres)*len){
                 //previous point is acceptable, so choose it.
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i-1;
@@ -1350,7 +1352,7 @@ queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj, double len) {
                 fakehead=false;
                 seg.clear();
                 seg.emplace_back(traj.m_points[i-1]);
-            }else if (traj.m_points[i].m_t<segStart+(1+looseFactor)*len){
+            }else if (traj.m_points[i].m_t<segStart+(1+splitSoftThres)*len){
                 // this point( the next one) is acceptable, so choose it
                 seg.emplace_back(traj.m_points[i]);
                 subtraj=xTrajectory(fakehead, fakeback, seg);
@@ -1401,7 +1403,7 @@ queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj, double len) {
     }
 
     double segStart=tjstat->mint;
-    while(segStart + (1.0-looseFactor) * len <= traj.m_points[0].m_t) {
+    while(segStart + (1.0-splitSoftThres) * len <= traj.m_points[0].m_t) {
         segStart += len;
     }
     seg.emplace_back(traj.m_points[0]);
@@ -1423,7 +1425,7 @@ queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj, double len) {
                 seg.emplace_back(traj.m_points[i]);
                 segStart += len;
             }
-            else if(traj.m_points[i-1].m_t>segStart+(1-looseFactor)*len){
+            else if(traj.m_points[i-1].m_t>segStart+(1-splitSoftThres)*len){
                 //previous point is acceptable, so choose it.
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i-1;
@@ -1433,7 +1435,7 @@ queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj, double len) {
                 fakehead=false;
                 seg.clear();
                 seg.emplace_back(traj.m_points[i-1]);
-            }else if (traj.m_points[i].m_t<segStart+(1+looseFactor)*len){
+            }else if (traj.m_points[i].m_t<segStart+(1+splitSoftThres)*len){
                 // this point( the next one) is acceptable, so choose it
                 seg.emplace_back(traj.m_points[i]);
                 subtraj=xTrajectory(fakehead, fakeback, seg);
@@ -1483,7 +1485,7 @@ queue<pair<pair<int, int>, xSBB> > xTrajectory::OPTS(xTrajectory &traj, double l
     int seg1 = std::min(std::ceil(sqrt(segNum)), std::ceil(sqrt(traj.m_points.size()-1)));
     auto m=simplifyWithRDPN(traj.m_points,seg1);
     int pointPrev=0;
-    for(auto pts:m)
+    for(auto &pts:m)
     {
         xTrajectory subtraj(pts);
         auto seg=GSS(subtraj,len);
@@ -1540,4 +1542,28 @@ queue<CUTENTRY> xTrajectory::EveryLine(xTrajectory &traj) {
         res.push(make_pair(make_pair(i,i+1), xSBB(traj.m_points[i],traj.m_points[i+1])));
     }
     return  res;
+}
+
+
+queue<pair<pair<int, int>, xSBB> > xTrajectory::RDP(xTrajectory &traj, double len) {
+    int segNum=(traj.m_endTime() - traj.m_startTime())/len;
+    segNum = min(segNum, int(traj.m_points.size())-1);
+    queue<CUTENTRY> res;
+    if(segNum == 1) {
+        res.emplace( make_pair(make_pair(0,int(traj.m_points.size()-1)), subtrajToSBB(traj)));
+        return res;
+    }
+    std::vector<std::vector<SpatialIndex::xPoint>> m=simplifyWithRDPN(traj.m_points,segNum);
+    int pointPrev=0;
+    for(auto &pts:m)
+    {
+        xTrajectory subtraj(pts);
+        CUTENTRY s;
+        s.first.first = pointPrev;
+        s.first.second = pointPrev + pts.size()-1;
+        s.second = subtrajToSBB(subtraj);
+        res.emplace(s);
+        pointPrev+=pts.size()-1;
+    }
+    return res;
 }

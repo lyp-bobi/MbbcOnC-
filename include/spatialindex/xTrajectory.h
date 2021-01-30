@@ -18,6 +18,8 @@ using std::pair;
 using std::string;
 using namespace SpatialIndex;
 
+extern double splitSoftThres;
+
 namespace SpatialIndex
 {
 
@@ -171,6 +173,7 @@ namespace SpatialIndex
         static queue<CUTENTRY> GSS(xTrajectory &traj, double len);
         static queue<CUTENTRY> OPTS(xTrajectory &traj, double len);
         static queue<CUTENTRY> FP(xTrajectory &traj, double np);
+        static queue<CUTENTRY> RDP(xTrajectory &traj, double len);
         static queue<CUTENTRY> EveryLine(xTrajectory &traj);
 
         void linkxTrajectory(xTrajectory &other);

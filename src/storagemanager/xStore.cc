@@ -172,8 +172,9 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
         tjstat->P = tjstat->Dt;
         std::cerr << file << endl;
         inFile.close();
-        if (file.find("td") != file.npos) tjstat->usedata("td");
-        if (file.find("gl") != file.npos) tjstat->usedata("gl");
+        if (file.find("tdexpand") != file.npos) tjstat->usedata("tdexpand");
+        else if (file.find("td") != file.npos) tjstat->usedata("td");
+        else if (file.find("gl") != file.npos) tjstat->usedata("gl");
         std::cerr << tjstat->toString() << endl;
         m_property["tjstat"] = tjstat->toString();
         m_property["bSubTraj"] = bsubtraj;

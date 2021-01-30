@@ -47,7 +47,6 @@
 #define GLFile "/root/GLSC.csv"
 #define fileFolder "/root/out/"
 #define maxLinesToRead 1e10
-#define testtime 100
 #define dimension 2
 #define indexcap 10
 #define leafcap 10000
@@ -58,9 +57,10 @@ using namespace std;
 using namespace SpatialIndex;
 using namespace xRTreeNsp;
 
-#define NUMCORE 1
+#define NUMCORE 4
 #define NUMTHREAD (NUMCORE)
 extern bool testxfirstOutput = true;
+extern double testtime = 4000;
 using namespace std;
 
 static int drop_cache(int drop) {
@@ -770,7 +770,6 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
     res->leaf2 = 1.0 * ts->m_leaf2 / num;
     res->indexIO = 1.0 * ts->m_indexIO / num;
     res->trajIO = 1.0 * ts->m_trajIO / num;
-    cerr<<"thread "<< res->toString()<<endl;
     return;
 }
 
@@ -796,7 +795,6 @@ public:
     void prepareTrees(xStore* x,
                       const function<xRTree*(IStorageManager*)> &treeBuilder){
         delete treeBuilder(x);
-        cerr<<"tree prepared\n";
         for(int i=0;i<nthread;i++) {
             m_stores.emplace_back(x->clone());
             m_trees.emplace_back(treeBuilder(m_stores.back()));
@@ -845,6 +843,22 @@ string testFileName(string &s){
 #else
     return "/root/"+s;
 #endif
+}
+
+#include "random"
+void fillQuerySet(vector<xTrajectory>& list, xStore& x, double len, double var=0, int num=testtime){
+    if(var!=0){
+        default_random_engine e;
+        auto queryLen =normal_distribution<double>(len,var);
+        for (int i = 0; i < num; i++) {
+            list.emplace_back(x.randomSubtraj(queryLen(e)));
+        }
+    }
+    else{
+        for (int i = 0; i < num; i++) {
+            list.emplace_back(x.randomSubtraj(len));
+        }
+    }
 }
 
 #endif //SPATIALINDEX_TESTFUNCS_H

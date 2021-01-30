@@ -11,12 +11,8 @@ int main(){
         double avgQL = 1800;
         std::cerr<<testFileName(target)<<endl;
         xStore x(target, testFileName(target), true);
-        default_random_engine e;
-        auto queryLen =normal_distribution<double>(avgQL,500.0);
         vector<xTrajectory> queries;
-        for (int i = 0; i < testtime; i++) {
-            queries.emplace_back(x.randomSubtraj(queryLen(e)));
-        }
+        fillQuerySet(queries,x,avgQL,500.0);
         tjstat->bt = avgQL;
         {
             MTQ q;

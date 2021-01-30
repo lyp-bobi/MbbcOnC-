@@ -94,6 +94,7 @@ set (SOURCES
         expandData
         btqtMat
         storeExplorer
+        splitMethod
         )
 
 foreach (test ${SOURCES})

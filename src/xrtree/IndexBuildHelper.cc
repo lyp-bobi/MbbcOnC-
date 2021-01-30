@@ -111,6 +111,7 @@ xRTree * xRTreeNsp::buildMBCRTreeWP(IStorageManager *st,
 //        std::cerr<<"load existing "<<name<<"\n";
     }
     else {
+        std::cerr<<"building new "<<name<<"\n";
         int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbcsize()),
                 bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + mbcsize() + pointersize() + entrysize());
         r = createNewxRTree(store, bindex, bleaf);
@@ -118,7 +119,7 @@ xRTree * xRTreeNsp::buildMBCRTreeWP(IStorageManager *st,
         store->m_property[name] = r->m_headerID;
         BulkLoader bl;
         bl.bulkLoadUsingSTR(r, *stream, bindex, bleaf, PageSizeDefault , 500);
-        std::cerr<<"build new "<<name<<"\n";
+        std::cerr<<"built new "<<name<<"\n";
         st->flush();
     }
 //    std::cerr<<r->m_headerID<<" "<<r->m_rootID<<endl;

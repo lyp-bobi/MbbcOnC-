@@ -5,42 +5,49 @@
 #include "testFuncs.h"
 #include "random"
 
-int main(){
+int main(int argc,char *argv[]){
     try {
-        string target = "tdfilter.txt";
-        double avgQL = 1800;
+        string target = "tdexpand.txt";
+        double qt =1800;
         std::cerr<<testFileName(target)<<endl;
         xStore x(target, testFileName(target), true);
-        default_random_engine e;
-        auto queryLen =normal_distribution<double>(avgQL,500.0);
-        vector<xTrajectory> queries;
-        for (int i = 0; i < testtime; i++) {
-            queries.emplace_back(x.randomSubtraj(queryLen(e)));
-        }
-        double len =1800;
-        {
-            MTQ q;
-            q.prepareTrees(&x,[&len](auto x){return buildMBCRTreeWP(x,xTrajectory::ISS, len, "ISS");});
-            q.appendQueries(queries);
-            std::cerr<<q.runQueries().toString();
-        }
-        {
-            MTQ q;
-            q.prepareTrees(&x,[&len](auto x){return buildMBCRTreeWP(x,xTrajectory::GSS, len, "GSS");});
-            q.appendQueries(queries);
-            std::cerr<<q.runQueries().toString();
-        }
-        {
-            MTQ q;
-            q.prepareTrees(&x,[&len](auto x){return buildMBCRTreeWP(x,xTrajectory::OPTS, , "OPTS");});
-            q.appendQueries(queries);
-            std::cerr<<q.runQueries().toString();
-        }
-        {
-            MTQ q;
-            q.prepareTrees(&x,[&len](auto x){return buildMBCRTreeWP(x,xTrajectory::FP, len/tjstat->tl, "FP");});
-            q.appendQueries(queries);
-            std::cerr<<q.runQueries().toString();
+        double bts[] = {1200,1800,2400,3000,3600,4200,4800,5400};
+        for(auto bt:bts) {
+            std::cerr<<"bt is "<<bt <<endl;
+            vector<xTrajectory> queries;
+            fillQuerySet(queries, x, qt);
+            {
+                MTQ q;
+                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::ISS, bt, "ISS"); });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
+            {
+                MTQ q;
+                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::GSS, bt, "GSS"); });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
+            {
+                MTQ q;
+                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, bt, "OPTS"); });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
+            {
+                MTQ q;
+                q.prepareTrees(&x,
+                               [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::FP, bt / tjstat->tl, "FP"); });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
+            {
+                MTQ q;
+                q.prepareTrees(&x,
+                               [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::RDP, bt, "RDP"); });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
         }
     }catch (Tools::Exception &e) {
         cerr << "******ERROR******" << endl;
