@@ -103,6 +103,8 @@ namespace SpatialIndex
 
             string m_name="";
 
+            double m_bt = 100000;
+
 			IStorageManager* m_pStorageManager;
 
 			id_type m_rootID, m_headerID;

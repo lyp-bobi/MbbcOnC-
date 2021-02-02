@@ -7,8 +7,8 @@
 
 int main(){
     try {
-        string target = "tdexpand.txt";
-        double qts[] = {300,900,1500,2100,2700,3300,3900,4500};
+        string target = "tdfilter.txt";
+        double qts[] = {300,1800,3600,7200,10800};
         double seglens[] = {600,900,1500,2100,2700,3300,3900,4500};
         cerr<<"seglen: ";
         for(auto len:seglens){cerr<<len<<" ";}

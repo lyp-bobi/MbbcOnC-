@@ -3,7 +3,7 @@
 //
 #include "testFuncs.h"
 int main(){
-    xStore x("test", "D://TRI-framework/dumpedtraj.txt",true,true);
+    xStore x("test", "D://TRI-framework/dumpedtraj.txt",true);
 
     double querylens[]={50,100,200,400,800,1600,10000};
     xCylinder query(xPoint(40,116.327,6516),0.0001,6516,9516,2);
@@ -20,58 +20,58 @@ int main(){
     query.checkRel(s);
     MyVisitor vis;
     try {
-//        bUsingSBBD = false;
-//        for (auto querylen:querylens) {
-//            tjstat->bt = querylen;
-//            auto r = buildMBCRTreeWP(&x, xTrajectory::ISS,querylen);
-//            r->intersectsWithQuery(query, vis);
-//            r->nearestNeighborQuery(5, tj, vis);
-//            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
-//            vis.clear();
-//            auto r2 = buildMBRRTreeWP(&x, xTrajectory::ISS,querylen);
-//            r2->intersectsWithQuery(query, vis);
-//            r2->nearestNeighborQuery(5, tj, vis);
-//            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
-//            vis.clear();
-//        }
-//        {
-//            auto r = buildTBTreeWP(&x);
-//            r->intersectsWithQuery(query, vis);
-//            r->nearestNeighborQuery(5, tj, vis);
-//            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
-//            vis.clear();
-//        }
-//        {
-//            auto r = buildSTRTreeWP(&x);
-//            r->intersectsWithQuery(query, vis);
-//            r->nearestNeighborQuery(5, tj, vis);
-//            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
-//            vis.clear();
-//        }
-        bUsingSBBD = true;
-//        for (auto querylen:querylens) {
-//            tjstat->bt = querylen;
-//            auto r = buildMBCRTreeWP(&x, xTrajectory::ISS,querylen);
-//            r->intersectsWithQuery(query, vis);
-//            r->nearestNeighborQuery(5, tj, vis);
-//            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
-//            vis.clear();
-//            auto r2 = buildMBRRTreeWP(&x, xTrajectory::ISS,querylen);
-//            r2->intersectsWithQuery(query, vis);
-//            r2->nearestNeighborQuery(5, tj, vis);
-//            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
-//            vis.clear();
-//        }
-//        {
-//            auto r = buildTBTreeWP(&x);
-//            r->intersectsWithQuery(query, vis);
-//            r->nearestNeighborQuery(5, tj, vis);
-//            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
-//            vis.clear();
-//        }
+        bUsingSBBD = false;
+        for (auto querylen:querylens) {
+            tjstat->bt = querylen;
+            auto r = buildMBCRTreeWP(&x, xTrajectory::ISS,querylen);
+            r->intersectsWithQuery(query, vis);
+            r->nearestNeighborQuery(5, tj, vis);
+            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+            vis.clear();
+            auto r2 = buildMBRRTreeWP(&x, xTrajectory::ISS,querylen);
+            r2->intersectsWithQuery(query, vis);
+            r2->nearestNeighborQuery(5, tj, vis);
+            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+            vis.clear();
+        }
+        {
+            auto r = buildTBTreeWP(&x);
+            r->intersectsWithQuery(query, vis);
+            r->nearestNeighborQuery(5, tj, vis);
+            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+            vis.clear();
+        }
         {
             auto r = buildSTRTreeWP(&x);
-//            r->intersectsWithQuery(query, vis);
+            r->intersectsWithQuery(query, vis);
+            r->nearestNeighborQuery(5, tj, vis);
+            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+            vis.clear();
+        }
+        bUsingSBBD = true;
+        for (auto querylen:querylens) {
+            tjstat->bt = querylen;
+            auto r = buildMBCRTreeWP(&x, xTrajectory::ISS,querylen);
+            r->intersectsWithQuery(query, vis);
+            r->nearestNeighborQuery(5, tj, vis);
+            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+            vis.clear();
+            auto r2 = buildMBRRTreeWP(&x, xTrajectory::ISS,querylen);
+            r2->intersectsWithQuery(query, vis);
+            r2->nearestNeighborQuery(5, tj, vis);
+            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+            vis.clear();
+        }
+        {
+            auto r = buildTBTreeWP(&x);
+            r->intersectsWithQuery(query, vis);
+            r->nearestNeighborQuery(5, tj, vis);
+            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+            vis.clear();
+        }
+        {
+            auto r = buildSTRTreeWP(&x);
+            r->intersectsWithQuery(query, vis);
             r->nearestNeighborQuery(5, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
             vis.clear();

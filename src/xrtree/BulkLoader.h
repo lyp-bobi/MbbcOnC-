@@ -128,6 +128,17 @@ namespace SpatialIndex
 				uint32_t pageSize,
 				uint32_t numberOfPages
 			);
+            void createLevelT(
+                    xRTree* pTree,
+                    Tools::SmartPointer<ExternalSorter> es,
+                    uint32_t dimension,
+                    uint32_t indexSize,
+                    uint32_t leafSize,
+                    uint32_t level,
+                    Tools::SmartPointer<ExternalSorter> es2,
+                    uint32_t pageSize,
+                    uint32_t numberOfPages
+            );
 			Node* createNode(
 				xRTree* pTree,
 				std::vector<ExternalSorter::Record*>& e,

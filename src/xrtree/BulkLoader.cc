@@ -372,7 +372,10 @@ void BulkLoader::bulkLoadUsingSTR(
 		pTree->m_stats.m_nodesInLevel.emplace_back(0);
 
 		Tools::SmartPointer<ExternalSorter> es2 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
-		createLevel(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);
+		if(level == 0)
+            createLevelT(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);
+        else
+            createLevel(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);
 		es = es2;
 
 		if (es->getTotalEntries() == 1) break;
@@ -518,16 +521,10 @@ void BulkLoader::createLevel(
 	{
 		bool bMore = true;
         ExternalSorter::Record* pR;
-        try { pR = es->getNextRecord(); }
-        catch (Tools::EndOfStreamException) {
-            bMore = false;
-        }
 		while (bMore)
 		{
 			Tools::SmartPointer<ExternalSorter> es3 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
-            pR->m_s = dimension + 1;
-            es3->insert(pR);
-			for (uint64_t i = 1; i < b * ceil(1.0 * P / S); ++i)
+			for (uint64_t i = 0; i < b * ceil(1.0 * P / S); ++i)
             {
                 try { pR = es->getNextRecord(); }
                 catch (Tools::EndOfStreamException) {
@@ -537,30 +534,68 @@ void BulkLoader::createLevel(
                 pR->m_s = dimension + 1;
                 es3->insert(pR);
             }
-            try { pR = es->getNextRecord(); }
-            catch (Tools::EndOfStreamException) {
-                bMore = false;
-            }
-//            while(bMore&&(pR->m_r.m_pLow[2]+pR->m_r.m_pHigh[2])/2==lastTime){
-//                pR->m_s = dimension + 1;
-//                es3->insert(pR);
-//                try { pR = es->getNextRecord(); }
-//                catch (Tools::EndOfStreamException) {
-//                    bMore = false;
-//                    break;
-//                }
-//            }
 
             if(es3->getTotalEntries()>0) {
-//                if(level==0&&dimension==0) {
-//                    std::cerr << "entries is"<<es3->getTotalEntries()<<"\n";
-//                }
                 es3->sort();
                 createLevel(pTree, es3, dimension + 1, bleaf, bindex, level, es2, pageSize, numberOfPages);
             }
 
 		}
 	}
+}
+
+void BulkLoader::createLevelT(
+        SpatialIndex::xRTreeNsp::xRTree* pTree,
+        Tools::SmartPointer<ExternalSorter> es,
+        uint32_t dimension,
+        uint32_t bleaf,
+        uint32_t bindex,
+        uint32_t level,
+        Tools::SmartPointer<ExternalSorter> es2,
+        uint32_t pageSize,
+        uint32_t numberOfPages
+) {
+    assert(dimension==0&&level==0);
+    double curt, lastt;
+
+    bool bMore = true;
+    ExternalSorter::Record* pR;
+    int total = es->getTotalEntries();
+    try { pR = es->getNextRecord(); }
+    catch (Tools::EndOfStreamException) {
+        bMore = false;
+    }
+    curt = (pR->m_sbbd.m_b.br.m_tmax + pR->m_sbbd.m_b.br.m_tmin)/2;
+    pR->m_s = dimension + 1;
+    lastt = curt + pTree->m_bt;
+    while (bMore)
+    {
+        Tools::SmartPointer<ExternalSorter> es3 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
+        while(es3->getTotalEntries()< (bleaf*bindex) && bMore) {
+            lastt = lastt + pTree->m_bt;
+            while (curt <= lastt) {
+                es3->insert(pR);
+                try { pR = es->getNextRecord(); }
+                catch (Tools::EndOfStreamException) {
+                    bMore = false;
+                    break;
+                }
+                pR->m_s = dimension + 1;
+                if(curt > (pR->m_sbbd.m_b.br.m_tmax + pR->m_sbbd.m_b.br.m_tmin)/2)
+                    break;
+                curt = (pR->m_sbbd.m_b.br.m_tmax + pR->m_sbbd.m_b.br.m_tmin)/2;
+            }
+
+        }
+
+        if(es3->getTotalEntries()>0) {
+            total -= es3->getTotalEntries();
+//            std::cerr<<"slab"<<lastt<<"\t"<<es3->getTotalEntries()<<"\t"<<total<<endl;
+            es3->sort();
+            createLevel(pTree, es3, dimension + 1, bleaf, bindex, level, es2, pageSize, numberOfPages);
+        }
+
+    }
 }
 
 Node* BulkLoader::createNode(SpatialIndex::xRTreeNsp::xRTree* pTree, std::vector<ExternalSorter::Record*>& e, uint32_t level)

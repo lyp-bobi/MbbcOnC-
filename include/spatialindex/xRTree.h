@@ -56,7 +56,7 @@ namespace SpatialIndex
 			IntersectionQuery = 0x2
 		};
         class xRTree;
-        xRTree* createNewxRTree(IStorageManager* store,long indexfan, long leaffan);
+        xRTree* createNewxRTree(IStorageManager* store,long indexfan, long leaffan, double bt);
 
 
         SIDX_DLL xRTree* buildMBRRTreeWP(IStorageManager* store, const CUTFUNC_PARA &f, double len, string add="");

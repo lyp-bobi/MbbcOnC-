@@ -185,6 +185,18 @@ void SpatialIndex::xRTreeNsp::xRTree::initNew(Tools::PropertySet& ps)
 		m_treeVariant = static_cast<xRTreeVariant>(var.m_val.lVal);
 	}
 
+    // bt
+    var = ps.getProperty("Bt");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (
+                var.m_varType != Tools::VT_DOUBLE ||
+                var.m_val.dblVal <= 0.0)
+            throw Tools::IllegalArgumentException("initNew: Property Bt must be Tools::VT_DOUBLE and in (0.0, inf)");
+
+        m_bt = var.m_val.dblVal;
+    }
+
 	// fill factor
 	// it cannot be larger than 50%, since linear and quadratic split algorithms
 	// require assigning to both nodes the same number of entries.
@@ -360,6 +372,18 @@ void SpatialIndex::xRTreeNsp::xRTree::initOld(Tools::PropertySet& ps)
 		m_treeVariant = static_cast<xRTreeVariant>(var.m_val.lVal);
 	}
 
+    // bt
+    var = ps.getProperty("Bt");
+    if (var.m_varType != Tools::VT_EMPTY)
+    {
+        if (
+                var.m_varType != Tools::VT_DOUBLE ||
+                var.m_val.dblVal <= 0.0)
+            throw Tools::IllegalArgumentException("initNew: Property Bt must be Tools::VT_DOUBLE and in (0.0, inf)");
+
+        m_bt = var.m_val.dblVal;
+    }
+
 	// near minimum overlap factor
 	var = ps.getProperty("NearMinimumOverlapFactor");
 	if (var.m_varType != Tools::VT_EMPTY)
@@ -445,6 +469,7 @@ void SpatialIndex::xRTreeNsp::xRTree::storeHeader()
     if(m_pStorageManager->m_isro) return;
 	const uint32_t headerSize =
 		sizeof(id_type) +						// m_rootID
+		sizeof(double)+                         // m_bt
 		sizeof(xRTreeVariant) +					// m_treeVariant
 		sizeof(double) +						// m_fillFactor
 		sizeof(uint32_t) +						// m_indexCapacity
@@ -464,6 +489,8 @@ void SpatialIndex::xRTreeNsp::xRTree::storeHeader()
 
 	memcpy(ptr, &m_rootID, sizeof(id_type));
 	ptr += sizeof(id_type);
+    memcpy(ptr, &m_bt, sizeof(double));
+    ptr += sizeof(double);
 	memcpy(ptr, &m_treeVariant, sizeof(xRTreeVariant));
 	ptr += sizeof(xRTreeVariant);
 	memcpy(ptr, &m_fillFactor, sizeof(double));
@@ -511,6 +538,8 @@ void SpatialIndex::xRTreeNsp::xRTree::loadHeader()
 
 	memcpy(&m_rootID, ptr, sizeof(id_type));
 	ptr += sizeof(id_type);
+    memcpy(&m_bt, ptr, sizeof(double));
+    ptr += sizeof(double);
 	memcpy(&m_treeVariant, ptr, sizeof(xRTreeVariant));
 	ptr += sizeof(xRTreeVariant);
 	memcpy(&m_fillFactor, ptr, sizeof(double));
