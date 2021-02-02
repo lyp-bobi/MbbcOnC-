@@ -1101,7 +1101,7 @@ Tools::TemporaryFile::TemporaryFile()
 		m_sFile = std::string(tmpName);
 
 #else
-	char tmpName[7] = "XXXXXX";
+	char tmpName[] = "sort.XXXXXX";
 	if (mktemp(tmpName) == 0)
 		throw std::ios_base::failure("Tools::TemporaryFile: Cannot create temporary file name.");
 	m_sFile = tmpName;

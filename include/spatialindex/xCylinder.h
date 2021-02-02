@@ -15,6 +15,7 @@ namespace SpatialIndex
 
     public:
     xCylinder();
+    xCylinder(const xPoint &p,double r,double sTime,double eTime);
     xCylinder(const xPoint &p,double r,double sTime,double eTime, uint32_t dimension);
     xCylinder(const xCylinder& in);
     xCylinder &operator=(const xCylinder &r);

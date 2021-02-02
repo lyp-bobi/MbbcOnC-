@@ -861,4 +861,21 @@ void fillQuerySet(vector<xTrajectory>& list, xStore& x, double len, double var=0
     }
 }
 
+void fillQuerySet(vector<xCylinder>& list, xStore& x, double rd,double qt, double var=0, int num=testtime){
+    if(var!=0){
+        default_random_engine e;
+        auto rdd =normal_distribution<double>(rd,var);
+        for (int i = 0; i < num; i++) {
+            xPoint p =x.randomPoint();
+            list.emplace_back(xCylinder(p,rdd(e),p.m_t-qt/2,p.m_t+qt/2));
+        }
+    }
+    else{
+        for (int i = 0; i < num; i++) {
+            xPoint p =x.randomPoint();
+            list.emplace_back(xCylinder(p,rd,p.m_t-qt/2,p.m_t+qt/2));
+        }
+    }
+}
+
 #endif //SPATIALINDEX_TESTFUNCS_H

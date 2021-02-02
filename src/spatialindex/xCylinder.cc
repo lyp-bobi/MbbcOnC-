@@ -19,6 +19,13 @@ xCylinder::xCylinder(const SpatialIndex::xCylinder &in) {
     m_startTime=in.m_startTime;
     m_endTime=in.m_endTime;
 }
+xCylinder::xCylinder(const xPoint&p,double r,double sTime,double eTime){
+    m_p=p;
+    m_startTime=sTime;
+    m_endTime=eTime;
+    m_r=r;
+}
+
 xCylinder::xCylinder(const xPoint&p,double r,double sTime,double eTime, uint32_t dimension){
     m_p=p;
     m_startTime=sTime;

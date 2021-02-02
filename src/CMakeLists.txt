@@ -129,6 +129,7 @@ set(SIDX_XRTREE_CPP
         "${SIDX_SRC_DIR}/xrtree/Statistics.cc"
         "${SIDX_SRC_DIR}/xrtree/Statistics.h"
         "${SIDX_SRC_DIR}/xrtree/IndexBuildHelper.cc"
+        "${SIDX_SRC_DIR}/xrtree/SBBForest.cc"
         )
 list (APPEND SIDX_CPP ${SIDX_XRTREE_CPP})
 

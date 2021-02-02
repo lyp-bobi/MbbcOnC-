@@ -95,6 +95,8 @@ set (SOURCES
         btqtMat
         storeExplorer
         splitMethod
+        speedEstimator
+        rangeQuery
         )
 
 foreach (test ${SOURCES})
