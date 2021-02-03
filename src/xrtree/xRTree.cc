@@ -907,23 +907,20 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
     xTrajectory ssTraj;
     double delta=0, ssdelta= 0;
     if(bUsingSBBD&& bUsingSimp && m_bStoringLinks) {
-//
-        int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (tjstat->bt));
-        segnum=std::max(segnum,10);
-        vector<vector<xPoint>> simpseg;
-        try {
-            simpseg = xTrajectory::simplifyWithRDPN(queryTraj->m_points,
-                                                   std::min(segnum,int(std::sqrt(queryTraj->m_points.size()))));
-        }
-        catch (...){
-            std::cerr<<"RDPN query has some problem with\n"<< queryTraj<<"with"<<std::min(segnum,int(std::sqrt(queryTraj->m_points.size())))<<"\n";
-        }
         vector<xPoint> simpp;
-        for (const auto &s:simpseg) {
-            simpp.emplace_back(s.front());
+        int segnum = std::floor((queryTraj->m_endTime() - queryTraj->m_startTime()) / (tjstat->bt));
+        if (segnum * 2 < queryTraj->m_points.size()){
+            simpleTraj = *queryTraj;
+        }else {
+            vector<vector<xPoint>> simpseg;
+            simpseg = xTrajectory::simplifyWithRDPN(queryTraj->m_points,
+                                                    std::min(segnum, int(std::sqrt(queryTraj->m_points.size()))));
+            for (const auto &s:simpseg) {
+                simpp.emplace_back(s.front());
+            }
+            simpp.emplace_back(simpseg.back().back());
+            simpleTraj = xTrajectory(simpp);
         }
-        simpp.emplace_back(simpseg.back().back());
-        simpleTraj=xTrajectory(simpp);
         delta = queryTraj->getMinimumDistance(simpleTraj);
         simpp.clear();
         simpp.emplace_back(queryTraj->m_points[0]);
@@ -933,7 +930,9 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
     }else{
         simpleTraj=*queryTraj;
     }
-
+#ifdef TJDEBUG
+    cerr<<"query is "<< *queryTraj<<endl;
+#endif
     double knearest = 0.0;
     int iternum = 0;
     bool btopnode =false;
@@ -962,7 +961,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
             }
             switch (pFirst->m_type) {
                 case 0: {//inner node
-                    ps.pop();
+                    ps.pop(0);
                     NodePtr n = readNode(pFirst->m_id);
                     v.visitNode(*n);
                     for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
@@ -984,12 +983,15 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                     break;
                 }
                 case 1: {//leaf node
-                    ps.pop();
+                    ps.pop(1);
                     if (!ps.isLoaded(pFirst->m_id)) {
                         NodePtr n = readNode(pFirst->m_id);
                         m_ts->m_leaf1 += 1;
                         v.visitNode(*n);
                         ps.loadLeaf(*n);
+#ifdef TJDEBUG
+                        cerr<<iternum<<"\tleaf with "<<pFirst->m_id<<"\t"<<pFirst->m_dist.opt<<"\t"<<n->m_nodeMBR<<endl;
+#endif
 //                    n.relinquish();
                     }
                     delete pFirst;
@@ -999,6 +1001,9 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                     if(m_bStoringLinks) {
                         id_type missing;
                         missing = ps.getOneMissingPart(pFirst->m_id);
+#ifdef TJDEBUG
+                        cerr<<iternum<<"\tIB with "<<pFirst->m_dist.opt<<"\t"<<ps.explain(pFirst->m_id)<<endl;
+#endif
                         NodePtr n = readNode(missing);
                         v.visitNode(*n);
                         ps.loadLeaf(*n, pFirst->m_dist.opt);
@@ -1010,7 +1015,10 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                     }
                 }
                 case 3: {//complete bounding
-                    ps.pop();
+                    ps.pop(3);
+#ifdef TJDEBUG
+                    cerr<<iternum<<"\tCB with "<<pFirst->m_dist.opt<<"\t"<<ps.explain(pFirst->m_id)<<endl;
+#endif
                     if (pFirst->m_dist.pes < ps.top()->m_dist.opt){
                         // we judge by sbbs instead of subtraj
                         ++(m_stats.m_u64QueryResults);
@@ -1032,7 +1040,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
 
                 }
                 case 4: {//exact traj
-                    ps.pop();
+                    ps.pop(4);
                     ++(m_stats.m_u64QueryResults);
                     ++count;
                     knearest = pFirst->m_dist.opt;

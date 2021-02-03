@@ -361,9 +361,15 @@ namespace SpatialIndex
         public:
             string explain(id_type id){
                 stringstream  ss;
+                auto s =m_parts[id];
                 ss<<"id is "<<id<<endl;
                 for(auto &b:m_parts[id].m_sbbs){
                     ss<<b.toString()<<endl;
+                }
+                for(auto &b:m_parts[id].m_computedDist){
+                    if(b.second.infer== false){
+                        ss<<b.first.first<<"\t"<<b.first.second<<"\t"<<b.second.opt<<endl;
+                    }
                 }
                 return ss.str();
             }
@@ -372,19 +378,13 @@ namespace SpatialIndex
 
             NNEntry* top();
 
-            NNEntry* pop();
+            NNEntry* pop(int type);
             void clean(){
                 m_mpq.clean();
                 m_nodespq.clean();
             }
 
-            auto push(NNEntry* e){
-                if(e->m_type==0||e->m_type==1){
-                    return m_nodespq.push(e);
-                }else{
-                    return m_mpq.push(e);
-                }
-            }
+            void push(NNEntry* e);
 
             auto empty(){return m_mpq.empty()&&m_nodespq.empty();}
             id_type getOneMissingPart(id_type id) {

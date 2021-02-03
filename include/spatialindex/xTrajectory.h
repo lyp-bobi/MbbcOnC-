@@ -22,6 +22,36 @@ extern double splitSoftThres;
 
 namespace SpatialIndex
 {
+    struct LOCALE{
+        uint32_t prev;
+        double place;
+        LOCALE(uint32_t a, double b)
+                :prev(a), place(b){}
+    };
+    static inline LOCALE locateTime(std::vector<xPoint> &mp,double t) {
+        int low = 0;
+        int high = mp.size()-1;
+        int mid;
+        if(t<=mp.front().m_t) return LOCALE(0,0);
+        if(t>= mp.back().m_t) return LOCALE(mp.size()-1,0);
+        while(low<=high){
+            mid = (low+high)/2;
+            if(mp[mid].m_t>t)
+                high=mid-1;
+            else if(mp[mid].m_t<t)
+                low=mid+1;
+            else{
+                return LOCALE(mid,0);
+            }
+        }
+        low -=1;high+=1;
+        return LOCALE(low,(t-mp[low].m_t)/(mp[high].m_t - mp[low].m_t));
+    }
+    static inline xPoint* pos(std::vector<xPoint> &mp, const LOCALE &p, double t){
+        double x = (1-p.place) * mp[p.prev].m_x + (p.place) * mp[p.prev+1].m_x;
+        double y = (1-p.place) * mp[p.prev].m_y + (p.place) * mp[p.prev+1].m_y;
+        return new xPoint(x,y,t);
+    }
 
     class SIDX_DLL xTrajectory: public Tools::IObject, public virtual IxShape{
 
@@ -34,8 +64,8 @@ namespace SpatialIndex
             xPoint *m_back = nullptr;
             std::vector<xPoint> *m_vectorPointer;
             ~fakeTpVector(){
-                delete(m_front);
-                delete(m_back);
+                if(m_front) delete(m_front);
+                if(m_back) delete(m_back);
             }
             fakeTpVector(const std::vector<xPoint> *vector,double ts,double te)
             {
@@ -43,24 +73,20 @@ namespace SpatialIndex
                 if(ts==te) return;
                 if(ts>m_vectorPointer->back().m_t || te < m_vectorPointer->front().m_t) return;
                 m_is=0;
-                int m_ie=m_vectorPointer->size()-1;
-                while(m_vectorPointer->at(m_is).m_t < ts) m_is++;
-                while(m_vectorPointer->at(m_ie).m_t > te) m_ie--;
-                if(m_is!=0&& m_vectorPointer->at(m_is).m_t != ts){
-                    double x=makemidmacro(m_vectorPointer->at(m_is-1).m_x, m_vectorPointer->at(m_is-1).m_t,
-                                          m_vectorPointer->at(m_is).m_x, m_vectorPointer->at(m_is).m_t, ts);
-                    double y=makemidmacro(m_vectorPointer->at(m_is-1).m_y, m_vectorPointer->at(m_is-1).m_t,
-                                          m_vectorPointer->at(m_is).m_y, m_vectorPointer->at(m_is).m_t, ts);
-                    m_front=new xPoint(x,y,ts);
-                    m_is--;
+                int m_ie;
+                LOCALE s = locateTime(*m_vectorPointer, ts);
+                LOCALE e = locateTime(*m_vectorPointer, te);
+                if(s.place == 0){
+                    m_is = s.prev;
+                }else{
+                    m_is = s.prev;
+                    m_front = pos(*m_vectorPointer,s,ts);
                 }
-                if(m_ie!=m_vectorPointer->size()-1&& m_vectorPointer->at(m_ie).m_t != te){
-                    double x=makemidmacro(m_vectorPointer->at(m_ie).m_x, m_vectorPointer->at(m_ie).m_t,
-                                          m_vectorPointer->at(m_ie+1).m_x, m_vectorPointer->at(m_ie+1).m_t, te);
-                    double y=makemidmacro(m_vectorPointer->at(m_ie).m_y, m_vectorPointer->at(m_ie).m_t,
-                                          m_vectorPointer->at(m_ie+1).m_y, m_vectorPointer->at(m_ie+1).m_t, te);
-                    m_back=new xPoint(x,y,te);
-                    m_ie++;
+                if(e.place ==0){
+                    m_ie = e.prev;
+                }else{
+                    m_ie = e.prev+1;
+                    m_back = pos(*m_vectorPointer,e,te);
                 }
                 m_size=m_ie-m_is+1;
             }

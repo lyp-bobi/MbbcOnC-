@@ -20,7 +20,7 @@ int main(){
     query.checkRel(s);
     MyVisitor vis;
     try {
-        bUsingSBBD = false;
+        bUsingSBBD = true;
         for (auto querylen:querylens) {
             tjstat->bt = querylen;
             auto r = buildMBCRTreeWP(&x, xTrajectory::ISS,querylen);
@@ -48,7 +48,7 @@ int main(){
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
             vis.clear();
         }
-        bUsingSBBD = true;
+        bUsingSBBD = false;
         for (auto querylen:querylens) {
             tjstat->bt = querylen;
             auto r = buildMBCRTreeWP(&x, xTrajectory::ISS,querylen);

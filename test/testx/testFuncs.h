@@ -56,30 +56,24 @@
 using namespace std;
 using namespace SpatialIndex;
 using namespace xRTreeNsp;
-
+#ifdef TJDEBUG
+#define NUMCORE 1
+#else
 #define NUMCORE 4
+#endif
 #define NUMTHREAD (NUMCORE)
 extern bool testxfirstOutput = true;
 extern double testtime = 4000;
 using namespace std;
 
 static int drop_cache(int drop) {
-    int ret = 0;
 #if !WIN32
-    int fd = 0;
     sync();
-    fd = open("/proc/sys/vm/drop_caches", O_RDWR);
-    if (fd < 0) {
-        return -1;
-    }
-    char dropData[32] = {0};
-    int dropSize = snprintf(dropData, sizeof(dropData), "%d", drop);
-
-    ret = write(fd, dropData, dropSize);
-    close(fd);
+    ofstream ofs("/proc/sys/vm/drop_caches");
+    ofs<< "3"<<endl;
+    ofs.close();
 #endif
-    return ret;
-
+    return 0;
 }
 
 
@@ -111,7 +105,9 @@ public:
         auto mou=dynamic_cast<const xRTreeNsp::xRTree::simpleData*>(&d);
         if(mou!=nullptr){
             m_lastDist=mou->m_dist;
-//            cerr << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
+#ifdef TJDEBUG
+            cerr <<"result" << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
+#endif
         }
     }
 
@@ -688,6 +684,7 @@ struct queryRet{
     double leaf2 = 0;
     double indexIO=0;
     double trajIO=0;
+    double nresult=0;
     queryRet operator+(const queryRet& r) const{
         queryRet res;
         res.time= time+r.time;
@@ -697,6 +694,7 @@ struct queryRet{
         res.leaf2= leaf2+r.leaf2;
         res.indexIO= indexIO+r.indexIO;
         res.trajIO= trajIO+r.trajIO;
+        res.nresult = nresult+r.nresult;
         return res;
     }
     string toString() const{
@@ -705,7 +703,7 @@ struct queryRet{
             testxfirstOutput =false;
             s<<"time\tindexVisit\tleafVisit\tindexIO\ttrajIO\n";
         }
-        s<<time<<"\t"<<indexVisit<<"\t"<<leafVisit<<"\t"<<indexIO<<"\t"<<trajIO<<"\t"<<leaf1<<"\t"<<leaf2<<"\n";
+        s<<time<<"\t"<<indexVisit<<"\t"<<leafVisit<<"\t"<<indexIO<<"\t"<<trajIO<<"\t"<<leaf1<<"\t"<<leaf2<<"\t"<<nresult<<"\n";
         return s.str();
     }
 };
@@ -721,6 +719,7 @@ static queryRet average(vector<queryRet> &sum){
     res.leaf2/=sum.size();
     res.indexIO/=sum.size();
     res.trajIO/=sum.size();
+    res.nresult/=sum.size();
     return res;
 }
 
@@ -741,24 +740,26 @@ struct queryInput{
 static void QueryBatchThread(queryInput inp, queryRet *res) {
     xStore * ts = inp.tree->m_ts;
     ts->cleanStatistic();
-    drop_cache(3);
-    int num = inp.knn_queries.size();
+    int num;
     MyVisitor vis;
     vis.ts = ts;
     auto start = std::chrono::system_clock::now();
     double rad = 0;
-    int indio = 0;
-    std::vector<int> indios;
     if(inp.type == qt_knn) {
+        num = inp.knn_queries.size();
         for (int i = 0; i < inp.knn_queries.size(); i++) {
             vis.m_query = (IShape *) &(inp.knn_queries.at(i));
             inp.tree->nearestNeighborQuery(inp.nnk, inp.knn_queries.at(i), vis);
             rad += vis.m_lastDist;
-            indios.emplace_back(ts->m_indexIO - indio);
-            indio = ts->m_indexIO;
+        }
+    }else if(inp.type == qt_range){
+        num = inp.range_queries.size();
+        for (int i = 0; i < inp.range_queries.size(); i++) {
+            vis.m_query = (IShape *) &(inp.range_queries.at(i));
+            inp.tree->intersectsWithQuery(inp.range_queries.at(i), vis);
+            rad += vis.m_lastDist;
         }
     }
-    rad /= inp.knn_queries.size();
     double time;
     auto end = std::chrono::system_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
@@ -770,6 +771,7 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
     res->leaf2 = 1.0 * ts->m_leaf2 / num;
     res->indexIO = 1.0 * ts->m_indexIO / num;
     res->trajIO = 1.0 * ts->m_trajIO / num;
+    res->nresult = 1.0 * vis.m_resultGet / num;
     return;
 }
 
@@ -827,6 +829,7 @@ public:
         }
     }
     queryRet runQueries(){
+        drop_cache(3);
         for(int i=0;i<nthread;i++) {
             m_ths.emplace_back(thread(QueryBatchThread, m_queries[i], &m_res[i]));
         }

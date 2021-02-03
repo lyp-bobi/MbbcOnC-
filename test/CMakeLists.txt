@@ -97,6 +97,10 @@ set (SOURCES
         splitMethod
         speedEstimator
         rangeQuery
+        changek
+        fractal
+        01.e2eknn
+        mbcknn
         )
 
 foreach (test ${SOURCES})

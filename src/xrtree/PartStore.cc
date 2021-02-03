@@ -13,17 +13,18 @@ void PartsStore::Parts::insert(xSBB &r, id_type prev, id_type next, xStoreEntry 
         for(;j!=m_sbbs.end()&&j->startTime()<r.startTime();j++);
         m_sbbs.insert(j,r);
     }
-    m_loadedTime+=r.endTime()-r.startTime();
+    m_loadedTime += min(r.endTime(),m_ps->m_query.m_endTime())-
+                                max(r.startTime(),m_ps->m_query.m_startTime());
     if(r.endTime()>m_maxtime){
-        m_maxtime=r.endTime();
-        if(next==-1) {
+        m_maxtime=min(r.endTime(),m_ps->m_query.m_endTime());
+        if(next==-1||r.endTime()>m_ps->m_query.m_endTime()) {
             m_hasNext=false;
             m_loadedTime+=m_ps->m_query.m_endTime()-m_maxtime;
         }
     }
     if(r.startTime()<m_mintime){
-        m_mintime=r.startTime();
-        if(prev==-1) {
+        m_mintime=max(r.startTime(),m_ps->m_query.m_startTime());
+        if(prev==-1||r.startTime()<m_ps->m_query.m_startTime()) {
             m_hasPrev=false;
             m_loadedTime+=m_mintime-m_ps->m_query.m_startTime();
         }
@@ -36,8 +37,6 @@ void PartsStore::Parts::insert(xSBB &r, id_type prev, id_type next, xStoreEntry 
 void PartsStore::insert(id_type id, xSBB &b, id_type prev, id_type next, xStoreEntry &entry) {
     if(m_parts.count(id)==0){
         m_parts[id]=Parts(this);
-        m_parts[id].m_loadedTime = min(b.endTime(),m_query.m_endTime())-
-                                   max(b.startTime(),m_query.m_startTime());
     }
     m_parts[id].insert(b,prev,next,entry);
 }
@@ -47,14 +46,17 @@ DISTE PartsStore::updateValue(id_type id) {
     double computedTime = 0;
     DISTE pd;
     DISTE res;
+    bool needComp =false;
     std::pair<double, double> timeInterval;
+    std::map<std::pair<double,double>,DISTE>::iterator  iter;
     //inferred distance(front dist, back dist and mid dist) should be stored as negative values
     //front dist
     if (parts->m_mintime > m_query.m_startTime()) {
         timeInterval.first=m_query.m_startTime();
         timeInterval.second=parts->m_mintime;
-        if (parts->m_computedDist.count(timeInterval) > 0) {
-            pd= parts->m_computedDist[timeInterval];
+        iter = parts->m_computedDist.find(timeInterval);
+        if(iter != parts->m_computedDist.end()){
+            pd= iter->second;
         } else {
             if (parts->m_hasPrev) {
                 pd = m_query.frontDist(parts->m_sbbs.front(),stat->vmax);
@@ -66,7 +68,7 @@ DISTE PartsStore::updateValue(id_type id) {
             }
         }
         //we don't know if it has sbbs, so can't use
-        if(tjstat->regular&&parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+        if(tjstat->regular&&iter->second.infer&&!m_nodespq.empty()){
             pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
                                       (timeInterval.second - timeInterval.first) /
                                       (m_query.m_endTime() - m_query.m_startTime()));
@@ -78,10 +80,11 @@ DISTE PartsStore::updateValue(id_type id) {
     const xSBB *prev= nullptr;
     for (const auto &box:parts->m_sbbs) {
         //this box
-        timeInterval.first=box.startTime();
-        timeInterval.second=box.endTime();
-        if (parts->m_computedDist.count(timeInterval) > 0) {
-            pd = parts->m_computedDist[timeInterval];
+        timeInterval.first=max(box.startTime(),m_query.m_startTime());
+        timeInterval.second=min(box.endTime(), m_query.m_endTime());
+        iter = parts->m_computedDist.find(timeInterval);
+        if(iter != parts->m_computedDist.end()&&!(iter->second.infer)){
+            pd= iter->second;
         } else {
             pd = DISTE(m_query.sbbDist(box));
             parts->m_computedDist[timeInterval] = pd;
@@ -93,13 +96,14 @@ DISTE PartsStore::updateValue(id_type id) {
             if (prev->endTime() < box.startTime()) {
                 timeInterval.first=prev->endTime();
                 timeInterval.second=box.startTime();
-                if (parts->m_computedDist.count(timeInterval) > 0) {
-                    pd= parts->m_computedDist[timeInterval];
+                iter = parts->m_computedDist.find(timeInterval);
+                if(iter != parts->m_computedDist.end()){
+                    pd= iter->second;
                 } else {
                     pd = m_query.gapDist(*prev, box, stat->vmax);
                     parts->m_computedDist[timeInterval] = pd;
                 }
-                if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+                if(iter->second.infer&&!m_nodespq.empty()){
                     pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
                                               (timeInterval.second - timeInterval.first) /
                                               (m_query.m_endTime() - m_query.m_startTime()));
@@ -114,8 +118,9 @@ DISTE PartsStore::updateValue(id_type id) {
     if (parts->m_maxtime < m_query.m_endTime()) {
         timeInterval.first=parts->m_maxtime;
         timeInterval.second=m_query.m_endTime();
-        if (parts->m_computedDist.count(timeInterval) > 0) {
-            pd= parts->m_computedDist[timeInterval];
+        iter = parts->m_computedDist.find(timeInterval);
+        if(iter != parts->m_computedDist.end()){
+            pd= iter->second;
         } else {
             if (parts->m_hasNext) {
                 pd = m_query.backDist(parts->m_sbbs.back(),stat->vmax);
@@ -127,7 +132,7 @@ DISTE PartsStore::updateValue(id_type id) {
             }
         }
         //we don't know if it has sbbs, so can't use
-        if(tjstat->regular&&parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
+        if(tjstat->regular&&iter->second.infer&&!m_nodespq.empty()){
             pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
                                       (timeInterval.second - timeInterval.first) /
                                       (m_query.m_endTime() - m_query.m_startTime()));
@@ -181,26 +186,43 @@ void PartsStore::loadLeaf(const Node &n, double dist) {
 }
 
 NNEntry* PartsStore::top() {
-    if(!m_mpq.empty()&&m_mpq.top()->m_type==2){
-        id_type lastid=m_mpq.top()->m_id;
-        updateValue(lastid);
-        m_mpq.updateOrder(m_handlers[lastid]);
-        while(m_mpq.top()->m_type==2&&m_mpq.top()->m_id!=lastid){
-            lastid=m_mpq.top()->m_id;
+    id_type lastid = -1;
+    if(m_nodespq.empty()) {
+        while(m_mpq.top()->m_type==2&&lastid!=m_mpq.top()->m_id) {
+            lastid = m_mpq.top()->m_id;
             updateValue(lastid);
             m_mpq.updateOrder(m_handlers[lastid]);
         }
-    }
-    if(!m_mpq.empty()&&(m_nodespq.empty()|| m_mpq.top()->m_dist < m_nodespq.top()->m_dist))
         return m_mpq.top();
-    else
-        return m_nodespq.top();
+    }
+    while(true){
+        if(m_mpq.empty()||m_nodespq.top()->m_dist < m_mpq.top()->m_dist){
+            return m_nodespq.top();
+        }
+        if(m_mpq.top()->m_type==4)
+            return m_mpq.top();
+        if(lastid!=m_mpq.top()->m_id) {
+            lastid = m_mpq.top()->m_id;
+            updateValue(lastid);
+            m_mpq.updateOrder(m_handlers[lastid]);
+        } else{
+            return m_mpq.top();
+        }
+    }
 }
 
-NNEntry* PartsStore::pop() {
-    if(!m_mpq.empty()&&(m_nodespq.empty()|| m_mpq.top()->m_dist < m_nodespq.top()->m_dist))
-        return m_mpq.pop();
-    else
+
+NNEntry* PartsStore::pop(int type) {
+    if(type <2)
         return m_nodespq.pop();
+    else
+        return m_mpq.pop();
 }
 
+void PartsStore::push(NNEntry *e) {
+    if(e->m_type==0||e->m_type==1){
+        m_nodespq.push(e);
+    }else{
+        m_mpq.push(e);
+    }
+}
