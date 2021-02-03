@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
 ******************************************************************************/
-
-#pragma once
+#ifndef SPATIALINDEX_H
+#define SPATIALINDEX_H
 
 #include "tools/Tools.h"
 #include "tools/MutablePriorityQueue.h"
@@ -331,6 +331,7 @@ namespace SpatialIndex
 		double dist=0;
 		double Df =2; //fractral dimension
 		double f = 50,fp=170; //fanout, point capacity
+		bool regular = false;
 		string dataset = "";
 		static trajStat* instance();
 		void init(){
@@ -373,6 +374,7 @@ namespace SpatialIndex
                 Sr = 0.5;
                 Df = 1.56;
                 P = 5333150;
+                regular = true;
                 std::cerr<<"use td sta\n";
             }
 			else if(dataset == "td"){
@@ -384,6 +386,7 @@ namespace SpatialIndex
 				Sr = 0.5;
 				Df = 1.56;
 				P = 533315;
+				regular = true;
 				std::cerr<<"use td sta\n";
 			}
 			else if (dataset == "od"){
@@ -562,3 +565,4 @@ extern SpatialIndex::trajStat *tjstat;
 // typedef SpatialIndex::Tools::PoolPointer<Point> PointPtr;
 // typedef SpatialIndex::Tools::PoolPointer<TimeRegion> TimeRegionPtr;
 // typedef SpatialIndex::Tools::PoolPointer<MovingRegion> MovingRegionPtr;
+#endif

@@ -63,18 +63,19 @@ xStore::~xStore() {
 xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
     m_name = myname;
     m_pageSize = 4096;
+    string filename = filedirprefix+myname;
 #define fp (int(m_pageSize/sizeof(prexp)/3))
-    if ((!forceNew) && CheckFilesExists(myname)) {
+    if ((!forceNew) && CheckFilesExists(filename)) {
 //        std::cerr << "using existing xStore " << myname << endl;
-        m_pStorageManager = loadDiskStorageManager(myname);
-        ifstream propFile(myname + ".property", ios::in);
+        m_pStorageManager = loadDiskStorageManager(filename);
+        ifstream propFile(filedirprefix+myname + ".property", ios::in);
         propFile >> m_property;
         propFile.close();
         if(tjstat->lineCount==0) { /* only load it when not inited*/
             tjstat->fromString(m_property["tjstat"]);
         }
         m_bSubTraj = m_property["bSubTraj"];
-        ifstream trajidxFile(m_name + ".trajidx", ios::in);
+        ifstream trajidxFile(filedirprefix+m_name + ".trajidx", ios::in);
         id_type size, id, page, off;
         trajidxFile >> size;
         for (int i = 0; i < size; i++) {
@@ -85,7 +86,7 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
     } else {
         m_bSubTraj = bsubtraj;
         std::cerr << "start loading " << file << " into " << myname << "\n";
-        m_pStorageManager = createNewDiskStorageManager(myname, m_pageSize);
+        m_pStorageManager = createNewDiskStorageManager(filename, m_pageSize);
         m_property["trajfile"] = file;
         tjstat->init();
         ifstream inFile(file, ios::in);
@@ -295,10 +296,10 @@ xPoint xStore::randomPoint() {
 void xStore::flush() {
     if(m_isro) return;
     m_pStorageManager->flush();
-    ofstream propFile(m_name + ".property", ios::out);
+    ofstream propFile(filedirprefix+m_name + ".property", ios::out);
     propFile << m_property;
     propFile.close();
-    ofstream trajidxFile(m_name + ".trajidx", ios::out);
+    ofstream trajidxFile(filedirprefix+m_name + ".trajidx", ios::out);
     trajidxFile << m_trajIdx.size() << endl;
     for (auto s = m_trajIdx.begin(); s != m_trajIdx.end(); s++) {
         trajidxFile << s->first << " " << s->second->m_page << " " << s->second->m_npoint << "\n";

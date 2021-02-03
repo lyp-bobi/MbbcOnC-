@@ -125,6 +125,7 @@ set(SIDX_XRTREE_CPP
         "${SIDX_SRC_DIR}/xrtree/Node.h"
         "${SIDX_SRC_DIR}/xrtree/PointerPoolNode.h"
         "${SIDX_SRC_DIR}/xrtree/xRTree.cc"
+        "${SIDX_SRC_DIR}/xrtree/PartStore.cc"
         "${SIDX_SRC_DIR}/xrtree/xRTree.h"
         "${SIDX_SRC_DIR}/xrtree/Statistics.cc"
         "${SIDX_SRC_DIR}/xrtree/Statistics.h"

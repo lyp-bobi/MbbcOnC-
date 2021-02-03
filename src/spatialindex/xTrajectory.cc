@@ -1002,7 +1002,7 @@ double xTrajectory::nodeDist(const xSBB &b) const {
         double pd = line2MBRMinSED(timedTraj[i], timedTraj[i+1], n);
         min=std::min(min,pd);
     }
-    if(min>=1e300) return 0;
+    if(min<0) return 0;
     return min*(m_endTime()-m_startTime());
 }
 

@@ -705,7 +705,7 @@ struct queryRet{
             testxfirstOutput =false;
             s<<"time\tindexVisit\tleafVisit\tindexIO\ttrajIO\n";
         }
-        s<<time<<"\t"<<indexVisit<<"\t"<<leafVisit<<"\t"<<indexIO<<"\t"<<trajIO<<"\n";
+        s<<time<<"\t"<<indexVisit<<"\t"<<leafVisit<<"\t"<<indexIO<<"\t"<<trajIO<<"\t"<<leaf1<<"\t"<<leaf2<<"\n";
         return s.str();
     }
 };

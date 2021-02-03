@@ -9,7 +9,11 @@
 #define CUTFUNC_PARA function<queue<CUTENTRY>(xTrajectory&, double)>
 #include <spatialindex/SpatialIndex.h>
 #include <cstring>
-
+#if !WIN32
+#define filedirprefix "/root/run/"
+#else
+#define filedirprefix "D://run/"
+#endif
 using namespace SpatialIndex;
 using namespace SpatialIndex::StorageManager;
 using std::vector;
