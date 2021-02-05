@@ -90,18 +90,18 @@ namespace SpatialIndex
                 }
                 m_size=m_ie-m_is+1;
             }
-            xPoint& operator[](int n){
+            inline xPoint& operator[](int n){
                 if(n==0&&m_front!= nullptr) return *m_front;
                 if(n==m_size-1&&m_back!= nullptr) return *m_back;
-                return m_vectorPointer->at(m_is+n);
+                return (*m_vectorPointer)[m_is+n];
             }
-            xPoint& front(){
+            inline xPoint& front(){
                 if(m_front!= nullptr) return *m_front;
-                else return m_vectorPointer->at(m_is);
+                else return (*m_vectorPointer)[m_is];
             }
-            xPoint& back(){
+            inline xPoint& back(){
                 if(m_back!= nullptr) return *m_back;
-                return m_vectorPointer->at(m_is+m_size-1);
+                return (*m_vectorPointer)[m_is+m_size-1];
             }
         };
         xTrajectory();

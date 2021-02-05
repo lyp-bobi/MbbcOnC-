@@ -19,12 +19,8 @@ namespace SpatialIndex
         ~xSBB();
         xSBB &operator=(const xSBB &r);
 
-        void loadbr(xMBR &r);
-        void loadbc(xMBC &r);
-        void loadbl(xLine &r);
-
-        prex startTime() const;
-        prex endTime() const;
+        double m_startTime=1e300;
+        double m_endTime=1e300;
         double tdist(const xPoint &p) const;
 
         virtual bool operator==(const xSBB &r) const;
@@ -40,6 +36,8 @@ namespace SpatialIndex
 
         std::string toString() const ;
         void loadFromString(std::string s);
+
+        void loadFromByteArray(int type, const uint8_t* ptr);
 
         void init();
 

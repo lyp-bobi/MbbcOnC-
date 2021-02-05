@@ -101,6 +101,7 @@ set (SOURCES
         fractal
         01.e2eknn
         mbcknn
+        rangeDebug
         )
 
 foreach (test ${SOURCES})

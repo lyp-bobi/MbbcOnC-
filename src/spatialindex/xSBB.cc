@@ -18,31 +18,45 @@ xSBB::xSBB(const SpatialIndex::xSBB &in)
 :hasbr(in.hasbr),hasbc(in.hasbc),hasbl(in.hasbl){
     if(hasbr){
         br=in.br;
+        m_startTime=br.m_tmin;
+        m_endTime=br.m_tmax;
     }
     if(hasbc){
         bc=in.bc;
+        m_startTime=bc.m_ps.m_t;
+        m_endTime=bc.m_pe.m_t;
     }
     if(hasbl){
         bl=in.bl;
+        m_startTime=bl.m_ps.m_t;
+        m_endTime=bl.m_pe.m_t;
     }
 }
 xSBB::xSBB(xMBR &r){
     hasbr=true;
     br=r;
+    m_startTime=br.m_tmin;
+    m_endTime=br.m_tmax;
 }
 xSBB::xSBB(xMBC &r){
     hasbc=true;
     bc=r;
+    m_startTime=bc.m_ps.m_t;
+    m_endTime=bc.m_pe.m_t;
 }
 xSBB::xSBB(xLine &r){
     hasbl=true;
     bl=r;
+    m_startTime=bl.m_ps.m_t;
+    m_endTime=bl.m_pe.m_t;
 }
 xSBB::xSBB(xMBR &r, xMBC &r2) {
     hasbr=true;
     br=r;
     hasbc=true;
     bc=r2;
+    m_startTime=bc.m_ps.m_t;
+    m_endTime=bc.m_pe.m_t;
 }
 xSBB::xSBB(xPoint &r1, xPoint &r2) {
     hasbr=true;
@@ -55,6 +69,8 @@ xSBB::xSBB(xPoint &r1, xPoint &r2) {
     br.m_tmax = max(r1.m_t, r2.m_t);
     bl.m_ps = r1;
     bl.m_pe = r2;
+    m_startTime=br.m_tmin;
+    m_endTime=br.m_tmax;
 }
 xSBB::~xSBB(){
 }
@@ -66,6 +82,8 @@ xSBB& xSBB::operator=(const xSBB& in)
     br = in.br;
     bc=in.bc;
     bl=in.bl;
+    m_startTime=in.m_startTime;
+    m_endTime=in.m_endTime;
     return *this;
 }
 
@@ -82,21 +100,6 @@ xSBB* xSBB::clone() {
     return new xSBB(*this);
 }
 
-void xSBB::loadbr(xMBR &r) {
-    hasbr=true;
-    br = r;
-}
-
-void xSBB::loadbc(xMBC &r) {
-    hasbc=true;
-    bc = r;
-}
-
-void xSBB::loadbl(xLine &r) {
-    hasbl=true;
-    bl = r;
-}
-
 double xSBB::tdist(const xPoint &p) const {
     if(hasbr){
         return br.getMinimumDistance(p);
@@ -110,31 +113,6 @@ double xSBB::tdist(const xPoint &p) const {
     return 0;
 }
 
-double xSBB::startTime() const {
-    if(hasbr){
-        return br.m_tmin;
-    }
-    if(hasbc){
-        return bc.m_ps.m_t;
-    }
-    if(hasbl){
-        return bl.m_ps.m_t;
-    }
-    return 0;
-}
-
-double xSBB::endTime() const {
-    if(hasbr){
-        return br.m_tmax;
-    }
-    if(hasbc){
-        return bc.m_pe.m_t;
-    }
-    if(hasbl){
-        return bl.m_pe.m_t;
-    }
-    return 0;
-}
 
 
 std::string xSBB::toString() const {
@@ -175,6 +153,8 @@ void xSBB::loadFromString(std::string s) {
         br.m_xmax=std::stod(nums[cur++]);
         br.m_ymax=std::stod(nums[cur++]);
         br.m_tmax=std::stod(nums[cur++]);
+        m_startTime=br.m_tmin;
+        m_endTime=br.m_tmax;
     }
     if(hasbc) {
         bc.m_ps.m_x = std::stod(nums[cur++]);
@@ -185,6 +165,8 @@ void xSBB::loadFromString(std::string s) {
         bc.m_pe.m_t = std::stod(nums[cur++]);
         bc.m_rd = std::stod(nums[cur++]);
         bc.m_rv = std::stod(nums[cur++]);
+        m_startTime=bc.m_ps.m_t;
+        m_endTime=bc.m_pe.m_t;
     }
     if(hasbl) {
         bl.m_ps.m_x = std::stod(nums[cur++]);
@@ -193,6 +175,8 @@ void xSBB::loadFromString(std::string s) {
         bl.m_pe.m_x = std::stod(nums[cur++]);
         bl.m_pe.m_y = std::stod(nums[cur++]);
         bl.m_pe.m_t = std::stod(nums[cur++]);
+        m_startTime=bl.m_ps.m_t;
+        m_endTime=bl.m_pe.m_t;
     }
 }
 
@@ -200,4 +184,29 @@ void xSBB::init() {
     hasbr=false;
     hasbc=false;
     hasbl=false;
+}
+
+void xSBB::loadFromByteArray(int type, const uint8_t *ptr) {
+    switch (type) {
+        case 1:
+            hasbr=true;
+            br.loadFromByteArray(ptr);
+            m_startTime=br.m_tmin;
+            m_endTime = br.m_tmax;
+            break;
+        case 2:
+            hasbc=true;
+            bc.loadFromByteArray(ptr);
+            m_startTime=bc.m_ps.m_t;
+            m_endTime=bc.m_pe.m_t;
+            break;
+        case 3:
+            hasbl=true;
+            bl.loadFromByteArray(ptr);
+            m_startTime=bl.m_ps.m_t;
+            m_endTime=bl.m_pe.m_t;
+            break;
+        default:
+            throw Tools::IllegalArgumentException("xSBB:type shoulb be 1,2,3");
+    }
 }

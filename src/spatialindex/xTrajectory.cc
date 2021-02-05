@@ -1008,8 +1008,8 @@ double xTrajectory::nodeDist(const xSBB &b) const {
 
 DISTE xTrajectory::sbbDist(const xSBB &b) const {
     double tstart, tend;
-    tstart = std::max(m_startTime(), b.startTime());
-    tend = std::min(m_endTime(), b.endTime());
+    tstart = std::max(m_startTime(), b.m_startTime);
+    tend = std::min(m_endTime(), b.m_endTime);
     if(tstart>=tend) return DISTE(1e300);
     fakeTpVector timedTraj(&m_points,tstart,tend);
     DISTE res;
@@ -1032,8 +1032,8 @@ DISTE xTrajectory::sbbDist(const xSBB &b) const {
 DISTE xTrajectory::sbbDistInfer(const xSBB &b, double v) const {
     DISTE res = sbbDist(b);
     if(res.opt==1e300) return res;
-    if(m_startTime()<b.startTime()) res = res + frontDist(b,v);
-    if(m_endTime()>b.endTime()) res = res + backDist(b,v);
+    if(m_startTime()< b.m_startTime) res = res + frontDist(b, v);
+    if(m_endTime()> b.m_endTime) res = res + backDist(b, v);
     return res;
 }
 
@@ -1043,7 +1043,7 @@ static double ldd(double d,double v,double dt){
 }
 DISTE xTrajectory::frontDist(const xSBB &b, double v) const {
     double opti=0,pessi=0;
-    double ints=b.startTime();
+    double ints= b.m_startTime;
     xPoint p = getPointAtTime(ints);
     double ds = b.tdist(p);
     opti= ldd(ds,-v,ints-m_startTime());
@@ -1053,7 +1053,7 @@ DISTE xTrajectory::frontDist(const xSBB &b, double v) const {
 
 DISTE xTrajectory::backDist(const xSBB &b, double v) const {
     double opti=0,pessi=0;
-    double inte=b.endTime();
+    double inte= b.m_endTime;
     double de = b.tdist(getPointAtTime(inte));
     opti= ldd(de,-v,m_endTime()-inte);
     pessi= ldd(de,v,m_endTime()-inte);
@@ -1062,7 +1062,7 @@ DISTE xTrajectory::backDist(const xSBB &b, double v) const {
 
 DISTE xTrajectory::gapDist(const xSBB &prev,const xSBB &next, double v) const{
     double opti=0,pessi=0;
-    double ints=prev.endTime(),inte=next.startTime();
+    double ints= prev.m_endTime,inte= next.m_startTime;
     double ds = prev.tdist(getPointAtTime(ints));
     double de = prev.tdist(getPointAtTime(inte));
     double to=(ints+inte+(de-ds)/(v))/2;

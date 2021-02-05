@@ -316,7 +316,7 @@ namespace SpatialIndex
                         }
                     }
                     if(m_pq.size()<m_len){
-                        m_pq.push_back(std::make_pair(priority,id));
+                        m_pq.emplace_back(priority,id);
                         return true;
                     }
                 }
@@ -331,13 +331,14 @@ namespace SpatialIndex
             public:
                 PartsStore* m_ps;
                 std::set<id_type> m_missingLeaf, m_loadedLeaf;
-                std::list<xSBB> m_sbbs;
+                std::map<double,xSBB> m_sbbs;
                 std::map<std::pair<double,double>,DISTE> m_computedDist;
                 std::map<double,xStoreEntry> m_ses;
                 DISTE m_calcMin;
                 double m_mintime=1e300,m_maxtime=-1e300;
                 bool m_hasPrev=true,m_hasNext=true;
                 double m_computedTime=0,m_loadedTime=0;
+                bool is_modified = true;
                 Parts(PartsStore* ps= nullptr):m_ps(ps){}
                 void insert(xSBB &r,id_type prev,id_type next,xStoreEntry &entry);
             };
@@ -364,7 +365,7 @@ namespace SpatialIndex
                 auto s =m_parts[id];
                 ss<<"id is "<<id<<endl;
                 for(auto &b:m_parts[id].m_sbbs){
-                    ss<<b.toString()<<endl;
+                    ss<<b.second.toString()<<endl;
                 }
                 for(auto &b:m_parts[id].m_computedDist){
                     if(b.second.infer== false){

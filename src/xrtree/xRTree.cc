@@ -1090,8 +1090,8 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
 //                                std::cerr<<"";
 //                            }
                             pd = std::max(0.0, simpleTraj.sbbDistInfer(*n->m_ptrxSBB[cChild], tjstat->vmax).opt);
-                            ts = n->m_ptrxSBB[cChild]->startTime();
-                            te = n->m_ptrxSBB[cChild]->endTime();
+                            ts = n->m_ptrxSBB[cChild]->m_startTime;
+                            te = n->m_ptrxSBB[cChild]->m_endTime;
                             leafInfo *e = new leafInfo();
                             e->m_se = n->m_se[cChild];
                             e->m_hasPrev = (n->m_prevNode[cChild] != -1);

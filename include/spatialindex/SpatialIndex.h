@@ -376,7 +376,6 @@ namespace SpatialIndex
                 Sr = 0.5;
                 Df = 1.56;
                 P = 5333150;
-                regular = true;
                 std::cerr<<"use td sta\n";
             }
 			else if(dataset == "td"){
@@ -388,7 +387,6 @@ namespace SpatialIndex
 				Sr = 0.5;
 				Df = 1.56;
 				P = 533315;
-				regular = true;
 				std::cerr<<"use td sta\n";
 			}
 			else if (dataset == "od"){

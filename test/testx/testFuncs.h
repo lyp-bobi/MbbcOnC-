@@ -61,7 +61,7 @@ using namespace xRTreeNsp;
 #else
 #define NUMCORE 4
 #endif
-#define NUMTHREAD (NUMCORE)
+#define NUMTHREAD (NUMCORE*1.5)
 extern bool testxfirstOutput = true;
 extern double testtime = 4000;
 using namespace std;
