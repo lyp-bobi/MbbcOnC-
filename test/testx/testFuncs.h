@@ -63,7 +63,7 @@ extern double testtime = 10;
 #define NUMCORE 4
 extern double testtime = 1200;
 #endif
-#define NUMTHREAD (NUMCORE)
+#define NUMTHREAD (NUMCORE*1.5)
 extern bool testxfirstOutput = true;
 
 
@@ -802,7 +802,7 @@ public:
                       const function<xRTree*(IStorageManager*)> &treeBuilder){
         delete treeBuilder(x);
         for(int i=0;i<nthread;i++) {
-            m_stores.emplace_back(x->clone());
+            m_stores.emplace_back(new xStore(*x));
             m_trees.emplace_back(treeBuilder(m_stores.back()));
             queryInput q;
             q.tree = m_trees.back();
@@ -814,7 +814,7 @@ public:
     void prepareForest(xStore* x,map<pair<double, double>, double> &lens){
         delete buildSBBForest(x,xTrajectory::OPTS,lens);
         for(int i=0;i<nthread;i++) {
-            m_stores.emplace_back(x->clone());
+            m_stores.emplace_back(new xStore(*x));
             m_trees.emplace_back(buildSBBForest(m_stores.back(),xTrajectory::OPTS,lens));
             queryInput q;
             q.tree = m_trees.back();

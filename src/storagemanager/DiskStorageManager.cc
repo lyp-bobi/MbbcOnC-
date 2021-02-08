@@ -360,49 +360,78 @@ void DiskStorageManager::flush()
 
 void DiskStorageManager::loadByteArray(const id_type page, uint32_t& len, uint8_t** data)
 {
-    auto start = std::chrono::system_clock::now();
-	std::map<id_type, Entry*>::iterator it = m_pageIndex.find(page);
+    if(m_fakepageIndex == nullptr) {
+        std::map<id_type, Entry *>::iterator it = m_pageIndex.find(page);
 
-	if (it == m_pageIndex.end())
-		throw InvalidPageException(page);
+        if (it == m_pageIndex.end())
+            throw InvalidPageException(page);
 
-	std::vector<id_type>& pages = (*it).second->m_pages;
-	uint32_t cNext = 0;
-	uint32_t cTotal = static_cast<uint32_t>(pages.size());
+        std::vector<id_type> &pages = (*it).second->m_pages;
+        uint32_t cNext = 0;
+        uint32_t cTotal = static_cast<uint32_t>(pages.size());
 
-	len = (*it).second->m_length;
-	*data = new uint8_t[len];
+        len = (*it).second->m_length;
+        *data = new uint8_t[len];
 
-	uint8_t* ptr = *data;
-	uint32_t cLen;
-	uint32_t cRem = len;
+        uint8_t *ptr = *data;
+        uint32_t cLen;
+        uint32_t cRem = len;
 
-	do
-	{
-		m_dataFile.seekg(pages[cNext] * m_pageSize, std::ios_base::beg);
-		if (m_dataFile.fail())
-			throw Tools::IllegalStateException("SpatialIndex::DiskStorageManager: Corrupted data file.");
+        do {
+            m_dataFile.seekg(pages[cNext] * m_pageSize, std::ios_base::beg);
+            if (m_dataFile.fail())
+                throw Tools::IllegalStateException("SpatialIndex::DiskStorageManager: Corrupted data file.");
 
-		m_dataFile.read(reinterpret_cast<char*>(m_buffer), m_pageSize);
-		if (m_dataFile.fail())
-			throw Tools::IllegalStateException("SpatialIndex::DiskStorageManager: Corrupted data file.");
+            m_dataFile.read(reinterpret_cast<char *>(m_buffer), m_pageSize);
+            if (m_dataFile.fail())
+                throw Tools::IllegalStateException("SpatialIndex::DiskStorageManager: Corrupted data file.");
 
-		cLen = (cRem > m_pageSize) ? m_pageSize : cRem;
-		memcpy(ptr, m_buffer, cLen);
+            cLen = (cRem > m_pageSize) ? m_pageSize : cRem;
+            memcpy(ptr, m_buffer, cLen);
 
-		ptr += cLen;
-		cRem -= cLen;
-		++cNext;
-	}
-	while (cNext < cTotal);
-    auto end = std::chrono::system_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    iotime+=double(duration.count()) * std::chrono::microseconds::period::num
-            / std::chrono::microseconds::period::den;
+            ptr += cLen;
+            cRem -= cLen;
+            ++cNext;
+        } while (cNext < cTotal);
+    }else{
+        std::map<id_type, Entry *>::iterator it = m_fakepageIndex->find(page);
+
+        if (it == m_fakepageIndex->end())
+            throw InvalidPageException(page);
+
+        std::vector<id_type> &pages = (*it).second->m_pages;
+        uint32_t cNext = 0;
+        uint32_t cTotal = static_cast<uint32_t>(pages.size());
+
+        len = (*it).second->m_length;
+        *data = new uint8_t[len];
+
+        uint8_t *ptr = *data;
+        uint32_t cLen;
+        uint32_t cRem = len;
+
+        do {
+            m_dataFile.seekg(pages[cNext] * m_pageSize, std::ios_base::beg);
+            if (m_dataFile.fail())
+                throw Tools::IllegalStateException("SpatialIndex::DiskStorageManager: Corrupted data file.");
+
+            m_dataFile.read(reinterpret_cast<char *>(m_buffer), m_pageSize);
+            if (m_dataFile.fail())
+                throw Tools::IllegalStateException("SpatialIndex::DiskStorageManager: Corrupted data file.");
+
+            cLen = (cRem > m_pageSize) ? m_pageSize : cRem;
+            memcpy(ptr, m_buffer, cLen);
+
+            ptr += cLen;
+            cRem -= cLen;
+            ++cNext;
+        } while (cNext < cTotal);
+    }
 }
 
 void DiskStorageManager::storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data)
 {
+    if(m_isro) throw Tools::IllegalStateException("DiskStorageManger:can't write a ro file");
 	if (page == NewPage)
 	{
 //        std::cout<<"page id"<<page<<std::endl;
@@ -515,7 +544,9 @@ void DiskStorageManager::storeByteArray(id_type& page, const uint32_t len, const
 
 void DiskStorageManager::deleteByteArray(const id_type page)
 {
-	std::map<id_type, Entry*>::iterator it = m_pageIndex.find(page);
+    if(m_isro) throw Tools::IllegalStateException("DiskStorageManger:can't write a ro file");
+
+    std::map<id_type, Entry*>::iterator it = m_pageIndex.find(page);
 
 	if (it == m_pageIndex.end())
 		throw InvalidPageException(page);
@@ -527,4 +558,26 @@ void DiskStorageManager::deleteByteArray(const id_type page)
 
 	delete (*it).second;
 	m_pageIndex.erase(it);
+}
+
+
+DiskStorageManager::DiskStorageManager(DiskStorageManager &r,string &name) {
+    assert(!r.m_isro);
+    std::string sIndexFile = name + ".idx";
+    std::string sDataFile = name + ".dat";
+    std::ios_base::openmode mode = std::ios::in | std::ios::out | std::ios::binary;
+    m_indexFile.open(sIndexFile.c_str(), mode);
+    m_dataFile.open(sDataFile.c_str(), mode);
+    if(m_indexFile.fail()){
+        cerr<<strerror(errno);
+    }
+    if(m_dataFile.fail()){
+        cerr<<strerror(errno);
+    }
+    m_fakepageIndex = &r.m_pageIndex;
+    m_pageSize=r.m_pageSize;
+    m_isro=true;
+    // create buffer.
+    m_buffer = new uint8_t[m_pageSize];
+    memset(m_buffer, 0, m_pageSize);
 }

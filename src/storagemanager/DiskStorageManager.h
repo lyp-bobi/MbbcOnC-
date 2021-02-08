@@ -35,6 +35,8 @@ namespace SpatialIndex
 		{
 		public:
 			DiskStorageManager(Tools::PropertySet&);
+
+            DiskStorageManager(DiskStorageManager &r, string &name);
 			virtual ~DiskStorageManager();
 
 			virtual void flush();
@@ -57,10 +59,10 @@ namespace SpatialIndex
 			id_type m_nextPage;
 			std::set<id_type> m_emptyPages;
 			std::map<id_type, Entry*> m_pageIndex;
+            std::map<id_type, Entry*> *m_fakepageIndex= nullptr;
 
 			uint8_t* m_buffer;
         public:
-			double iotime=0;
 			id_type nextPage() override {return m_nextPage;}
 		}; // DiskStorageManager
 	}

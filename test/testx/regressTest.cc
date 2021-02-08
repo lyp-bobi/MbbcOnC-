@@ -5,11 +5,12 @@
 
 int main(){
     string target = "tdexpand.txt";
-    xStore x(target, testFileName(target), true);
+    xStore xx(target, testFileName(target), true);
+    xStore x(xx);
     double seglen[]={600,900,1200,1800};
     xCylinder query(xPoint(40,116.327,6516),0.0001,6516,9516,2);
     xTrajectory tj,tj2;
-    x.loadTraj(tj, xStoreEntry(1850,0,1000));
+    x.loadTraj(tj, xStoreEntry(8,0,1000));
     x.loadTraj(tj2,xStoreEntry(1858,0, 10000));
 //    tj.getMinimumDistance(tj2);
 //    x.loadTraj(tj, xStoreEntry(4337,0,1000));

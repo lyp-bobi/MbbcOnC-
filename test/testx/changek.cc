@@ -15,7 +15,7 @@ int main(){
         xStore x(target, testFileName(target), true);
         vector<xTrajectory> queries;
         fillQuerySet(queries,x,qt);
-        for(int k = 6;k<=201;k+=10) {
+        for(int k = 6;k<=21;k+=10) {
             cerr<<"k is " << k<<endl;
 
 //            xTrajectory tj;

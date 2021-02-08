@@ -63,7 +63,7 @@ namespace SpatialIndex
         public:
             ~xStore();
             xStore(string myname, string file, bool subtrajs=true, bool forceNew=false);
-            xStore* clone() const;
+            xStore(xStore &r);
             void flush();
             void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
                 auto start = std::chrono::system_clock::now();
@@ -93,6 +93,7 @@ namespace SpatialIndex
 
             json m_property;
             std::map<id_type,xTrajEntry*> m_trajIdx;
+            std::map<id_type,xTrajEntry*> *m_faketrajIdx= nullptr;
             IStorageManager* m_pStorageManager;
             std::string m_name;
             bool m_bSubTraj=false;

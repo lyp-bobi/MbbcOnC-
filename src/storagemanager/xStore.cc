@@ -2,6 +2,7 @@
 // Created by Chuang on 2019/6/10.
 //
 #include "storagemanager/xStore.h"
+#include "DiskStorageManager.h"
 #include <cmath>
 #include <cstring>
 #include <sys/stat.h>
@@ -184,15 +185,28 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
 
 }
 
-xStore * xStore::clone() const {
-    xStore* res= new xStore(m_name, m_property["trajfile"],m_bSubTraj);
-    res->m_isro = true;
-    res->m_pStorageManager->m_isro=true;
-    return res;
+xStore::xStore(xStore &r) {
+    assert(!r.m_isro);
+    m_name=r.m_name;
+    m_pageSize=r.m_pageSize;
+    string filename = filedirprefix+m_name;
+    DiskStorageManager* d = dynamic_cast<DiskStorageManager *>(r.m_pStorageManager);
+    m_pStorageManager = new DiskStorageManager(*d,filename);
+    ifstream propFile(filedirprefix+m_name + ".property", ios::in);
+    propFile >> m_property;
+    propFile.close();
+    m_bSubTraj = m_property["bSubTraj"];
+    m_faketrajIdx = &r.m_trajIdx;
+    m_isro = true;
 }
 
 void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
-    auto te = m_trajIdx[e.m_id];
+    xTrajEntry * te;
+    if(m_faketrajIdx== nullptr) {
+        te = m_trajIdx[e.m_id];
+    }else{
+        te = (*m_faketrajIdx)[e.m_id];
+    }
     uint32_t ms = min(te->m_npoint - 1, e.m_s), me = min(te->m_npoint - 1, e.m_e);
     //test code
 //    std::cerr<<"test id "<<e.m_id<<endl;
@@ -262,19 +276,35 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
 }
 
 xTrajectory xStore::randomSubtraj(double len) {
-    int rnd = random(0, m_trajIdx.size() - 1);
-    int i=0;
-    xTrajectory tj,tj2;
-    for (auto key:m_trajIdx) {
-        if (i == rnd) {
-            loadTraj(tj, xStoreEntry(key.first, 0, 1000000));
-            double t = tj.randomPoint().m_t;
-            tj.getPartialxTrajectory(t-len/2,t+len/2,tj2);
-            return tj2;
+    if(m_faketrajIdx== nullptr) {
+        int rnd = random(0, m_trajIdx.size() - 1);
+        int i = 0;
+        xTrajectory tj, tj2;
+        for (auto key:m_trajIdx) {
+            if (i == rnd) {
+                loadTraj(tj, xStoreEntry(key.first, 0, 1000000));
+                double t = tj.randomPoint().m_t;
+                tj.getPartialxTrajectory(t - len / 2, t + len / 2, tj2);
+                return tj2;
+            }
+            i++;
         }
-        i++;
+        return tj;
+    }else{
+        int rnd = random(0, m_faketrajIdx->size() - 1);
+        int i = 0;
+        xTrajectory tj, tj2;
+        for (auto key:*m_faketrajIdx) {
+            if (i == rnd) {
+                loadTraj(tj, xStoreEntry(key.first, 0, 1000000));
+                double t = tj.randomPoint().m_t;
+                tj.getPartialxTrajectory(t - len / 2, t + len / 2, tj2);
+                return tj2;
+            }
+            i++;
+        }
+        return tj;
     }
-    return tj;
 }
 
 xPoint xStore::randomPoint() {
