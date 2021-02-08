@@ -28,7 +28,6 @@
 #define SPATIALINDEX_H
 
 //#define TJDEBUG
-
 #include "tools/Tools.h"
 #include "tools/MutablePriorityQueue.h"
 #include "tools/DiskMultiMap.h"
@@ -69,21 +68,18 @@ namespace SpatialIndex
 	struct DISTE{
 	    double opt=0;
 	    double pes=0;
-	    double e=0;
 	    bool infer = false;
 	    DISTE(){};
-	    explicit DISTE(double optimistic,double pessimistic,double error, bool isinferred)
-	    {opt=optimistic;pes=pessimistic;e=error;infer=isinferred;}
+	    explicit DISTE(double optimistic,double pessimistic, bool isinferred)
+	    {opt=optimistic;pes=pessimistic;infer=isinferred;}
 	    explicit DISTE(double exact){
 	        opt=pes=exact;
-	        e=0;
 	        infer = false;
 	    }
 	    DISTE operator+(const DISTE &d2) const{
 	        DISTE res;
             res.opt=opt+d2.opt;
             res.pes=pes+d2.pes;
-            res.e = e+d2.e;
             res.infer = infer||d2.infer;
             return res;
 	    }
@@ -558,6 +554,7 @@ extern SpatialIndex::trajStat *tjstat;
 
 #include "MBCRTree.h"
 #include "xRTree.h"
+#include "SBBForest.h"
 #include "Version.h"
 
 

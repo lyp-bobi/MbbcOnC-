@@ -379,3 +379,12 @@ xRTree * xRTreeNsp::loadTree(IStorageManager *mng, string name) {
     delete stream;
     return r;
 }
+
+SBBForest * xRTreeNsp::buildSBBForest(IStorageManager *store, const function<queue<pair<pair<int, int>, xSBB> > (xTrajectory &, double)> &f, map<pair<double, double>, double> &lens) {
+    SBBForest* res = new SBBForest();
+    for(auto &i:lens){
+        xRTree* r = buildMBCRTreeWP(store,f,i.second);
+        res->m_trees[i.first]=r;
+    }
+    return res;
+}

@@ -585,7 +585,7 @@ double xTrajectory::getArea() const{ return 0;}
 inline double theF(double c1,double c2,double c3,double c4,double t){
     //the c4 should be the length of that time period
     double delta=4*c1*c3-c2*c2;
-    if(delta<=1e-7){
+    if(delta<=1e-10){
         return (2*c1*t+c2)*sqrt(std::max(0.0,c1*t*t+c2*t+c3))/4/c1/c4;
     }
     else {
@@ -605,7 +605,7 @@ inline double xTrajectory::line2lineIED(const SpatialIndex::xPoint &p1s, const S
                                 const SpatialIndex::xPoint &p2s, const SpatialIndex::xPoint &p2e) {
     if(p1s.m_t!=p2s.m_t|p1e.m_t!=p2e.m_t)
         throw Tools::IllegalStateException("line2lineIED: time period not the same");
-    double ts = p1s.m_t, te = p1e.m_t;
+    double ts = 0, te = p1e.m_t-p1s.m_t;
     double dxs=p1s.m_x-p2s.m_x;
     double dys=p1s.m_y-p2s.m_y;
     double dxe=p1e.m_x-p2e.m_x;
@@ -614,7 +614,7 @@ inline double xTrajectory::line2lineIED(const SpatialIndex::xPoint &p1s, const S
             c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
             c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
             c4=te-ts;
-    if(c1<1e-7){
+    if(c1<1e-9){
         return std::sqrt(sq(dxs)+sq(dys))*c4;
     }else{
             return (theF(c1,c2,c3,c4,te)-theF(c1,c2,c3,c4,ts));
@@ -822,7 +822,7 @@ inline DISTE xTrajectory::line2MBRDistance(const SpatialIndex::xPoint &ps, const
         opti = sum;
     }
     double pessi = opti + (pe.m_t-ps.m_t)*sqrt(sq(r.m_xmax-r.m_xmin)+sq(r.m_ymax-r.m_ymin));
-    return DISTE(opti,pessi,0,false);
+    return DISTE(opti,pessi,false);
 }
 
 inline double mbcArea(double t0,double t3,double rd,double rv,double ts,double te){
@@ -861,7 +861,7 @@ inline DISTE xTrajectory::line2MBCDistance(const SpatialIndex::xPoint &ps, const
     xPoint p2s(xts,yts, ps.m_t), p2e(xte,yte, pe.m_t);
     double s = line2lineIED(ps, pe, p2s, p2e);
     double sm = mbcArea(r.m_ps.m_t, r.m_pe.m_t, r.m_rd, r.m_rv, ps.m_t, pe.m_t);
-    return DISTE(max(0.0,s-sm),s+sm,0,false);
+    return DISTE(max(0.0,s-sm),s+sm,false);
 }
 
 inline DISTE xTrajectory::line2MBLDistance(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
@@ -1048,7 +1048,7 @@ DISTE xTrajectory::frontDist(const xSBB &b, double v) const {
     double ds = b.tdist(p);
     opti= ldd(ds,-v,ints-m_startTime());
     pessi= ldd(ds,v,ints-m_startTime());
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 
 DISTE xTrajectory::backDist(const xSBB &b, double v) const {
@@ -1057,7 +1057,7 @@ DISTE xTrajectory::backDist(const xSBB &b, double v) const {
     double de = b.tdist(getPointAtTime(inte));
     opti= ldd(de,-v,m_endTime()-inte);
     pessi= ldd(de,v,m_endTime()-inte);
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 
 DISTE xTrajectory::gapDist(const xSBB &prev,const xSBB &next, double v) const{
@@ -1069,7 +1069,7 @@ DISTE xTrajectory::gapDist(const xSBB &prev,const xSBB &next, double v) const{
     double tp = (ints+inte+(ds-de)/(v))/2;
     opti=ldd(ds,-v,to-ints)+ldd(de,-v,inte-to);
     pessi = ldd(ds,v,tp-ints)+ldd(de,v,inte-tp);
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 
 
@@ -1100,7 +1100,7 @@ DISTE xTrajectory::frontDist(const xPoint &b, double v) const {
     double ds = b.getMinimumDistance(getPointAtTime(ints));
     opti= ldd(ds,-v,ints-m_startTime());
     pessi= ldd(ds,v,ints-m_startTime());
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 
 DISTE xTrajectory::backDist(const xPoint &b, double v) const {
@@ -1109,7 +1109,7 @@ DISTE xTrajectory::backDist(const xPoint &b, double v) const {
     double de = b.getMinimumDistance(getPointAtTime(inte));
     opti= ldd(de,-v,m_endTime()-inte);
     pessi= ldd(de,v,m_endTime()-inte);
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 
 DISTE xTrajectory::gapDist(const xPoint &prev,const xPoint &next, double v) const{
@@ -1121,7 +1121,7 @@ DISTE xTrajectory::gapDist(const xPoint &prev,const xPoint &next, double v) cons
     double tp = (ints+inte+(ds-de)/(v))/2;
     opti=ldd(ds,-v,to-ints)+ldd(de,-v,inte-to);
     pessi = ldd(ds,v,tp-ints)+ldd(de,v,inte-tp);
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 
 

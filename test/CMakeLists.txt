@@ -102,6 +102,7 @@ set (SOURCES
         01.e2eknn
         mbcknn
         rangeDebug
+        02.e2ennk
         )
 
 foreach (test ${SOURCES})

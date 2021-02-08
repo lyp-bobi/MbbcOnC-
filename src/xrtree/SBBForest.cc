@@ -1,7 +1,8 @@
 //
 // Created by Chuang on 2021/1/30.
 //
-#include "SBBForest.h"
+#include <spatialindex/SpatialIndex.h>
+#include "xRTree.h"
 using namespace xRTreeNsp;
 xRTree * SBBForest::chooseTree(double qt) {
     for(auto &s:m_trees){

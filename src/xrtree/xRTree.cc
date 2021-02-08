@@ -1020,7 +1020,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                     cerr<<iternum<<"\tCB with "<<pFirst->m_dist.opt<<"\t"<<ps.explain(pFirst->m_id)<<endl;
 #endif
                     if (pFirst->m_dist.pes < ps.top()->m_dist.opt){
-                        // we judge by sbbs instead of subtraj
+                        // we judge by sbbs instead of subtraj, 1 for error caused by float point numbers
                         ++(m_stats.m_u64QueryResults);
                         ++count;
                         knearest = pFirst->m_dist.opt;

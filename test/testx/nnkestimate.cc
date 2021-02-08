@@ -7,10 +7,11 @@
 int main(){
     try {
         string target = "tdexpand.txt";
+        double bts[] = {600,900,1200,1800,2700};
         double qts[] = {300,1800,3600,7200,10800};
         cerr<<"01,e2eknn, with TB,STR,SBB1200,SBBF(600,900,1200,1800)"<<endl;
         xStore x(target, testFileName(target), true);
-        for(double qt=300;qt<=10800;qt+=500) {
+        for(double nnk =6;nnk<200;nnk+=10) {
             cerr<<"qt is " << qt<<endl;
             vector<xTrajectory> queries;
             fillQuerySet(queries,x,qt);

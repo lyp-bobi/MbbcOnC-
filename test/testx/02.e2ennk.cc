@@ -6,30 +6,33 @@
 
 int main(){
     try {
-        string target = "tdexpand.txt";
-        double qts[] = {300,1800,3600,7200,10800};
-        cerr<<"01,e2eknn, with TB,STR,SBB1200,SBBF(600,900,1200,1800)"<<endl;
+        string target = "tdfilter.txt";
+        double qt = 3600;
+        double seglens[] = {600,900,1200,1800,2700};
+        cerr<<"seglen: ";
+        for(auto len:seglens){cerr<<len<<" ";}
+        cerr<<endl;
         xStore x(target, testFileName(target), true);
-        for(double qt=300;qt<=10800;qt+=500) {
-            cerr<<"qt is " << qt<<endl;
-            vector<xTrajectory> queries;
-            fillQuerySet(queries,x,qt);
+        vector<xTrajectory> queries;
+        fillQuerySet(queries,x,qt);
+        for(int k = 5;k<200;k+=10) {
+            cerr<<"k is " << k<<endl;
             {
                 MTQ q;
                 q.prepareTrees(&x, [](auto x) { return buildTBTreeWP(x); });
-                q.appendQueries(queries);
+                q.appendQueries(queries,k);
                 std::cerr << q.runQueries().toString();
             }
             {
                 MTQ q;
                 q.prepareTrees(&x, [](auto x) { return buildSTRTreeWP(x); });
-                q.appendQueries(queries);
+                q.appendQueries(queries,k);
                 std::cerr << q.runQueries().toString();
             }
             {
                 MTQ q;
                 q.prepareTrees(&x, [](auto x) { return buildMBCRTreeWP(x, xTrajectory::ISS, 1200); });
-                q.appendQueries(queries);
+                q.appendQueries(queries,k);
                 std::cerr << q.runQueries().toString();
             }
             {
@@ -40,7 +43,7 @@ int main(){
                 lens[make_pair(3000,4500)]=1200;
                 lens[make_pair(4500,1e300)]=1800;
                 q.prepareForest(&x,lens);
-                q.appendQueries(queries);
+                q.appendQueries(queries,k);
                 std::cerr << q.runQueries().toString();
             }
         }

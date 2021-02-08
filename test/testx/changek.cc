@@ -6,16 +6,16 @@
 
 int main(){
     try {
-        string target = "tdfilter.txt";
+        string target = "tdexpand.txt";
         double qt = 3600;
-        double seglens[] = {600,900,1500,2100,2700,3300,3900,4500};
+        double seglens[] = {600,900,1200,1800,2700};
         cerr<<"seglen: ";
         for(auto len:seglens){cerr<<len<<" ";}
         cerr<<endl;
         xStore x(target, testFileName(target), true);
         vector<xTrajectory> queries;
         fillQuerySet(queries,x,qt);
-        for(int k = 5;k<200;k+=10) {
+        for(int k = 6;k<=201;k+=10) {
             cerr<<"k is " << k<<endl;
 
 //            xTrajectory tj;

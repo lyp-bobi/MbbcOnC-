@@ -44,7 +44,7 @@ namespace SpatialIndex
 	namespace xRTreeNsp
 	{
         class poppq;
-		class xRTree
+		class xRTree:public xRTreeQueryObject
 		{
                   //class NNEntry;
 

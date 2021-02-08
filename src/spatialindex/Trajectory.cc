@@ -638,7 +638,7 @@ double Trajectory::getArea() const{ return 0;}
 inline double theF(double c1,double c2,double c3,double c4,double t){
     //the c4 should be the length of that time period
     double delta=4*c1*c3-c2*c2;
-    if(delta<=1e-7){
+    if(delta<=1e-10){
         return (2*c1*t+c2)*sqrt(std::max(0.0,c1*t*t+c2*t+c3))/4/c1/c4;
     }
     else {
@@ -1244,7 +1244,7 @@ DISTE Trajectory::getFrontIED(const SpatialIndex::Region sbr, double MaxVelocity
         opti= ldd(ds,-2*MaxVelocity,ints-m_startTime());
         pessi= ldd(ds,2*MaxVelocity,ints-m_startTime());
     }
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 DISTE Trajectory::getFrontIED(double x, double y, double ints, double MaxVelocity) const {
     double opti=0,pessi=0;
@@ -1267,7 +1267,7 @@ DISTE Trajectory::getFrontIED(double x, double y, double ints, double MaxVelocit
         opti= ldd(ds,-2*MaxVelocity,ints-m_startTime());
         pessi= ldd(ds,2*MaxVelocity,ints-m_startTime());
     }
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 DISTE Trajectory::getBackIED(const SpatialIndex::Region ebr, double MaxVelocity) const {
     double opti=0,pessi=0;
@@ -1289,7 +1289,7 @@ DISTE Trajectory::getBackIED(const SpatialIndex::Region ebr, double MaxVelocity)
         opti= ldd(de,-2*MaxVelocity,m_endTime()- inte);
         pessi= ldd(de,2*MaxVelocity,m_endTime()- inte);
     }
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 DISTE Trajectory::getBackIED(double x, double y,  double inte, double MaxVelocity) const {
     double opti=0,pessi=0;
@@ -1312,7 +1312,7 @@ DISTE Trajectory::getBackIED(double x, double y,  double inte, double MaxVelocit
         opti= ldd(de,-2*MaxVelocity,m_endTime()- inte);
         pessi= ldd(de,2*MaxVelocity,m_endTime()- inte);
     }
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 
 DISTE Trajectory::getMidIED(const SpatialIndex::Region &sbr, const SpatialIndex::Region &ebr,
@@ -1360,7 +1360,7 @@ DISTE Trajectory::getMidIED(const SpatialIndex::Region &sbr, const SpatialIndex:
         opti= ldd(ds,-2*MaxVelocity,to-ints)+ldd(de,2*MaxVelocity,inte-to);
         pessi = ldd(ds,2*MaxVelocity,tp-ints)+ldd(de,-2*MaxVelocity,inte-tp);
     }
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 DISTE Trajectory::getMidIED(const MBC &sbc, const MBC &ebc,
                             double MaxVelocity,double queryVelocity) {
@@ -1406,7 +1406,7 @@ DISTE Trajectory::getMidIED(const MBC &sbc, const MBC &ebc,
         opti=ldd(ds,-2*MaxVelocity,to-ints)+ldd(de,2*MaxVelocity,inte-to);
         pessi = ldd(ds,2*MaxVelocity,tp-ints)+ldd(de,-2*MaxVelocity,inte-tp);
     }
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 
 DISTE Trajectory::getMidIED(const STPoint &sPoint, const STPoint &ePoint,
@@ -1457,7 +1457,7 @@ DISTE Trajectory::getMidIED(const STPoint &sPoint, const STPoint &ePoint,
         opti=ldd(ds,-2*MaxVelocity,to-ints)+ldd(de,2*MaxVelocity,inte-to);
         pessi = ldd(ds,2*MaxVelocity,tp-ints)+ldd(de,-2*MaxVelocity,inte-tp);
     }
-    return DISTE(opti,pessi,0,true);
+    return DISTE(opti,pessi,true);
 }
 
 double Trajectory::getStaticIED(double x, double y, double t1, double t2) const {

@@ -27,10 +27,19 @@
 
 #pragma once
 
+
+
+
 namespace SpatialIndex
 {
 	namespace xRTreeNsp
 	{
+        class xRTreeQueryObject{
+        public:
+            virtual void intersectsWithQuery(const xCylinder& query, IVisitor& v){};
+            virtual void nearestNeighborQuery(uint32_t k, const xTrajectory& query, IVisitor& v){};
+        };
+        class SBBForest;
 #define PageSizeDefault 4096
 		SIDX_DLL enum xRTreeVariant
 		{
@@ -69,10 +78,9 @@ namespace SpatialIndex
         SIDX_DLL xRTree* buildTBTreeWoP(IStorageManager* store);
         SIDX_DLL xRTree* buildSTRTreeWoP(IStorageManager* store);
 		SIDX_DLL xRTree* loadTree(IStorageManager* store, string name);
-//        xRTree* buildMBCRTreeWP(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
-//        xRTree* buildTBTree2(xStore* store,function<void(xTrajectory&,list<xSBB>&)> cut);
-//        xRTree* buildTBTree(xStore* store);
-//        xRTree* build3DRTree(xStore* store);
-//        xRTree* buildSTRTree(xStore* store);
+#define SBBFMAP map<pair<double, double>, double>
+        SIDX_DLL SBBForest* buildSBBForest
+		(IStorageManager* store, const CUTFUNC_PARA &f,
+		        map<pair<double,double>,double> &lens);
 	}
 }

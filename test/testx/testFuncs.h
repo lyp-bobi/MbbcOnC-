@@ -58,12 +58,15 @@ using namespace SpatialIndex;
 using namespace xRTreeNsp;
 #ifdef TJDEBUG
 #define NUMCORE 1
+extern double testtime = 10;
 #else
 #define NUMCORE 4
+extern double testtime = 1200;
 #endif
-#define NUMTHREAD (NUMCORE*1.5)
+#define NUMTHREAD (NUMCORE)
 extern bool testxfirstOutput = true;
-extern double testtime = 4000;
+
+
 using namespace std;
 
 static int drop_cache(int drop) {
@@ -729,7 +732,8 @@ enum queryType{
 };
 
 struct queryInput{
-    xRTree * tree = nullptr;
+    xRTreeQueryObject * tree = nullptr;
+    xStore * store;
     queryType type = qt_knn;
     vector<xTrajectory> knn_queries;
     vector<xCylinder> range_queries;
@@ -738,7 +742,7 @@ struct queryInput{
 
 
 static void QueryBatchThread(queryInput inp, queryRet *res) {
-    xStore * ts = inp.tree->m_ts;
+    xStore * ts = inp.store;
     ts->cleanStatistic();
     int num;
     MyVisitor vis;
@@ -781,7 +785,7 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
 class MTQ{
 public:
     vector<xStore*> m_stores;
-    vector<xRTree*> m_trees;
+    vector<xRTreeQueryObject*> m_trees;
     vector<queryInput> m_queries;
     vector<queryRet> m_res;
     vector<thread> m_ths;
@@ -802,11 +806,24 @@ public:
             m_trees.emplace_back(treeBuilder(m_stores.back()));
             queryInput q;
             q.tree = m_trees.back();
+            q.store=m_stores.back();
             m_queries.emplace_back(q);
             m_res.emplace_back(queryRet());
         }
     }
-    void appendQueries(vector<xTrajectory> &knnq, int nnk=5){
+    void prepareForest(xStore* x,map<pair<double, double>, double> &lens){
+        delete buildSBBForest(x,xTrajectory::OPTS,lens);
+        for(int i=0;i<nthread;i++) {
+            m_stores.emplace_back(x->clone());
+            m_trees.emplace_back(buildSBBForest(m_stores.back(),xTrajectory::OPTS,lens));
+            queryInput q;
+            q.tree = m_trees.back();
+            q.store=m_stores.back();
+            m_queries.emplace_back(q);
+            m_res.emplace_back(queryRet());
+        }
+    }
+    void appendQueries(vector<xTrajectory> &knnq, int nnk=6){
         int i=0;
         for(auto &q:knnq)
         {

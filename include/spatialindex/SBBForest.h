@@ -4,13 +4,13 @@
 
 #ifndef SPATIALINDEX_SBBFOREST_H
 #define SPATIALINDEX_SBBFOREST_H
-#include "xRTree.h"
+
 namespace SpatialIndex {
     namespace xRTreeNsp {
-        class SBBForest {
+        class SBBForest: public xRTreeQueryObject {
         public:
+            ~SBBForest(){freeall();}
             map<pair<double, double>, xRTree *> m_trees;
-
             xRTree *chooseTree(double qt);
             void insert(double l,double h, xRTree* r);
             void freeall();
