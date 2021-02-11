@@ -26,7 +26,7 @@
 ******************************************************************************/
 
 #pragma once
-
+extern bool bulkloadt;
 namespace SpatialIndex
 {
 	namespace xRTreeNsp

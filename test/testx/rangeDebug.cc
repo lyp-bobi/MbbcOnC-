@@ -12,15 +12,18 @@ int main(){
         cerr<<"seglen: ";
         cerr<<endl;
         xStore x(target, testFileName(target), true);
-        xCylinder query(xPoint(116.327,40,6516),4,26516,26516,2);
+        vector<xCylinder> queries;
+        fillQuerySet(queries,x,0.1,0);
+        xCylinder query(xPoint(116.327,40,6516),4,226516,226516,2);
         xTrajectory tj2;
         int sum = 0;
         for(auto &s:x.m_trajIdx){
-            x.loadTraj(tj2,xStoreEntry(s.first,0,10000));
+            x.loadTraj(tj2,xStoreEntry(s.first,0,100000));
             if(tj2.intersectsxCylinder(query)){
                 sum +=1;
             }else{
-                tj2.intersectsxCylinder(query);
+                cerr<<s.first<<"\t"<<tj2<<endl;
+                cerr<<tj2.intersectsxCylinder(query)<<endl;
             }
         }
         cerr<<sum<<endl;

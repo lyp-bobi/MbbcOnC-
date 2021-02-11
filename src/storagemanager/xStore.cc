@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstring>
 #include <sys/stat.h>
+#define fp (int(m_pageSize/sizeof(prexp)/3))
 
 bool CheckFilesExists(const string &s) {
     struct stat stats;
@@ -61,11 +62,148 @@ xStore::~xStore() {
     delete m_pStorageManager;
 }
 
+static int getLastId(string s)
+{
+    string filename = s;
+    ifstream fin;
+
+    fin.open(filename);
+    if(fin.is_open()) {
+        fin.seekg(0,ios_base::end);                // go to one spot before the EOF
+        for(int i=0;i<2;i++) {
+            fin.seekg(-2,ios_base::cur);
+            bool keepLooping = true;
+            while (keepLooping) {
+                char ch;
+                ch = fin.peek();                            // Get current byte's data
+                std::cerr<<ch;
+                if ((long long) fin.tellg() <= 1) {             // If the data was at or before the 0th byte
+                    fin.seekg(0);                       // The first line is the last line
+                    keepLooping = false;                // So stop there
+                } else if (ch == '\n') {                   // If the data was a newline
+                    keepLooping = false;                // Stop at the current position.
+                } else {                                  // If the data was neither a newline nor at the 0 byte
+                    fin.seekg(-1,ios_base::cur);
+                    // Move to the front of that data, then to the front of the data before it
+                }
+            }
+        }
+        string lastLine;
+        getline(fin,lastLine);                      // Read the current line
+        getline(fin,lastLine);                      // Read the current line
+        fin.close();
+        return stoll(lastLine);
+    }
+
+    return 0;
+}
+
+void xStore::loadFile(string file) {
+    std::cerr << "start loading " << file << " into " << m_name << "\n";
+    string filename = filedirprefix+m_name;
+    if(m_pStorageManager== nullptr){
+        if (CheckFilesExists(filename)) {
+            m_pStorageManager = loadDiskStorageManager(filename);
+        }else{
+            m_pStorageManager = createNewDiskStorageManager(filename,m_pageSize);
+        }
+    }
+    ifstream inFile(file, ios::in);
+    string lineStr;
+    set<id_type> ids;
+    xTrajectory tj;
+    xMBR r;
+    uint8_t *data;
+    uint32_t len;
+    int curLine = 0;
+    while (getline(inFile, lineStr)) {
+        try {
+            string str;
+            stringstream ss(lineStr);
+            getline(ss, str);
+            id_type id = stoll(str);
+            getline(inFile, str);
+            tj.loadFromString(str);
+            //test code
+//                std::cerr<<"test id"<<id<<endl;
+            if (tj.m_points.size() >= 2) {
+                int rem = tj.m_points.size();
+                int cur = 0;
+                uint8_t *ptr;
+                bool isfirst = true;
+                id_type firstpage;
+                while (rem > 0) {
+                    int plen = min(rem, fp);
+                    xPoint *p;
+                    data = new uint8_t[24 * plen];
+                    ptr = data;
+                    for (int i = 0; i < plen; i++) {
+                        //test code
+//                            std::cerr<<" "<<cur<< tj.m_points[cur]<<endl;
+                        p = &(tj.m_points[cur++]);
+                        p->storeToByteArrayE(&ptr, len);
+                        if (i != plen - 1) ptr += len;
+                    }
+                    ptr = data;
+                    id_type newPage = StorageManager::NewPage;
+                    m_pStorageManager->storeByteArray(newPage, 24 * plen, data);
+                    if (isfirst) {
+                        firstpage = newPage;
+                        isfirst = false;
+                    }
+                    rem -= fp;
+                    if (m_bSubTraj && rem != 0) {
+                        rem++;
+                        cur--;
+                    }
+                    delete[] data;
+                }
+                m_trajIdx[id] = new xTrajEntry(firstpage, tj.m_points.size());
+                ids.insert(id);
+                curLine++;
+                tj.getxMBR(r);
+                if (r.m_xmax > tjstat->maxx) tjstat->maxx = r.m_xmax;
+                if (r.m_xmin < tjstat->minx) tjstat->minx = r.m_xmin;
+                if (r.m_ymax > tjstat->maxy) tjstat->maxy = r.m_ymax;
+                if (r.m_ymin < tjstat->miny) tjstat->miny = r.m_ymin;
+                if (r.m_tmax > tjstat->maxt) tjstat->maxt = r.m_tmax;
+                if (r.m_tmin < tjstat->mint) tjstat->mint = r.m_tmin;
+                tjstat->dist += tj.m_dist();
+                tjstat->lineCount += tj.m_points.size() - 1;
+                tjstat->trajCount += 1;
+                if (tjstat->vmax < tj.maxSpeed()) {
+                    tjstat->vmax = tj.maxSpeed();
+                }
+                tjstat->M += tj.m_endTime() - tj.m_startTime();
+            }
+        }
+        catch (...) {
+            break;
+        }
+    }
+    std::cerr << "load finished\n";
+    tjstat->Dx = tjstat->maxx - tjstat->minx;
+    tjstat->Dy = tjstat->maxy - tjstat->miny;
+    tjstat->Dt = tjstat->maxt - tjstat->mint;
+    tjstat->tl = tjstat->M / tjstat->lineCount;
+    tjstat->jt = tjstat->M / tjstat->trajCount;
+    tjstat->v = tjstat->dist / tjstat->M;
+    tjstat->Sr = (tjstat->Dx + tjstat->Dy) / 2;
+    tjstat->P = tjstat->Dt;
+    std::cerr << file << endl;
+    inFile.close();
+    if (file.find("tdexpand") != file.npos) tjstat->usedata("tdexpand");
+    else if (file.find("td") != file.npos) tjstat->usedata("td");
+    else if (file.find("gl") != file.npos) tjstat->usedata("gl");
+    std::cerr << tjstat->toString() << endl;
+    m_property["tjstat"] = tjstat->toString();
+    flush();
+}
+
 xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
     m_name = myname;
     m_pageSize = 4096;
     string filename = filedirprefix+myname;
-#define fp (int(m_pageSize/sizeof(prexp)/3))
     if ((!forceNew) && CheckFilesExists(filename)) {
 //        std::cerr << "using existing xStore " << myname << endl;
         m_pStorageManager = loadDiskStorageManager(filename);
@@ -85,6 +223,12 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
         }
         trajidxFile.close();
     } else {
+        if(m_name=="od") {
+            m_property["trajfile"] = file;
+            m_property["tjstat"] = tjstat->toString();
+            m_property["bSubTraj"] = bsubtraj;
+            return;
+        }
         m_bSubTraj = bsubtraj;
         std::cerr << "start loading " << file << " into " << myname << "\n";
         m_pStorageManager = createNewDiskStorageManager(filename, m_pageSize);

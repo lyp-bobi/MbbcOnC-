@@ -86,6 +86,7 @@ endforeach()
 
 set (DIR testx)
 set (SOURCES
+        odconvert
         regressTest
         knnCoverageTest
         knn-mt
@@ -98,11 +99,17 @@ set (SOURCES
         speedEstimator
         rangeQuery
         changek
-        fractal
+        06.fractal
         01.e2eknn
         mbcknn
         rangeDebug
         02.e2ennk
+        03.mixquery
+        04.dense
+        05.range
+        07.sbbsize
+        08.estimate
+        bulkloadtest
         )
 
 foreach (test ${SOURCES})

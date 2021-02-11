@@ -41,9 +41,10 @@
 #include "Index.h"
 #include "BulkLoader.h"
 
-
+bool bulkloadt= true;
 using namespace SpatialIndex;
 using namespace SpatialIndex::xRTreeNsp;
+
 
 //
 // ExternalSorter::Record
@@ -372,7 +373,7 @@ void BulkLoader::bulkLoadUsingSTR(
 		pTree->m_stats.m_nodesInLevel.emplace_back(0);
 
 		Tools::SmartPointer<ExternalSorter> es2 = Tools::SmartPointer<ExternalSorter>(new ExternalSorter(pageSize, numberOfPages));
-		if(level == 0)
+		if(bulkloadt&&level==0)
             createLevelT(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);
         else
             createLevel(pTree, es, 0, bleaf, bindex, level++, es2, pageSize, numberOfPages);

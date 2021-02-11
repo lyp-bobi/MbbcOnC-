@@ -45,9 +45,12 @@
 //#define sourceFile "D://t1000.txt"
 #define genFile "D://00.txt"
 #define GLFile "/root/GLSC.csv"
-#define fileFolder "/root/out/"
+#ifndef WIN32
+    #define fileFolder "/root/out/"
+#else
+    #define fileFolder "D://out/"
+#endif
 #define maxLinesToRead 1e10
-#define dimension 2
 #define indexcap 10
 #define leafcap 10000
 //extern int QueryType;
@@ -63,7 +66,7 @@ extern double testtime = 10;
 #define NUMCORE 4
 extern double testtime = 1200;
 #endif
-#define NUMTHREAD (NUMCORE*1.5)
+#define NUMTHREAD (NUMCORE*2)
 extern bool testxfirstOutput = true;
 
 
@@ -152,7 +155,7 @@ static vector<pair<id_type, xTrajectory> > loadGTToTrajs(string filename = genFi
     //first level: vector of time period
     //second level: vector of segments in the time period
 #ifndef NDEBUG
-    cerr << "loading generated trajectories from txt to trajectories" << endl;
+    cerr << "loading generated trajectories from"<<filename<<" to trajectories" << endl;
 #endif
 
     ifstream inFile(filename, ios::in);
@@ -231,7 +234,7 @@ static vector<pair<id_type, xTrajectory> > loadGTToTrajs(string filename = genFi
     tjstat->jt = tjstat->M / tjstat->trajCount;
     tjstat->v = tjstat->dist / tjstat->M;
     std::cerr << *tjstat;
-    tjstat->usedata("od");
+//    tjstat->usedata("od");
     inFile.close();
 //    drop_cache(3);
     return res;
@@ -300,7 +303,7 @@ static vector<pair<id_type, xTrajectory> > loadDumpedFiledToTrajs(string filenam
 }
 
 
-static void dumpToFile(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
+static id_type dumpToFile(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1,id_type id=0) {
     ofstream outFile(filename, ios::out);
 
     //outFile << tjstat->toString() << "\n";
@@ -310,14 +313,15 @@ static void dumpToFile(vector<pair<id_type, xTrajectory> > &trajs, string filena
     else{
         num = min(num,int(trajs.size()));
     }
-    int id=0;
     for(int i=0;i<num;i++){
         auto traj = trajs[i];
         outFile << id << "\n";
         outFile << traj.second.toString() << "\n";
         id++;
     }
+    cerr<<"dumping to "<<filename<<endl;
     outFile.close();
+    return id;
 }
 
 
@@ -342,7 +346,11 @@ static int getLastId(string s)
                 } else if (ch == '\n') {                   // If the data was a newline
                     keepLooping = false;                // Stop at the current position.
                 } else {                                  // If the data was neither a newline nor at the 0 byte
+#ifndef WIN32
                     fin.seekg(-1,ios_base::cur);
+#else
+                    fin.seekg(-2,ios_base::cur);
+#endif
                     // Move to the front of that data, then to the front of the data before it
                 }
             }
@@ -357,7 +365,7 @@ static int getLastId(string s)
     return 0;
 }
 
-static void dumpToFile_append(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
+static id_type dumpToFile_append(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
     int id = getLastId(filename);
     ofstream outFile(filename, ios::app);
 //    outFile << tjstat->toString() << "\n";
@@ -373,8 +381,10 @@ static void dumpToFile_append(vector<pair<id_type, xTrajectory> > &trajs, string
         outFile << id << endl;
         outFile << traj.second.toString() << endl;
     }
+    cerr<<"dumping to "<<filename<<endl;
     outFile.flush();
     outFile.close();
+    return id;
 }
 
 
@@ -490,7 +500,6 @@ static vector<pair<id_type, xTrajectory> > loadGTFolder(int num = 10, string fol
         vector<pair<id_type, xTrajectory> > tmptrajs = loadGTToTrajs(file);
         res.insert(res.begin(), tmptrajs.begin(), tmptrajs.end());
     }
-    tjstat->usedata("od");
 //    drop_cache(3);
     return res;
 }
@@ -688,6 +697,7 @@ struct queryRet{
     double indexIO=0;
     double trajIO=0;
     double nresult=0;
+    double qps=0;
     queryRet operator+(const queryRet& r) const{
         queryRet res;
         res.time= time+r.time;
@@ -698,15 +708,16 @@ struct queryRet{
         res.indexIO= indexIO+r.indexIO;
         res.trajIO= trajIO+r.trajIO;
         res.nresult = nresult+r.nresult;
+        res.qps = qps+r.qps;
         return res;
     }
     string toString() const{
         stringstream s;
         if(testxfirstOutput){
             testxfirstOutput =false;
-            s<<"time\tindexVisit\tleafVisit\tindexIO\ttrajIO\n";
+            s<<"qps\ttime\tindexVisit\tleafVisit\tindexIO\ttrajIO\n";
         }
-        s<<time<<"\t"<<indexVisit<<"\t"<<leafVisit<<"\t"<<indexIO<<"\t"<<trajIO<<"\t"<<leaf1<<"\t"<<leaf2<<"\t"<<nresult<<"\n";
+        s<<qps<<"\t"<<time<<"\t"<<indexVisit<<"\t"<<leafVisit<<"\t"<<indexIO<<"\t"<<trajIO<<"\t"<<leaf1<<"\t"<<leaf2<<"\t"<<nresult<<"\t"<<indexIO+trajIO<<"\n";
         return s.str();
     }
 };
@@ -769,6 +780,7 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     time = double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
     res->time = time/num;
+    res->qps = num/time;
     res->indexVisit = 1.0*vis.m_indexvisited/num;
     res->leafVisit = 1.0 * vis.m_leafvisited/ num;
     res->leaf1 = 1.0 * ts->m_leaf1/num;
@@ -831,7 +843,11 @@ public:
             i++;
         }
         for(auto &qs:m_queries){
-            qs.nnk = nnk;
+            if(nnk==0){
+                qs.nnk = 6+rand()*195;
+            }else {
+                qs.nnk = nnk;
+            }
         }
     }
     void appendQueries(vector<xCylinder> &rq){
@@ -878,6 +894,14 @@ void fillQuerySet(vector<xTrajectory>& list, xStore& x, double len, double var=0
         for (int i = 0; i < num; i++) {
             list.emplace_back(x.randomSubtraj(len));
         }
+    }
+}
+
+void fillQuerySetRand(vector<xTrajectory>& list, xStore& x){
+    default_random_engine e;
+    auto queryLen =uniform_real_distribution<double>(300,5400);
+    for (int i = 0; i < testtime; i++) {
+        list.emplace_back(x.randomSubtraj(queryLen(e)));
     }
 }
 

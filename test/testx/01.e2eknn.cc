@@ -28,7 +28,7 @@ int main(){
             }
             {
                 MTQ q;
-                q.prepareTrees(&x, [](auto x) { return buildMBCRTreeWP(x, xTrajectory::ISS, 1200); });
+                q.prepareTrees(&x, [](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, 1200); });
                 q.appendQueries(queries);
                 std::cerr << q.runQueries().toString();
             }
@@ -36,9 +36,9 @@ int main(){
                 MTQ q;
                 SBBFMAP lens;
                 lens[make_pair(0,1500)]=600;
-                lens[make_pair(1500,3000)]=900;
-                lens[make_pair(3000,4500)]=1200;
-                lens[make_pair(4500,1e300)]=1800;
+                lens[make_pair(1500,2500)]=900;
+                lens[make_pair(2500,4800)]=1200;
+                lens[make_pair(4800,1e300)]=1800;
                 q.prepareForest(&x,lens);
                 q.appendQueries(queries);
                 std::cerr << q.runQueries().toString();

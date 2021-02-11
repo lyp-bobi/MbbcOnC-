@@ -131,10 +131,10 @@ xRTree * xRTreeNsp::buildMBCRTreeWP(IStorageManager *st,
     return r;
 }
 
-xRTree * xRTreeNsp::buildTBTreeWP(IStorageManager *mng) {
+xRTree * xRTreeNsp::buildTBTreeWP(IStorageManager *mng, string add) {
     auto store=static_cast<xStore*>(mng);
     auto stream = new xSBBStream(store, [](auto x){return xTrajectory::FP(x, 169);});
-    string name ="TBWP";
+    string name ="TBWP"+add;
     xRTree * r;
     tjstat->bt = tjstat->tl*170;
     if(store->m_property.contains(name)){
@@ -164,10 +164,10 @@ xRTree * xRTreeNsp::buildTBTreeWP(IStorageManager *mng) {
     return r;
 }
 
-xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng) {
+xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng, string add) {
     auto store=static_cast<xStore*>(mng);
     auto stream = new xSBBStream(store, xTrajectory::EveryLine);
-    string name ="STRWP";
+    string name ="STRWP"+add;
     xRTree * r;
     tjstat->bt = tjstat->tl;
     if(store->m_property.contains(name)){

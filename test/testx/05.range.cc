@@ -1,35 +1,39 @@
 //
 // Created by Chuang on 2020/12/10.
 //
+
 #include "testFuncs.h"
 #include "random"
 
 int main(){
     try {
-        string target = "tdfilter.txt";
-        double qt = 3600;
-        cerr<<"02, e2ennk, TB,STR, and SBB1800";
+        string target = "tdexpand.txt";
+        double rds[] = {0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2};
+        double seglens[] = {600,900,1500,2100,2700,3300,3900,4500};
+        cerr<<"seglen: ";
+        for(auto len:seglens){cerr<<len<<" ";}
+        cerr<<endl;
         xStore x(target, testFileName(target), true);
-        vector<xTrajectory> queries;
-        fillQuerySet(queries,x,qt);
-        for(int k = 5;k<200;k+=10) {
-            cerr<<"k is " << k<<endl;
+        for(auto rd:rds) {
+            cerr<<"rd is " << rd<<endl;
+            vector<xCylinder> queries;
+            fillQuerySet(queries,x,rd,1800);
             {
                 MTQ q;
                 q.prepareTrees(&x, [](auto x) { return buildTBTreeWP(x); });
-                q.appendQueries(queries,k);
+                q.appendQueries(queries);
                 std::cerr << q.runQueries().toString();
             }
             {
                 MTQ q;
                 q.prepareTrees(&x, [](auto x) { return buildSTRTreeWP(x); });
-                q.appendQueries(queries,k);
+                q.appendQueries(queries);
                 std::cerr << q.runQueries().toString();
             }
-            {
+            for (auto len:seglens) {
                 MTQ q;
-                q.prepareTrees(&x, [](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, 1200); });
-                q.appendQueries(queries,k);
+                q.prepareTrees(&x, [&len](auto x) { return buildMBCRTreeWP(x, xTrajectory::ISS, len); });
+                q.appendQueries(queries);
                 std::cerr << q.runQueries().toString();
             }
         }
