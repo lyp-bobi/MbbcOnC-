@@ -63,7 +63,7 @@ using namespace xRTreeNsp;
 #define NUMCORE 1
 extern double testtime = 10;
 #else
-#define NUMCORE 4
+#define NUMCORE 1
 extern double testtime = 1200;
 #endif
 #define NUMTHREAD (NUMCORE*2)
@@ -154,9 +154,7 @@ Type stringToNum(const std::string &str) {
 static vector<pair<id_type, xTrajectory> > loadGTToTrajs(string filename = genFile) {
     //first level: vector of time period
     //second level: vector of segments in the time period
-#ifndef NDEBUG
     cerr << "loading generated trajectories from"<<filename<<" to trajectories" << endl;
-#endif
 
     ifstream inFile(filename, ios::in);
     string lineStr;
@@ -339,18 +337,14 @@ static int getLastId(string s)
             while (keepLooping) {
                 char ch;
                 ch = fin.peek();                            // Get current byte's data
-                std::cerr<<ch;
+//                std::cerr<<ch;
                 if ((long long) fin.tellg() <= 1) {             // If the data was at or before the 0th byte
                     fin.seekg(0);                       // The first line is the last line
                     keepLooping = false;                // So stop there
                 } else if (ch == '\n') {                   // If the data was a newline
                     keepLooping = false;                // Stop at the current position.
                 } else {                                  // If the data was neither a newline nor at the 0 byte
-#ifndef WIN32
                     fin.seekg(-1,ios_base::cur);
-#else
-                    fin.seekg(-2,ios_base::cur);
-#endif
                     // Move to the front of that data, then to the front of the data before it
                 }
             }
@@ -359,14 +353,15 @@ static int getLastId(string s)
         getline(fin,lastLine);                      // Read the current line
         getline(fin,lastLine);                      // Read the current line
         fin.close();
+        cerr<<"last id is "<<lastLine<<endl;
         return stoll(lastLine);
     }
 
     return 0;
 }
 
-static id_type dumpToFile_append(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1) {
-    int id = getLastId(filename);
+static id_type dumpToFile_append(vector<pair<id_type, xTrajectory> > &trajs, string filename = "dumpedtraj.txt", int num =-1, id_type id = -1) {
+    if(id==-1) id = getLastId(filename) + 1;
     ofstream outFile(filename, ios::app);
 //    outFile << tjstat->toString() << "\n";
     if( num == -1){
@@ -377,9 +372,9 @@ static id_type dumpToFile_append(vector<pair<id_type, xTrajectory> > &trajs, str
     }
     for(int i=0;i<num;i++){
         auto traj = trajs[i];
-        id++;
         outFile << id << endl;
         outFile << traj.second.toString() << endl;
+        id++;
     }
     cerr<<"dumping to "<<filename<<endl;
     outFile.flush();
@@ -873,7 +868,7 @@ public:
     }
 };
 
-string testFileName(string &s){
+string testFileName(string s){
 #if (defined _WIN32 || defined _WIN64 || defined WIN32 || defined WIN64)
     return "D://TRI-framework/dumpedtraj.txt";
 #else

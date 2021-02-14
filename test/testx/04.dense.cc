@@ -15,7 +15,7 @@ int main(){
     }
     xStore x("od","od");
     testtime = 80;
-    for(int i=1;i<files.size();i++){
+    for(int i=0;i<files.size();i++){
         //don't load it if
         x.loadFile(files[i]);
         string idxnum = to_string(i);

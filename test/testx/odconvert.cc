@@ -19,15 +19,15 @@ int main(){
     id_type id = -1;
     for(int i=0;i<files.size();i+=5){
         auto j=loadGTToTrajs(files[i]);
-        dumpToFile(j,to_string(i/5)+".out",-1,id+1);
+        id = dumpToFile(j,to_string(i/5)+".out",-1,id);
         j= loadGTToTrajs(files[i+1]);
-        dumpToFile_append(j,to_string(i/5)+".out");
+        id = dumpToFile_append(j,to_string(i/5)+".out",-1,id);
         j= loadGTToTrajs(files[i+2]);
-        dumpToFile_append(j,to_string(i/5)+".out");
+        id = dumpToFile_append(j,to_string(i/5)+".out",-1,id);
         j= loadGTToTrajs(files[i+3]);
-        dumpToFile_append(j,to_string(i/5)+".out");
+        id =dumpToFile_append(j,to_string(i/5)+".out",-1,id);
         j= loadGTToTrajs(files[i+4]);
-        id=dumpToFile_append(j,to_string(i/5)+".out");
+        id =id=dumpToFile_append(j,to_string(i/5)+".out",-1,id);
     }
     return 0;
 }

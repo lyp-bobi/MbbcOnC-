@@ -227,35 +227,16 @@ static bool below0(double a,double b,double c,double ts,double te){
 }
 
 int xCylinder::checkRel(const xLine &l) const {
+    if (l.m_ps.m_t > m_endTime || l.m_pe.m_t < m_startTime) return 0;
     double t0 = l.m_ps.m_t,  t3 = l.m_pe.m_t;
     double tlow = m_startTime, thigh = m_endTime;
     double ints = std::max(t0, tlow), inte = std::min(t3, thigh);
     auto a = l.getCenterRdAtTime(ints), b = l.getCenterRdAtTime(inte);
-    double dxs=(m_p.m_x)-a.first.m_x;
-    double dys=(m_p.m_y)-a.first.m_y;
-    double dxe=(m_p.m_x)-b.first.m_x;
-    double dye=(m_p.m_y)-b.first.m_y;
-    double ts = ints, te = inte;
-    double c1=sq(dxs-dxe)+sq(dys-dye),
-            c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
-            c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
-            c4=te-ts;
-    double d;
-    if(c1<1e-7){
-        d= std::sqrt(sq(dxs)+sq(dys));
-    }else{
-        double middle=-c2/c1/2;
-        if(middle>ints&&middle<inte){
-            d= sqrt((4*c1*c3-c2*c2)/4/c1)/c4;
-        }
-        else{
-            d= std::min(std::sqrt(sq(dxs)+sq(dys)),std::sqrt(sq(dxe)+sq(dye)));
-        }
-    }
-    if(d<=m_r){
-        return 2;
-    }
-    return 0;
+    xPoint p1(m_p),p2(m_p);
+    p1.m_t=ints;p2.m_t=inte;
+    double d = xTrajectory::line2lineMinSED(p1,p2,a.first,b.first);
+    if(d<=m_r) return 2;
+    else return 0;
 }
 
 

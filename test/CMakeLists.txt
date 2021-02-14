@@ -54,35 +54,35 @@ endforeach()
 #endforeach()
 
 
-set (DIR mbc)
-set (SOURCES
-        #mbcTest
-        leafsize
-        knnTest
-        densityTest
-        TrajStoreTest
-        optimizedTest
-        tb3drTest
-        e2eTest
-        e2eTestGT
-        splitTest
-        radiusEstimator
-        splitQueryTest
-        rangeTest
-        simpliTest
-        speedEstimator
-        changeKTest
-        e2eRangeTest
-        indexTest
-        dump
-        secondaryTest
-        )
+#set (DIR mbc)
+#set (SOURCES
+#        #mbcTest
+#        leafsize
+#        knnTest
+#        densityTest
+#        TrajStoreTest
+#        optimizedTest
+#        tb3drTest
+#        e2eTest
+#        e2eTestGT
+#        splitTest
+#        radiusEstimator
+#        splitQueryTest
+#        rangeTest
+#        simpliTest
+#        speedEstimator
+#        changeKTest
+#        e2eRangeTest
+#        indexTest
+#        dump
+#        secondaryTest
+#        )
 
-foreach (test ${SOURCES})
-    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
-    target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
-    target_link_libraries(test-${DIR}-${test} ${CMAKE_THREAD_LIBS_INIT})
-endforeach()
+#foreach (test ${SOURCES})
+#    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
+#    target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
+#    target_link_libraries(test-${DIR}-${test} ${CMAKE_THREAD_LIBS_INIT})
+#endforeach()
 
 set (DIR testx)
 set (SOURCES
