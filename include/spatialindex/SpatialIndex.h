@@ -53,9 +53,6 @@ using json = nlohmann::json;
 
 #define prexp double //storage precision
 
-extern bool bUsingSimp;
-extern bool bUsingSBBD;
-
 namespace SpatialIndex
 {
 	class Point;

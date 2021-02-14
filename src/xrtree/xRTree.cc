@@ -1056,7 +1056,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
         ps.clean();
     }
     else{/*BFMST*/
-        PartsStoreBFMST ps(simpleTraj,0, this);
+        PartsStoreBFMST ps(simpleTraj,0, this,k);
         string str = queryTraj->toString();
         ps.push(new NNEntry(m_rootID, DISTE(0), 0));
 
@@ -1081,6 +1081,9 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                     ps.pop();
                     NodePtr n = readNode(pFirst->m_id);
                     v.visitNode(*n);
+#ifdef TJDEBUG
+                    cerr<<iternum<<"\tnode with "<<pFirst->m_id<<"\t"<<pFirst->m_dist.opt<<"\t"<<n->m_nodeMBR<<endl;
+#endif
                     for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
                         if (n->m_level == 0) {
                             double pd;
@@ -1089,6 +1092,10 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
 //                            if(n->m_pIdentifier[cChild]==788){
 //                                std::cerr<<"";
 //                            }
+                            if(n->m_se[cChild].m_id ==328){
+                                if(n->m_ptrxSBB[cChild]->m_endTime>8016&&n->m_ptrxSBB[cChild]->m_startTime<8156)
+                                    cerr<<"";
+                            }
                             pd = std::max(0.0, simpleTraj.sbbDistInfer(*n->m_ptrxSBB[cChild], tjstat->vmax).opt);
                             ts = n->m_ptrxSBB[cChild]->m_startTime;
                             te = n->m_ptrxSBB[cChild]->m_endTime;
@@ -1109,6 +1116,9 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                 }
                 case 1: {//leaf node
                     ps.pop();
+#ifdef TJDEBUG
+                    cerr<<iternum<<"\tCB with "<<pFirst->m_dist.opt<<"\t"<<ps.explain(pFirst->m_pEntry->m_se.m_id)<<endl;
+#endif
                     ps.loadPartTraj(pFirst->m_id, pFirst->m_pEntry,pFirst->m_dist.opt);
                     delete pFirst->m_pEntry;
                     delete pFirst;

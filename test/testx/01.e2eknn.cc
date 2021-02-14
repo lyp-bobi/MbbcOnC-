@@ -10,7 +10,7 @@ int main(){
         double qts[] = {300,1800,3600,7200,10800};
         cerr<<"01,e2eknn, with TB,STR,SBB1200,SBBF(600,900,1200,1800)"<<endl;
         xStore x(target, testFileName(target), true);
-        for(double qt=300;qt<=10800;qt+=500) {
+        for(double qt=300;qt<=5300;qt+=500) {
             cerr<<"qt is " << qt<<endl;
             vector<xTrajectory> queries;
             fillQuerySet(queries,x,qt);

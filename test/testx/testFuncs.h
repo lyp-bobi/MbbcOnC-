@@ -59,11 +59,11 @@
 using namespace std;
 using namespace SpatialIndex;
 using namespace xRTreeNsp;
-#ifdef TJDEBUG
+#if defined(TJDEBUG) || defined(WIN32)
 #define NUMCORE 1
 extern double testtime = 10;
 #else
-#define NUMCORE 1
+#define NUMCORE 4
 extern double testtime = 1200;
 #endif
 #define NUMTHREAD (NUMCORE*2)
@@ -111,7 +111,7 @@ public:
         auto mou=dynamic_cast<const xRTreeNsp::xRTree::simpleData*>(&d);
         if(mou!=nullptr){
             m_lastDist=mou->m_dist;
-#ifdef TJDEBUG
+#if !defined(NDEBUG) || defined(TJDEBUG)
             cerr <<"result" << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
 #endif
         }

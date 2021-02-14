@@ -431,7 +431,8 @@ void DiskStorageManager::loadByteArray(const id_type page, uint32_t& len, uint8_
 
 void DiskStorageManager::storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data)
 {
-    if(m_isro) throw Tools::IllegalStateException("DiskStorageManger:can't write a ro file");
+    if(m_isro)
+        throw Tools::IllegalStateException("DiskStorageManger:can't write a ro file");
 	if (page == NewPage)
 	{
 //        std::cout<<"page id"<<page<<std::endl;
@@ -544,7 +545,8 @@ void DiskStorageManager::storeByteArray(id_type& page, const uint32_t len, const
 
 void DiskStorageManager::deleteByteArray(const id_type page)
 {
-    if(m_isro) throw Tools::IllegalStateException("DiskStorageManger:can't write a ro file");
+    if(m_isro)
+        throw Tools::IllegalStateException("DiskStorageManger:can't write a ro file");
 
     std::map<id_type, Entry*>::iterator it = m_pageIndex.find(page);
 

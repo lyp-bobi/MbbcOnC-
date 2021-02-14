@@ -469,205 +469,27 @@ namespace SpatialIndex
             std::map<id_type ,Parts> m_parts;
             int m_dimension=2;
             std::set<id_type > loadedLeaf;
-            void insert(id_type id, xTrajectory &r,id_type prev,id_type next,xStoreEntry &entry){
-                if(m_parts.count(id)==0){
-                    m_parts[id]=Parts(this);
-                }
-//                    m_parts[id].insert(r,prev,next,entry);
-                xTrajectory tmp;
-                tmp.m_points.emplace_back(r.m_points[0]);
-                tmp.m_points.emplace_back(r.m_points[r.m_points.size()-1]);
-                m_parts[id].m_computedDist[std::make_pair(r.m_startTime(),r.m_endTime())]
-                        = DISTE( r.getMinimumDistance(m_query));
-                m_parts[id].insert(tmp,prev,next,entry);
-//                    std::cerr<<"part"<<id<<"\t"<<m_parts[id].m_loadedTime<<"\t"<<m_query.m_endTime()-m_query.m_startTime()<<"\n";
-                update(id);
-            }
-
-            DISTE update(id_type id) {
-                if(m_except.count(id)>0){
-                    return DISTE(1e300);
-                }
-                Parts *parts = &m_parts[id];
-                double computedTime = 0;
-                DISTE pd(0);
-                DISTE res;
-                std::pair<double, double> timeInterval;
-
-                //inferred distance(front dist, back dist and mid dist) should be stored as negative values
-                //front dist
-                if (parts->m_mintime > m_query.m_startTime()) {
-                    timeInterval.first=m_query.m_startTime();
-                    timeInterval.second=parts->m_mintime;
-                    if (parts->m_computedDist.count(timeInterval) > 0) {
-                        pd= parts->m_computedDist[timeInterval];
-                    } else {
-                        if (parts->m_hasPrev) {
-                            pd = m_query.frontDist(parts->m_pTrajs.front().m_points.front(),
-                                                     stat->vmax);
-                            parts->m_computedDist[timeInterval] = pd;
-                        } else {
-                            pd = m_query.frontDistStatic(parts->m_pTrajs.front().m_points.front());
-                            parts->m_computedDist[timeInterval] = pd;
-                            computedTime += timeInterval.second - timeInterval.first;
-                        }
-                    }
-                    //we don't know if it has sbbs, so can't use
-//                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
-//                        pd.opt = std::max(pd.opt, m_lastNodeDist *
-//                                                  (timeInterval.second - timeInterval.first) /
-//                                                  (m_query.m_endTime() - m_query.m_startTime()));
-//                        pd.pes = max(pd.opt,pd.pes);
-//                    }
-                    res = res+pd;
-                }
-                //mid dist
-                const xTrajectory *prev= nullptr;
-                for (const auto &traj:parts->m_pTrajs) {
-                    //this box
-                    timeInterval.first=traj.m_startTime();
-                    timeInterval.second=traj.m_endTime();
-                    if (parts->m_computedDist.count(timeInterval) > 0) {
-                        if (!parts->m_computedDist[timeInterval].infer) {
-                            pd = parts->m_computedDist[timeInterval];
-                        } else {
-                            pd = DISTE(traj.getMinimumDistance(m_query));
-                            parts->m_computedDist[timeInterval] = pd;
-                        }
-                    } else {
-                        pd = DISTE(traj.getMinimumDistance(m_query));
-                        parts->m_computedDist[timeInterval] = pd;
-                    }
-                    res = res+pd;
-                    computedTime += timeInterval.second - timeInterval.first;
-                    //the gap
-                    if (traj.m_startTime() != parts->m_pTrajs.front().m_startTime()) {//not first
-                        if (prev->m_endTime() < traj.m_startTime()) {
-                            timeInterval.first=prev->m_endTime();
-                            timeInterval.second=traj.m_startTime();
-                            if (parts->m_computedDist.count(timeInterval) > 0) {
-                                pd= parts->m_computedDist[timeInterval];
-                            } else {
-                                pd = m_query.gapDist(prev->m_points.back(), traj.m_points.front(), stat->vmax);
-                                parts->m_computedDist[timeInterval] = pd;
-                            }
-                            if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()) {
-                                pd.opt = std::max(pd.opt, m_lastNodeDist *
-                                                          (timeInterval.second - timeInterval.first) /
-                                                          (m_query.m_endTime() - m_query.m_startTime()));
-                                pd.pes = max(pd.opt,pd.pes);
-                            }
-                            res = res+pd;
-                        }
-                    }
-                    prev = &traj;
-                }
-                //backdist
-                if (parts->m_maxtime < m_query.m_endTime()) {
-                    timeInterval.first=parts->m_maxtime;
-                    timeInterval.second=m_query.m_endTime();
-                    if (parts->m_computedDist.count(timeInterval) > 0) {
-                        pd= parts->m_computedDist[timeInterval];
-                    } else {
-                        if (parts->m_hasNext) {
-                            pd = m_query.backDist(parts->m_pTrajs.back().m_points.back(),stat->vmax);
-                            parts->m_computedDist[timeInterval] = pd;
-                        } else {
-                            pd = m_query.backDistStatic(parts->m_pTrajs.back().m_points.back());
-                            parts->m_computedDist[timeInterval] = pd;
-                            computedTime += timeInterval.second - timeInterval.first;
-                        }
-                    }
-                    //we don't know if it has sbbs, so can't use
-//                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
-//                        pd.opt = std::max(pd.opt, m_lastNodeDist *
-//                                                  (timeInterval.second - timeInterval.first) /
-//                                                  (m_query.m_endTime() - m_query.m_startTime()));
-//                        pd.pes = max(pd.opt,pd.pes);
-//                    }
-                    res = res+pd;
-                }
-
-                parts->m_calcMin = res;
-                parts->m_computedTime = computedTime;
-                int type = 2;
-                if (parts->m_loadedTime + 1e-7 >= (m_query.m_endTime() - m_query.m_startTime())) type = 3;
-                res.opt -= m_error;
-                res.pes += m_error;
-                if (m_handlers.count(id) == 0) {
-                    auto handle = m_mpq.push(new NNEntry(id, res, type));
-                    m_handlers[id] = handle;
-                } else {
-                    m_mpq.update(m_handlers[id], id, res, type);
-                }
-                m_pes.insert(id, res.pes);
-                if(res.opt>m_pes.threshold()){
-                    m_except.insert(id);
-                }
-                return res;
-            }
+            void insert(id_type id, xTrajectory &r,id_type prev,id_type next,xStoreEntry &entry);
+            DISTE update(id_type id) ;
         public:
-            void loadPartTraj(id_type id, leafInfo * e, double dist) {
-                xTrajectory tmpTraj;
-                id_type trajid = e->m_se.m_id;
-                m_ts->loadTraj(tmpTraj, e->m_se);
-                if (m_except.count(trajid) > 0) return;
-                xTrajectory inter;
-                tmpTraj.getPartialxTrajectory(max(m_query.m_startTime(), e->m_ts),
-                                              min(m_query.m_endTime(), e->m_te), inter);
-                bool pv = e->m_hasPrev, nt = e->m_hasNext;
-                if (!m_pTree->m_bStoringLinks) {
-                    pv = e->m_se.m_s > 0 || e->m_ts > tmpTraj.m_startTime();
-                    nt = e->m_se.m_e < m_ts->m_trajIdx[e->m_se.m_id]->m_npoint-1 || e->m_te < tmpTraj.m_endTime();
-                }
-                pv = pv && (m_query.m_startTime() < e->m_ts);
-                nt = nt && (m_query.m_endTime() > e->m_te);
-                insert(trajid, inter, pv ? 1 : -1, nt ? 1 : -1, e->m_se);
-            }
+            void loadPartTraj(id_type id, leafInfo * e, double dist);
 
-            auto top(){
-                if(!m_mpq.empty()){
-                    id_type prevtop=-1;
-                    while(m_mpq.top()->m_id!=prevtop){
-                        prevtop=m_mpq.top()->m_id;
-                        update(prevtop);
-                    }
-                }
-                if(!m_mpq.empty()&&m_mpq.top()->m_type==3&&(m_nodespq.empty()|| m_mpq.top()->m_dist < m_nodespq.top()->m_dist)){
-                    return m_mpq.top();
-                }
-                if(!m_nodespq.empty())
-                    return m_nodespq.top();
-                return m_mpq.top();
-            }
+            NNEntry* top();
+            NNEntry* pop();
+            string explain(id_type id);
 
-            auto pop(){
-                if(!m_mpq.empty()&&m_mpq.top()->m_type==3&&(m_nodespq.empty()|| m_mpq.top()->m_dist < m_nodespq.top()->m_dist))
-                    return m_mpq.pop();
-                if(!m_nodespq.empty()) {
-                    if(m_nodespq.top()->m_type==0){
-                        m_lastNodeDist = m_nodespq.top()->m_dist.opt;
-                    }
-                    return m_nodespq.pop();
-                }
-                return m_mpq.pop();
-            }
 
-            auto push(NNEntry* e){
-                if(e->m_type==0||e->m_type==1){
-                    return m_nodespq.push(e);
-                }else{
-                    return m_mpq.push(e);
-                }
-            }
+            void push(NNEntry* e);
             void clean(){
                 m_mpq.clean();
                 m_nodespq.clean();
             }
 
             auto empty(){return m_mpq.empty()&&m_nodespq.empty();}
-            PartsStoreBFMST(xTrajectory &traj,double error,xRTree* r)
-                    :m_query(traj),m_error(error), m_pTree(r),m_ts(r->m_ts){}
+            PartsStoreBFMST(xTrajectory &traj,double error,xRTree* r, int nnk)
+                    :m_query(traj),m_error(error), m_pTree(r),m_ts(r->m_ts){
+                m_pes.setLen(nnk);
+            }
             ~PartsStoreBFMST(){}
         };//PartStoreBFMST
 	}
