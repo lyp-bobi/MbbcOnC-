@@ -224,6 +224,7 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
         trajidxFile.close();
     } else {
         if(m_name=="od") {
+            m_bSubTraj = bsubtraj;
             m_property["trajfile"] = file;
             m_property["tjstat"] = tjstat->toString();
             m_property["bSubTraj"] = bsubtraj;
