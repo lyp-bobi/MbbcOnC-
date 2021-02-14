@@ -16,8 +16,9 @@ int main(){
     xStore x("od","od");
     testtime = 80;
     for(int i=0;i<files.size();i++){
-        //don't load it if
-        x.loadFile(files[i]);
+        //don't load it if exist
+        if(!x.m_property.contains("TBWP"+to_string(i)))
+            x.loadFile(files[i]);
         string idxnum = to_string(i);
         vector<xTrajectory> queries;
         fillQuerySet(queries,x,1000);

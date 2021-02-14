@@ -9,7 +9,7 @@ int main(){
     try {
         string target = "tdexpand.txt";
         double rds[] = {0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2};
-        double seglens[] = {600,900,1500,2100,2700,3300,3900,4500};
+        double seglens[] = {100,300,600};
         cerr<<"seglen: ";
         for(auto len:seglens){cerr<<len<<" ";}
         cerr<<endl;

@@ -41,7 +41,7 @@
 #include "Index.h"
 #include "BulkLoader.h"
 
-bool bulkloadt= true;
+bool bulkloadt= false;
 using namespace SpatialIndex;
 using namespace SpatialIndex::xRTreeNsp;
 

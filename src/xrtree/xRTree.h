@@ -96,6 +96,9 @@ namespace SpatialIndex
             bool m_bUsingMBC=false;//for SBBRTree
             bool m_bUsingMBL=false;//for STR-Tree
 
+            bool m_bUsingSimp=true;
+            bool m_bUsingSBBD=true;
+
             bool m_bStoringLinks = true;
 
             xStore *m_ts=nullptr;

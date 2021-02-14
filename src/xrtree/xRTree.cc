@@ -833,7 +833,7 @@ void xRTree::intersectsWithQuery(const xCylinder &query, IVisitor &v) {
 //                        std::cerr<<*querycy << endl<< (n->m_ptrxSBB[cChild])->toString();
                         ++(m_stats.m_u64QueryResults);
                     } else {
-                        if(bUsingSBBD) {
+                        if(m_bUsingSBBD) {
                             pending.insert(make_pair(id, n->m_se[cChild]));
                         }else{
                             xTrajectory partTraj;
@@ -858,7 +858,7 @@ void xRTree::intersectsWithQuery(const xCylinder &query, IVisitor &v) {
             }
         }
     }
-    if(bUsingSBBD && !pending.empty()) {
+    if(m_bUsingSBBD && !pending.empty()) {
         id_type previd=pending.begin()->first;
         uint32_t lower = pending.begin()->second.m_s, higher=pending.begin()->second.m_e;
         while (!pending.empty()) {
@@ -906,7 +906,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
     xTrajectory simpleTraj;
     xTrajectory ssTraj;
     double delta=0, ssdelta= 0;
-    if(bUsingSBBD&& bUsingSimp && m_bStoringLinks) {
+    if(m_bUsingSBBD&& m_bUsingSimp && m_bStoringLinks) {
         vector<xPoint> simpp;
         int segnum = std::floor((queryTraj->m_endTime() - queryTraj->m_startTime()) / (tjstat->bt));
         if (segnum * 2 < queryTraj->m_points.size()){
@@ -937,7 +937,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
     int iternum = 0;
     bool btopnode =false;
     /*SBB-Driven*/
-    if(bUsingSBBD == true && m_bStoringLinks) {
+    if(m_bUsingSBBD == true && m_bStoringLinks) {
         PartsStore ps(simpleTraj, delta, this);
         ps.push(new NNEntry(m_rootID, DISTE(0), 0));
 
@@ -966,7 +966,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                     v.visitNode(*n);
                     for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
                         double pd;
-                        if(n->m_level>=2 && bUsingSimp){
+                        if(n->m_level>=2 && m_bUsingSimp){
                             pd = std::max(0.0, ssTraj.nodeDist(*(n->m_ptrMBR[cChild])) - ssdelta);
                         }else{
                             pd = std::max(0.0, simpleTraj.nodeDist(*(n->m_ptrMBR[cChild])) - delta);

@@ -160,6 +160,7 @@ xRTree * xRTreeNsp::buildTBTreeWP(IStorageManager *mng, string add) {
         std::cerr<<"built new "<<name<<"\n";
         mng->flush();
     }
+    r->m_bUsingSBBD=r->m_bUsingSimp=false;
     delete stream;
     return r;
 }
@@ -194,6 +195,7 @@ xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng, string add) {
         mng->flush();
     }
     delete stream;
+    r->m_bUsingSBBD=r->m_bUsingSimp=false;
     return r;
 }
 
