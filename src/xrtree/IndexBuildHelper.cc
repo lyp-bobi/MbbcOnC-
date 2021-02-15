@@ -195,7 +195,7 @@ xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng, string add) {
         mng->flush();
     }
     delete stream;
-    r->m_bUsingSBBD=r->m_bUsingSimp=false;
+    r->m_bUsingSimp=false;
     return r;
 }
 

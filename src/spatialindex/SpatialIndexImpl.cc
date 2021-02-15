@@ -26,8 +26,6 @@
 ******************************************************************************/
 #include <spatialindex/SpatialIndex.h>
 
-#include "../mbcrtree/MBCRTree.h"
-
 bool bUsingSimp=true;
 bool bUsingSBBD=true;
 
@@ -67,26 +65,12 @@ std::string SpatialIndex::InvalidPageException::what()
 
 std::ostream& SpatialIndex::operator<<(std::ostream& os, const ISpatialIndex& i)
 {
-    const SpatialIndex::MBCRTree::MBCRTree* pMBCRTree = dynamic_cast<const SpatialIndex::MBCRTree::MBCRTree*>(&i);
-    if (pMBCRTree != 0)
-    {
-        os << *pMBCRTree;
-        return os;
-    }
-
 	std::cerr << "ISpatialIndex operator<<: Not implemented yet for this index type." << std::endl;
 	return os;
 }
 
 std::ostream& SpatialIndex::operator<<(std::ostream& os, const IStatistics& s)
 {
-    const SpatialIndex::MBCRTree::Statistics* pMBCRTreeStats = dynamic_cast<const SpatialIndex::MBCRTree::Statistics*>(&s);
-    if (pMBCRTreeStats != 0)
-    {
-        os << *pMBCRTreeStats;
-        return os;
-    }
-
 	std::cerr << "IStatistics operator<<: Not implemented yet for this index type." << std::endl;
 	return os;
 }

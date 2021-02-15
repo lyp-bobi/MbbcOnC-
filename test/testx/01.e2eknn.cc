@@ -14,18 +14,18 @@ int main(){
             cerr<<"qt is " << qt<<endl;
             vector<xTrajectory> queries;
             fillQuerySet(queries,x,qt);
-            {
-                MTQ q;
-                q.prepareTrees(&x, [](auto x) { return buildTBTreeWP(x); });
-                q.appendQueries(queries);
-                std::cerr << q.runQueries().toString();
-            }
-            {
-                MTQ q;
-                q.prepareTrees(&x, [](auto x) { return buildSTRTreeWP(x); });
-                q.appendQueries(queries);
-                std::cerr << q.runQueries().toString();
-            }
+//            {
+//                MTQ q;
+//                q.prepareTrees(&x, [](auto x) { return buildTBTreeWP(x); });
+//                q.appendQueries(queries);
+//                std::cerr << q.runQueries().toString();
+//            }
+//            {
+//                MTQ q;
+//                q.prepareTrees(&x, [](auto x) { return buildSTRTreeWP(x); });
+//                q.appendQueries(queries);
+//                std::cerr << q.runQueries().toString();
+//            }
             {
                 MTQ q;
                 q.prepareTrees(&x, [](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, 1200); });

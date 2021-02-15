@@ -352,6 +352,7 @@ namespace SpatialIndex
             double m_error;
             xStore* m_ts;
             poppq m_pes;
+            std::set<id_type> m_except;
             xRTree * m_pTree;
             trajStat* stat = trajStat::instance();
             std::map<id_type ,Parts> m_parts;
@@ -399,8 +400,10 @@ namespace SpatialIndex
 
             auto nodetop(){return m_nodespq.top();}
 
-             PartsStore(xTrajectory &traj,double error, xRTree *r)
-                    :m_query(traj),m_error(error), m_pTree(r),m_ts(r->m_ts){}
+             PartsStore(xTrajectory &traj,double error, xRTree *r, int nnk)
+                    :m_query(traj),m_error(error), m_pTree(r),m_ts(r->m_ts){
+                m_pes.setLen(nnk);
+            }
             ~PartsStore(){}
             xTrajectory getTraj(id_type id){
                 vector<STPoint> buff;

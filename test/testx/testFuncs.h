@@ -41,7 +41,6 @@
 
 #include "storagemanager/xStore.h"
 #include "../../src/storagemanager/DiskStorageManager.h"
-#include "../../src/mbcrtree/MBCRTree.h"
 //#define sourceFile "D://t1000.txt"
 #define genFile "D://00.txt"
 #define GLFile "/root/GLSC.csv"
@@ -61,7 +60,7 @@ using namespace SpatialIndex;
 using namespace xRTreeNsp;
 #if defined(TJDEBUG) || defined(WIN32) || !defined(NDEBUG)
 #define NUMCORE 1
-extern double testtime = 10;
+extern double testtime = 20;
 #else
 #define NUMCORE 4
 extern double testtime = 1200;
@@ -649,7 +648,6 @@ static void rangeQueryBatch(xRTree *tree, const vector<xCylinder *> &queries, xS
         vis = new MyVisitor();
     }
     vis->ts = ts;
-    sb = 0, sbb = 0;
     auto start = std::chrono::system_clock::now();
     for (int i = 0; i < queries.size(); i++) {
         vis->m_query = queries[i];
@@ -664,8 +662,7 @@ static void rangeQueryBatch(xRTree *tree, const vector<xCylinder *> &queries, xS
 //    cerr <<"xStore Statistic"<< 1.0*ts->m_indexIO/num<<"\t"<<1.0*ts->m_trajIO/num<<endl;
     cerr << "average time\tIndexVisit\tLeafVisit\tIndexIO\ttrajIO\tprevalidateRate\tinternum\tcontainNum\n";
     cerr << time / num << "\t" << 1.0 * vis->m_indexvisited / num << "\t" << 1.0 * vis->m_leafvisited / num << "\t"
-         << 1.0 * ts->m_indexIO / num << "\t" << 1.0 * ts->m_trajIO / num << "\t" << double(sbb) / sb << "\t" << sb
-         << "\t" << sbb << endl;
+         << 1.0 * ts->m_indexIO / num << "\t" << 1.0 * ts->m_trajIO / num << "\t" << endl;
 //    cerr <<vis->m_resultGet<<"\n";
 //    cerr <<time/num<<"\n";
 }

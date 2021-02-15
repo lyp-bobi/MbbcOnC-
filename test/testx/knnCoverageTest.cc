@@ -21,33 +21,8 @@ int main(){
         for(auto sl:segLens) {
             CUTFUNC f=[](auto tj){return xTrajectory::OPTS(tj,tjstat->bt);};
             for (auto qs:querySets) {
-                bUsingSBBD = false;
                 for (auto querylen:segLens) {
                     xRP r(buildMBCRTreeWP(&x, xTrajectory::ISS,sl));
-                    kNNQueryBatch(r, qs, &x, 5);
-                    vis.clear();
-                    xRP r2(buildMBRRTreeWP(&x, xTrajectory::ISS,sl));
-
-                    kNNQueryBatch(r2, qs, &x, 5);
-                    vis.clear();
-                }
-                {
-                    xRP r(buildTBTreeWP(&x));
-
-                    kNNQueryBatch(r, qs, &x, 5);
-                    vis.clear();
-                }
-                {
-                    xRP r(buildSTRTreeWP(&x));
-
-                    kNNQueryBatch(r, qs, &x, 5);
-                    vis.clear();
-                }
-                bUsingSBBD = true;
-                for (auto querylen:segLens) {
-                    tjstat->bt = querylen;
-                    xRP r(buildMBCRTreeWP(&x, xTrajectory::ISS,sl));
-
                     kNNQueryBatch(r, qs, &x, 5);
                     vis.clear();
                     xRP r2(buildMBRRTreeWP(&x, xTrajectory::ISS,sl));

@@ -48,10 +48,6 @@ Tools::PropertySet* GetDefaults()
 	var.m_val.ulVal = 100;
 	ps->setProperty("LeafCapacity", var);
 
-	var.m_varType = Tools::VT_LONG;
-	var.m_val.lVal = SpatialIndex::MBCRTree::RV_RSTAR;
-	ps->setProperty("TreeVariant", var);
-
 	// var.m_varType = Tools::VT_LONGLONG;
 	// var.m_val.llVal = 0;
 	// ps->setProperty("IndexIdentifier", var);

@@ -277,4 +277,3 @@ namespace SpatialIndex
 typedef Tools::PoolPointer<Trajectory> TrajectoryPtr;
 SIDX_DLL std::ostream& operator<<(std::ostream& os, const Trajectory& r);
 }
-std::vector<std::string> split(const std::string &strtem,char a);

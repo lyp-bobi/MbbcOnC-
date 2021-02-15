@@ -216,7 +216,7 @@ double xMBR::getArea() const
 
 double xMBR::getMinimumDistance(const IShape& s) const
 {
-    const MBC* pbc = dynamic_cast<const MBC*>(&s);
+    const xMBC* pbc = dynamic_cast<const xMBC*>(&s);
     if (pbc != 0) return pbc->getMinimumDistance(*this);
 
 	const xMBR* pr = dynamic_cast<const xMBR*>(&s);

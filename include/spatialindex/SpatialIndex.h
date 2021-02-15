@@ -49,9 +49,18 @@ using json = nlohmann::json;
 #define cube(x) (x)*(x)*(x)
 #define makemidmacro(x1,t1,x2,t2,t) ((t)-(t1))/((t2)-(t1))*(x2)+((t2)-(t))/((t2)-(t1))*(x1)
 
+#define midpos(x1,x2,ratio) ((1-ratio)*x1+ratio*x2)
+
 #define prex double  //index precision
 
 #define prexp double //storage precision
+
+#define prec float //computation precision
+#define sqrtp sqrtf
+#define asinhp asinhf
+extern double calcuTime[10];
+
+std::vector<std::string> split(const std::string &strtem,char a);
 
 namespace SpatialIndex
 {
@@ -63,18 +72,18 @@ namespace SpatialIndex
 
 
 	struct DISTE{
-	    double opt=0;
-	    double pes=0;
+	    prec opt=0;
+	    prec pes=0;
 	    bool infer = false;
 	    DISTE(){};
-	    explicit DISTE(double optimistic,double pessimistic, bool isinferred)
+	    explicit DISTE(prec optimistic,prec pessimistic, bool isinferred)
 	    {
 #ifndef NDEBUG
 	        assert(optimistic<=pessimistic);
 #endif
 	        opt=optimistic;pes=pessimistic;infer=isinferred;
 	    }
-	    explicit DISTE(double exact){
+	    explicit DISTE(prec exact){
 	        opt=pes=exact;
 	        infer = false;
 	    }
@@ -552,10 +561,10 @@ extern SpatialIndex::trajStat *tjstat;
 #include "TimeRegion.h"
 #include "MovingPoint.h"
 #include "MovingRegion.h"
-#include "MBC.h"
-#include "Cylinder.h"
-#include "Trajectory.h"
-#include "ShapeList.h"
+//#include "MBC.h"
+//#include "Cylinder.h"
+//#include "Trajectory.h"
+//#include "ShapeList.h"
 
 
 #include "xPoint.h"
@@ -566,7 +575,7 @@ extern SpatialIndex::trajStat *tjstat;
 #include "xCylinder.h"
 #include "xTrajectory.h"
 
-#include "MBCRTree.h"
+//#include "MBCRTree.h"
 #include "xRTree.h"
 #include "SBBForest.h"
 #include "Version.h"

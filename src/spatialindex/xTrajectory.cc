@@ -11,7 +11,6 @@
 
 
 #include <spatialindex/SpatialIndex.h>
-#include <storagemanager/TrajStore.h>
 
 using namespace SpatialIndex;
 using std::vector;
@@ -19,7 +18,7 @@ using std::cout;
 using std::endl;
 using std::sqrt;
 
-double splitSoftThres = 0.3;
+double splitSoftThres = 0.2;
 
 xTrajectory::xTrajectory() {
 
@@ -582,22 +581,22 @@ std::vector<xTrajectory> xTrajectory::getItself() const {
 
 double xTrajectory::getArea() const{ return 0;}
 
-inline double theF(double c1,double c2,double c3,double c4,double t){
+inline prec theF(prec c1,prec c2,prec c3,prec c4,prec t){
     //the c4 should be the length of that time period
-    double delta=4*c1*c3-c2*c2;
+    prec delta=4*c1*c3-c2*c2;
     if(delta<=1e-10){
-        return (2*c1*t+c2)*sqrt(std::max(0.0,c1*t*t+c2*t+c3))/4/c1/c4;
+        return (2*c1*t+c2)*sqrtp(std::max((prec)0.0,c1*t*t+c2*t+c3))/4/c1/c4;
     }
     else {
-        return asinh((2 * c1 * t + c2) / sqrt(delta)) * delta / 8 / c1 / sqrt(c1) / c4
-               + (2 * c1 * t + c2) * sqrt(std::max(0.0,c1 * t * t + c2 * t + c3)) / 4 / c1 / c4;
+        return asinhp((2 * c1 * t + c2) / sqrtp(delta)) * delta / 8 / c1 / sqrtp(c1) / c4
+               + (2 * c1 * t + c2) * sqrtp(std::max((prec)0.0,c1 * t * t + c2 * t + c3)) / 4 / c1 / c4;
     }
 }
-inline double theD(double c1,double c2,double c3,double c4,double t){
+inline prec theD(prec c1,prec c2,prec c3,prec c4,prec t){
     //the c4 should be the length of that time period
     return sqrt(c1*t*t+c2*t+c3)/c4;
 }
-inline double theDdd(double c1,double c2,double c3,double c4,double t){
+inline prec theDdd(prec c1,prec c2,prec c3,prec c4,prec t){
     return 0;
 }
 
@@ -605,17 +604,17 @@ inline double xTrajectory::line2lineIED(const SpatialIndex::xPoint &p1s, const S
                                 const SpatialIndex::xPoint &p2s, const SpatialIndex::xPoint &p2e) {
     if(p1s.m_t!=p2s.m_t|p1e.m_t!=p2e.m_t)
         throw Tools::IllegalStateException("line2lineIED: time period not the same");
-    double ts = 0, te = p1e.m_t-p1s.m_t;
-    double dxs=p1s.m_x-p2s.m_x;
-    double dys=p1s.m_y-p2s.m_y;
-    double dxe=p1e.m_x-p2e.m_x;
-    double dye=p1e.m_y-p2e.m_y;
-    double c1=sq(dxs-dxe)+sq(dys-dye),
+    prec ts = 0, te = p1e.m_t-p1s.m_t;
+    prec dxs=p1s.m_x-p2s.m_x;
+    prec dys=p1s.m_y-p2s.m_y;
+    prec dxe=p1e.m_x-p2e.m_x;
+    prec dye=p1e.m_y-p2e.m_y;
+    prec c1=sq(dxs-dxe)+sq(dys-dye),
             c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
             c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
             c4=te-ts;
     if(c1<1e-9){
-        return std::sqrt(sq(dxs)+sq(dys))*c4;
+        return sqrtp(sq(dxs)+sq(dys))*c4;
     }else{
             return (theF(c1,c2,c3,c4,te)-theF(c1,c2,c3,c4,ts));
     }
@@ -852,8 +851,9 @@ inline DISTE xTrajectory::line2MBCDistance(const SpatialIndex::xPoint &ps, const
 
     double x1 = r.m_ps.m_x, y1 = r.m_ps.m_y, t1 = r.m_ps.m_t;
     double x2 = r.m_pe.m_x, y2 = r.m_pe.m_y, t2 = r.m_pe.m_t;
-    double xts = makemidmacro(x1, t1, x2, t2, ps.m_t), xte = makemidmacro(x1, t1, x2, t2, pe.m_t);
-    double yts = makemidmacro(y1, t1, y2, t2, ps.m_t), yte = makemidmacro(y1, t1, y2, t2, pe.m_t);
+    double ratio1 = (ps.m_t - t1)/(t2-t1), ratio2=(pe.m_t - t1)/(t2-t1);
+    double xts=midpos(x1,x2,ratio1), xte=midpos(x1,x2,ratio2);
+    double yts=midpos(y1,y2,ratio1), yte=midpos(y1,y2,ratio2);
     double mbcr1 = std::min(std::min(r.m_rd, (ps.m_t - r.m_ps.m_t) * r.m_rv),
                             (r.m_pe.m_t - ps.m_t) * r.m_rv);
     double mbcr2 = std::min(std::min(r.m_rd, (pe.m_t - r.m_ps.m_t) * r.m_rv),
@@ -869,8 +869,9 @@ inline DISTE xTrajectory::line2MBLDistance(const SpatialIndex::xPoint &ps, const
 
     double x1 = r.m_ps.m_x, y1 = r.m_ps.m_y, t1 = r.m_ps.m_t;
     double x2 = r.m_pe.m_x, y2 = r.m_pe.m_y, t2 = r.m_pe.m_t;
-    double xts = makemidmacro(x1, t1, x2, t2, ps.m_t), xte = makemidmacro(x1, t1, x2, t2, pe.m_t);
-    double yts = makemidmacro(y1, t1, y2, t2, ps.m_t), yte = makemidmacro(y1, t1, y2, t2, pe.m_t);
+    double ratio1 = (ps.m_t - t1)/(t2-t1), ratio2=(pe.m_t - t1)/(t2-t1);
+    double xts=midpos(x1,x2,ratio1), xte=midpos(x1,x2,ratio2);
+    double yts=midpos(y1,y2,ratio1), yte=midpos(y1,y2,ratio2);
     xPoint p2s(xts,yts, ps.m_t), p2e(xte,yte, pe.m_t);
     double s = line2lineIED(ps, pe, p2s, p2e);
     return DISTE(s);
@@ -915,7 +916,6 @@ double xTrajectory::getMinimumDistance(const SpatialIndex::xTrajectory &in) cons
         auto iter2 = timedTraj2.m_vectorPointer->begin()+timedTraj2.m_is;
         xPoint lastp1 = midTraj[0], lastp2 = timedTraj2[0], newp1, newp2;
         newp1.makeInfinite(2);newp2.makeInfinite(2);
-        if(disttype==1) {max=std::max(max,iter1->getMinimumDistance(*iter2));}
         while (lasttime != timedTraj2[timedTraj2.m_size-1].m_t) {
             if ((iter1 + 1)->m_t == (iter2 + 1)->m_t) {
                 newtime = (iter1 + 1)->m_t;
@@ -926,16 +926,18 @@ double xTrajectory::getMinimumDistance(const SpatialIndex::xTrajectory &in) cons
             } else if ((iter1 + 1)->m_t < (iter2 + 1)->m_t) {
                 newtime = (iter1 + 1)->m_t;
                 newp1 = *(iter1 + 1);
-                double x=makemidmacro(iter2->m_x,iter2->m_t,(iter2 + 1)->m_x,(iter2 + 1)->m_t,newtime);
-                double y=makemidmacro(iter2->m_y,iter2->m_t,(iter2 + 1)->m_y,(iter2 + 1)->m_t,newtime);
+                double ratio = (newtime-iter2->m_t)/((iter2 + 1)->m_t - (iter2)->m_t);
+                double x=midpos(iter2->m_x, (iter2+1)->m_x,ratio);
+                double y=midpos(iter2->m_y, (iter2+1)->m_y,ratio);
                 newp2.m_x=x;
                 newp2.m_y=y;
                 newp2.m_t=newtime;
                 iter1++;
             } else {
                 newtime = (iter2 + 1)->m_t;
-                double x=makemidmacro(iter1->m_x,iter1->m_t,(iter1 + 1)->m_x,(iter1 + 1)->m_t,newtime);
-                double y=makemidmacro(iter1->m_y,iter1->m_t,(iter1 + 1)->m_y,(iter1 + 1)->m_t,newtime);
+                double ratio = (newtime-iter1->m_t)/((iter1 + 1)->m_t - (iter1)->m_t);
+                double x=midpos(iter1->m_x, (iter1+1)->m_x,ratio);
+                double y=midpos(iter1->m_y, (iter1+1)->m_y,ratio);
                 newp1.m_x=x;
                 newp1.m_y=y;
                 newp1.m_t=newtime;
@@ -1235,20 +1237,18 @@ void xTrajectory::getPartialxTrajectory(double tstart, double tend, SpatialIndex
     while(m_points[ie].m_t>tend) ie--;
     double x,y;
     if(is!=0&&m_points[is].m_t!=tstart){
-        x=makemidmacro(m_points[is-1].m_x,m_points[is-1].m_t,
-                       m_points[is].m_x,m_points[is].m_t,tstart);
-        y=makemidmacro(m_points[is-1].m_y,m_points[is-1].m_t,
-                       m_points[is].m_y,m_points[is].m_t,tstart);
+        double ratio = (tstart-m_points[is-1].m_t)/(m_points[is].m_t - m_points[is-1].m_t);
+        x=midpos(m_points[is-1].m_x, m_points[is].m_x,ratio);
+        y=midpos(m_points[is-1].m_y, m_points[is].m_y,ratio);
         out.m_points.push_back(xPoint(x,y,tstart));
     }
     for(int i=is;i<=ie;i++){
         out.m_points.push_back(xPoint(m_points[i]));
     }
     if(ie!=m_points.size()-1&&m_points[ie].m_t!=tend){
-        x=makemidmacro(m_points[ie].m_x,m_points[ie].m_t,
-                       m_points[ie+1].m_x,m_points[ie+1].m_t,tend);
-        y=makemidmacro(m_points[ie].m_y,m_points[ie].m_t,
-                       m_points[ie+1].m_y,m_points[ie+1].m_t,tend);
+        double ratio = (tend-m_points[ie].m_t)/(m_points[ie+1].m_t - m_points[ie].m_t);
+        x=midpos(m_points[ie].m_x, m_points[ie+1].m_x,ratio);
+        y=midpos(m_points[ie].m_y, m_points[ie+1].m_y,ratio);
         out.m_points.push_back(xPoint(x,y,tend));
     }
 }

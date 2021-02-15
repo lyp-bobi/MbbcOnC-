@@ -101,9 +101,9 @@ DISTE PartsStore::updateValue(id_type id) {
                     parts->m_computedDist[timeInterval] = pd;
                 }
                 if(iter->second.infer&&!m_nodespq.empty()){
-                    pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
+                    pd.opt = std::max(pd.opt, (prec)( m_nodespq.top()->m_dist.opt *
                                               (timeInterval.second - timeInterval.first) /
-                                              (m_query.m_endTime() - m_query.m_startTime()));
+                                              (m_query.m_endTime() - m_query.m_startTime())));
                     pd.pes = max(pd.opt,pd.pes);
                 }
                 res = res + pd;
@@ -143,6 +143,10 @@ DISTE PartsStore::updateValue(id_type id) {
     if (parts->m_missingLeaf.empty()) type = 3;
     res.opt -= m_error;
     res.pes += m_error;
+    m_pes.insert(id, res.pes);
+    if(res.opt>m_pes.threshold()){
+        m_except.insert(id);
+    }
     m_mpq.updateValue(m_handlers[id], id, res, type);
     parts->is_modified=false;
     return res;
@@ -160,7 +164,7 @@ void PartsStore::loadLeaf(const Node &n, double dist) {
         xStoreEntry entry= n.m_se[i];
         double bts= n.m_ptrxSBB[i]->m_startTime,bte= n.m_ptrxSBB[i]->m_endTime;
         if(bts>=m_query.m_endTime()||
-           bte<=m_query.m_startTime()){}
+           bte<=m_query.m_startTime()||m_except.count(trajid)>0){}
         else {
             insert(trajid, *n.m_ptrxSBB[i],
                    (m_query.m_startTime()<bts)?n.m_prevNode[i]:-1
@@ -309,9 +313,9 @@ DISTE PartsStoreBFMST::update(id_type id) {
                     parts->m_computedDist[timeInterval] = pd;
                 }
                 if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()) {
-                    pd.opt = std::max(pd.opt, m_lastNodeDist *
+                    pd.opt = std::max(pd.opt, (prec)(m_lastNodeDist *
                                               (timeInterval.second - timeInterval.first) /
-                                              (m_query.m_endTime() - m_query.m_startTime()));
+                                              (m_query.m_endTime() - m_query.m_startTime())));
                     pd.pes = max(pd.opt,pd.pes);
                 }
                 res = res+pd;

@@ -43,29 +43,29 @@ int main(){
             tj.loadFromString("39.999976,116.326565,8016.000000 40.000032,116.326175,8021.000000 40.000038,116.326154,8026.000000 40.000035,116.326081,8031.000000 39.996877,116.326645,8151.000000 39.996825,116.326536,8156.000000");
             double res1 = 0;
             double res2 = 0;
-//            for (auto querylen:seglen) {
-//                tjstat->bt = querylen;
-//                auto r = buildMBCRTreeWP(&x, xTrajectory::ISS, querylen);
-////            r->intersectsWithQuery(query, vis);
-//                r->nearestNeighborQuery(6, tj, vis);
-//
-//                std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
-//                if(res1==0&&res2==0) {
-//                    res1 = vis.m_resultGet;
-//                    res2 = vis.m_lastResult;
-//                }else{
-//                    if(vis.m_resultGet!=res1 || vis.m_lastResult!=res2){
-//                        cerr<<tj<<endl;
-//                        return 1;
-//                    }
-//                }
-//                vis.clear();
-////            auto r2 = buildMBRRTreeWP(&x, xTrajectory::ISS,querylen);
-////            r2->intersectsWithQuery(query, vis);
-////            r2->nearestNeighborQuery(6, tj, vis);
-////            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
-////            vis.clear();
-//            }
+            for (auto querylen:seglen) {
+                tjstat->bt = querylen;
+                auto r = buildMBCRTreeWP(&x, xTrajectory::ISS, querylen);
+//            r->intersectsWithQuery(query, vis);
+                r->nearestNeighborQuery(6, tj, vis);
+
+                std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+                if(res1==0&&res2==0) {
+                    res1 = vis.m_resultGet;
+                    res2 = vis.m_lastResult;
+                }else{
+                    if(vis.m_resultGet!=res1 || vis.m_lastResult!=res2){
+                        cerr<<tj<<endl;
+                        return 1;
+                    }
+                }
+                vis.clear();
+//            auto r2 = buildMBRRTreeWP(&x, xTrajectory::ISS,querylen);
+//            r2->intersectsWithQuery(query, vis);
+//            r2->nearestNeighborQuery(6, tj, vis);
+//            std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
+//            vis.clear();
+            }
 //        {
 //            auto r = buildTBTreeWP(&x);
 //            r->intersectsWithQuery(query, vis);

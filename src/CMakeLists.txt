@@ -31,14 +31,14 @@ set(SIDX_BASE_HPP
   "${SIDX_HEADERS_DIR}/MovingPoint.h"
   "${SIDX_HEADERS_DIR}/Point.h"
   "${SIDX_HEADERS_DIR}/Region.h"
-  "${SIDX_HEADERS_DIR}/MBCRTree.h"
+#  "${SIDX_HEADERS_DIR}/MBCRTree.h"
   "${SIDX_HEADERS_DIR}/SpatialIndex.h"
   "${SIDX_HEADERS_DIR}/TimePoint.h"
   "${SIDX_HEADERS_DIR}/STPoint.h"
   "${SIDX_HEADERS_DIR}/TimeRegion.h"
   "${SIDX_HEADERS_DIR}/Version.h"
-  "${SIDX_HEADERS_DIR}/../storagemanager/TrajStore.h"
-  "${SIDX_HEADERS_DIR}/ShapeList.h"
+#  "${SIDX_HEADERS_DIR}/../storagemanager/TrajStore.h"
+#  "${SIDX_HEADERS_DIR}/ShapeList.h"
 )
 list (APPEND SIDX_HPP ${SIDX_BASE_HPP} )
 
@@ -73,16 +73,16 @@ set(SIDX_SPATIALINDEX_CPP
   "${SIDX_SRC_DIR}/spatialindex/LineSegment.cc"
   "${SIDX_SRC_DIR}/spatialindex/MovingPoint.cc"
   "${SIDX_SRC_DIR}/spatialindex/MovingRegion.cc"
-  "${SIDX_SRC_DIR}/spatialindex/MBC.cc"
-  "${SIDX_SRC_DIR}/spatialindex/Cylinder.cc"
-  "${SIDX_SRC_DIR}/spatialindex/Trajectory.cc"
+#  "${SIDX_SRC_DIR}/spatialindex/MBC.cc"
+#  "${SIDX_SRC_DIR}/spatialindex/Cylinder.cc"
+#  "${SIDX_SRC_DIR}/spatialindex/Trajectory.cc"
   "${SIDX_SRC_DIR}/spatialindex/Point.cc"
   "${SIDX_SRC_DIR}/spatialindex/Region.cc"
   "${SIDX_SRC_DIR}/spatialindex/SpatialIndexImpl.cc"
   "${SIDX_SRC_DIR}/spatialindex/TimePoint.cc"
   "${SIDX_SRC_DIR}/spatialindex/STPoint.cc"
   "${SIDX_SRC_DIR}/spatialindex/TimeRegion.cc"
-  "${SIDX_SRC_DIR}/spatialindex/ShapeList.cc"
+#  "${SIDX_SRC_DIR}/spatialindex/ShapeList.cc"
     "${SIDX_SRC_DIR}/spatialindex/xMBC.cc"
     "${SIDX_SRC_DIR}/spatialindex/xCylinder.cc"
     "${SIDX_SRC_DIR}/spatialindex/xTrajectory.cc"
@@ -95,23 +95,23 @@ list (APPEND SIDX_CPP ${SIDX_SPATIALINDEX_CPP} )
 
 
 
-set(SIDX_MBCRTREE_CPP
-        "${SIDX_SRC_DIR}/mbcrtree/BulkLoader.cc"
-        "${SIDX_SRC_DIR}/mbcrtree/BulkLoader.h"
-        "${SIDX_SRC_DIR}/mbcrtree/Index.cc"
-        "${SIDX_SRC_DIR}/mbcrtree/Index.h"
-        "${SIDX_SRC_DIR}/mbcrtree/Leaf.cc"
-        "${SIDX_SRC_DIR}/mbcrtree/Leaf.h"
-        "${SIDX_SRC_DIR}/mbcrtree/Node.cc"
-        "${SIDX_SRC_DIR}/mbcrtree/Node.h"
-        "${SIDX_SRC_DIR}/mbcrtree/PointerPoolNode.h"
-        "${SIDX_SRC_DIR}/mbcrtree/MBCRTree.cc"
-        "${SIDX_SRC_DIR}/mbcrtree/MBCRTree.h"
-        "${SIDX_SRC_DIR}/mbcrtree/Statistics.cc"
-        "${SIDX_SRC_DIR}/mbcrtree/Statistics.h"
-        "${SIDX_SRC_DIR}/mbcrtree/TrajStoreRelated.cc"
-        )
-list (APPEND SIDX_CPP ${SIDX_MBCRTREE_CPP})
+#set(SIDX_MBCRTREE_CPP
+#        "${SIDX_SRC_DIR}/mbcrtree/BulkLoader.cc"
+#        "${SIDX_SRC_DIR}/mbcrtree/BulkLoader.h"
+#        "${SIDX_SRC_DIR}/mbcrtree/Index.cc"
+#        "${SIDX_SRC_DIR}/mbcrtree/Index.h"
+#        "${SIDX_SRC_DIR}/mbcrtree/Leaf.cc"
+#        "${SIDX_SRC_DIR}/mbcrtree/Leaf.h"
+#        "${SIDX_SRC_DIR}/mbcrtree/Node.cc"
+#        "${SIDX_SRC_DIR}/mbcrtree/Node.h"
+#        "${SIDX_SRC_DIR}/mbcrtree/PointerPoolNode.h"
+#        "${SIDX_SRC_DIR}/mbcrtree/MBCRTree.cc"
+#        "${SIDX_SRC_DIR}/mbcrtree/MBCRTree.h"
+#        "${SIDX_SRC_DIR}/mbcrtree/Statistics.cc"
+#        "${SIDX_SRC_DIR}/mbcrtree/Statistics.h"
+#        "${SIDX_SRC_DIR}/mbcrtree/TrajStoreRelated.cc"
+#        )
+#list (APPEND SIDX_CPP ${SIDX_MBCRTREE_CPP})
 
 
 set(SIDX_XRTREE_CPP
@@ -143,7 +143,7 @@ set(SIDX_STORAGEMANAGER_CPP
   "${SIDX_SRC_DIR}/storagemanager/MemoryStorageManager.h"
   "${SIDX_SRC_DIR}/storagemanager/RandomEvictionsBuffer.cc"
   "${SIDX_SRC_DIR}/storagemanager/RandomEvictionsBuffer.h"
-  "${SIDX_SRC_DIR}/storagemanager/TrajStore.cc"
+#  "${SIDX_SRC_DIR}/storagemanager/TrajStore.cc"
   "${SIDX_SRC_DIR}/storagemanager/xStore.cc"
 )
 list (APPEND SIDX_CPP ${SIDX_STORAGEMANAGER_CPP})

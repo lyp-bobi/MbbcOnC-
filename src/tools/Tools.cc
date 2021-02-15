@@ -69,6 +69,7 @@ std::string Tools::IllegalArgumentException::what()
 
 Tools::IllegalStateException::IllegalStateException(std::string s) : m_error(s)
 {
+    std::cerr<<"";
 }
 
 std::string Tools::IllegalStateException::what()

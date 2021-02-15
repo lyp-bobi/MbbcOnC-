@@ -650,7 +650,8 @@ SpatialIndex::xRTreeNsp::NodePtr SpatialIndex::xRTreeNsp::xRTree::readNode(id_ty
 
 		if (level>0) n = m_indexPool.acquire();
 		else if (level==0) n = m_leafPool.acquire();
-		else throw Tools::IllegalStateException("readNode: failed reading the correct node type information");
+		else
+		    throw Tools::IllegalStateException("readNode: failed reading the correct node type information");
 
 		if (n.get() == nullptr)
 		{
@@ -822,10 +823,8 @@ void xRTree::intersectsWithQuery(const xCylinder &query, IVisitor &v) {
                 int b;
                 b = querycy->checkRel(*(n->m_ptrxSBB[cChild]));
                 if (b>0) {
-                    sb += 1;
                     simpleData data = simpleData(n->m_se[cChild].m_id, 0);
                     if (b==2) {
-                        sbb += 1;
                         m_stats.m_doubleExactQueryResults += 1;
                         results.insert(n->m_se[cChild].m_id);
                         pending.erase(n->m_se[cChild].m_id);
@@ -938,7 +937,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
     bool btopnode =false;
     /*SBB-Driven*/
     if(m_bUsingSBBD == true && m_bStoringLinks) {
-        PartsStore ps(simpleTraj, delta, this);
+        PartsStore ps(simpleTraj, delta, this,k);
         ps.push(new NNEntry(m_rootID, DISTE(0), 0));
 
         uint32_t count = 0;
@@ -1096,7 +1095,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                                 if(n->m_ptrxSBB[cChild]->m_endTime>8016&&n->m_ptrxSBB[cChild]->m_startTime<8156)
                                     cerr<<"";
                             }
-                            pd = std::max(0.0, simpleTraj.sbbDistInfer(*n->m_ptrxSBB[cChild], tjstat->vmax).opt);
+                            pd = std::max((prec)0.0, simpleTraj.sbbDistInfer(*n->m_ptrxSBB[cChild], tjstat->vmax).opt);
                             ts = n->m_ptrxSBB[cChild]->m_startTime;
                             te = n->m_ptrxSBB[cChild]->m_endTime;
                             leafInfo *e = new leafInfo();
