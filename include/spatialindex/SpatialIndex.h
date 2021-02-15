@@ -353,7 +353,19 @@ namespace SpatialIndex
 		}
 		void usedata(string str){
 			dataset = str;
-			if (dataset == "gl"){
+            if (dataset == "glexpand"){
+                dataset="gl";
+                M = 1.31808e+09;
+                lineCount = 200692990;
+                trajCount = 206190;
+                tl = 6.56764;
+                jt = 6392.55;
+                Sr = 0.5;
+                Df = 1.25;
+                P = 60000;
+                std::cerr<<"use glexpand sta\n";
+            }
+			else if (dataset == "gl"){
 				M = 1.31808e+08;
 				lineCount = 20069299;
 				trajCount = 20619;
@@ -374,7 +386,7 @@ namespace SpatialIndex
                 Sr = 0.5;
                 Df = 1.56;
                 P = 5333150;
-                std::cerr<<"use td sta\n";
+                std::cerr<<"use tdexpand sta\n";
             }
 			else if(dataset == "td"){
 				M = 5.20574e+09;

@@ -6,7 +6,7 @@
 
 int main(){
     try {
-//        string target = "tdexpand.txt";
+//        string target = "tdexpand.data";
         string target = "glexpand.data";
         testtime=400;
         double seglens[] = {300,600,900,1200,1800,2700,3600};

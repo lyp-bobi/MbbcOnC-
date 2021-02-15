@@ -296,6 +296,7 @@ static vector<pair<id_type, xTrajectory> > loadDumpedFiledToTrajs(string filenam
     std::cerr<<filename<<endl;
     if (filename.find("tdexpand")!=filename.npos) tjstat->usedata("tdexpand");
     else if (filename.find("td")!=filename.npos) tjstat->usedata("td");
+    else if (filename.find("gl")!=filename.npos) tjstat->usedata("glexpand");
     else if (filename.find("gl")!=filename.npos) tjstat->usedata("gl");
     return res;
 }
