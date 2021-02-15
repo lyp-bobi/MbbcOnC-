@@ -21,12 +21,12 @@ int main(){
 //            tj.loadFromString("116.467128,39.939488,265079.000000 116.497360,39.961560,265185.000000 116.356050,39.867990,265229.000000 116.360633,39.872935,265379.000000");
 //            queries.emplace_back(tj);
             fillQuerySet(queries,x,qt);
-            {
-                MTQ q;
-                q.prepareTrees(&x, [](auto x) { return buildTBTreeWP(x); });
-                q.appendQueries(queries);
-                std::cerr << q.runQueries().toString();
-            }
+//            {
+//                MTQ q;
+//                q.prepareTrees(&x, [](auto x) { return buildTBTreeWP(x); });
+//                q.appendQueries(queries);
+//                std::cerr << q.runQueries().toString();
+//            }
             {
                 MTQ q;
                 q.prepareTrees(&x, [](auto x) { return buildSTRTreeWP(x); });

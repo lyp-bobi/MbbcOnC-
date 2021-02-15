@@ -193,6 +193,7 @@ void xStore::loadFile(string file) {
     std::cerr << file << endl;
     inFile.close();
     if (file.find("tdexpand") != file.npos) tjstat->usedata("tdexpand");
+    else if (file.find("glexpand") != file.npos) tjstat->usedata("glexpand");
     else if (file.find("td") != file.npos) tjstat->usedata("td");
     else if (file.find("gl") != file.npos) tjstat->usedata("gl");
     std::cerr << tjstat->toString() << endl;
@@ -320,6 +321,7 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
         std::cerr << file << endl;
         inFile.close();
         if (file.find("tdexpand") != file.npos) tjstat->usedata("tdexpand");
+        if (file.find("glexpand") != file.npos) tjstat->usedata("glexpand");
         else if (file.find("td") != file.npos) tjstat->usedata("td");
         else if (file.find("gl") != file.npos) tjstat->usedata("gl");
         std::cerr << tjstat->toString() << endl;

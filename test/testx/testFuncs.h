@@ -77,6 +77,7 @@ static int drop_cache(int drop) {
     ofstream ofs("/proc/sys/vm/drop_caches");
     ofs<< "3"<<endl;
     ofs.close();
+    usleep(10000);
 #endif
     return 0;
 }
