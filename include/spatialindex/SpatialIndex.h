@@ -72,18 +72,18 @@ namespace SpatialIndex
 
 
 	struct DISTE{
-	    prec opt=0;
-	    prec pes=0;
+	    double opt=0;
+	    double pes=0;
 	    bool infer = false;
 	    DISTE(){};
-	    explicit DISTE(prec optimistic,prec pessimistic, bool isinferred)
+	    explicit DISTE(double optimistic,double pessimistic, bool isinferred)
 	    {
 #ifndef NDEBUG
 	        assert(optimistic<=pessimistic);
 #endif
 	        opt=optimistic;pes=pessimistic;infer=isinferred;
 	    }
-	    explicit DISTE(prec exact){
+	    explicit DISTE(double exact){
 	        opt=pes=exact;
 	        infer = false;
 	    }
@@ -371,7 +371,7 @@ namespace SpatialIndex
                 jt = 6392.55;
                 Sr = 0.5;
                 Df = 1.25;
-                P = 60000;
+                P = 600000;
                 std::cerr<<"use glexpand sta\n";
             }
 			else if (dataset == "gl"){

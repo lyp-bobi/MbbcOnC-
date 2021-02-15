@@ -1,16 +1,16 @@
 include_directories(../include)
 
 find_package(Threads)
-set (DIR geometry)
-set (SOURCES 
-        Intersection
-        )
-
-foreach (test ${SOURCES})
-    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
-    target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
-    target_link_libraries(test-${DIR}-${test} ${CMAKE_THREAD_LIBS_INIT})
-endforeach()
+#set (DIR geometry)
+#set (SOURCES
+#        Intersection
+#        )
+#
+#foreach (test ${SOURCES})
+#    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
+#    target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
+#    target_link_libraries(test-${DIR}-${test} ${CMAKE_THREAD_LIBS_INIT})
+#endforeach()
 #
 #set (DIR rtree)
 #set (SOURCES
@@ -109,6 +109,7 @@ set (SOURCES
         05.range
         07.sbbsize
         08.estimate
+        09.mbcknn
         bulkloadtest
         )
 

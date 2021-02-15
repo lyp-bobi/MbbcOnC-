@@ -1091,11 +1091,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
 //                            if(n->m_pIdentifier[cChild]==788){
 //                                std::cerr<<"";
 //                            }
-                            if(n->m_se[cChild].m_id ==328){
-                                if(n->m_ptrxSBB[cChild]->m_endTime>8016&&n->m_ptrxSBB[cChild]->m_startTime<8156)
-                                    cerr<<"";
-                            }
-                            pd = std::max((prec)0.0, simpleTraj.sbbDistInfer(*n->m_ptrxSBB[cChild], tjstat->vmax).opt);
+                            pd = std::max(0.0, simpleTraj.sbbDistInfer(*n->m_ptrxSBB[cChild], tjstat->vmax).opt);
                             ts = n->m_ptrxSBB[cChild]->m_startTime;
                             te = n->m_ptrxSBB[cChild]->m_endTime;
                             leafInfo *e = new leafInfo();

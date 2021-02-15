@@ -101,7 +101,7 @@ DISTE PartsStore::updateValue(id_type id) {
                     parts->m_computedDist[timeInterval] = pd;
                 }
                 if(iter->second.infer&&!m_nodespq.empty()){
-                    pd.opt = std::max(pd.opt, (prec)( m_nodespq.top()->m_dist.opt *
+                    pd.opt = std::max(pd.opt, ( m_nodespq.top()->m_dist.opt *
                                               (timeInterval.second - timeInterval.first) /
                                               (m_query.m_endTime() - m_query.m_startTime())));
                     pd.pes = max(pd.opt,pd.pes);
@@ -313,7 +313,7 @@ DISTE PartsStoreBFMST::update(id_type id) {
                     parts->m_computedDist[timeInterval] = pd;
                 }
                 if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()) {
-                    pd.opt = std::max(pd.opt, (prec)(m_lastNodeDist *
+                    pd.opt = std::max(pd.opt, (m_lastNodeDist *
                                               (timeInterval.second - timeInterval.first) /
                                               (m_query.m_endTime() - m_query.m_startTime())));
                     pd.pes = max(pd.opt,pd.pes);
