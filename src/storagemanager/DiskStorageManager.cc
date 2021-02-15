@@ -167,15 +167,10 @@ DiskStorageManager::DiskStorageManager(Tools::PropertySet& ps) : m_pageSize(0), 
 		if (bFileExists == true && bOverwrite == false)
 		{
             std::ios_base::openmode mode = std::ios::in | std::ios::out | std::ios::binary;
-			m_indexFile.open(sIndexFile.c_str(), mode);
+            m_indexFile.rdbuf()->pubsetbuf(0,0);
+            m_dataFile.rdbuf()->pubsetbuf(0,0);
+            m_indexFile.open(sIndexFile.c_str(), mode);
 			m_dataFile.open(sDataFile.c_str(), mode);
-/*test*/
-            if(m_indexFile.fail()){
-                cerr<<strerror(errno);
-            }
-            if(m_dataFile.fail()){
-                cerr<<strerror(errno);
-            }
 			if (m_indexFile.fail() || m_dataFile.fail()){
                 cerr<< m_indexFile.fail() << m_dataFile.fail()<<strerror(errno);
 				throw Tools::IllegalArgumentException("SpatialIndex::DiskStorageManager: Index/Data file cannot be read/writen.");
@@ -184,7 +179,9 @@ DiskStorageManager::DiskStorageManager(Tools::PropertySet& ps) : m_pageSize(0), 
 		else
 		{
             std::ios_base::openmode mode = std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc;
-			m_indexFile.open(sIndexFile.c_str(), mode);
+            m_indexFile.rdbuf()->pubsetbuf(0,0);
+            m_dataFile.rdbuf()->pubsetbuf(0,0);
+            m_indexFile.open(sIndexFile.c_str(), mode);
 			m_dataFile.open(sDataFile.c_str(), mode);
 
 			if (m_indexFile.fail() || m_dataFile.fail())
@@ -568,6 +565,8 @@ DiskStorageManager::DiskStorageManager(DiskStorageManager &r,string &name) {
     std::string sIndexFile = name + ".idx";
     std::string sDataFile = name + ".dat";
     std::ios_base::openmode mode = std::ios::in | std::ios::out | std::ios::binary;
+    m_indexFile.rdbuf()->pubsetbuf(0,0);
+    m_dataFile.rdbuf()->pubsetbuf(0,0);
     m_indexFile.open(sIndexFile.c_str(), mode);
     m_dataFile.open(sDataFile.c_str(), mode);
     if(m_indexFile.fail()){
