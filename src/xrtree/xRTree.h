@@ -209,7 +209,9 @@ namespace SpatialIndex
             NNEntry(id_type id, leafInfo* e, double f, uint32_t type)
                     : m_id(id), m_dist(f), m_type(type), m_pEntry(e) {
             }
-            ~NNEntry() {}
+            ~NNEntry() {
+                if(m_pEntry!= nullptr) delete m_pEntry;
+            }
         }; // NNEntry
 
         class NNComparator : public INearestNeighborComparator
@@ -270,9 +272,6 @@ namespace SpatialIndex
             void clean(){
                 for(long i=1;i<m_vHandleHeap.size();i++){
                     id_type idd=m_vHandleHeap[i];
-                    if(m_vElements[idd]->m_pEntry!= nullptr){
-                        delete(m_vElements[idd]->m_pEntry);
-                    }
                     delete m_vElements[idd];
                 }
                 m_vHandleHeap.clear();

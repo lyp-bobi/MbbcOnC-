@@ -59,7 +59,7 @@
 using namespace std;
 using namespace SpatialIndex;
 using namespace xRTreeNsp;
-#if defined(TJDEBUG) || defined(WIN32)
+#if defined(TJDEBUG) || defined(WIN32) || !defined(NDEBUG)
 #define NUMCORE 1
 extern double testtime = 10;
 #else

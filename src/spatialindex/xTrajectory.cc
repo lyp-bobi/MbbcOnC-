@@ -1039,7 +1039,7 @@ DISTE xTrajectory::sbbDistInfer(const xSBB &b, double v) const {
 
 static double ldd(double d,double v,double dt){
     if(d+v*dt>0) return dt*(d+v*dt/2);
-    else return d*d/2*std::fabs(v);
+    else return d*d/2/std::fabs(v);
 }
 DISTE xTrajectory::frontDist(const xSBB &b, double v) const {
     double opti=0,pessi=0;

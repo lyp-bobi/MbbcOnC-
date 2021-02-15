@@ -68,7 +68,12 @@ namespace SpatialIndex
 	    bool infer = false;
 	    DISTE(){};
 	    explicit DISTE(double optimistic,double pessimistic, bool isinferred)
-	    {opt=optimistic;pes=pessimistic;infer=isinferred;}
+	    {
+#ifndef NDEBUG
+	        assert(optimistic<=pessimistic);
+#endif
+	        opt=optimistic;pes=pessimistic;infer=isinferred;
+	    }
 	    explicit DISTE(double exact){
 	        opt=pes=exact;
 	        infer = false;

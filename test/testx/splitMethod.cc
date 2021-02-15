@@ -16,31 +16,31 @@ int main(int argc,char *argv[]){
             std::cerr<<"bt is "<<bt <<endl;
             vector<xTrajectory> queries;
             fillQuerySet(queries, x, qt);
-//            {
-//                MTQ q;
-//                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::ISS, bt, "ISS"); });
-//                q.appendQueries(queries);
-//                std::cerr << q.runQueries().toString();
-//            }
-//            {
-//                MTQ q;
-//                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::GSS, bt, "GSS"); });
-//                q.appendQueries(queries);
-//                std::cerr << q.runQueries().toString();
-//            }
-//            {
-//                MTQ q;
-//                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, bt, "OPTS"); });
-//                q.appendQueries(queries);
-//                std::cerr << q.runQueries().toString();
-//            }
-//            {
-//                MTQ q;
-//                q.prepareTrees(&x,
-//                               [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::FP, bt / tjstat->tl, "FP"); });
-//                q.appendQueries(queries);
-//                std::cerr << q.runQueries().toString();
-//            }
+            {
+                MTQ q;
+                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::ISS, bt, "ISS"); });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
+            {
+                MTQ q;
+                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::GSS, bt, "GSS"); });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
+            {
+                MTQ q;
+                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, bt, "OPTS"); });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
+            {
+                MTQ q;
+                q.prepareTrees(&x,
+                               [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::FP, bt / tjstat->tl, "FP"); });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
             {
                 MTQ q;
                 q.prepareTrees(&x,

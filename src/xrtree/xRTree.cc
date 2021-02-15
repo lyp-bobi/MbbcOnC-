@@ -1120,7 +1120,6 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
                     cerr<<iternum<<"\tCB with "<<pFirst->m_dist.opt<<"\t"<<ps.explain(pFirst->m_pEntry->m_se.m_id)<<endl;
 #endif
                     ps.loadPartTraj(pFirst->m_id, pFirst->m_pEntry,pFirst->m_dist.opt);
-                    delete pFirst->m_pEntry;
                     delete pFirst;
                     break;
                 }

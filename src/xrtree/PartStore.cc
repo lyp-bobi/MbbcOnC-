@@ -386,11 +386,16 @@ void PartsStoreBFMST::loadPartTraj(id_type id, leafInfo *e, double dist){
 }
 
 NNEntry* PartsStoreBFMST::top() {
+    if(m_mpq.empty()||(!m_nodespq.empty()&&m_nodespq.top()->m_dist< m_mpq.top()->m_dist)){
+        return m_nodespq.top();
+    }
     if(!m_mpq.empty()){
         id_type prevtop=-1;
         while(m_mpq.top()->m_id!=prevtop){
             while(m_except.count(m_mpq.top()->m_id)>0){
+                auto s= m_mpq.top();
                 m_mpq.pop();
+                delete s;
                 if(m_mpq.empty()){
                     return m_nodespq.top();
                 }
