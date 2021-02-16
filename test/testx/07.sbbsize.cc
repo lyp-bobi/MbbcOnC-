@@ -4,7 +4,7 @@
 
 #include "testFuncs.h"
 
-int main(){
+int main(int argc,char *argv[]){
     string target = "tdfilter.txt";
     cerr<<"07,sbbsize";
     xStore x(target, testFileName(target), true);

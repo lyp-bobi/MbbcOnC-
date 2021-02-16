@@ -4,7 +4,7 @@
 #include "testFuncs.h"
 #include "random"
 
-int main(){
+int main(int argc,char *argv[]){
     try {
         string target = "tdexpand.data";
         double qts[] = {300,1800,3600,7200,10800};

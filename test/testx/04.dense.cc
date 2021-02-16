@@ -3,7 +3,7 @@
 
 #include "testFuncs.h"
 
-int main(){
+int main(int argc,char *argv[]){
     double seglens[] = {5,10,20,30,40,60,80};
     cerr<<"seglen: ";
     for(auto len:seglens){cerr<<len<<" ";}

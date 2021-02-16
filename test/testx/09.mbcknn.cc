@@ -4,7 +4,7 @@
 #include "testFuncs.h"
 #include "random"
 
-int main(){
+int main(int argc,char *argv[]){
     try {
         string target = "tdexpand.data";
 //        string target = "glexpand.data";
