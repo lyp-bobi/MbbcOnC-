@@ -204,6 +204,11 @@ NNEntry* PartsStore::top() {
         if(m_mpq.top()->m_type==4)
             return m_mpq.top();
         if(lastid!=m_mpq.top()->m_id) {
+            if(m_except.count(m_mpq.top()->m_id)>0){
+                NNEntry* p = m_mpq.top();
+                m_mpq.pop();
+                delete p;
+            }
             lastid = m_mpq.top()->m_id;
             updateValue(lastid);
             m_mpq.updateOrder(m_handlers[lastid]);

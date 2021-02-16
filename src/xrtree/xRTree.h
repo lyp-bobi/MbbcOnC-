@@ -35,7 +35,7 @@
 #include "PointerPoolNode.h"
 #include <cmath>
 
-
+extern bool bulkloadt;
 
 
 

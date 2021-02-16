@@ -8,7 +8,7 @@ int main(){
     cerr<<"seglen: ";
     for(auto len:seglens){cerr<<len<<" ";}
     cerr<<endl;
-
+    bulkloadt=true;
     vector<string> files;
     for(int i=0;i<10;i++){
         files.emplace_back(fileFolder+to_string(i)+".out");
