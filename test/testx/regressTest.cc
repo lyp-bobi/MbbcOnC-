@@ -5,7 +5,7 @@
 
 int main(){
     string target = "tdexpand.data";
-    xStore x(target, testFileName(target), true);
+    xStore x(target, testFileName(target), true,true);
     double seglen[]={600,900,1200,1800};
     xCylinder query(xPoint(40,116.327,6516),0.0001,6516,9516,2);
     xTrajectory tj,tj2;

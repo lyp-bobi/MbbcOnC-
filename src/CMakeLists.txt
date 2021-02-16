@@ -31,14 +31,11 @@ set(SIDX_BASE_HPP
   "${SIDX_HEADERS_DIR}/MovingPoint.h"
   "${SIDX_HEADERS_DIR}/Point.h"
   "${SIDX_HEADERS_DIR}/Region.h"
-#  "${SIDX_HEADERS_DIR}/MBCRTree.h"
   "${SIDX_HEADERS_DIR}/SpatialIndex.h"
   "${SIDX_HEADERS_DIR}/TimePoint.h"
   "${SIDX_HEADERS_DIR}/STPoint.h"
   "${SIDX_HEADERS_DIR}/TimeRegion.h"
   "${SIDX_HEADERS_DIR}/Version.h"
-#  "${SIDX_HEADERS_DIR}/../storagemanager/TrajStore.h"
-#  "${SIDX_HEADERS_DIR}/ShapeList.h"
 )
 list (APPEND SIDX_HPP ${SIDX_BASE_HPP} )
 
@@ -175,6 +172,7 @@ source_group("C API Source Files" FILES ${SIDX_CAPI_CPP})
 
 # Standard include directory of SIDX library
 include_directories(../include)
+include_directories(${STXXL_INCLUDE_DIRS})
 
 set (APPS_CPP_DEPENDENCIES "${SIDX_LIB_NAME}" CACHE INTERNAL "libraries to link")
 
@@ -204,11 +202,16 @@ add_library(${SIDX_LIB_NAME} SHARED ${SIDX_SOURCES})
 
 add_library(${SIDX_C_LIB_NAME} SHARED ${SIDX_CAPI_CPP})
 
+target_link_libraries(${SIDX_LIB_NAME}
+        ${STXXL_LIBRARIES}
+        )
+target_link_libraries(${SIDX_C_LIB_NAME}
+        ${STXXL_LIBRARIES}
+        )
+
 target_link_libraries(${SIDX_C_LIB_NAME}
   ${SIDX_LIB_NAME}
 )
-
-
 
 set_target_properties(${SIDX_LIB_NAME}
     PROPERTIES VERSION "${SIDX_LIB_VERSION}"

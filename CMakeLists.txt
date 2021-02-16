@@ -12,6 +12,10 @@ add_definitions(-std=c++14)
 # internal cmake settings
 #------------------------------------------------------------------------------
 
+#stxxl
+add_subdirectory(stxxl)
+include_directories(${STXXL_INCLUDE_DIRS})
+
 set(CMAKE_COLOR_MAKEFILE ON)
 
 # Allow advanced users to generate Makefiles printing detailed commands
@@ -129,6 +133,7 @@ if(ASAN)
     set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fsanitize=address")
     #SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lasan")
 endif()
+
 set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -DNDEBUG")
 # TODO: Still testing the output paths --mloskot
 set(SIDX_BUILD_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
@@ -303,3 +308,5 @@ list(APPEND CPACK_SOURCE_IGNORE_FILES ".bz2")
 
 include(CPack)
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+
+

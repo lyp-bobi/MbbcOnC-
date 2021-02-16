@@ -18,7 +18,7 @@ int main(int argc,char *argv[]){
             fillQuerySet(queries, x, qt);
             {
                 MTQ q;
-                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::ISS, bt, "ISS"); });
+                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, bt, "ISS"); });
                 q.appendQueries(queries);
                 std::cerr << q.runQueries().toString();
             }

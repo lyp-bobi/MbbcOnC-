@@ -9,7 +9,7 @@ int main(){
         string target = "tdexpand.data";
 //        string target = "glexpand.data";
         cerr<<"09,mbcknn, SBBs"<<endl;
-        double seglens[] = {600,900,1200,1800};
+        double seglens[] = {600,900,1200,1800,2700};
         cerr<<"seglen: ";
         for(auto len:seglens){cerr<<len<<" ";}
         cerr<<endl;
@@ -19,13 +19,21 @@ int main(){
         fillQuerySet(queries,x,3600);
         for (auto len:seglens) {
             MTQ q;
-            q.prepareTrees(&x, [&len](auto x) { return buildMBRRTreeWP(x, xTrajectory::ISS, len); });
+            q.prepareTrees(&x, [&len](auto x) {
+                xRTree* r =buildMBRRTreeWP(x, xTrajectory::OPTS, len);
+//                r->m_bUsingSBBD=false;
+                return r;
+            });
             q.appendQueries(queries);
             std::cerr << q.runQueries().toString();
         }
         for (auto len:seglens) {
             MTQ q;
-            q.prepareTrees(&x, [&len](auto x) { return buildMBCRTreeWP(x, xTrajectory::ISS, len); });
+            q.prepareTrees(&x, [&len](auto x) {
+                xRTree* r =buildMBCRTreeWP(x, xTrajectory::OPTS, len);
+//                r->m_bUsingSBBD=false;
+                return r;
+            });
             q.appendQueries(queries);
             std::cerr << q.runQueries().toString();
         }

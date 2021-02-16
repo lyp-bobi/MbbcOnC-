@@ -34,7 +34,6 @@
 #include <chrono>
 #include "tools/json.hpp"
 #include <cmath>
-
 using json = nlohmann::json;
 
 #ifndef M_PI

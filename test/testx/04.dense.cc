@@ -8,7 +8,6 @@ int main(){
     cerr<<"seglen: ";
     for(auto len:seglens){cerr<<len<<" ";}
     cerr<<endl;
-    bulkloadt=true;
     vector<string> files;
     for(int i=0;i<10;i++){
         files.emplace_back(fileFolder+to_string(i)+".out");
@@ -36,7 +35,7 @@ int main(){
         }
         for (auto len:seglens) {
             MTQ q;
-            q.prepareTrees(&x, [&len,&idxnum](auto x) { return buildMBCRTreeWP(x, xTrajectory::ISS, len,idxnum); });
+            q.prepareTrees(&x, [&len,&idxnum](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, len,idxnum); });
 //            q.appendQueries(queries);
 //            std::cerr << q.runQueries().toString();
         }

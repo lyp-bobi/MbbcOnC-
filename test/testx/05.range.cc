@@ -32,7 +32,7 @@ int main(){
             }
             for (auto len:seglens) {
                 MTQ q;
-                q.prepareTrees(&x, [&len](auto x) { return buildMBCRTreeWP(x, xTrajectory::ISS, len); });
+                q.prepareTrees(&x, [&len](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, len); });
                 q.appendQueries(queries);
                 std::cerr << q.runQueries().toString();
             }

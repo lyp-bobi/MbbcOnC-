@@ -26,6 +26,7 @@
 ******************************************************************************/
 
 #pragma once
+#include <stxxl.h>
 namespace SpatialIndex
 {
 	namespace xRTreeNsp
@@ -114,8 +115,24 @@ namespace SpatialIndex
 				uint32_t numberOfPages // The total number of pages to use.
 			);
 
+#ifndef WIN32
+			//2+4=6GB cache.
+			BulkLoader():m_part2node((uint64_t)2048*1024*1024,(uint64_t)4096*1024*1024){}
+#endif
 		protected:
-            std::map<id_type,id_type> m_part2node;
+            struct CmpIdLess
+            {
+                bool operator () (const id_type & a, const id_type & b) const { return a<b; }
+                static int max_value() { return std::numeric_limits<int>::max(); }
+            };
+
+#ifdef WIN32
+			std::map<id_type,id_type> m_part2node;
+#else
+			//default: 1mb node, 4mb leaf
+            typedef stxxl::map<id_type,id_type, CmpIdLess,(uint64_t)1024*1024,(uint64_t)4*1024*1024> id_map_type;
+            id_map_type m_part2node;
+#endif
 			void createLevel(
 				xRTree* pTree,
 				Tools::SmartPointer<ExternalSorter> es,

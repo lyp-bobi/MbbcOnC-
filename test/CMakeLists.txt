@@ -95,7 +95,7 @@ set (SOURCES
         expandData
         btqtMat
         storeExplorer
-        splitMethod
+        11.splitMethod
         speedEstimator
         rangeQuery
         changek
@@ -110,11 +110,13 @@ set (SOURCES
         07.sbbsize
         08.estimate
         09.mbcknn
-        bulkloadtest
+#        bulkloadtest
+        10.mbcrange
         )
 
 foreach (test ${SOURCES})
     add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
+    target_link_libraries(test-${DIR}-${test} ${STXXL_LIBRARIES})
     target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
     target_link_libraries(test-${DIR}-${test} ${CMAKE_THREAD_LIBS_INIT})
 endforeach()
