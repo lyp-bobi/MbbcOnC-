@@ -329,6 +329,7 @@ void BulkLoader::bulkLoadUsingSTR(
 	uint32_t pageSize,
 	uint32_t numberOfPages
 ) {
+    auto start = std::chrono::system_clock::now();
 	if (! stream.hasNext())
 		throw Tools::IllegalArgumentException(
 			"xRTree::BulkLoader::bulkLoadUsingSTR: Empty data stream given."
@@ -389,6 +390,11 @@ void BulkLoader::bulkLoadUsingSTR(
 //    m_part2node.swap(empty);
 	pTree->m_stats.m_u32TreeHeight = level;
 	pTree->storeHeader();
+    double time;
+    auto end = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    time = double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
+    cerr<<"bulkload finished with time "<<time<<endl;
 }
 
 void BulkLoader::createLevel(

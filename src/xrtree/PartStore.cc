@@ -48,6 +48,7 @@ DISTE PartsStore::updateValue(id_type id) {
     std::map<std::pair<double,double>,DISTE>::iterator  iter;
     //inferred distance(front dist, back dist and mid dist) should be stored as negative values
     //front dist
+#ifndef SKIPMAXSPEED
     if (parts->m_mintime > m_query.m_startTime()) {
         timeInterval.first=m_query.m_startTime();
         timeInterval.second=parts->m_mintime;
@@ -73,6 +74,21 @@ DISTE PartsStore::updateValue(id_type id) {
 //        }
         res = res + pd;
     }
+#else
+    if (parts->m_mintime > m_query.m_startTime()&&!parts->m_hasPrev) {
+        timeInterval.first=m_query.m_startTime();
+        timeInterval.second=parts->m_mintime;
+        iter = parts->m_computedDist.find(timeInterval);
+        if(iter != parts->m_computedDist.end()){
+            pd= iter->second;
+        } else {
+            pd = m_query.frontDistStatic(parts->m_sbbs.begin()->second);
+            parts->m_computedDist[timeInterval] = pd;
+            computedTime += timeInterval.second - timeInterval.first;
+        }
+        res = res + pd;
+    }
+#endif
     //mid dist
     const xSBB *prev= nullptr;
     for (const auto &box:parts->m_sbbs) {
@@ -89,8 +105,10 @@ DISTE PartsStore::updateValue(id_type id) {
         res = res + pd;
         computedTime += timeInterval.second - timeInterval.first;
         //the gap
+
         if (box.second.m_startTime != parts->m_sbbs.begin()->second.m_startTime) {//not first
             if (prev->m_endTime < box.second.m_startTime) {
+#ifndef SKIPMAXSPEED
                 timeInterval.first= prev->m_endTime;
                 timeInterval.second= box.second.m_startTime;
                 iter = parts->m_computedDist.find(timeInterval);
@@ -106,12 +124,19 @@ DISTE PartsStore::updateValue(id_type id) {
                                               (m_query.m_endTime() - m_query.m_startTime())));
                     pd.pes = max(pd.opt,pd.pes);
                 }
+#else
+                pd.opt = ( m_nodespq.top()->m_dist.opt *
+                        (timeInterval.second - timeInterval.first) /
+                        (m_query.m_endTime() - m_query.m_startTime()));
+                pd.pes = 1e300;
+#endif
                 res = res + pd;
             }
         }
         prev = &box.second;
     }
     //backdist
+#ifndef SKIPMAXSPEED
     if (parts->m_maxtime < m_query.m_endTime()) {
         timeInterval.first=parts->m_maxtime;
         timeInterval.second=m_query.m_endTime();
@@ -137,6 +162,21 @@ DISTE PartsStore::updateValue(id_type id) {
 //        }
         res = res + pd;
     }
+#else
+    if (parts->m_maxtime < m_query.m_endTime()&&!parts->m_hasNext) {
+        timeInterval.first=parts->m_maxtime;
+        timeInterval.second=m_query.m_endTime();
+        iter = parts->m_computedDist.find(timeInterval);
+        if(iter != parts->m_computedDist.end()){
+            pd= iter->second;
+        } else {
+            pd = m_query.backDistStatic(parts->m_sbbs.rbegin()->second);
+            parts->m_computedDist[timeInterval] = pd;
+            computedTime += timeInterval.second - timeInterval.first;
+        }
+        res = res + pd;
+    }
+#endif
     parts->m_calcMin = res;
     parts->m_computedTime = computedTime;
     int type = 2;
@@ -208,10 +248,11 @@ NNEntry* PartsStore::top() {
                 NNEntry* p = m_mpq.top();
                 m_mpq.pop();
                 delete p;
+            }else {
+                lastid = m_mpq.top()->m_id;
+                updateValue(lastid);
+                m_mpq.updateOrder(m_handlers[lastid]);
             }
-            lastid = m_mpq.top()->m_id;
-            updateValue(lastid);
-            m_mpq.updateOrder(m_handlers[lastid]);
         } else{
             return m_mpq.top();
         }
@@ -387,7 +428,7 @@ void PartsStoreBFMST::loadPartTraj(id_type id, leafInfo *e, double dist){
     bool pv = e->m_hasPrev, nt = e->m_hasNext;
     if (!m_pTree->m_bStoringLinks) {
         pv = e->m_se.m_s > 0 || e->m_ts > tmpTraj.m_startTime();
-        nt = e->m_se.m_e < m_ts->m_trajIdx[e->m_se.m_id]->m_npoint-1 || e->m_te < tmpTraj.m_endTime();
+        nt = e->m_se.m_e < (*(m_ts->m_trajIdx))[e->m_se.m_id].m_npoint-1 || e->m_te < tmpTraj.m_endTime();
     }
     pv = pv && (m_query.m_startTime() < e->m_ts);
     nt = nt && (m_query.m_endTime() > e->m_te);

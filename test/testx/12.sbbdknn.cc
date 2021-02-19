@@ -8,12 +8,14 @@
 int main(int argc,char *argv[]){
     try {
         string target;
+        vector<double> seglens;
         if(argc==1) {
             target = "tdexpand.data";
+            seglens = {600,900,1200,1800,2700,3600};
         }else {
             target = "glexpand.data";
+            seglens = {100,200,300,600,900,1200};
         }
-        double seglens[] = {600,900,1200,1800,2700,3600};
         cerr<<"seglen: ";
         for(auto len:seglens){cerr<<len<<" ";}
         cerr<<endl;

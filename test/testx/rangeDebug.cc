@@ -17,7 +17,7 @@ int main(){
         xCylinder query(xPoint(116.327,40,6516),4,226516,226516,2);
         xTrajectory tj2;
         int sum = 0;
-        for(auto &s:x.m_trajIdx){
+        for(auto &s:*(x.m_trajIdx)){
             x.loadTraj(tj2,xStoreEntry(s.first,0,100000));
             if(tj2.intersectsxCylinder(query)){
                 sum +=1;

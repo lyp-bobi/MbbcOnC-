@@ -38,6 +38,7 @@ namespace SpatialIndex
         public:
             virtual void intersectsWithQuery(const xCylinder& query, IVisitor& v){};
             virtual void nearestNeighborQuery(uint32_t k, const xTrajectory& query, IVisitor& v){};
+            virtual ~xRTreeQueryObject(){};
         };
         class SBBForest;
 #define PageSizeDefault 4096

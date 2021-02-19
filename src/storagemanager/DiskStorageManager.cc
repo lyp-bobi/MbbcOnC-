@@ -578,6 +578,7 @@ DiskStorageManager::DiskStorageManager(DiskStorageManager &r,string &name) {
     m_fakepageIndex = &r.m_pageIndex;
     m_pageSize=r.m_pageSize;
     m_isro=true;
+    m_nextPage = r.m_nextPage;
     // create buffer.
     m_buffer = new uint8_t[m_pageSize];
     memset(m_buffer, 0, m_pageSize);

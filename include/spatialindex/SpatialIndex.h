@@ -101,6 +101,12 @@ namespace SpatialIndex
 
 	typedef int64_t id_type;
 
+    struct CmpIdLess
+    {
+        bool operator () (const id_type & a, const id_type & b) const { return a<b; }
+        static int max_value() { return std::numeric_limits<int>::max(); }
+    };
+
 	SIDX_DLL enum CommandType
 	{
 		CT_NODEREAD = 0x0,
@@ -394,6 +400,7 @@ namespace SpatialIndex
                 Sr = 0.5;
                 Df = 1.56;
                 P = 5333150;
+                vmax =0.1;
                 std::cerr<<"use tdexpand sta\n";
             }
 			else if(dataset == "td"){
@@ -405,6 +412,7 @@ namespace SpatialIndex
 				Sr = 0.5;
 				Df = 1.56;
 				P = 533315;
+                vmax =0.1;
 				std::cerr<<"use td sta\n";
 			}
 			else if (dataset == "od"){
@@ -521,12 +529,6 @@ namespace SpatialIndex
 			tl=_tl; jt=_jt; v=_v; minx=_minx; maxx=_maxx;
 			miny=_miny; maxy=_maxy; mint=_mint; maxt=_maxt;
 			Dx=_Dx; Dy=_Dy; Dt=_Dt; dist=_dist;
-		}
-		void output(){
-			std::cerr<<bt<<","<< M<<","<< lineCount<<","<< trajCount<<","<<
-					 tl<<","<< jt<<","<< v<<","<< minx<<","<< maxx<<","<<
-					 miny<<","<< maxy<<","<< mint<<","<< maxt<<","<<
-					 Dx<<","<< Dy<<","<< Dt<<","<< dist<<"\n";
 		}
 		string toString(){
 			ostringstream ostream;

@@ -26,7 +26,10 @@
 ******************************************************************************/
 
 #pragma once
+#define XXLMAP
+#ifdef XXLMAP
 #include <stxxl.h>
+#endif
 namespace SpatialIndex
 {
 	namespace xRTreeNsp
@@ -115,22 +118,17 @@ namespace SpatialIndex
 				uint32_t numberOfPages // The total number of pages to use.
 			);
 
-#ifndef WIN32
+#ifdef XXLMAP
 			//2+4=6GB cache.
 			BulkLoader():m_part2node((uint64_t)2048*1024*1024,(uint64_t)4096*1024*1024){}
+			~BulkLoader(){m_part2node.clear();}
 #endif
 		protected:
-            struct CmpIdLess
-            {
-                bool operator () (const id_type & a, const id_type & b) const { return a<b; }
-                static int max_value() { return std::numeric_limits<int>::max(); }
-            };
-
-#ifdef WIN32
+#ifndef XXLMAP
 			std::map<id_type,id_type> m_part2node;
 #else
-			//default: 1mb node, 4mb leaf
-            typedef stxxl::map<id_type,id_type, CmpIdLess,(uint64_t)1024*1024,(uint64_t)4*1024*1024> id_map_type;
+			//default: 16k node, 128k leaf
+            typedef stxxl::map<id_type,id_type, CmpIdLess,(uint64_t)16*1024,(uint64_t)128*1024> id_map_type;
             id_map_type m_part2node;
 #endif
 			void createLevel(

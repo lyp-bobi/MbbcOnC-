@@ -60,12 +60,13 @@ using namespace SpatialIndex;
 using namespace xRTreeNsp;
 #if defined(TJDEBUG) || defined(WIN32) || !defined(NDEBUG)
 #define NUMCORE 1
+#define NUMTHREAD (NUMCORE)
 extern double testtime = 20;
 #else
 #define NUMCORE 4
 extern double testtime = 1200;
-#endif
 #define NUMTHREAD (NUMCORE*2)
+#endif
 extern bool testxfirstOutput = true;
 
 
@@ -757,9 +758,16 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
     if(inp.type == qt_knn) {
         num = inp.knn_queries.size();
         for (int i = 0; i < inp.knn_queries.size(); i++) {
-            vis.m_query = (IShape *) &(inp.knn_queries.at(i));
-            inp.tree->nearestNeighborQuery(inp.nnk, inp.knn_queries.at(i), vis);
-            rad += vis.m_lastDist;
+            try {
+                vis.m_query = (IShape *) &(inp.knn_queries.at(i));
+                inp.tree->nearestNeighborQuery(inp.nnk, inp.knn_queries.at(i), vis);
+                rad += vis.m_lastDist;
+            } catch (Tools::Exception &e) {
+                cerr<<"error occurs at query \n "<<inp.knn_queries.at(i)<<endl;
+                cerr << "******ERROR******" << endl;
+                std::string s = e.what();
+                cerr << s << endl;
+            }
         }
     }else if(inp.type == qt_range){
         num = inp.range_queries.size();

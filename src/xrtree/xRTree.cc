@@ -901,6 +901,7 @@ void xRTree::intersectsWithQuery(const xCylinder &query, IVisitor &v) {
 }
 
 void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor &v) {
+    if(query.m_points.size()<=2) return;
     const xTrajectory *queryTraj= &query;
     xTrajectory simpleTraj;
     xTrajectory ssTraj;

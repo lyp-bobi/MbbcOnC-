@@ -126,6 +126,7 @@ public:
           n_clean_forced(0)
     {
         const unsigned_type nnodes = cache_size_in_bytes / block_type::raw_size;
+//        cerr<<"cache is"<<nnodes<<endl;
         STXXL_BTREE_CACHE_VERBOSE("btree::node_cache constructor nodes=" << nnodes);
         if (nnodes < 3)
         {

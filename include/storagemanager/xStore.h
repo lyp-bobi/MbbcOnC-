@@ -3,7 +3,6 @@
 //
 
 #pragma once
-
 #define CUTENTRY pair<pair<int,int>,xSBB>
 #define CUTFUNC function<queue<CUTENTRY>(xTrajectory&)>
 #define CUTFUNC_PARA function<queue<CUTENTRY>(xTrajectory&, double)>
@@ -19,7 +18,7 @@ using namespace SpatialIndex::StorageManager;
 using std::vector;
 
 extern bool bSecondaryIndex;
-
+#include "xTrajIdx.h"
 namespace SpatialIndex
 {
     struct xStoreEntry{
@@ -50,18 +49,11 @@ namespace SpatialIndex
             virtual void getData(uint32_t& len, uint8_t** data) const{
             }
         };
-        class xTrajEntry{
-        public:
-            id_type m_page;
-            uint32_t m_npoint;
-            xTrajEntry(id_type page,uint32_t len);
-            std::string toString();
-            xTrajEntry(string &s);
-        };
+
         class xStore;
         class SIDX_DLL xStore:public IStorageManager{
         public:
-            xStore(){}
+            xStore(){};
             ~xStore();
             xStore(string myname, string file, bool subtrajs=true, bool forceNew=false);
             xStore(xStore &r);
@@ -94,8 +86,7 @@ namespace SpatialIndex
             xPoint randomPoint();
 
             json m_property;
-            std::map<id_type,xTrajEntry*> m_trajIdx;
-            std::map<id_type,xTrajEntry*> *m_faketrajIdx= nullptr;
+            xTrajIdx *m_trajIdx=nullptr;
             IStorageManager* m_pStorageManager=nullptr;
             std::string m_name;
             bool m_bSubTraj=false;
@@ -117,9 +108,12 @@ namespace SpatialIndex
             xStore *m_pstore;
             //tmp recorder for split sbbs
             id_type m_id;
-            std::map<id_type,xTrajEntry*>::iterator m_it;
+//#ifdef WIN32
+            std::map<id_type,xTrajEntry>::iterator m_it;
+//#else
+//            id_entry_map::iterator m_it;
+//#endif
             id_type m_count=0;
-
             xSBBStream(xStore *p, CUTFUNC f);
             bool hasNext();
             uint32_t size() override;

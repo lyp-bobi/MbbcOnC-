@@ -4,12 +4,20 @@
 #include "testFuncs.h"
 #include "random"
 
-int main(){
+int main(int argc,char *argv[]){
     try {
-        string target = "tdexpand.data";
+        string target;
+        vector<double> seglens;
+        if(argc==1) {
+            target = "tdexpand.data";
+            seglens = {600,900,1200,1800,2700,3600};
+        }else {
+            target = "glexpand.data";
+            seglens = {100,200,300,600,900,1200};
+        }
         testtime=400;
         double qt = 3600;
-        double seglens[] = {1200,1800,2700,3600};
+
         cerr<<"seglen: ";
         for(auto len:seglens){cerr<<len<<" ";}
         cerr<<endl;

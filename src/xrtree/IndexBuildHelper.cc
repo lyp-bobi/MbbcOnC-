@@ -78,6 +78,7 @@ xRTree * xRTreeNsp::buildMBRRTreeWP(IStorageManager *st,
         //std::cerr<<"load existing "<<name<<"\n";
     }
     else {
+        std::cerr<<"start building "<<name<<"\n";
         int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
                 bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize() + pointersize() + entrysize());
         r = createNewxRTree(store, bindex, bleaf, len);
@@ -115,7 +116,7 @@ xRTree * xRTreeNsp::buildMBCRTreeWP(IStorageManager *st,
 //        std::cerr<<"load existing "<<name<<"\n";
     }
     else {
-        std::cerr<<"building new "<<name<<"\n";
+        std::cerr<<"start building "<<name<<"\n";
         int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbcsize()),
                 bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + mbcsize() + pointersize() + entrysize());
         r = createNewxRTree(store, bindex, bleaf, len);
@@ -150,6 +151,7 @@ xRTree * xRTreeNsp::buildTBTreeWP(IStorageManager *mng, string add) {
 //        std::cerr<<"load existing "<<name<<"\n";
     }
     else {
+        std::cerr<<"start building "<<name<<"\n";
         int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
                 bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize() + pointersize() + entrysize());
         r = createNewxRTree(store, bindex, bleaf, tjstat->tl*170);
@@ -184,6 +186,7 @@ xRTree * xRTreeNsp::buildSTRTreeWP(IStorageManager *mng, string add) {
 //        std::cerr<<"load existing "<<name<<"\n";
     }
     else {
+        std::cerr<<"start building "<<name<<"\n";
         int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
                 bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + linesize() + pointersize() + entrysize());
         r = createNewxRTree(store, bindex, bleaf, tjstat->tl);

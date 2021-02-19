@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 #define fp (int(m_pageSize/sizeof(prexp)/3))
 
+std::mutex mtx;
+
 bool CheckFilesExists(const string &s) {
     struct stat stats;
 
@@ -56,10 +58,8 @@ xTrajEntry::xTrajEntry::xTrajEntry(string &s) {
 }
 
 xStore::~xStore() {
-    for (auto s:m_trajIdx) {
-        delete s.second;
-    }
     delete m_pStorageManager;
+    if(m_isro== false) delete m_trajIdx;
 }
 
 static int getLastId(string s)
@@ -99,6 +99,9 @@ static int getLastId(string s)
 }
 
 void xStore::loadFile(string file) {
+    if(m_trajIdx== nullptr){
+        m_trajIdx= new xTrajIdx();
+    }
     std::cerr << "start loading " << file << " into " << m_name << "\n";
     string filename = filedirprefix+m_name;
     if(m_pStorageManager== nullptr){
@@ -158,7 +161,7 @@ void xStore::loadFile(string file) {
                     }
                     delete[] data;
                 }
-                m_trajIdx[id] = new xTrajEntry(firstpage, tj.m_points.size());
+                m_trajIdx->insert(make_pair(id,xTrajEntry(firstpage, tj.m_points.size())));
                 ids.insert(id);
                 curLine++;
                 tj.getxMBR(r);
@@ -201,7 +204,11 @@ void xStore::loadFile(string file) {
     flush();
 }
 
-xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
+xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew)
+{
+    if(m_trajIdx== nullptr){
+        m_trajIdx= new xTrajIdx();
+    }
     m_name = myname;
     m_pageSize = 4096;
     string filename = filedirprefix+myname;
@@ -220,7 +227,7 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
         trajidxFile >> size;
         for (int i = 0; i < size; i++) {
             trajidxFile >> id >> page >> off;
-            m_trajIdx[id] = new xTrajEntry(page, off);
+            m_trajIdx->insert(make_pair(id,xTrajEntry(page, off)));
         }
         trajidxFile.close();
     } else {
@@ -286,7 +293,7 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
                         }
                         delete[] data;
                     }
-                    m_trajIdx[id] = new xTrajEntry(firstpage, tj.m_points.size());
+                    m_trajIdx->insert(make_pair(id,xTrajEntry(firstpage, tj.m_points.size())));
                     ids.insert(id);
                     curLine++;
                     tj.getxMBR(r);
@@ -321,7 +328,7 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
         std::cerr << file << endl;
         inFile.close();
         if (file.find("tdexpand") != file.npos) tjstat->usedata("tdexpand");
-        if (file.find("glexpand") != file.npos) tjstat->usedata("glexpand");
+        else if (file.find("glexpand") != file.npos) tjstat->usedata("glexpand");
         else if (file.find("td") != file.npos) tjstat->usedata("td");
         else if (file.find("gl") != file.npos) tjstat->usedata("gl");
         std::cerr << tjstat->toString() << endl;
@@ -332,7 +339,8 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew) {
 
 }
 
-xStore::xStore(xStore &r) {
+xStore::xStore(xStore &r)
+{
     assert(!r.m_isro);
     m_name=r.m_name;
     m_pageSize=r.m_pageSize;
@@ -343,30 +351,26 @@ xStore::xStore(xStore &r) {
     propFile >> m_property;
     propFile.close();
     m_bSubTraj = m_property["bSubTraj"];
-    m_faketrajIdx = &r.m_trajIdx;
+    m_trajIdx = r.m_trajIdx;
     m_isro = true;
 }
 
 void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
-    xTrajEntry * te;
-    if(m_faketrajIdx== nullptr) {
-        te = m_trajIdx[e.m_id];
-    }else{
-        te = (*m_faketrajIdx)[e.m_id];
-    }
-    uint32_t ms = min(te->m_npoint - 1, e.m_s), me = min(te->m_npoint - 1, e.m_e);
+    xTrajEntry te;
+    te = (*m_trajIdx)[e.m_id];
+    uint32_t ms = min(te.m_npoint - 1, e.m_s), me = min(te.m_npoint - 1, e.m_e);
     //test code
 //    std::cerr<<"test id "<<e.m_id<<endl;
     out.m_points.clear();
     out.m_points.reserve(me-ms+1);
+    uint8_t *data, *ptr;
+    uint32_t len, tmplen;
     if (m_bSubTraj) {
-        id_type pages = te->m_page + (ms) / (fp - 1);
-        id_type pagee = te->m_page + int(ceil(1.0 * (me) / (fp - 1))) - 1;
+        id_type pages = te.m_page + (ms) / (fp - 1);
+        id_type pagee = te.m_page + int(ceil(1.0 * (me) / (fp - 1))) - 1;
         if (pages > pagee) pagee++;
         m_trajIO += pagee - pages + 1;
         id_type cur = ms / (fp - 1) * (fp - 1);
-        uint8_t *data, *ptr;
-        uint32_t len, tmplen;
         int ps, pe;
         prexp x, y, t;
         for (auto i = pages; i <= pagee; i++) {
@@ -390,14 +394,12 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
             cur += pe + 1;
         }
         out.m_fakehead = (ms != 0);
-        out.m_fakeback = (me == te->m_npoint - 1);
+        out.m_fakeback = (me == te.m_npoint - 1);
     } else {
-        id_type pages = te->m_page + (ms + 1) / fp;
-        id_type pagee = te->m_page + int(ceil(1.0 * (me + 1) / fp)) - 1;
+        id_type pages = te.m_page + (ms + 1) / fp;
+        id_type pagee = te.m_page + int(ceil(1.0 * (me + 1) / fp)) - 1;
         m_trajIO += pagee - pages + 1;
         id_type cur = ms / fp * fp;
-        uint8_t *data, *ptr;
-        uint32_t len, tmplen;
         int ps, pe;
         prexp x, y, t;
         for (auto i = pages; i <= pagee; i++) {
@@ -418,50 +420,38 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
             delete data;
         }
         out.m_fakehead = (ms != 0);
-        out.m_fakeback = (me == te->m_npoint - 1);
+        out.m_fakeback = (me == te.m_npoint - 1);
     }
+    //simulate secondary addressing
+//    int pagenum = random(0,m_pStorageManager->nextPage() - 1);
+//    m_pStorageManager->loadByteArray(pagenum, tmplen, &data);
+//    delete[] data;
 }
 
 xTrajectory xStore::randomSubtraj(double len) {
-    if(m_faketrajIdx== nullptr) {
-        int rnd = random(0, m_trajIdx.size() - 1);
-        int i = 0;
-        xTrajectory tj, tj2;
-        for (auto key:m_trajIdx) {
-            if (i == rnd) {
-                loadTraj(tj, xStoreEntry(key.first, 0, 1000000));
-                double t = tj.randomPoint().m_t;
-                tj.getPartialxTrajectory(t - len / 2, t + len / 2, tj2);
-                return tj2;
-            }
-            i++;
+    int rnd = random(0, (*m_trajIdx).size() - 1);
+    int i = 0;
+    xTrajectory tj, tj2;
+    for (auto key:(*m_trajIdx)) {
+        if (i == rnd) {
+            loadTraj(tj, xStoreEntry(key.first, 0, 1000000));
+            double t = tj.randomPoint().m_t;
+            tj.getPartialxTrajectory(t - len / 2, t + len / 2, tj2);
+            return tj2;
         }
-        return tj;
-    }else{
-        int rnd = random(0, m_faketrajIdx->size() - 1);
-        int i = 0;
-        xTrajectory tj, tj2;
-        for (auto key:*m_faketrajIdx) {
-            if (i == rnd) {
-                loadTraj(tj, xStoreEntry(key.first, 0, 1000000));
-                double t = tj.randomPoint().m_t;
-                tj.getPartialxTrajectory(t - len / 2, t + len / 2, tj2);
-                return tj2;
-            }
-            i++;
-        }
-        return tj;
+        i++;
     }
+    return tj;
 }
 
 xPoint xStore::randomPoint() {
-    int rnd = random(0, m_trajIdx.size() - 1);
+    int rnd = random(0, m_trajIdx->size() - 1);
     int rnd2;
     int i = 0;
     xTrajectory tj;
-    for (auto key:m_trajIdx) {
+    for (auto key:*m_trajIdx) {
         if (i == rnd) {
-            rnd2 = random(0, key.second->m_npoint - 1);
+            rnd2 = random(0, key.second.m_npoint - 1);
             loadTraj(tj, xStoreEntry(key.first, 0, rnd2));
             return tj.m_points.front();
         }
@@ -477,20 +467,20 @@ void xStore::flush() {
     propFile << m_property;
     propFile.close();
     ofstream trajidxFile(filedirprefix+m_name + ".trajidx", ios::out);
-    trajidxFile << m_trajIdx.size() << endl;
-    for (auto s = m_trajIdx.begin(); s != m_trajIdx.end(); s++) {
-        trajidxFile << s->first << " " << s->second->m_page << " " << s->second->m_npoint << "\n";
+    trajidxFile << m_trajIdx->size() << endl;
+    for (auto s = m_trajIdx->begin(); s != m_trajIdx->end(); s++) {
+        trajidxFile << s->first << " " << s->second.m_page << " " << s->second.m_npoint << "\n";
     }
     trajidxFile.close();
 }
 
 xSBBStream::xSBBStream(xStore *p, CUTFUNC f)
-        : m_pstore(p), m_cutFunc(f) {
-    m_it = m_pstore->m_trajIdx.begin();
+        : m_cutFunc(f),m_pstore(p) {
+    m_it = m_pstore->m_trajIdx->begin();
 }
 
 bool xSBBStream::hasNext() {
-    if (!m_buf.empty() || m_it != m_pstore->m_trajIdx.end()) return true;
+    if (!m_buf.empty() || m_it != m_pstore->m_trajIdx->end()) return true;
     return false;
 }
 
@@ -498,7 +488,7 @@ xSBBData *xSBBStream::getNext() {
     bool isFirst = false;
     if (m_buf.empty()) {
         xTrajectory tj;
-        m_pstore->loadTraj(tj, xStoreEntry(m_it->first, 0, m_it->second->m_npoint));
+        m_pstore->loadTraj(tj, xStoreEntry(m_it->first, 0, m_it->second.m_npoint));
         m_buf = m_cutFunc(tj);
         m_id = m_it->first;
         m_it++;
@@ -515,7 +505,16 @@ uint32_t xSBBStream::size() {
 }
 
 void xSBBStream::rewind() {
-    m_it = m_pstore->m_trajIdx.begin();
+    m_it = m_pstore->m_trajIdx->begin();
     m_count = 0;
 }
 
+ostream & SpatialIndex::StorageManager::operator<<(ostream &os, const xTrajEntry &c) {
+    os << c.m_page<<" "<<c.m_npoint;
+    return os;
+}
+
+istream & SpatialIndex::StorageManager::operator>>(istream &is, xTrajEntry &c) {
+    is>>c.m_page>>c.m_npoint;
+    return is;
+}
