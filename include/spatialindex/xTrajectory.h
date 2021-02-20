@@ -147,6 +147,7 @@ namespace SpatialIndex
         virtual double getMinimumDistance(const IShape& in) const;
 
         static double line2lineIED(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
+        static double line2lineIEDA(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
         static double line2lineMinSED(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
         static DISTE line2MBRDistance(const xPoint &ps,const xPoint &pe,const xMBR &r);
         static double line2MBRIED_impl(const xPoint &ps, const xPoint &pe, const xMBR &r, int sr);

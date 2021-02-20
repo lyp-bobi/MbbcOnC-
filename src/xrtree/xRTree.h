@@ -358,9 +358,9 @@ namespace SpatialIndex
             std::map<id_type ,Parts> m_parts;
             int m_dimension=2;
             std::set<id_type > loadedLeaf;
-            void insert(id_type id, xSBB &b,id_type prev,id_type next,xStoreEntry &entry);
+            bool insert(id_type id, xSBB &b, id_type leafid,id_type prev,id_type next,xStoreEntry &entry);
 
-            DISTE updateValue(id_type id) ;
+            DISTE updateValue(id_type id,bool Inqueue=true) ;
 
         public:
             string explain(id_type id){

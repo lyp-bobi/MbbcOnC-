@@ -11,10 +11,11 @@ add_definitions(-std=c++14)
 #------------------------------------------------------------------------------
 # internal cmake settings
 #------------------------------------------------------------------------------
-
-#stxxl
-add_subdirectory(stxxl)
-include_directories(${STXXL_INCLUDE_DIRS})
+if(NOT WIN32)
+    #stxxl
+    add_subdirectory(stxxl)
+    include_directories(${STXXL_INCLUDE_DIRS})
+endif()
 
 set(CMAKE_COLOR_MAKEFILE ON)
 

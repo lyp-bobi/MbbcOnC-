@@ -6,19 +6,21 @@
 
 int main(int argc,char *argv[]){
     try {
+        vector<double> seglens;
         string target;
         if(argc==1) {
             target = "tdexpand.data";
+            seglens = {600,900,1200,1800,2700,3600};
         }else {
             target = "glexpand.data";
+            seglens = {100,200,300,600,900,1200};
         }
         testtime=400;
-        double seglens[] = {300,600,900,1200,1800,2700,3600};
         cerr<<"seglen: ";
         for(auto len:seglens){cerr<<len<<" ";}
         cerr<<endl;
         xStore x(target, testFileName(target), true);
-        for(double qt=300;qt<=5400;qt+=300) {
+        for(double qt=300;qt<=10800;qt+=1000) {
             cerr<<"qt is " << qt<<endl;
             vector<xTrajectory> queries;
 //            xTrajectory tj;

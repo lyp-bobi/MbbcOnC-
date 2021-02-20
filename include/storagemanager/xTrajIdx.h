@@ -6,7 +6,7 @@
 #define SPATIALINDEX_XTRAJIDX_H
 
 #pragma once
-#include <stxxl.h>
+//#include <stxxl.h>
 #include <thread>
 #include <mutex>
 using namespace SpatialIndex;

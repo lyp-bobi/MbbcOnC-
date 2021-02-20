@@ -59,9 +59,9 @@ using namespace std;
 using namespace SpatialIndex;
 using namespace xRTreeNsp;
 #if defined(TJDEBUG) || defined(WIN32) || !defined(NDEBUG)
-#define NUMCORE 1
+#define NUMCORE 4
 #define NUMTHREAD (NUMCORE)
-extern double testtime = 20;
+extern double testtime = 200;
 #else
 #define NUMCORE 4
 extern double testtime = 1200;
@@ -74,11 +74,12 @@ using namespace std;
 
 static int drop_cache(int drop) {
 #if !WIN32
-    sync();
+    if(drop == 3) {
+        sync();
+    }
     ofstream ofs("/proc/sys/vm/drop_caches");
-    ofs<< "3"<<endl;
+    ofs<< drop<<endl;
     ofs.close();
-    usleep(10000);
 #endif
     return 0;
 }
@@ -759,6 +760,7 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
         num = inp.knn_queries.size();
         for (int i = 0; i < inp.knn_queries.size(); i++) {
             try {
+//                drop_cache(1);
                 vis.m_query = (IShape *) &(inp.knn_queries.at(i));
                 inp.tree->nearestNeighborQuery(inp.nnk, inp.knn_queries.at(i), vis);
                 rad += vis.m_lastDist;
@@ -772,6 +774,7 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
     }else if(inp.type == qt_range){
         num = inp.range_queries.size();
         for (int i = 0; i < inp.range_queries.size(); i++) {
+//            drop_cache(1);
             vis.m_query = (IShape *) &(inp.range_queries.at(i));
             inp.tree->intersectsWithQuery(inp.range_queries.at(i), vis);
             rad += vis.m_lastDist;
@@ -845,13 +848,23 @@ public:
             i++;
         }
         for(auto &qs:m_queries){
-            if(nnk==0){
-                qs.nnk = 6+rand()*195;
-            }else {
-                qs.nnk = nnk;
-            }
+            qs.nnk = nnk;
         }
     }
+
+    void appendQueries(vector<xTrajectory> &knnq, vector<int> &nnk){
+        int i=0;
+        for(auto &q:knnq)
+        {
+            m_queries[i % nthread].knn_queries.emplace_back(q);
+            i++;
+        }
+        for(int i=0;i<m_queries.size();i++){
+            m_queries[i].nnk=nnk[i];
+        }
+    }
+
+
     void appendQueries(vector<xCylinder> &rq){
         int i=0;
         for(auto &q:rq)
@@ -865,6 +878,7 @@ public:
     }
     queryRet runQueries(){
         drop_cache(3);
+        usleep(5000);
         for(int i=0;i<nthread;i++) {
             m_ths.emplace_back(thread(QueryBatchThread, m_queries[i], &m_res[i]));
         }
@@ -901,7 +915,7 @@ void fillQuerySet(vector<xTrajectory>& list, xStore& x, double len, double var=0
 
 void fillQuerySetRand(vector<xTrajectory>& list, xStore& x){
     default_random_engine e;
-    auto queryLen =uniform_real_distribution<double>(300,5400);
+    auto queryLen =uniform_real_distribution<double>(300,10800);
     for (int i = 0; i < testtime; i++) {
         list.emplace_back(x.randomSubtraj(queryLen(e)));
     }

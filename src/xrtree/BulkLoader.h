@@ -26,7 +26,9 @@
 ******************************************************************************/
 
 #pragma once
+#ifndef WIN32
 #define XXLMAP
+#endif
 #ifdef XXLMAP
 #include <stxxl.h>
 #endif
@@ -121,7 +123,8 @@ namespace SpatialIndex
 #ifdef XXLMAP
 			//2+4=6GB cache.
 			BulkLoader():m_part2node((uint64_t)2048*1024*1024,(uint64_t)4096*1024*1024){}
-			~BulkLoader(){m_part2node.clear();}
+//            BulkLoader():m_part2node((uint64_t)1024*1024*1024,(uint64_t)2048*1024*1024){}
+            ~BulkLoader(){m_part2node.clear();}
 #endif
 		protected:
 #ifndef XXLMAP

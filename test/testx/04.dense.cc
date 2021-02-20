@@ -15,6 +15,7 @@ int main(int argc,char *argv[]){
     xStore x("od","od");
     testtime = 80;
     for(int i=0;i<files.size();i++){
+        cerr<<"size is "<<i<<endl;
         //don't load it if exist
         if(!x.m_property.contains("TBWP"+to_string(i)))
             x.loadFile(files[i]);

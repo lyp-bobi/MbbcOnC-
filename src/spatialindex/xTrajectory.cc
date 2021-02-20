@@ -620,6 +620,20 @@ inline double xTrajectory::line2lineIED(const SpatialIndex::xPoint &p1s, const S
     }
 }
 
+inline double xTrajectory::line2lineIEDA(const SpatialIndex::xPoint &p1s, const SpatialIndex::xPoint &p1e,
+                                        const SpatialIndex::xPoint &p2s, const SpatialIndex::xPoint &p2e) {
+    if(p1s.m_t!=p2s.m_t|p1e.m_t!=p2e.m_t)
+        throw Tools::IllegalStateException("line2lineIED: time period not the same");
+    prec ts = 0, te = p1e.m_t-p1s.m_t;
+    prec dxs=p1s.m_x-p2s.m_x;
+    prec dys=p1s.m_y-p2s.m_y;
+    prec dxe=p1e.m_x-p2e.m_x;
+    prec dye=p1e.m_y-p2e.m_y;
+    double d = sqrtp(sq(dxs)+sq(dys));
+    return d;
+}
+
+
 inline double xTrajectory::line2lineMinSED(const SpatialIndex::xPoint &p1s, const SpatialIndex::xPoint &p1e,
                                 const SpatialIndex::xPoint &p2s, const SpatialIndex::xPoint &p2e) {
     if(p1s.m_t!=p2s.m_t|p1e.m_t!=p2e.m_t)
