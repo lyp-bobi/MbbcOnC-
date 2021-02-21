@@ -114,6 +114,7 @@ set (SOURCES
         10.mbcrange
         12.sbbdknn
         debug
+        longQuery
         )
 
 foreach (test ${SOURCES})

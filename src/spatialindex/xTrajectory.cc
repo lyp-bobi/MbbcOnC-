@@ -824,6 +824,8 @@ inline DISTE xTrajectory::line2MBRDistance(const SpatialIndex::xPoint &ps, const
             case 4:
                 opti +=  (2*r.m_xmin-line.second.m_ps.m_x-line.second.m_pe.m_x)/2*dt;
                 break;
+            case 5:
+                break;
             case 6:
                 opti +=  (line.second.m_ps.m_x+line.second.m_pe.m_x-2*r.m_xmax)/2*dt;
                 break;

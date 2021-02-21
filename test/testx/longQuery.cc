@@ -9,19 +9,14 @@ int main(int argc,char *argv[]){
         bulkloadt =true;
         vector<double> seglens;
         string target;
-        if(argc==1) {
-            target = "tdexpand.data";
-            seglens = {600,900,1200,1800,2700,3600};
-        }else {
-            target = "glexpand.data";
-            seglens = {100,200,300,600,900,1200};
-        }
+        target = "tdexpand.data";
+        seglens = {3600,7200,10800,14400,20000,30000};
         testtime=400;
         cerr<<"seglen: ";
         for(auto len:seglens){cerr<<len<<" ";}
         cerr<<endl;
         xStore x(target, testFileName(target), true);
-        for(double qt=300;qt<=10800;qt+=500) {
+        for(double qt=43200;qt<=100000;qt+=43200) {
             cerr<<"qt is " << qt<<endl;
             vector<xTrajectory> queries;
 //            xTrajectory tj;
@@ -42,7 +37,7 @@ int main(int argc,char *argv[]){
 //            }
             for (auto len:seglens) {
                 MTQ q;
-                q.prepareTrees(&x, [&len](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, len); });
+                q.prepareTrees(&x, [&len](auto x) { return buildMBRRTreeWP(x, xTrajectory::OPTS, len); });
                 q.appendQueries(queries);
                 std::cerr << q.runQueries().toString();
             }

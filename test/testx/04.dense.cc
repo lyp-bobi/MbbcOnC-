@@ -28,12 +28,12 @@ int main(int argc,char *argv[]){
             q.appendQueries(queries);
             std::cerr << q.runQueries().toString();
         }
-        {
-            MTQ q;
-            q.prepareTrees(&x, [&idxnum](auto x) { return buildSTRTreeWP(x,idxnum); });
-            q.appendQueries(queries);
-            std::cerr << q.runQueries().toString();
-        }
+//        {
+//            MTQ q;
+//            q.prepareTrees(&x, [&idxnum](auto x) { return buildSTRTreeWP(x,idxnum); });
+//            q.appendQueries(queries);
+//            std::cerr << q.runQueries().toString();
+//        }
         for (auto len:seglens) {
             MTQ q;
             q.prepareTrees(&x, [&len,&idxnum](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, len,idxnum); });
