@@ -155,7 +155,7 @@ xPoint xTrajectory::getPointAtTime(const double time) const {
     if(time<m_points.front().m_t||time>m_points.back().m_t){
         throw Tools::IllegalArgumentException(
                 "xTrajectory::getPointAtTime: time"+std::to_string(time)+"is illegal."
-                );}
+        );}
     if(m_points.size()==1){
         return m_points[0];
     }
@@ -175,19 +175,19 @@ xPoint xTrajectory::getPointAtTime(const double time) const {
 }
 
 bool xTrajectory::intersectsxMBR(const xMBR& in) const{
-        double ts=std::max(m_startTime(),in.m_tmin),
-                te=std::min(m_endTime(),in.m_tmax);
-        if(ts>te) return false;
-        if(ts==te){
-            return in.containsxPoint(getPointAtTime(ts));
+    double ts=std::max(m_startTime(),in.m_tmin),
+            te=std::min(m_endTime(),in.m_tmax);
+    if(ts>te) return false;
+    if(ts==te){
+        return in.containsxPoint(getPointAtTime(ts));
+    }
+    fakeTpVector timedTraj(&m_points,ts,te);
+    for(int i=0;i<timedTraj.m_size-1;i++){
+        if(line2MBRMinSED(timedTraj[i],timedTraj[i+1],in)<1e-7){
+            return true;
         }
-        fakeTpVector timedTraj(&m_points,ts,te);
-        for(int i=0;i<timedTraj.m_size-1;i++){
-            if(line2MBRMinSED(timedTraj[i],timedTraj[i+1],in)<1e-7){
-                return true;
-            }
-        }
-        return false;
+    }
+    return false;
 }
 bool xTrajectory::intersectsxCylinder(const SpatialIndex::xCylinder &in) const {
     double ts=std::max(m_startTime(),in.m_startTime),
@@ -286,7 +286,7 @@ const std::pair<int, double> findMaximumDistance(const vector<SpatialIndex::xPoi
     return std::make_pair(index, Mdist);
 }
 std::vector<SpatialIndex::xPoint> xTrajectory::simplifyWithRDP(const std::vector<SpatialIndex::xPoint> &Points,
-                                                                 double epsilon){
+                                                               double epsilon){
     if(Points.size()<3){  //base case 1
         return Points;
     }
@@ -314,7 +314,7 @@ std::vector<SpatialIndex::xPoint> xTrajectory::simplifyWithRDP(const std::vector
 }
 
 std::vector<std::vector<SpatialIndex::xPoint>> xTrajectory::simplifyWithRDPN(const std::vector<SpatialIndex::xPoint> &Points,
-                                                               int numPart){
+                                                                             int numPart){
     if(Points.size()<numPart+1){  //base case 1
         throw Tools::IllegalStateException("simplifyWithRDPN:Error");
     }
@@ -600,8 +600,8 @@ inline prec theDdd(prec c1,prec c2,prec c3,prec c4,prec t){
     return 0;
 }
 
-inline double xTrajectory::line2lineIED(const SpatialIndex::xPoint &p1s, const SpatialIndex::xPoint &p1e,
-                                const SpatialIndex::xPoint &p2s, const SpatialIndex::xPoint &p2e) {
+double xTrajectory::line2lineIED(const SpatialIndex::xPoint &p1s, const SpatialIndex::xPoint &p1e,
+                                        const SpatialIndex::xPoint &p2s, const SpatialIndex::xPoint &p2e) {
     if(p1s.m_t!=p2s.m_t|p1e.m_t!=p2e.m_t)
         throw Tools::IllegalStateException("line2lineIED: time period not the same");
     prec ts = 0, te = p1e.m_t-p1s.m_t;
@@ -616,12 +616,12 @@ inline double xTrajectory::line2lineIED(const SpatialIndex::xPoint &p1s, const S
     if(c1<1e-9){
         return sqrtp(sq(dxs)+sq(dys))*c4;
     }else{
-            return (theF(c1,c2,c3,c4,te)-theF(c1,c2,c3,c4,ts));
+        return (theF(c1,c2,c3,c4,te)-theF(c1,c2,c3,c4,ts));
     }
 }
 
-inline double xTrajectory::line2lineIEDA(const SpatialIndex::xPoint &p1s, const SpatialIndex::xPoint &p1e,
-                                        const SpatialIndex::xPoint &p2s, const SpatialIndex::xPoint &p2e) {
+double xTrajectory::line2lineIEDA(const SpatialIndex::xPoint &p1s, const SpatialIndex::xPoint &p1e,
+                                         const SpatialIndex::xPoint &p2s, const SpatialIndex::xPoint &p2e) {
     if(p1s.m_t!=p2s.m_t|p1e.m_t!=p2e.m_t)
         throw Tools::IllegalStateException("line2lineIED: time period not the same");
     prec ts = 0, te = p1e.m_t-p1s.m_t;
@@ -635,7 +635,7 @@ inline double xTrajectory::line2lineIEDA(const SpatialIndex::xPoint &p1s, const 
 
 
 double xTrajectory::line2lineMinSED(const SpatialIndex::xPoint &p1s, const SpatialIndex::xPoint &p1e,
-                                const SpatialIndex::xPoint &p2s, const SpatialIndex::xPoint &p2e) {
+                                           const SpatialIndex::xPoint &p2s, const SpatialIndex::xPoint &p2e) {
     if(p1s.m_t!=p2s.m_t|p1e.m_t!=p2e.m_t)
         throw Tools::IllegalStateException("line2lineMinSED: time period not the same");
     double ts = p1s.m_t, te = p1e.m_t;
@@ -662,189 +662,177 @@ double xTrajectory::line2lineMinSED(const SpatialIndex::xPoint &p1s, const Spati
 
 
 
-bool cutByLine(xPoint &out,const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,double value,int axis){
+xPoint* cutByLine(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,double value,int axis){
     int otheraxis=1-axis;
     double axisv1=ps.m_pCoords(axis),axisv2=pe.m_pCoords(axis);
     if((axisv1<value)==(axisv2<value)||std::fabs(axisv1-value)<1e-7||std::fabs(axisv2-value)<1e-7) //need no cut
-        return false;
+        return nullptr;
     else {
         double d = std::fabs(ps.m_pCoords(axis) - pe.m_pCoords(axis));
         double d1 = std::fabs(ps.m_pCoords(axis) - value) / d;
         double d2 = std::fabs(pe.m_pCoords(axis) - value) / d;
+        //get p=d2*ps+d1*pe
+        double xyt[3];
         if(axis==0) {
-            out.m_x=value;
-            out.m_y=d2 * ps.m_pCoords(otheraxis) + d1 * pe.m_pCoords(otheraxis);
-            out.m_t=d2 * ps.m_t + d1 * pe.m_t;
+            xyt[0]=value;
+            xyt[1]=d2 * ps.m_pCoords(otheraxis) + d1 * pe.m_pCoords(otheraxis);
+            xyt[2]=d2 * ps.m_t + d1 * pe.m_t;
         }else{
-            out.m_x=d2 * ps.m_pCoords(otheraxis) + d1 * pe.m_pCoords(otheraxis);
-            out.m_y=value;
-            out.m_t=d2 * ps.m_t + d1 * pe.m_t;
+            xyt[0]=d2 * ps.m_pCoords(otheraxis) + d1 * pe.m_pCoords(otheraxis);
+            xyt[1]=value;
+            xyt[2]=d2 * ps.m_t + d1 * pe.m_t;
         }
 //        Tools::SmartPointer<xPoint> sp(new xPoint(xyt, xyt[2], 2));
-        return true;
+        auto res=new xPoint(xyt[0],xyt[1],xyt[2]);
+        return res;
 //        return sp.get();
     }
 }
-std::map<int,xLine> xTrajectory::cutByPhase(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
-                                                     const SpatialIndex::xMBR &r){
+std::vector<std::pair<xPoint,xPoint>> xTrajectory::cutByPhase(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
+                                                              const SpatialIndex::xMBR &r){
     double xd1=r.m_xmin,xd2=r.m_xmax,yd1=r.m_ymin,yd2=r.m_ymax;
-    std::vector<xLine> res;
-    std::vector<xLine> tmp;
-    res.emplace_back(xLine(ps,pe));
-    double xmin = min(ps.m_x,pe.m_x), xmax = max(ps.m_x,pe.m_x),
-        ymin = min(ps.m_y,pe.m_y),ymax=max(ps.m_y,pe.m_y);
-    xPoint ptmp;
-    if(xmin<xd1&&xd1<xmax) {
-        for (const auto &line:res) {
-            if (cutByLine(ptmp, line.m_ps, line.m_pe, xd1, 0)) {
-                tmp.emplace_back(xLine(line.m_ps, ptmp));
-                tmp.emplace_back(xLine(ptmp, line.m_pe));
-            } else {
-                tmp.emplace_back(line);
-            }
-        }
-        res.swap(tmp);
-        tmp.clear();
-    }
-    if(xmin<xd2&&xd2<xmax) {
-        for (const auto &line:res) {
-            if (cutByLine(ptmp, line.m_ps, line.m_pe, xd2, 0)) {
-                tmp.emplace_back(xLine(line.m_ps, ptmp));
-                tmp.emplace_back(xLine(ptmp, line.m_pe));
-            } else {
-                tmp.emplace_back(line);
-            }
-        }
-        res.swap(tmp);
-        tmp.clear();
-    }
-    if(ymin<yd1&&yd1<ymax) {
-        for (const auto &line:res) {
-            if (cutByLine(ptmp, line.m_ps, line.m_pe, yd1, 1)) {
-                tmp.emplace_back(xLine(line.m_ps, ptmp));
-                tmp.emplace_back(xLine(ptmp, line.m_pe));
-            } else {
-                tmp.emplace_back(line);
-            }
-        }
-        res.swap(tmp);
-        tmp.clear();
-    }
-    if(ymin<yd2&&yd2<ymax) {
-        for (const auto &line:res) {
-            if (cutByLine(ptmp, line.m_ps, line.m_pe, yd2, 1)) {
-                tmp.emplace_back(xLine(line.m_ps, ptmp));
-                tmp.emplace_back(xLine(ptmp, line.m_pe));
-            } else {
-                tmp.emplace_back(line);
-            }
-        }
-        res.swap(tmp);
-        tmp.clear();
-    }
-    std::map<int,xLine> rphase;
+    std::vector<std::pair<xPoint,xPoint>> res;
+    std::vector<std::pair<xPoint,xPoint>> tmp;
+    res.emplace_back(std::make_pair(ps,pe));
     for(const auto &line:res){
-        rphase[getPhase(r,line.m_ps,line.m_pe)]=line;
-    }
-    return rphase;
-}
-
-inline double point2lineDist_spatial(double x0, double y0, xLine& l){
-    double x1 = l.m_ps.m_x;
-    double x2 = l.m_pe.m_x;
-    double y1 = l.m_ps.m_y;
-    double y2 = l.m_pe.m_y;
-    return std::abs((x2 - x1) * (y1 - y0) - (x1 - x0) * (y2 - y1)) / (std::sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)));
-}
-
-inline double xTrajectory::line2MBRMinSED(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
-                                  const SpatialIndex::xMBR &r) {
-    assert(r.m_tmin<=ps.m_t);
-    assert(r.m_tmax>=pe.m_t);
-    auto parts = cutByPhase(ps, pe, r);
-    if(parts.count(5)>0) return 0;
-    double res=1e300;
-    for(auto &line:parts){
-        switch (line.first) {
-            case 1:
-                res = min(res, point2lineDist_spatial(r.m_xmin,r.m_ymin,line.second));
-                break;
-            case 2:
-                res = min(res,r.m_ymin-max(line.second.m_ps.m_y,line.second.m_pe.m_y));
-                break;
-            case 3:
-                res = min(res, point2lineDist_spatial(r.m_xmax,r.m_ymin,line.second));
-                break;
-            case 4:
-                res = min(res,r.m_xmin-max(line.second.m_ps.m_x,line.second.m_pe.m_x));
-                break;
-            case 6:
-                res = min(res,min(line.second.m_ps.m_x,line.second.m_pe.m_x)-r.m_xmax);
-                break;
-            case 7:
-                res = min(res, point2lineDist_spatial(r.m_xmin,r.m_ymax,line.second));
-                break;
-            case 8:
-                res = min(res,min(line.second.m_ps.m_y,line.second.m_pe.m_y)-r.m_ymax);
-                break;
-            case 9:
-                res = min(res, point2lineDist_spatial(r.m_xmax,r.m_ymax,line.second));
-                break;
-            default:
-                throw Tools::IllegalStateException("wrong phase");
+        xPoint* stp=cutByLine(line.first,line.second,xd1,0);
+        if(stp!= nullptr){
+            tmp.emplace_back(std::make_pair(line.first,*stp));
+            tmp.emplace_back(std::make_pair(*stp,line.second));
+            delete stp;
+        }
+        else{
+            tmp.emplace_back(line);
         }
     }
+    res=tmp;tmp.clear();
+    for(const auto &line:res){
+        xPoint *stp=cutByLine(line.first,line.second,xd2,0);
+        if(stp!= nullptr){
+            tmp.emplace_back(std::make_pair(line.first,*stp));
+            tmp.emplace_back(std::make_pair(*stp,line.second));
+            delete stp;
+        }
+        else{
+            tmp.emplace_back(line);
+        }
+    }
+    res=tmp;tmp.clear();
+    for(const auto &line:res){
+        xPoint *stp=cutByLine(line.first,line.second,yd1,1);
+        if(stp!= nullptr){
+            tmp.emplace_back(std::make_pair(line.first,*stp));
+            tmp.emplace_back(std::make_pair(*stp,line.second));
+            delete stp;
+        }
+        else{
+            tmp.emplace_back(line);
+        }
+    }
+    res=tmp;tmp.clear();
+    for(const auto &line:res){
+        xPoint *stp=cutByLine(line.first,line.second,yd2,1);
+        if(stp!= nullptr){
+            tmp.emplace_back(std::make_pair(line.first,*stp));
+            tmp.emplace_back(std::make_pair(*stp,line.second));
+            delete stp;
+        }
+        else{
+            tmp.emplace_back(line);
+        }
+    }
+    res=tmp;tmp.clear();
+//    for(auto seg:res){
+//        cout<<seg.first<<"\n"<<seg.second<<"\n";
+//    }
     return res;
 }
 
+inline double xTrajectory::line2MBRMinSED_impl(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
+                                               const SpatialIndex::xMBR &r, int sr) {
+    double ts = ps.m_t, te = pe.m_t;
+//    if(std::fabs(te-ts)<1e-7) return 0;
+    double res;
+    if (sr == 5) return 0;
+    else if (sr % 2 == 0){
+        return std::min(ps.getMinimumDistance(r),pe.getMinimumDistance(r));
+    }
+    else {
+        double px, py;
+        if (sr == 1 || sr == 7) px = r.m_xmin;
+        else px = r.m_xmax;
+        if (sr == 1 || sr == 3) py = r.m_ymin;
+        else py = r.m_ymax;
+        return line2lineMinSED(ps, pe, xPoint(px,py,ts), xPoint(px,py,te));
+    }
+}
+
+inline double xTrajectory::line2MBRMinSED(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
+                                          const SpatialIndex::xMBR &r) {
+    assert(r.m_tmin<=ps.m_t);
+    assert(r.m_tmax>=pe.m_t);
+    int sr = getPhase(r, ps, pe);
+    if (sr > 0) {
+        return line2MBRMinSED_impl(ps, pe, r, sr);
+    } else {
+        double min = 1e300;
+        auto part = cutByPhase(ps, pe, r);
+        for (const auto &p:part) {
+            int tmpsr = getPhase(r, p.first, p.second);
+            double tmpres = line2MBRMinSED_impl(p.first, p.second, r, tmpsr);
+//            cout<<tmpsr<<" "<<tmpres<<"\n";
+            min=std::min(min,tmpres);
+        }
+        return min;
+    }
+}
+
+inline double xTrajectory::line2MBRIED_impl(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
+                                            const SpatialIndex::xMBR &r, int sr) {
+    double ts = ps.m_t, te = pe.m_t;
+    if(std::fabs(te-ts)<1e-7) return 0;
+    double res;
+    if (sr == 5) return 0;
+    else if (sr % 2 == 0){
+        return 0.5 * (ps.getMinimumDistance(r) + pe.getMinimumDistance(r)) * (te - ts);
+    }
+    else {
+        double px, py;
+        if (sr == 1 || sr == 7) px = r.m_xmin;
+        else px = r.m_xmax;
+        if (sr == 1 || sr == 3) py = r.m_ymin;
+        else py = r.m_ymax;
+        return line2lineIED(ps, pe, xPoint(px,py,ts), xPoint(px,py,te));
+    }
+}
+
+inline double xTrajectory::line2MBRMaxSED(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
+                                          const SpatialIndex::xMBR &r) {
+    assert(r.m_tmin<=ps.m_t);
+    assert(r.m_tmax>=pe.m_t);
+    return std::max(ps.getMinimumDistance(r),pe.getMinimumDistance(r));
+}
+
 inline DISTE xTrajectory::line2MBRDistance(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
-                                    const SpatialIndex::xMBR &r) {
+                                           const SpatialIndex::xMBR &r) {
     //the line's time period should be in the MBR's time period
     assert(r.m_tmin<=ps.m_t);
     assert(r.m_tmax>=pe.m_t);
     //check if need cutting
-    double opti=0;
-    double dt = pe.m_t-ps.m_t;
-    auto parts = cutByPhase(ps, pe, r);
-    for(auto &line:parts){
-        switch (line.first) {
-            case 1:
-                opti += line2lineIED(line.second.m_ps, line.second.m_pe,
-                        xPoint(r.m_xmin,r.m_ymin,line.second.m_ps.m_t),
-                        xPoint(r.m_xmin,r.m_ymin,line.second.m_pe.m_t));
-                break;
-            case 2:
-                opti += (2*r.m_ymin-line.second.m_ps.m_y-line.second.m_pe.m_y)/2*dt;
-                break;
-            case 3:
-                opti += line2lineIED(line.second.m_ps, line.second.m_pe,
-                             xPoint(r.m_xmax,r.m_ymin,line.second.m_ps.m_t),
-                             xPoint(r.m_xmax,r.m_ymin,line.second.m_pe.m_t));
-                break;
-            case 4:
-                opti +=  (2*r.m_xmin-line.second.m_ps.m_x-line.second.m_pe.m_x)/2*dt;
-                break;
-            case 5:
-                break;
-            case 6:
-                opti +=  (line.second.m_ps.m_x+line.second.m_pe.m_x-2*r.m_xmax)/2*dt;
-                break;
-            case 7:
-                opti += line2lineIED(line.second.m_ps, line.second.m_pe,
-                                     xPoint(r.m_xmin,r.m_ymax,line.second.m_ps.m_t),
-                                     xPoint(r.m_xmin,r.m_ymax,line.second.m_pe.m_t));
-                break;
-            case 8:
-                opti +=  (line.second.m_ps.m_y+line.second.m_pe.m_y-2*r.m_ymax)/2*dt;
-                break;
-            case 9:
-                opti += line2lineIED(line.second.m_ps, line.second.m_pe,
-                                     xPoint(r.m_xmax,r.m_ymax,line.second.m_ps.m_t),
-                                     xPoint(r.m_xmax,r.m_ymax,line.second.m_pe.m_t));
-                break;
-            default:
-                throw Tools::IllegalStateException("wrong phase");
+    double opti;
+    int sr = getPhase(r, ps, pe);
+    if (sr > 0) {
+        opti = line2MBRIED_impl(ps, pe, r, sr);
+    } else {
+        double sum = 0;
+        auto part = cutByPhase(ps, pe, r);
+        for (const auto &p:part) {
+            int tmpsr = getPhase(r, p.first, p.second);
+            double tmpres = line2MBRIED_impl(p.first, p.second, r, tmpsr);
+//            cout<<tmpsr<<" "<<tmpres<<"\n";
+            sum += tmpres;
         }
+        opti = sum;
     }
     double pessi = opti + (pe.m_t-ps.m_t)*sqrt(sq(r.m_xmax-r.m_xmin)+sq(r.m_ymax-r.m_ymin));
     return DISTE(opti,pessi,false);
@@ -873,7 +861,7 @@ inline double mbcArea(double t0,double t3,double rd,double rv,double ts,double t
 }
 
 inline DISTE xTrajectory::line2MBCDistance(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
-                                    const SpatialIndex::xMBC &r) {
+                                           const SpatialIndex::xMBC &r) {
 
     double x1 = r.m_ps.m_x, y1 = r.m_ps.m_y, t1 = r.m_ps.m_t;
     double x2 = r.m_pe.m_x, y2 = r.m_pe.m_y, t2 = r.m_pe.m_t;
@@ -1246,7 +1234,7 @@ void xTrajectory::linkxTrajectory(SpatialIndex::xTrajectory &other) {
     else{
 //        std::cerr<<*this<<other<<"\n";
         std::cerr<<m_points.back()<<" "<<other.m_points.front()<<"\n"
-            <<other.m_points.back()<<" "<<m_points.front();
+                 <<other.m_points.back()<<" "<<m_points.front();
         throw Tools::IllegalStateException("xTrajectory::linkxTrajectory: the two trajectories to be linked should have a common point.");
     }
 }
@@ -1280,7 +1268,7 @@ void xTrajectory::getPartialxTrajectory(double tstart, double tend, SpatialIndex
 }
 
 int xTrajectory::cutTrajsIntoFile(std::vector<std::pair<SpatialIndex::id_type, SpatialIndex::xTrajectory>> &trajs,
-                                 double segLen, int strat, std::string filename) {
+                                  double segLen, int strat, std::string filename) {
 
     tjstat->bt = segLen;
     double totallen=0;
@@ -1361,7 +1349,7 @@ queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj, double len) {
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i;
                 res.push(make_pair(make_pair(ms,me)
-                                           ,subtrajToSBB(subtraj)));
+                        ,subtrajToSBB(subtraj)));
                 ms = i;
                 fakehead = false;
                 seg.clear();
