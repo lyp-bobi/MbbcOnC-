@@ -932,6 +932,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
     }
 #ifdef TJDEBUG
     cerr<<"query is "<< *queryTraj<<endl;
+    cerr<<"simped query is"<<simpleTraj<<"\n with delta "<<delta<<endl;
 #endif
     double knearest = 0.0;
     int iternum = 0;

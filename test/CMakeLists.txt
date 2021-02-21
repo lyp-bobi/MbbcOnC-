@@ -113,6 +113,7 @@ set (SOURCES
 #        bulkloadtest
         10.mbcrange
         12.sbbdknn
+        debug
         )
 
 foreach (test ${SOURCES})

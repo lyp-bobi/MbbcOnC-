@@ -43,7 +43,7 @@ int main(int argc,char *argv[]){
             lens[make_pair(2000,6800)]=1800;
             lens[make_pair(6800,1e300)]=2700;
             q.prepareForest(&x,lens);
-            q.appendQueries(queries,0);
+            q.appendQueries(queries,nnks);
             std::cerr << q.runQueries().toString();
         }
         cerr<<"mission complete.\n";

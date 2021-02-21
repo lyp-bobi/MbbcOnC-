@@ -18,6 +18,8 @@ xLine::xLine()
 xLine::xLine(const SpatialIndex::xLine &in)
 :m_ps(in.m_ps),m_pe(in.m_pe){
 }
+xLine::xLine(xPoint ps, xPoint pe)
+        :m_ps(ps),m_pe(pe){}
 xLine::xLine(xPoint ps, xPoint pe, double rd, double rv)
 :m_ps(ps),m_pe(pe){}
 

@@ -170,123 +170,124 @@ bool xMBC::intersectsxPoint(const SpatialIndex::xPoint &in) const {
 
 bool xMBC::intersectsxMBR(const SpatialIndex::xMBR &in) const {
     //2 dimensions for space, the third for time
-    if(in.m_tmin>m_pe.m_t||in.m_tmax<m_ps.m_t) return false;
-    if(in.m_tmin==in.m_tmax) {
-        auto timed=getCenterRdAtTime(in.m_tmin);
-        return timed.first.getMinimumDistance(in)<=timed.second+1e-7;
-    }else{
-        double t0=m_ps.m_t,t1=m_ps.m_t+m_rd/m_rv,t2=m_pe.m_t-m_rd/m_rv,t3=m_pe.m_t;
-        if(m_rv<1e-7){
-            t1 = t0;
-            t2=t3;
-        }
-        double tlow=in.m_tmin,thigh=in.m_tmax;
-        double ints=std::max(t0,tlow),inte=std::min(t3,thigh);
-        auto a=getCenterRdAtTime(ints),b=getCenterRdAtTime(inte);
-        double d=xTrajectory::line2MBRMinSED(a.first,b.first,in);
-        if(d>m_rd) return false;
-//        return true;
-        //cylinder
-        double ts=std::max(t1,tlow),te=std::min(t2,thigh);
-        if(ts<=te) {
-            a = getCenterRdAtTime(ts), b = getCenterRdAtTime(te);
-            d=xTrajectory::line2MBRMinSED(a.first,b.first,in);
-            if (d <= m_rd) return true;
-        }
-
-        //top
-        ts=std::max(t2,tlow),te=std::min(t3,thigh);
-        if(ts<=te) {
-            a = getCenterRdAtTime(ts), b = getCenterRdAtTime(te);
-            if(a.first.getMinimumDistance(in)<=a.second) return true;
-            if(b.first.getMinimumDistance(in)<=b.second) return true;
-            auto part = xTrajectory::cutByPhase(a.first, b.first, in);
-            for (const auto &p:part) {
-                int tmpsr = getPhase(in, p.first, p.second);
-                if(tmpsr==5) return true;
-                if(tmpsr%2==0) {
-                    a = getCenterRdAtTime(p.first.m_t), b = getCenterRdAtTime(p.second.m_t);
-                    if(a.first.getMinimumDistance(in)<=a.second) return true;
-                    if(b.first.getMinimumDistance(in)<=b.second) return true;
-                }
-                if(tmpsr%2==1){
-                    double px, py;
-                    if (tmpsr == 1 || tmpsr == 7) px = in.m_xmin;
-                    else px = in.m_xmax;
-                    if (tmpsr == 1 || tmpsr == 3) py = in.m_ymin;
-                    else py = in.m_ymax;
-                    const xPoint *s,*e;
-                    if(p.first.m_t<p.second.m_t){
-                        s=&p.first;
-                        e=&p.second;
-                    }else{
-                        s=&p.second;
-                        e=&p.first;
-                    }
-                    double _ts=s->m_t,_te=e->m_t;
-                    double dxs=s->m_x-px;
-                    double dys=s->m_y-py;
-                    double dxe=e->m_x-px;
-                    double dye=e->m_y-py;
-                    double c1=sq(dxs-dxe)+sq(dys-dye),
-                            c2=2*((dxe*_ts-dxs*_te)*(dxs-dxe)+(dye*_ts-dys*_te)*(dys-dye)),
-                            c3=sq(dxe*_ts-dxs*te)+sq(dye*_ts-dys*te),
-                            c4=_te-_ts;
-                    double _a=c1*c1-c4*c4*m_rv*m_rv,
-                            _b=c2,_c=c3;
-                    double delta=_b*_b-4*_a*_c;
-                    if(_a*_ts*_ts+_b*_ts+_c<=0||_a*_te*_te+_b*_te+_c<=0) return true;
-                    if(delta>0&&_ts<-_b/2/_a&&-_b/2/_a<_te) return true;
-                }
-            }
-        }
-        //bottom
-        ts=std::max(t0,tlow),te=std::min(t1,thigh);
-        if(ts<=te) {
-            a = getCenterRdAtTime(ts), b = getCenterRdAtTime(te);
-            if(a.first.getMinimumDistance(in)<=a.second) return true;
-            if(b.first.getMinimumDistance(in)<=b.second) return true;
-            auto part = xTrajectory::cutByPhase(a.first, b.first, in);
-            for (const auto &p:part) {
-                int tmpsr = getPhase(in, p.first, p.second);
-                if(tmpsr==5) return true;
-                if(tmpsr%2==0) {
-                    a = getCenterRdAtTime(p.first.m_t), b = getCenterRdAtTime(p.second.m_t);
-                    if(a.first.getMinimumDistance(in)<=a.second) return true;
-                    if(b.first.getMinimumDistance(in)<=b.second) return true;
-                }
-                if(tmpsr%2==1){
-                    double px, py;
-                    if (tmpsr == 1 || tmpsr == 7) px = in.m_xmin;
-                    else px = in.m_xmax;
-                    if (tmpsr == 1 || tmpsr == 3) py = in.m_ymin;
-                    else py = in.m_ymax;
-                    const xPoint *s,*e;
-                    if(p.first.m_t<p.second.m_t){
-                        s=&p.first;
-                        e=&p.second;
-                    }else{
-                        s=&p.second;
-                        e=&p.first;
-                    }
-                    double _ts=s->m_t,_te=e->m_t;
-                    double dxs=s->m_x-px;
-                    double dys=s->m_y-py;
-                    double dxe=e->m_x-px;
-                    double dye=e->m_y-py;
-                    double c1=sq(dxs-dxe)+sq(dys-dye),
-                            c2=2*((dxe*_ts-dxs*_te)*(dxs-dxe)+(dye*_ts-dys*_te)*(dys-dye)),
-                            c3=sq(dxe*_ts-dxs*te)+sq(dye*_ts-dys*te),
-                            c4=_te-_ts;
-                    double _a=c1*c1-c4*c4*m_rv*m_rv,
-                            _b=c2,_c=c3;
-                    double delta=_b*_b-4*_a*_c;
-                    if(_a*_ts*_ts+_b*_ts+_c<=0||_a*_te*_te+_b*_te+_c<=0) return true;
-                    if(delta>0&&_ts<-_b/2/_a&&-_b/2/_a<_te) return true;
-                }
-            }
-        }
-        return false;
+    throw Tools::NotSupportedException("MBC intersect MBR not used now");
+//    if(in.m_tmin>m_pe.m_t||in.m_tmax<m_ps.m_t) return false;
+//    if(in.m_tmin==in.m_tmax) {
+//        auto timed=getCenterRdAtTime(in.m_tmin);
+//        return timed.first.getMinimumDistance(in)<=timed.second+1e-7;
+//    }else{
+//        double t0=m_ps.m_t,t1=m_ps.m_t+m_rd/m_rv,t2=m_pe.m_t-m_rd/m_rv,t3=m_pe.m_t;
+//        if(m_rv<1e-7){
+//            t1 = t0;
+//            t2=t3;
+//        }
+//        double tlow=in.m_tmin,thigh=in.m_tmax;
+//        double ints=std::max(t0,tlow),inte=std::min(t3,thigh);
+//        auto a=getCenterRdAtTime(ints),b=getCenterRdAtTime(inte);
+//        double d=xTrajectory::line2MBRMinSED(a.first,b.first,in);
+//        if(d>m_rd) return false;
+////        return true;
+//        //cylinder
+//        double ts=std::max(t1,tlow),te=std::min(t2,thigh);
+//        if(ts<=te) {
+//            a = getCenterRdAtTime(ts), b = getCenterRdAtTime(te);
+//            d=xTrajectory::line2MBRMinSED(a.first,b.first,in);
+//            if (d <= m_rd) return true;
+//        }
+//
+//        //top
+//        ts=std::max(t2,tlow),te=std::min(t3,thigh);
+//        if(ts<=te) {
+//            a = getCenterRdAtTime(ts), b = getCenterRdAtTime(te);
+//            if(a.first.getMinimumDistance(in)<=a.second) return true;
+//            if(b.first.getMinimumDistance(in)<=b.second) return true;
+//            auto part = xTrajectory::cutByPhase(a.first, b.first, in);
+//            for (const auto &p:part) {
+//                int tmpsr = getPhase(in, p.first, p.second);
+//                if(tmpsr==5) return true;
+//                if(tmpsr%2==0) {
+//                    a = getCenterRdAtTime(p.first.m_t), b = getCenterRdAtTime(p.second.m_t);
+//                    if(a.first.getMinimumDistance(in)<=a.second) return true;
+//                    if(b.first.getMinimumDistance(in)<=b.second) return true;
+//                }
+//                if(tmpsr%2==1){
+//                    double px, py;
+//                    if (tmpsr == 1 || tmpsr == 7) px = in.m_xmin;
+//                    else px = in.m_xmax;
+//                    if (tmpsr == 1 || tmpsr == 3) py = in.m_ymin;
+//                    else py = in.m_ymax;
+//                    const xPoint *s,*e;
+//                    if(p.first.m_t<p.second.m_t){
+//                        s=&p.first;
+//                        e=&p.second;
+//                    }else{
+//                        s=&p.second;
+//                        e=&p.first;
+//                    }
+//                    double _ts=s->m_t,_te=e->m_t;
+//                    double dxs=s->m_x-px;
+//                    double dys=s->m_y-py;
+//                    double dxe=e->m_x-px;
+//                    double dye=e->m_y-py;
+//                    double c1=sq(dxs-dxe)+sq(dys-dye),
+//                            c2=2*((dxe*_ts-dxs*_te)*(dxs-dxe)+(dye*_ts-dys*_te)*(dys-dye)),
+//                            c3=sq(dxe*_ts-dxs*te)+sq(dye*_ts-dys*te),
+//                            c4=_te-_ts;
+//                    double _a=c1*c1-c4*c4*m_rv*m_rv,
+//                            _b=c2,_c=c3;
+//                    double delta=_b*_b-4*_a*_c;
+//                    if(_a*_ts*_ts+_b*_ts+_c<=0||_a*_te*_te+_b*_te+_c<=0) return true;
+//                    if(delta>0&&_ts<-_b/2/_a&&-_b/2/_a<_te) return true;
+//                }
+//            }
+//        }
+//        //bottom
+//        ts=std::max(t0,tlow),te=std::min(t1,thigh);
+//        if(ts<=te) {
+//            a = getCenterRdAtTime(ts), b = getCenterRdAtTime(te);
+//            if(a.first.getMinimumDistance(in)<=a.second) return true;
+//            if(b.first.getMinimumDistance(in)<=b.second) return true;
+//            auto part = xTrajectory::cutByPhase(a.first, b.first, in);
+//            for (const auto &p:part) {
+//                int tmpsr = getPhase(in, p.first, p.second);
+//                if(tmpsr==5) return true;
+//                if(tmpsr%2==0) {
+//                    a = getCenterRdAtTime(p.first.m_t), b = getCenterRdAtTime(p.second.m_t);
+//                    if(a.first.getMinimumDistance(in)<=a.second) return true;
+//                    if(b.first.getMinimumDistance(in)<=b.second) return true;
+//                }
+//                if(tmpsr%2==1){
+//                    double px, py;
+//                    if (tmpsr == 1 || tmpsr == 7) px = in.m_xmin;
+//                    else px = in.m_xmax;
+//                    if (tmpsr == 1 || tmpsr == 3) py = in.m_ymin;
+//                    else py = in.m_ymax;
+//                    const xPoint *s,*e;
+//                    if(p.first.m_t<p.second.m_t){
+//                        s=&p.first;
+//                        e=&p.second;
+//                    }else{
+//                        s=&p.second;
+//                        e=&p.first;
+//                    }
+//                    double _ts=s->m_t,_te=e->m_t;
+//                    double dxs=s->m_x-px;
+//                    double dys=s->m_y-py;
+//                    double dxe=e->m_x-px;
+//                    double dye=e->m_y-py;
+//                    double c1=sq(dxs-dxe)+sq(dys-dye),
+//                            c2=2*((dxe*_ts-dxs*_te)*(dxs-dxe)+(dye*_ts-dys*_te)*(dys-dye)),
+//                            c3=sq(dxe*_ts-dxs*te)+sq(dye*_ts-dys*te),
+//                            c4=_te-_ts;
+//                    double _a=c1*c1-c4*c4*m_rv*m_rv,
+//                            _b=c2,_c=c3;
+//                    double delta=_b*_b-4*_a*_c;
+//                    if(_a*_ts*_ts+_b*_ts+_c<=0||_a*_te*_te+_b*_te+_c<=0) return true;
+//                    if(delta>0&&_ts<-_b/2/_a&&-_b/2/_a<_te) return true;
+//                }
+//            }
+//        }
+//        return false;
 //        if(t0>te||t3<ts) return false;
 //        if(ts>t0&&ts<t3){
 //            auto a =getCenterRdAtTime(ts);
@@ -313,7 +314,7 @@ bool xMBC::intersectsxMBR(const SpatialIndex::xMBR &in) const {
 //            if(a.first.getMinimumDistance(mbr2d)<=a.second) return true;
 //        }
 //        return false;
-    }
+//    }
 }
 
 inline bool xMBC::intersectsxMBC(const xMBC& in) const{throw Tools::NotSupportedException("xMBC::intersectsxMBC");}

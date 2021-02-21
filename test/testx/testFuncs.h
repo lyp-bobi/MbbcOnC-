@@ -59,9 +59,9 @@ using namespace std;
 using namespace SpatialIndex;
 using namespace xRTreeNsp;
 #if defined(TJDEBUG) || defined(WIN32) || !defined(NDEBUG)
-#define NUMCORE 4
+#define NUMCORE 1
 #define NUMTHREAD (NUMCORE)
-extern double testtime = 200;
+extern double testtime = 2;
 #else
 #define NUMCORE 4
 extern double testtime = 1200;
@@ -114,7 +114,7 @@ public:
         if(mou!=nullptr){
             m_lastDist=mou->m_dist;
 #if !defined(NDEBUG) || defined(TJDEBUG)
-            cerr <<"result" << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
+//            cerr <<"result" << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
 #endif
         }
     }

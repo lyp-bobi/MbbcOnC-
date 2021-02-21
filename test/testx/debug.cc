@@ -21,7 +21,7 @@ int main(int argc,char *argv[]){
         for(auto len:seglens){cerr<<len<<" ";}
         cerr<<endl;
         xStore x(target, testFileName(target), true);
-        for(double qt=300;qt<=10800;qt+=500) {
+        for(double qt=3600;qt<=3800;qt+=500) {
             cerr<<"qt is " << qt<<endl;
             vector<xTrajectory> queries;
 //            xTrajectory tj;

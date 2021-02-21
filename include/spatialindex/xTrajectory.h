@@ -149,11 +149,8 @@ namespace SpatialIndex
         static double line2lineIED(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
         static double line2lineIEDA(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
         static double line2lineMinSED(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
-        static DISTE line2MBRDistance(const xPoint &ps,const xPoint &pe,const xMBR &r);
-        static double line2MBRIED_impl(const xPoint &ps, const xPoint &pe, const xMBR &r, int sr);
         static double line2MBRMinSED(const xPoint &ps, const xPoint &pe, const xMBR &r);
-        static double line2MBRMaxSED(const xPoint &ps, const xPoint &pe, const xMBR &r);
-        static double line2MBRMinSED_impl(const xPoint &ps, const xPoint &pe, const xMBR &r, int sr);
+        static DISTE line2MBRDistance(const xPoint &ps,const xPoint &pe,const xMBR &r);
         static DISTE line2MBCDistance(const xPoint &ps,const xPoint &pe,const xMBC &r);
         static DISTE line2MBLDistance(const xPoint &ps,const xPoint &pe,const xLine &r);
 
@@ -276,7 +273,7 @@ namespace SpatialIndex
         void loadFromString(std::string s);
 
 //        static inline int getPhase(const SpatialIndex::xMBR &r,const xPoint &p1,const xPoint &p2);
-        static std::vector<std::pair<xPoint,xPoint>> cutByPhase(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
+        static std::map<int ,xLine> cutByPhase(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
                                                                   const SpatialIndex::xMBR &r);
 
         std::vector<xPoint> m_points;

@@ -10,6 +10,7 @@ namespace SpatialIndex
     public:
         xLine();
         xLine(const xLine& in);
+        xLine(xPoint ps,xPoint pe);
         xLine(xPoint ps,xPoint pe, prex rd, prex rv);
         xLine &operator=(const xLine &r);
 

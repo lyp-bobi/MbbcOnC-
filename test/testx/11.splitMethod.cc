@@ -7,12 +7,19 @@
 
 int main(int argc,char *argv[]){
     try {
-        string target = "tdexpand.data";
+        vector<double> seglens;
+        string target;
+        if(argc==1) {
+            target = "tdexpand.data";
+            seglens = {600,900,1200,1800,2700,3600};
+        }else {
+            target = "glexpand.data";
+            seglens = {100,200,300,600,900,1200};
+        }
         double qt =3600;
         std::cerr<<testFileName(target)<<endl;
         xStore x(target, testFileName(target), true);
-        double bts[] = {900,1200,1800,2400,3000,3600,4200,4800,5400};//600,
-        for(auto bt:bts) {
+        for(auto bt:seglens) {
             std::cerr<<"bt is "<<bt <<endl;
             vector<xTrajectory> queries;
             fillQuerySet(queries, x, qt);

@@ -6,7 +6,15 @@
 
 int main(int argc,char *argv[]){
     try {
-        string target = "tdfilter.txt";
+        vector<double> seglens;
+        string target;
+        if(argc==1) {
+            target = "tdexpand.data";
+            seglens = {600,900,1200,1800,2700,3600};
+        }else {
+            target = "glexpand.data";
+            seglens = {100,200,300,600,900,1200};
+        }
         double qt = 3600;
         cerr<<"02, e2ennk, TB,STR, and SBB1800";
         xStore x(target, testFileName(target), true);
@@ -28,7 +36,7 @@ int main(int argc,char *argv[]){
             }
             {
                 MTQ q;
-                q.prepareTrees(&x, [](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, 1800); });
+                q.prepareTrees(&x, [](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, 1200); });
                 q.appendQueries(queries,k);
                 std::cerr << q.runQueries().toString();
             }

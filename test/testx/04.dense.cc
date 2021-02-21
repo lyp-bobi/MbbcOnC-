@@ -13,32 +13,32 @@ int main(int argc,char *argv[]){
         files.emplace_back(fileFolder+to_string(i)+".out");
     }
     xStore x("od","od");
-    testtime = 80;
-    for(int i=0;i<files.size();i++){
+    testtime = 400;
+    for(int i=0;i<6;i++){
         cerr<<"size is "<<i<<endl;
         //don't load it if exist
         if(!x.m_property.contains("TBWP"+to_string(i)))
             x.loadFile(files[i]);
         string idxnum = to_string(i);
-//        vector<xTrajectory> queries;
-//        fillQuerySet(queries,x,1000);
+        vector<xTrajectory> queries;
+        fillQuerySet(queries,x,1000);
         {
             MTQ q;
             q.prepareTrees(&x, [&idxnum](auto x) { return buildTBTreeWP(x,idxnum); });
-//            q.appendQueries(queries);
-//            std::cerr << q.runQueries().toString();
+            q.appendQueries(queries);
+            std::cerr << q.runQueries().toString();
         }
         {
             MTQ q;
             q.prepareTrees(&x, [&idxnum](auto x) { return buildSTRTreeWP(x,idxnum); });
-//            q.appendQueries(queries);
-//            std::cerr << q.runQueries().toString();
+            q.appendQueries(queries);
+            std::cerr << q.runQueries().toString();
         }
         for (auto len:seglens) {
             MTQ q;
             q.prepareTrees(&x, [&len,&idxnum](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, len,idxnum); });
-//            q.appendQueries(queries);
-//            std::cerr << q.runQueries().toString();
+            q.appendQueries(queries);
+            std::cerr << q.runQueries().toString();
         }
     }
 }
