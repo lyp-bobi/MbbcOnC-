@@ -22,7 +22,7 @@ int main(int argc,char *argv[]){
                 sbbs.pop();
                 double d = sqrt(sq(b.bc.m_pe.m_x - b.bc.m_ps.m_x)
                                 + sq(b.bc.m_pe.m_y - b.bc.m_ps.m_y));
-                double t = b.m_endTime-b.m_startTime;
+                double t = stLen;//b.m_endTime-b.m_startTime;
                 double v = d / t;
                 v1 += b.br.getArea() / t;
                 v2 += b.bc.getArea() / t;

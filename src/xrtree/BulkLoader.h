@@ -122,8 +122,8 @@ namespace SpatialIndex
 
 #ifdef XXLMAP
 			//2+4=6GB cache.
-			BulkLoader():m_part2node((uint64_t)2048*1024*1024,(uint64_t)4096*1024*1024){}
-//            BulkLoader():m_part2node((uint64_t)1024*1024*1024,(uint64_t)2048*1024*1024){}
+//			BulkLoader():m_part2node((uint64_t)2048*1024*1024,(uint64_t)4096*1024*1024){}
+            BulkLoader():m_part2node((uint64_t)1024*1024*1024,(uint64_t)2048*1024*1024){}
             ~BulkLoader(){m_part2node.clear();}
 #endif
 		protected:

@@ -61,10 +61,10 @@ using namespace xRTreeNsp;
 #if defined(TJDEBUG) || defined(WIN32) || !defined(NDEBUG)
 #define NUMCORE 1
 #define NUMTHREAD (NUMCORE)
-extern double testtime = 2;
+extern double testtime = 100;
 #else
 #define NUMCORE 4
-extern double testtime = 1200;
+extern double testtime = 400;
 #define NUMTHREAD (NUMCORE*2)
 #endif
 extern bool testxfirstOutput = true;
@@ -77,9 +77,22 @@ static int drop_cache(int drop) {
     if(drop == 3) {
         sync();
     }
-    ofstream ofs("/proc/sys/vm/drop_caches");
-    ofs<< drop<<endl;
-    ofs.close();
+    {
+        ofstream ofs("/proc/sys/vm/drop_caches");
+        ofs<< drop<<endl;
+        ofs.close();
+    }
+    {
+        ofstream ofs("/sys/block/vda/queue/nr_requests");
+        ofs<< 32<<endl;
+        ofs.close();
+    }
+    {
+        ofstream ofs("/sys/block/vda/queue/max_sectors_kb");
+        ofs<< 16<<endl;
+        ofs.close();
+    }
+
 #endif
     return 0;
 }
@@ -775,9 +788,16 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
         num = inp.range_queries.size();
         for (int i = 0; i < inp.range_queries.size(); i++) {
 //            drop_cache(1);
-            vis.m_query = (IShape *) &(inp.range_queries.at(i));
-            inp.tree->intersectsWithQuery(inp.range_queries.at(i), vis);
-            rad += vis.m_lastDist;
+            try {
+                vis.m_query = (IShape *) &(inp.range_queries.at(i));
+                inp.tree->intersectsWithQuery(inp.range_queries.at(i), vis);
+                rad += vis.m_lastDist;
+            } catch (Tools::Exception &e) {
+                cerr<<"error occurs at query \n "<<inp.knn_queries.at(i)<<endl;
+                cerr << "******ERROR******" << endl;
+                std::string s = e.what();
+                cerr << s << endl;
+            }
         }
     }
     double time;
@@ -828,11 +848,11 @@ public:
             m_res.emplace_back(queryRet());
         }
     }
-    void prepareForest(xStore* x,map<pair<double, double>, double> &lens){
-        delete buildSBBForest(x,xTrajectory::OPTS,lens);
+    void prepareForest(xStore* x,map<pair<double, double>, double> &lens, double slab=1e300){
+        delete buildSBBForest(x,xTrajectory::OPTS,lens,slab);
         for(int i=0;i<nthread;i++) {
             m_stores.emplace_back(new xStore(*x));
-            m_trees.emplace_back(buildSBBForest(m_stores.back(),xTrajectory::OPTS,lens));
+            m_trees.emplace_back(buildSBBForest(m_stores.back(),xTrajectory::OPTS,lens,slab));
             queryInput q;
             q.tree = m_trees.back();
             q.store=m_stores.back();

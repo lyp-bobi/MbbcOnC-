@@ -10,11 +10,11 @@ int main(int argc,char *argv[]){
         vector<double> seglens;
         string target;
         if(argc==1) {
-            target = "tdexpand.data";
+            target = "tdexpand.datas";
             seglens = {600,900,1200,1800,2700,3600};
         }else {
-            target = "glexpand.data";
-            seglens = {100,200,300,600,900,1200};
+            target = "glexpand.datas";
+            seglens = {600};
         }
         double qt =3600;
         std::cerr<<testFileName(target)<<endl;
@@ -25,7 +25,7 @@ int main(int argc,char *argv[]){
             fillQuerySet(queries, x, qt);
             {
                 MTQ q;
-                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, bt, "ISS"); });
+                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::ISS, bt, "ISS"); });
                 q.appendQueries(queries);
                 std::cerr << q.runQueries().toString();
             }

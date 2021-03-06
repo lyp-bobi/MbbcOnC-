@@ -8,7 +8,7 @@
 #include "storagemanager/xStore.h"
 #define subTrajFile "./subTrajFile.stj"
 
-#define random(x, y) (((double)rand()/RAND_MAX)*(y-x)+x)
+#define random(x, y) (rand()%(y-x+1)+x)
 
 
 #define bip auto start = std::chrono::system_clock::now();

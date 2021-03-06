@@ -9,22 +9,22 @@ int main(int argc,char *argv[]){
         vector<double> seglens;
         string target;
         if(argc==1) {
-            target = "tdexpand.data";
-            seglens = {600,900,1200,1800,2700,3600};
+            target = "tdexpand.datas";
+            seglens = {1800};
         }else {
-            target = "glexpand.data";
-            seglens = {100,200,300,600,900,1200};
+            target = "glexpand.datas";
+            seglens = {600};
         }
         double qt = 3600;
-        cerr<<"02, e2ennk, TB,STR, and SBB1800";
+        cerr<<"02, e2ennk, TB,STR, and SBB1800/600";
         xStore x(target, testFileName(target), true);
         vector<xTrajectory> queries;
         fillQuerySet(queries,x,qt);
-        for(int k = 5;k<200;k+=10) {
+        for(int k = 5;k<200;k+=20) {
             cerr<<"k is " << k<<endl;
-            {
+            for (auto len:seglens){
                 MTQ q;
-                q.prepareTrees(&x, [](auto x) { return buildTBTreeWP(x); });
+                q.prepareTrees(&x, [&len](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, len); });
                 q.appendQueries(queries,k);
                 std::cerr << q.runQueries().toString();
             }
@@ -36,10 +36,11 @@ int main(int argc,char *argv[]){
             }
             {
                 MTQ q;
-                q.prepareTrees(&x, [](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, 1200); });
+                q.prepareTrees(&x, [](auto x) { return buildTBTreeWP(x); });
                 q.appendQueries(queries,k);
                 std::cerr << q.runQueries().toString();
             }
+
         }
         cerr<<"mission complete.\n";
     }catch (Tools::Exception &e) {

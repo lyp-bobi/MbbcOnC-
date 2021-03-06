@@ -5,16 +5,39 @@
 #include "random"
 
 int main(int argc,char *argv[]){
-    if(argc==1) {
-        string target = "tdexpand.data";
+     {
+        string target = "tdexpand.datas";
         double qts[] = {300,1800,3600,7200,10800};
         cerr<<"03,mix, with TB,STR,SBB1800,SBBF(600,900,1200,1800)"<<endl;
         xStore x(target, testFileName(target), true);
         vector<xTrajectory> queries;
-        fillQuerySetRand(queries,x);
+        default_random_engine e;
+        auto queryLen1 =uniform_real_distribution<double>(60,180);
+        auto queryLen2 =uniform_real_distribution<double>(3600,10800);
+        auto queryLen3 = uniform_real_distribution<double>(86400,86400*2);
+        double count1=0,count2=0,count3=0;
+        testtime*=1.5;
+        for (int i = 0; i < testtime; i++) {
+            int c = uniform_int_distribution<int>(1,3)(e);
+            switch (c) {
+                case 1:
+                    queries.emplace_back(x.randomSubtraj(queryLen1(e)));
+                    count1++;
+                    break;
+                case 2:
+                    queries.emplace_back(x.randomSubtraj(queryLen2(e)));
+                    count2++;
+                    break;
+                case 3:
+                    queries.emplace_back(x.randomSubtraj(queryLen3(e)));
+                    count3++;
+                    break;
+            }
+        }
+        cerr<<count1<<"\t"<<count2<<"\t"<<count3<<"\t";
         vector<int> nnks;
         for(int i=0;i<testtime;i++){
-            nnks.emplace_back(random(6,201));
+            nnks.emplace_back(11);//random(6,201)
         }
         {
             MTQ q;
@@ -22,12 +45,12 @@ int main(int argc,char *argv[]){
             q.appendQueries(queries,nnks);
             std::cerr << q.runQueries().toString();
         }
-        {
-            MTQ q;
-            q.prepareTrees(&x, [](auto x) { return buildSTRTreeWP(x); });
-            q.appendQueries(queries,nnks);
-            std::cerr << q.runQueries().toString();
-        }
+//        {
+//            MTQ q;
+//            q.prepareTrees(&x, [](auto x) { return buildSTRTreeWP(x); });
+//            q.appendQueries(queries,nnks);
+//            std::cerr << q.runQueries().toString();
+//        }
         {
             MTQ q;
             q.prepareTrees(&x, [](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, 1800); });
@@ -37,53 +60,16 @@ int main(int argc,char *argv[]){
         {
             MTQ q;
             SBBFMAP lens;
-            lens[make_pair(0,900)]=600;
-            lens[make_pair(900,3000)]=1200;
-            lens[make_pair(3000,1e300)]=2700;
-            q.prepareForest(&x,lens);
-            q.appendQueries(queries,nnks);
-            std::cerr << q.runQueries().toString();
-        }
-        cerr<<"mission complete.\n";
-    }else{
-        string target = "glexpand.data";
-        cerr<<"03,mix, with TB,STR,SBB600,SBBF(200,)"<<endl;
-        xStore x(target, testFileName(target), true);
-        vector<xTrajectory> queries;
-        fillQuerySetRand(queries,x);
-        vector<int> nnks;
-        for(int i=0;i<testtime;i++){
-            nnks.emplace_back(random(6,201));
-        }
-        {
-            MTQ q;
-            q.prepareTrees(&x, [](auto x) { return buildTBTreeWP(x); });
-            q.appendQueries(queries,nnks);
-            std::cerr << q.runQueries().toString();
-        }
-        {
-            MTQ q;
-            q.prepareTrees(&x, [](auto x) { return buildSTRTreeWP(x); });
-            q.appendQueries(queries,nnks);
-            std::cerr << q.runQueries().toString();
-        }
-        {
-            MTQ q;
-            q.prepareTrees(&x, [](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, 1800); });
-            q.appendQueries(queries,nnks);
-            std::cerr << q.runQueries().toString();
-        }
-        {
-            MTQ q;
-            SBBFMAP lens;
-            lens[make_pair(0,500)]=200;
-            lens[make_pair(500,1e300)]=600;
-            q.prepareForest(&x,lens);
+            lens[make_pair(0,500)]=300;
+            lens[make_pair(500,20000)]=1800;
+            lens[make_pair(20000,1e300)]=7200;
+            q.prepareForest(&x,lens,4000);
             q.appendQueries(queries,nnks);
             std::cerr << q.runQueries().toString();
         }
         cerr<<"mission complete.\n";
     }
+        cerr<<"mission complete.\n";
     return 0;
 }
 // td

@@ -12,6 +12,7 @@ namespace SpatialIndex {
             ~SBBForest(){freeall();}
             map<pair<double, double>, xRTree *> m_trees;
             xRTree *chooseTree(double qt);
+            double m_slab=4000;//larger=useMBR
             void insert(double l,double h, xRTree* r);
             void freeall();
             void intersectsWithQuery(const xCylinder& query, IVisitor& v);

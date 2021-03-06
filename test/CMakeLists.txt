@@ -115,6 +115,7 @@ set (SOURCES
         12.sbbdknn
         debug
         longQuery
+        shuffledata
         )
 
 foreach (test ${SOURCES})

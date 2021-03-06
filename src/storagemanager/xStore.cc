@@ -206,6 +206,7 @@ void xStore::loadFile(string file) {
 
 xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew)
 {
+    cerr<<myname<<endl;
     if(m_trajIdx== nullptr){
         m_trajIdx= new xTrajIdx();
     }

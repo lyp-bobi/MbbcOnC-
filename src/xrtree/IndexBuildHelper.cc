@@ -385,10 +385,15 @@ xRTree * xRTreeNsp::loadTree(IStorageManager *mng, string name) {
     return r;
 }
 
-SBBForest * xRTreeNsp::buildSBBForest(IStorageManager *store, const function<queue<pair<pair<int, int>, xSBB> > (xTrajectory &, double)> &f, map<pair<double, double>, double> &lens) {
+SBBForest * xRTreeNsp::buildSBBForest(IStorageManager *store, const function<queue<pair<pair<int, int>, xSBB> > (xTrajectory &, double)> &f, map<pair<double, double>, double> &lens,double slab) {
     SBBForest* res = new SBBForest();
     for(auto &i:lens){
-        xRTree* r = buildMBCRTreeWP(store,f,i.second);
+        xRTree *r;
+        if(i.second<=slab) {
+            r = buildMBCRTreeWP(store, f, i.second);
+        }else{
+            r = buildMBRRTreeWP(store, f, i.second);
+        }
         res->m_trees[i.first]=r;
     }
     return res;

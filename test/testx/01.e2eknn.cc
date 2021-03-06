@@ -6,7 +6,7 @@
 
 int main(int argc,char *argv[]){
     try {
-        string target = "tdexpand.data";
+        string target = "tdexpand.datas";
         double qts[] = {300,1800,3600,7200,10800};
         cerr<<"01,e2eknn, with TB,STR,SBB1200,SBBF(600,900,1200,1800)"<<endl;
         xStore x(target, testFileName(target), true);

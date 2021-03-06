@@ -7,9 +7,16 @@
 
 int main(int argc,char *argv[]){
     try {
-        string target = "tdexpand.data";
         double rds[] = {0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2};
-        double seglens[] = {300,600,900};
+        vector<double> seglens;
+        string target;
+        if(argc==1) {
+            target = "tdexpand.datas";
+            seglens = {300,600,900,1200,1800,2700};
+        }else {
+            target = "glexpand.datas";
+            seglens = {50,300,600,1200,1800,2700};
+        }
         cerr<<"seglen: ";
         for(auto len:seglens){cerr<<len<<" ";}
         cerr<<endl;

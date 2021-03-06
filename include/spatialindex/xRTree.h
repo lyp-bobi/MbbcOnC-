@@ -82,6 +82,6 @@ namespace SpatialIndex
 #define SBBFMAP map<pair<double, double>, double>
         SIDX_DLL SBBForest* buildSBBForest
 		(IStorageManager* store, const CUTFUNC_PARA &f,
-		        map<pair<double,double>,double> &lens);
+		        map<pair<double,double>,double> &lens, double slab=4000);
 	}
 }

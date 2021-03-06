@@ -6,10 +6,9 @@
 
 int main(int argc,char *argv[]){
     try {
-        bulkloadt =true;
         vector<double> seglens;
         string target;
-        target = "tdexpand.data";
+        target = "tdexpand.datas";
         seglens = {3600,7200,10800,14400,20000,30000};
         testtime=400;
         cerr<<"seglen: ";

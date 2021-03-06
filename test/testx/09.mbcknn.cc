@@ -6,10 +6,16 @@
 
 int main(int argc,char *argv[]){
     try {
-        string target = "tdexpand.data";
-//        string target = "glexpand.data";
+        vector<double> seglens;
+        string target;
+        if(argc==1) {
+            target = "tdexpand.datas";
+            seglens = {600,900,1200,1800,2700,3600};
+        }else {
+            target = "glexpand.datas";
+            seglens = {100,200,300,600,900,1200,1800,2700};
+        }
         cerr<<"09,mbcknn, SBBs"<<endl;
-        double seglens[] = {600,900,1200,1800,2700};
         cerr<<"seglen: ";
         for(auto len:seglens){cerr<<len<<" ";}
         cerr<<endl;
