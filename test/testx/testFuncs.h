@@ -127,7 +127,7 @@ public:
         if(mou!=nullptr){
             m_lastDist=mou->m_dist;
 #if !defined(NDEBUG) || defined(TJDEBUG)
-//            cerr <<"result" << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
+            cerr <<"result" << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
 #endif
         }
     }

@@ -900,6 +900,30 @@ void xRTree::intersectsWithQuery(const xCylinder &query, IVisitor &v) {
     }
 }
 
+void xRTree::findid(id_type qid) {
+    std::set<id_type > results;
+    std::multimap<id_type, xStoreEntry> pending;
+    std::stack<NodePtr> st;
+    NodePtr root = readNode(m_rootID);
+    if (root->m_children > 0) st.push(root);
+    while (!st.empty()) {
+        NodePtr n = st.top();
+        st.pop();
+        if (n->m_level == 0) {
+            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+                id_type id = n->m_se[cChild].m_id;
+                if(id==qid){
+                    cerr<<n->toString();
+                }
+            }
+        } else {
+            for (uint32_t cChild = 0; cChild < n->m_children; ++cChild) {
+                st.push(readNode(n->m_pIdentifier[cChild]));
+            }
+        }
+    }
+}
+
 void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor &v) {
     if(query.m_points.size()<=2) return;
     const xTrajectory *queryTraj= &query;

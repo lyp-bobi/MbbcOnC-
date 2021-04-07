@@ -172,6 +172,7 @@ source_group("C API Source Files" FILES ${SIDX_CAPI_CPP})
 
 # Standard include directory of SIDX library
 include_directories(../include)
+include_directories(../sqlite)
 include_directories(${STXXL_INCLUDE_DIRS})
 
 set (APPS_CPP_DEPENDENCIES "${SIDX_LIB_NAME}" CACHE INTERNAL "libraries to link")

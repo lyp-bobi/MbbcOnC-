@@ -8,7 +8,7 @@ using namespace xRTreeNsp;
 
 void PartsStore::Parts::insert(xSBB &r, id_type prev, id_type next, xStoreEntry &entry) {
     is_modified = true;
-    m_sbbs[r.m_startTime]=r;
+    m_UCsbbs.emplace_back(r);
     m_loadedTime += min(r.m_endTime, m_ps->m_query.m_endTime()) -
                     max(r.m_startTime, m_ps->m_query.m_startTime());
     if(r.m_endTime > m_maxtime){
@@ -34,7 +34,7 @@ bool PartsStore::insert(id_type id, xSBB &b, id_type leafid, id_type prev, id_ty
     bool res=false;
     auto it = m_parts.find(id);
     if(it==m_parts.end()){
-        m_parts[id]=Parts(this);
+        m_parts.emplace(make_pair(id,Parts(this)));
         it = m_parts.find(id);
         res = true;
     }
@@ -47,145 +47,26 @@ bool PartsStore::insert(id_type id, xSBB &b, id_type leafid, id_type prev, id_ty
 DISTE PartsStore::updateValue(id_type id,bool Inqueue) {
     Parts *parts = &m_parts[id];
     if(!parts->is_modified) return parts->m_calcMin;
-    double computedTime = 0;
-    DISTE pd;
-    DISTE res;
-    bool needComp =false;
     std::pair<double, double> timeInterval;
-    std::map<std::pair<double,double>,DISTE>::iterator  iter;
-    //inferred distance(front dist, back dist and mid dist) should be stored as negative values
-    //front dist
-#ifndef SKIPMAXSPEED
-    if (parts->m_mintime > m_query.m_startTime()) {
-        timeInterval.first=m_query.m_startTime();
-        timeInterval.second=parts->m_mintime;
-        iter = parts->m_computedDist.find(timeInterval);
-        if(iter != parts->m_computedDist.end()){
-            pd= iter->second;
-        } else {
-            if (parts->m_hasPrev) {
-                pd = m_query.frontDist(parts->m_sbbs.begin()->second,stat->vmax);
-                parts->m_computedDist[timeInterval] = pd;
-            } else {
-                pd = m_query.frontDistStatic(parts->m_sbbs.begin()->second);
-                parts->m_computedDist[timeInterval] = pd;
-                computedTime += timeInterval.second - timeInterval.first;
+    for(auto &b:parts->m_UCsbbs){
+        parts->putSBB(b);
+    }
+    parts->m_UCsbbs.clear();
+    DISTE res;
+    for(auto it=parts->m_line.begin();it!=parts->m_line.end();it++){
+        if(!it->d.infer){
+            res += it->d;
+        }
+        else{
+            if(it == parts->m_line.begin() || it == (--parts->m_line.end())) {
+                res.infer = true;
+                continue;
             }
+            if(!m_nodespq.empty())
+                res +=DISTE((it->te-it->ts)*m_nodespq.top()->m_dist.opt/(m_query.m_endTime()-m_query.m_startTime()),1e300,true);
         }
-//        //we don't know if it has sbbs, so can't use
-//        if(tjstat->regular&&iter->second.infer&&!m_nodespq.empty()){
-//            pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-//                                      (timeInterval.second - timeInterval.first) /
-//                                      (m_query.m_endTime() - m_query.m_startTime()));
-//            pd.pes = max(pd.opt,pd.pes);
-//        }
-        res = res + pd;
     }
-#else
-    if (parts->m_mintime > m_query.m_startTime()&&!parts->m_hasPrev) {
-        timeInterval.first=m_query.m_startTime();
-        timeInterval.second=parts->m_mintime;
-        iter = parts->m_computedDist.find(timeInterval);
-        if(iter != parts->m_computedDist.end()){
-            pd= iter->second;
-        } else {
-            pd = m_query.frontDistStatic(parts->m_sbbs.begin()->second);
-            parts->m_computedDist[timeInterval] = pd;
-            computedTime += timeInterval.second - timeInterval.first;
-        }
-        res = res + pd;
-    }
-#endif
-    //mid dist
-    const xSBB *prev= nullptr;
-    for (const auto &box:parts->m_sbbs) {
-        //this box
-        timeInterval.first=max(box.second.m_startTime, m_query.m_startTime());
-        timeInterval.second=min(box.second.m_endTime, m_query.m_endTime());
-        iter = parts->m_computedDist.find(timeInterval);
-        if(iter != parts->m_computedDist.end()&&!(iter->second.infer)){
-            pd= iter->second;
-        } else {
-            pd = DISTE(m_query.sbbDist(box.second));
-            parts->m_computedDist[timeInterval] = pd;
-        }
-        res = res + pd;
-        computedTime += timeInterval.second - timeInterval.first;
-        //the gap
-
-        if (box.second.m_startTime != parts->m_sbbs.begin()->second.m_startTime) {//not first
-            if (prev->m_endTime < box.second.m_startTime) {
-#ifndef SKIPMAXSPEED
-                timeInterval.first= prev->m_endTime;
-                timeInterval.second= box.second.m_startTime;
-                iter = parts->m_computedDist.find(timeInterval);
-                if(iter != parts->m_computedDist.end()){
-                    pd= iter->second;
-                } else {
-                    pd = m_query.gapDist(*prev, box.second, stat->vmax);
-                    parts->m_computedDist[timeInterval] = pd;
-                }
-                if(iter->second.infer&&!m_nodespq.empty()){
-                    pd.opt = std::max(pd.opt, ( m_nodespq.top()->m_dist.opt *
-                                              (timeInterval.second - timeInterval.first) /
-                                              (m_query.m_endTime() - m_query.m_startTime())));
-                    pd.pes = max(pd.opt,pd.pes);
-                }
-#else
-                pd.opt = ( m_nodespq.top()->m_dist.opt *
-                        (timeInterval.second - timeInterval.first) /
-                        (m_query.m_endTime() - m_query.m_startTime()));
-                pd.pes = 1e300;
-#endif
-                res = res + pd;
-            }
-        }
-        prev = &box.second;
-    }
-    //backdist
-#ifndef SKIPMAXSPEED
-    if (parts->m_maxtime < m_query.m_endTime()) {
-        timeInterval.first=parts->m_maxtime;
-        timeInterval.second=m_query.m_endTime();
-        iter = parts->m_computedDist.find(timeInterval);
-        if(iter != parts->m_computedDist.end()){
-            pd= iter->second;
-        } else {
-            if (parts->m_hasNext) {
-                pd = m_query.backDist(parts->m_sbbs.rbegin()->second,stat->vmax);
-                parts->m_computedDist[timeInterval] = pd;
-            } else {
-                pd = m_query.backDistStatic(parts->m_sbbs.rbegin()->second);
-                parts->m_computedDist[timeInterval] = pd;
-                computedTime += timeInterval.second - timeInterval.first;
-            }
-        }
-//        //we don't know if it has sbbs, so can't use
-//        if(tjstat->regular&&iter->second.infer&&!m_nodespq.empty()){
-//            pd.opt = std::max(pd.opt, m_nodespq.top()->m_dist.opt *
-//                                      (timeInterval.second - timeInterval.first) /
-//                                      (m_query.m_endTime() - m_query.m_startTime()));
-//            pd.pes = max(pd.opt,pd.pes);
-//        }
-        res = res + pd;
-    }
-#else
-    if (parts->m_maxtime < m_query.m_endTime()&&!parts->m_hasNext) {
-        timeInterval.first=parts->m_maxtime;
-        timeInterval.second=m_query.m_endTime();
-        iter = parts->m_computedDist.find(timeInterval);
-        if(iter != parts->m_computedDist.end()){
-            pd= iter->second;
-        } else {
-            pd = m_query.backDistStatic(parts->m_sbbs.rbegin()->second);
-            parts->m_computedDist[timeInterval] = pd;
-            computedTime += timeInterval.second - timeInterval.first;
-        }
-        res = res + pd;
-    }
-#endif
     parts->m_calcMin = res;
-    parts->m_computedTime = computedTime;
     int type = 2;
     if (parts->m_missingLeaf.empty()) type = 3;
     res.opt -= m_error;
@@ -235,7 +116,7 @@ NNEntry* PartsStore::top() {
         if(m_mpq.empty()||(!m_nodespq.empty()&&m_nodespq.top()->m_dist < m_mpq.top()->m_dist)){
             return m_nodespq.top();
         }
-        if(m_mpq.top()->m_type==4)
+        if(m_mpq.top()->m_type>=3)
             return m_mpq.top();
         if(lastid!=m_mpq.top()->m_id) {
             if(m_except.count(m_mpq.top()->m_id)>0){
@@ -490,4 +371,69 @@ void PartsStoreBFMST::push(NNEntry *e) {
     }else{
         m_mpq.push(e);
     }
+}
+
+void PartsStore::Parts::putSBB(xSBB& b) {
+    double s=max(m_ps->m_query.m_startTime(),b.m_startTime);
+    double e=min(m_ps->m_query.m_endTime(),b.m_endTime);
+    auto it = m_line.begin();
+    while(it!=m_line.end()&&(it->ts>=e||it->te<=s)) it++;
+    if(it->ts==s&&it->te==e){
+        it->d=m_ps->m_query.sbbDist(b);
+        auto lit=it,nit =it;
+        lit--;nit++;
+        if(lit!=m_line.end()&& !lit->d.infer){
+            it->ts=lit->ts;
+            it->d+=lit->d;
+            m_line.erase(lit);
+        }
+        if(nit!=m_line.end()&& !nit->d.infer){
+            it->ts=nit->ts;
+            it->d+=nit->d;
+            m_line.erase(nit);
+        }
+        return;
+    }
+    if(s!=it->ts){ //fill prev one
+        double gaps=it->ts,gape=s;
+        if(b.m_startTime<=m_mintime&&!m_hasPrev){
+            m_line.insert(it,slab(gaps,gape,
+                    m_ps->m_query.frontDistStatic(b)));
+        }else{
+            m_line.insert(it,slab(gaps,gape));
+        }
+    }
+    if(e!=it->te){ //fill next one
+        double gaps=e,gape=it->te;
+        auto nit = it;
+        nit++;
+        if(b.m_endTime>=m_maxtime&&!m_hasNext){
+            m_line.insert(nit,slab(gaps,gape,
+                                  m_ps->m_query.backDistStatic(b)));
+        }else{
+            m_line.insert(nit,slab(gaps,gape));
+        }
+    }
+    if(s==it->ts){//try to merge into prev one
+        auto lit=it;
+        lit--;
+        if(lit!=m_line.end() && !lit->d.infer){
+            lit->te= e;
+            lit->d+=m_ps->m_query.sbbDist(b);
+            m_line.erase(it);
+            return;
+        }
+    }else if(e==it->te){//try to merge into next one
+        auto nit=it;
+        nit++;
+        if(nit!=m_line.end() && !nit->d.infer){
+            nit->ts= s;
+            nit->d+=m_ps->m_query.sbbDist(b);
+            m_line.erase(it);
+            return;
+        }
+    }
+    it->ts=s;
+    it->te=e;
+    it->d=m_ps->m_query.sbbDist(b);
 }

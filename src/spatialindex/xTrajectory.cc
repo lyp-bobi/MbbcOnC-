@@ -613,10 +613,11 @@ double xTrajectory::line2lineIED(const SpatialIndex::xPoint &p1s, const SpatialI
             c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
             c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
             c4=te-ts;
+    double ub = sqrtp(sq(dxs)+sq(dys))*(te-ts);
     if(c1<1e-9){
-        return sqrtp(sq(dxs)+sq(dys))*c4;
+        return min(ub,(double)sqrtp(sq(dxs)+sq(dys))*c4);
     }else{
-        return (theF(c1,c2,c3,c4,te)-theF(c1,c2,c3,c4,ts));
+        return min(ub,(double)(theF(c1,c2,c3,c4,te)-theF(c1,c2,c3,c4,ts)));
     }
 }
 
@@ -629,7 +630,7 @@ double xTrajectory::line2lineIEDA(const SpatialIndex::xPoint &p1s, const Spatial
     prec dys=p1s.m_y-p2s.m_y;
     prec dxe=p1e.m_x-p2e.m_x;
     prec dye=p1e.m_y-p2e.m_y;
-    double d = sqrtp(sq(dxs)+sq(dys));
+    double d = sqrtp(sq(dxs)+sq(dys))*(te-ts);
     return d;
 }
 
@@ -1008,18 +1009,15 @@ double xTrajectory::nodeDist(const xSBB &b) const {
     assert(b.hasbr);
     xMBR n = b.br;
     if(m_startTime()>=n.m_tmax||m_endTime()<=n.m_tmin) return 1e300;
-    double ints=std::max(m_startTime(),n.m_tmin),
-            inte=std::min(m_endTime(),n.m_tmax);
-    n.m_tmin=ints;
-    n.m_tmax=inte;
-    double min=1e300;
-    fakeTpVector timedTraj(&m_points,ints,inte);
-    for (int i = 0; i < timedTraj.m_size-1; i++) {
-        double pd = line2MBRMinSED(timedTraj[i], timedTraj[i+1], n);
-        min=std::min(min,pd);
+    n.m_tmin=m_startTime();
+    n.m_tmax=m_endTime();
+    double rmin=1e300;
+    for (int i = 0; i < m_points.size()-1; i++) {
+        double pd = line2MBRMinSED(m_points[i], m_points[i+1], n);
+        rmin=std::min(rmin,pd);
     }
-    if(min<0) return 0;
-    return min*(m_endTime()-m_startTime());
+    if(rmin<0) return 0;
+    return rmin*(m_endTime()-m_startTime());
 }
 
 DISTE xTrajectory::sbbDist(const xSBB &b) const {

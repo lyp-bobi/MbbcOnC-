@@ -17,6 +17,8 @@ if(NOT WIN32)
     include_directories(${STXXL_INCLUDE_DIRS})
 endif()
 
+add_subdirectory(sqlite)
+
 set(CMAKE_COLOR_MAKEFILE ON)
 
 # Allow advanced users to generate Makefiles printing detailed commands

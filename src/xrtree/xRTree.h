@@ -79,7 +79,7 @@ namespace SpatialIndex
 
             virtual void intersectsWithQuery(const xCylinder& query, IVisitor& v);
             virtual void nearestNeighborQuery(uint32_t k, const xTrajectory& query, IVisitor& v);
-
+            virtual void findid(id_type id);
         public:
 			void initNew(Tools::PropertySet&);
 			void initOld(Tools::PropertySet& ps);
@@ -327,13 +327,25 @@ namespace SpatialIndex
 
         };
 
+
         class PartsStore{ /* for SBB-Driven*/
         protected:
             class Parts{
             public:
+                class slab{
+                public:
+                    double ts,te;
+                    DISTE d;
+                    xMBR ms,me;
+                    slab(double s, double e):
+                            ts(s),te(e),d(0,0,true){}
+                    slab(double s, double e,DISTE dd):
+                            ts(s),te(e),d(dd){}
+                };
                 PartsStore* m_ps;
                 std::set<id_type> m_missingLeaf, m_loadedLeaf;
-                std::map<double,xSBB> m_sbbs;
+                std::vector<xSBB> m_UCsbbs;
+                std::list<slab> m_line;
                 std::map<std::pair<double,double>,DISTE> m_computedDist;
                 std::map<double,xStoreEntry> m_ses;
                 DISTE m_calcMin;
@@ -341,8 +353,12 @@ namespace SpatialIndex
                 bool m_hasPrev=true,m_hasNext=true;
                 double m_computedTime=0,m_loadedTime=0;
                 bool is_modified = true;
-                Parts(PartsStore* ps= nullptr):m_ps(ps){}
+                Parts(PartsStore* ps= nullptr){
+                    m_ps = ps;
+                    m_line.emplace_back(slab(ps->m_query.m_startTime(),ps->m_query.m_endTime()));
+                }
                 void insert(xSBB &r,id_type prev,id_type next,xStoreEntry &entry);
+                void putSBB(xSBB &b);
             };
 
             std::map<id_type ,MutablePriorityQueue<NNEntry>::handle_type > m_handlers;
@@ -367,9 +383,9 @@ namespace SpatialIndex
                 stringstream  ss;
                 auto s =m_parts[id];
                 ss<<"id is "<<id<<endl;
-                for(auto &b:m_parts[id].m_sbbs){
-                    ss<<b.second.toString()<<endl;
-                }
+//                for(auto &b:m_parts[id].m_UCsbbs){
+//                    ss<<b.second.toString()<<endl;
+//                }
                 for(auto &b:m_parts[id].m_computedDist){
                     if(b.second.infer== false){
                         ss<<b.first.first<<"\t"<<b.first.second<<"\t"<<b.second.opt<<endl;

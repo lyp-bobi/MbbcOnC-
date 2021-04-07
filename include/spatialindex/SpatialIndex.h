@@ -93,6 +93,12 @@ namespace SpatialIndex
             res.infer = infer||d2.infer;
             return res;
 	    }
+        const DISTE& operator+=(const DISTE &d2){
+            opt+=d2.opt;
+            pes+=d2.pes;
+            infer|=d2.infer;
+            return *this;
+        }
 
         bool operator<(const DISTE &d2) const{
             return opt<d2.opt;
