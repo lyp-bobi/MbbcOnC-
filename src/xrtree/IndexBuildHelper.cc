@@ -48,7 +48,7 @@ SpatialIndex::xRTreeNsp::xRTree * SpatialIndex::xRTreeNsp::createNewxRTree(IStor
 }
 
 inline int idsize(){return 8;}
-inline int nodeheadersize(){return 56;} //node id+mbr
+inline int nodeheadersize(){return 56+48;} //node id+mbr  + sqlitedbcost
 inline int mbrsize(){return 48;}
 inline int mbcsize(){
     if(bCompactMBC) return 56;

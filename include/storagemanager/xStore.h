@@ -56,10 +56,10 @@ namespace SpatialIndex
             xStore(){};
             ~xStore();
             xStore(string myname, string file, bool subtrajs=true, bool forceNew=false);
-            xStore(xStore &r);
-            void loadFile(string filename);
-            void flush();
-            void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
+            virtual xStore* clone();
+            virtual void loadFile(string filename);
+            virtual void flush();
+            virtual void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
                 auto start = std::chrono::system_clock::now();
                 m_pStorageManager->loadByteArray(page,len,data);
                 auto end = std::chrono::system_clock::now();
@@ -67,13 +67,13 @@ namespace SpatialIndex
                 m_IOtime+=double(duration.count()) * std::chrono::microseconds::period::num
                         / std::chrono::microseconds::period::den;
             }//for inner nodes
-            void storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data){
+            virtual void storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data){
                 m_pStorageManager->storeByteArray(page,len,data);
             }//for inner nodes
-            void deleteByteArray(const id_type page){
+            virtual void deleteByteArray(const id_type page){
                 m_pStorageManager->deleteByteArray(page);
             }//should not be used in bulkload mode i guess
-            void cleanStatistic(){
+            virtual void cleanStatistic(){
                 m_trajIO=0;m_indexIO=0;
                 m_leaf1=0;m_leaf2=0;
                 m_loadedTraj=0;
@@ -81,13 +81,17 @@ namespace SpatialIndex
                 m_IOtime=0;
             }
 
-            void loadTraj(xTrajectory &out, const xStoreEntry &e);
-            xTrajectory randomSubtraj(double len);
-            xPoint randomPoint();
+            virtual void loadTraj(xTrajectory &out, const xStoreEntry &e);
+            virtual xTrajectory randomSubtraj(double len);
+            virtual xPoint randomPoint();
 
             json m_property;
+            /* for file implemntation*/
             xTrajIdx *m_trajIdx=nullptr;
             IStorageManager* m_pStorageManager=nullptr;
+            /* for db implementation */
+
+
             std::string m_name;
             bool m_bSubTraj=false;
             uint32_t m_pageSize;
@@ -100,7 +104,21 @@ namespace SpatialIndex
             uint32_t m_boundingVisited=0;
             double m_IOtime=0;
         };
+        class SIDX_DLL xStoreDB: public xStore{
+        public:
+            xStoreDB();
+            xStoreDB(string myname, string file, bool subtrajs=true, bool forceNew=false);
+            virtual xStore* clone();
+            virtual void loadFile(string filename);
+            virtual void flush();
+            virtual void loadByteArray(const id_type page, uint32_t& len, uint8_t** data);
+            virtual void storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data);
+            virtual void deleteByteArray(const id_type page);
 
+            virtual void loadTraj(xTrajectory &out, const xStoreEntry &e);
+            virtual xTrajectory randomSubtraj(double len);
+            virtual xPoint randomPoint();
+        };
         class xSBBStream:public IDataStream{
         public:
             CUTFUNC m_cutFunc;
@@ -113,6 +131,9 @@ namespace SpatialIndex
 //#else
 //            id_entry_map::iterator m_it;
 //#endif
+            bool m_isdb;
+            id_type m_numit=0;
+            id_type m_size=-1;
             id_type m_count=0;
             xSBBStream(xStore *p, CUTFUNC f);
             bool hasNext();

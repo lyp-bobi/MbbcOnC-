@@ -84,6 +84,20 @@ find_package(Threads)
 #    target_link_libraries(test-${DIR}-${test} ${CMAKE_THREAD_LIBS_INIT})
 #endforeach()
 
+set (DIR sqlite)
+set (SOURCES
+        sqliteTest
+        )
+
+foreach (test ${SOURCES})
+    add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
+    target_link_libraries(test-${DIR}-${test} ${STXXL_LIBRARIES})
+    target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
+    target_link_libraries(test-${DIR}-${test} sqlite3_lib)
+    target_link_libraries(test-${DIR}-${test} ${CMAKE_THREAD_LIBS_INIT})
+endforeach()
+
+
 set (DIR testx)
 set (SOURCES
         odconvert
@@ -94,6 +108,7 @@ set (SOURCES
         queryLenVarying
         expandData
         btqtMat
+        btqtMatDB
         storeExplorer
         11.splitMethod
         speedEstimator
@@ -122,5 +137,6 @@ foreach (test ${SOURCES})
     add_executable(test-${DIR}-${test} ${DIR}/${test}.cc)
     target_link_libraries(test-${DIR}-${test} ${STXXL_LIBRARIES})
     target_link_libraries(test-${DIR}-${test} ${SIDX_LIB_NAME})
+    target_link_libraries(test-${DIR}-${test} sqlite3_lib)
     target_link_libraries(test-${DIR}-${test} ${CMAKE_THREAD_LIBS_INIT})
 endforeach()

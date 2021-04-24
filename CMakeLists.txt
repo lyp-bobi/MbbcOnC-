@@ -6,8 +6,9 @@
 cmake_minimum_required(VERSION 2.8.4)
 project(spatialindex)
 
-add_definitions(-std=c++14)
 
+
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -std=c++14")
 #------------------------------------------------------------------------------
 # internal cmake settings
 #------------------------------------------------------------------------------
@@ -17,7 +18,7 @@ if(NOT WIN32)
     include_directories(${STXXL_INCLUDE_DIRS})
 endif()
 
-add_subdirectory(sqlite)
+
 
 set(CMAKE_COLOR_MAKEFILE ON)
 
@@ -257,11 +258,12 @@ set(SIDX_DATA_DIR ${SIDX_DATA_SUBDIR})
 
 add_subdirectory(src)
 
+add_subdirectory(sqlite)
+include_directories(sqlite)
+
 if(SIDX_BUILD_TESTS)
     add_subdirectory(test)
 endif()
-
-#add_subdirectory(simpletri3d)
 
 
 #------------------------------------------------------------------------------

@@ -46,6 +46,17 @@ Tools::IObject* Node::clone()
 	throw Tools::NotSupportedException("IObject::clone should never be called.");
 }
 
+
+inline int idsize(){return 8;}
+inline int nodeheadersize(){return 56;} //node id+mbr
+inline int mbrsize(){return 48;}
+inline int mbcsize(){
+    if(bCompactMBC) return 56;
+    else return 64;
+}
+inline int linesize(){return 48;}
+inline int pointersize(){return 16;}
+inline int entrysize(){return 32;}
 //
 // Tools::ISerializable interface
 //
@@ -151,7 +162,7 @@ void Node::storeToByteArray(uint8_t** data, uint32_t& len)
     m_nodeMBR.storeToByteArrayE(&ptr,len);
     ptr+= m_nodeMBR.getByteArraySize();
     assert(ptr-*data<PageSizeDefault);
-    len = getByteArraySize();
+    len = ptr - *data;
 //    assert(len == (ptr - *data)+m_pTree->m_dimension*sizeof(double));
 }
 

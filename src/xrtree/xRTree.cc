@@ -574,8 +574,8 @@ void SpatialIndex::xRTreeNsp::xRTree::loadHeader()
 		ptr += sizeof(uint32_t);
 		m_stats.m_nodesInLevel.emplace_back(cNodes);
 	}
-
-	delete[] header;
+    if(m_pStorageManager->m_needfree)
+	    delete[] header;
 }
 
 SpatialIndex::id_type SpatialIndex::xRTreeNsp::xRTree::writeNode(Node* n)
@@ -629,6 +629,7 @@ SpatialIndex::xRTreeNsp::NodePtr SpatialIndex::xRTreeNsp::xRTree::readNode(id_ty
 {
     m_ts->m_indexIO++;
 	uint32_t dataLength;
+
 	uint8_t* buffer;
 
 	try
@@ -665,15 +666,16 @@ SpatialIndex::xRTreeNsp::NodePtr SpatialIndex::xRTreeNsp::xRTree::readNode(id_ty
 		n->loadFromByteArray(buffer);
 
 		++(m_stats.m_u64Reads);
-
-		delete[] buffer;
+        if(m_pStorageManager->m_needfree)
+		    delete[] buffer;
         //test code
 //        std:cerr<<n->toString()<<endl;
 		return n;
 	}
 	catch (...)
 	{
-		delete[] buffer;
+        if(m_pStorageManager->m_needfree)
+		    delete[] buffer;
 		throw;
 	}
 }

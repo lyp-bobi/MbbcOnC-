@@ -4,6 +4,8 @@
 
 
 #pragma once
+#ifndef SPATIALINDEX_XTRAJ_H
+#define SPATIALINDEX_XTRAJ_H
 #include <cmath>
 #include "storagemanager/xStore.h"
 #define subTrajFile "./subTrajFile.stj"
@@ -19,6 +21,7 @@ using std::string;
 using namespace SpatialIndex;
 
 extern double splitSoftThres;
+extern thread_local double dist_sense_thres;
 
 namespace SpatialIndex
 {
@@ -315,3 +318,4 @@ static inline int getPhase(const SpatialIndex::xMBR &r, const xPoint &p1, const 
     else return -1;
     return res;
 }
+#endif //SPATIALINDEX_XTRAJ_H

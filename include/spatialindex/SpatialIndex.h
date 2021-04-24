@@ -241,6 +241,7 @@ namespace SpatialIndex
 		virtual void flush() = 0;
 		virtual ~IStorageManager() {}
 		bool m_isro = false;
+        bool m_needfree = true;
 	}; // IStorageManager
 
 	class SIDX_DLL IVisitor

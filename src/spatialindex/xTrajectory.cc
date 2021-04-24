@@ -600,6 +600,7 @@ inline prec theDdd(prec c1,prec c2,prec c3,prec c4,prec t){
     return 0;
 }
 
+thread_local double dist_sense_thres = 0;
 double xTrajectory::line2lineIED(const SpatialIndex::xPoint &p1s, const SpatialIndex::xPoint &p1e,
                                         const SpatialIndex::xPoint &p2s, const SpatialIndex::xPoint &p2e) {
     if(p1s.m_t!=p2s.m_t|p1e.m_t!=p2e.m_t)
@@ -609,11 +610,15 @@ double xTrajectory::line2lineIED(const SpatialIndex::xPoint &p1s, const SpatialI
     prec dys=p1s.m_y-p2s.m_y;
     prec dxe=p1e.m_x-p2e.m_x;
     prec dye=p1e.m_y-p2e.m_y;
+    double ub = (sqrtp(sq(dxs)+sq(dys)) + sqrtp(sq(dxe)+sq(dye)))/2 *(te-ts);
+    if(te - ts < dist_sense_thres){
+        return ub;
+    }
     prec c1=sq(dxs-dxe)+sq(dys-dye),
             c2=2*((dxe*ts-dxs*te)*(dxs-dxe)+(dye*ts-dys*te)*(dys-dye)),
             c3=sq(dxe*ts-dxs*te)+sq(dye*ts-dys*te),
             c4=te-ts;
-    double ub = sqrtp(sq(dxs)+sq(dys))*(te-ts);
+
     if(c1<1e-9){
         return min(ub,(double)sqrtp(sq(dxs)+sq(dys))*c4);
     }else{

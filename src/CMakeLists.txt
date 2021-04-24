@@ -140,8 +140,9 @@ set(SIDX_STORAGEMANAGER_CPP
   "${SIDX_SRC_DIR}/storagemanager/MemoryStorageManager.h"
   "${SIDX_SRC_DIR}/storagemanager/RandomEvictionsBuffer.cc"
   "${SIDX_SRC_DIR}/storagemanager/RandomEvictionsBuffer.h"
-#  "${SIDX_SRC_DIR}/storagemanager/TrajStore.cc"
+  "${SIDX_SRC_DIR}/storagemanager/tjsql.cc"
   "${SIDX_SRC_DIR}/storagemanager/xStore.cc"
+  "${SIDX_SRC_DIR}/storagemanager/xStoreDB.cc"
 )
 list (APPEND SIDX_CPP ${SIDX_STORAGEMANAGER_CPP})
 
@@ -208,6 +209,13 @@ target_link_libraries(${SIDX_LIB_NAME}
         )
 target_link_libraries(${SIDX_C_LIB_NAME}
         ${STXXL_LIBRARIES}
+        )
+
+target_link_libraries(${SIDX_LIB_NAME}
+        sqlite3_lib
+        )
+target_link_libraries(${SIDX_C_LIB_NAME}
+        sqlite3_lib
         )
 
 target_link_libraries(${SIDX_C_LIB_NAME}

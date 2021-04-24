@@ -6,35 +6,18 @@
 #include <cmath>
 #include <cstring>
 #include <sys/stat.h>
-#define fp (int(m_pageSize/sizeof(prexp)/3))
+#include <storagemanager/tjsql.h>
+#define fp (int(m_pageSize/sizeof(prexp)/3)-1)
 
-std::mutex mtx;
-
-bool CheckFilesExists(const string &s) {
+static bool CheckFilesExists(const string &s) {
     struct stat stats;
 
     std::ostringstream os;
     std::string name;
     int ret;
-    os << s << ".idx"; //diskfileidx
-    name = os.str();
-    ret = stat(name.c_str(), &stats);
-    if (ret != 0) return false;
 
     os.str("");
-    os << s << ".dat";//diskfiledat
-    name = os.str();
-    ret = stat(name.c_str(), &stats);
-    if (ret != 0) return false;
-
-    os.str("");
-    os << s << ".trajidx"; //trajidx(m_trajidx)
-    name = os.str();
-    ret = stat(name.c_str(), &stats);
-    if (ret != 0) return false;
-
-    os.str("");
-    os << s << ".property"; //json property
+    os << s << ".dbproperty"; //json property
     name = os.str();
     ret = stat(name.c_str(), &stats);
     if (ret != 0) return false;
@@ -42,75 +25,14 @@ bool CheckFilesExists(const string &s) {
     return true;
 }
 
-xTrajEntry::xTrajEntry(id_type page, uint32_t len)
-        : m_page(page), m_npoint(len) {}
-
-std::string xTrajEntry::xTrajEntry::toString() {
-    string s;
-    s = std::to_string(m_page) + std::to_string(m_npoint);
-    return s;
-}
-
-xTrajEntry::xTrajEntry::xTrajEntry(string &s) {
-    auto ws = split(s, ',');
-    m_page = std::stoll(ws[0]);
-    m_npoint = std::stoi(ws[1]);
-}
-
-xStore::~xStore() {
-    delete m_pStorageManager;
-    if(m_isro== false) delete m_trajIdx;
-}
-
 static int getLastId(string s)
 {
-    string filename = s;
-    ifstream fin;
-
-    fin.open(filename);
-    if(fin.is_open()) {
-        fin.seekg(0,ios_base::end);                // go to one spot before the EOF
-        for(int i=0;i<2;i++) {
-            fin.seekg(-2,ios_base::cur);
-            bool keepLooping = true;
-            while (keepLooping) {
-                char ch;
-                ch = fin.peek();                            // Get current byte's data
-                std::cerr<<ch;
-                if ((long long) fin.tellg() <= 1) {             // If the data was at or before the 0th byte
-                    fin.seekg(0);                       // The first line is the last line
-                    keepLooping = false;                // So stop there
-                } else if (ch == '\n') {                   // If the data was a newline
-                    keepLooping = false;                // Stop at the current position.
-                } else {                                  // If the data was neither a newline nor at the 0 byte
-                    fin.seekg(-1,ios_base::cur);
-                    // Move to the front of that data, then to the front of the data before it
-                }
-            }
-        }
-        string lastLine;
-        getline(fin,lastLine);                      // Read the current line
-        getline(fin,lastLine);                      // Read the current line
-        fin.close();
-        return stoll(lastLine);
-    }
-
     return 0;
 }
 
-void xStore::loadFile(string file) {
-    if(m_trajIdx== nullptr){
-        m_trajIdx= new xTrajIdx();
-    }
-    std::cerr << "start loading " << file << " into " << m_name << "\n";
-    string filename = filedirprefix+m_name;
-    if(m_pStorageManager== nullptr){
-        if (CheckFilesExists(filename)) {
-            m_pStorageManager = loadDiskStorageManager(filename);
-        }else{
-            m_pStorageManager = createNewDiskStorageManager(filename,m_pageSize);
-        }
-    }
+void xStoreDB::loadFile(string file) {
+    std::cerr << "start loading " << file << " into " << m_name << " DB\n";
+    conn_init(m_name);
     ifstream inFile(file, ios::in);
     string lineStr;
     set<id_type> ids;
@@ -136,20 +58,19 @@ void xStore::loadFile(string file) {
                 bool isfirst = true;
                 id_type firstpage;
                 while (rem > 0) {
-                    int plen = min(rem, fp);
+                    uint32_t plen = min(rem, fp);
                     xPoint *p;
                     data = new uint8_t[24 * plen];
                     ptr = data;
                     for (int i = 0; i < plen; i++) {
-                        //test code
-//                            std::cerr<<" "<<cur<< tj.m_points[cur]<<endl;
                         p = &(tj.m_points[cur++]);
                         p->storeToByteArrayE(&ptr, len);
                         if (i != plen - 1) ptr += len;
                     }
                     ptr = data;
-                    id_type newPage = StorageManager::NewPage;
-                    m_pStorageManager->storeByteArray(newPage, 24 * plen, data);
+                    int64_t newPage = db_last_pageid()+1;
+                    db_insert_page(newPage, 24 * plen,data);
+
                     if (isfirst) {
                         firstpage = newPage;
                         isfirst = false;
@@ -161,7 +82,7 @@ void xStore::loadFile(string file) {
                     }
                     delete[] data;
                 }
-                m_trajIdx->insert(make_pair(id,xTrajEntry(firstpage, tj.m_points.size())));
+                db_insert_traj(id,firstpage,tj.m_points.size());
                 ids.insert(id);
                 curLine++;
                 tj.getxMBR(r);
@@ -204,33 +125,22 @@ void xStore::loadFile(string file) {
     flush();
 }
 
-xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew)
+xStoreDB::xStoreDB(string myname, string file, bool bsubtraj, bool forceNew)
 {
+    m_needfree = false;
+    conn_init(myname);
     cerr<<myname<<endl;
-    if(m_trajIdx== nullptr){
-        m_trajIdx= new xTrajIdx();
-    }
     m_name = myname;
     m_pageSize = 4096;
     string filename = filedirprefix+myname;
     if ((!forceNew) && CheckFilesExists(filename)) {
-//        std::cerr << "using existing xStore " << myname << endl;
-        m_pStorageManager = loadDiskStorageManager(filename);
-        ifstream propFile(filedirprefix+myname + ".property", ios::in);
+        ifstream propFile(filedirprefix+myname + ".dbproperty", ios::in);
         propFile >> m_property;
         propFile.close();
         if(tjstat->lineCount==0) { /* only load it when not inited*/
             tjstat->fromString(m_property["tjstat"]);
         }
         m_bSubTraj = m_property["bSubTraj"];
-        ifstream trajidxFile(filedirprefix+m_name + ".trajidx", ios::in);
-        id_type size, id, page, off;
-        trajidxFile >> size;
-        for (int i = 0; i < size; i++) {
-            trajidxFile >> id >> page >> off;
-            m_trajIdx->insert(make_pair(id,xTrajEntry(page, off)));
-        }
-        trajidxFile.close();
     } else {
         if(m_name=="od") {
             m_bSubTraj = bsubtraj;
@@ -241,7 +151,6 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew)
         }
         m_bSubTraj = bsubtraj;
         std::cerr << "start loading " << file << " into " << myname << "\n";
-        m_pStorageManager = createNewDiskStorageManager(filename, m_pageSize);
         m_property["trajfile"] = file;
         tjstat->init();
         ifstream inFile(file, ios::in);
@@ -281,8 +190,8 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew)
                             if (i != plen - 1) ptr += len;
                         }
                         ptr = data;
-                        id_type newPage = StorageManager::NewPage;
-                        m_pStorageManager->storeByteArray(newPage, 24 * plen, data);
+                        int64_t newPage = db_last_pageid()+1;
+                        db_insert_page(newPage, 24 * plen,data);
                         if (isfirst) {
                             firstpage = newPage;
                             isfirst = false;
@@ -294,7 +203,7 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew)
                         }
                         delete[] data;
                     }
-                    m_trajIdx->insert(make_pair(id,xTrajEntry(firstpage, tj.m_points.size())));
+                    db_insert_traj(id,firstpage,tj.m_points.size());
                     ids.insert(id);
                     curLine++;
                     tj.getxMBR(r);
@@ -340,27 +249,27 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew)
 
 }
 
-xStore * xStore::clone()
+xStoreDB::xStoreDB() {
+    m_needfree = false;
+}
+
+xStore * xStoreDB::clone()
 {
-    xStore *res = new xStore();
+    xStoreDB* res = new xStoreDB();
     assert(!m_isro);
+    conn_init(m_name);
     res->m_name=m_name;
     res->m_pageSize=m_pageSize;
-    string filename = filedirprefix+res->m_name;
-    DiskStorageManager* d = dynamic_cast<DiskStorageManager *>(m_pStorageManager);
-    res->m_pStorageManager = new DiskStorageManager(*d,filename);
-    ifstream propFile(filedirprefix+res->m_name + ".property", ios::in);
+    ifstream propFile(filedirprefix+res->m_name + ".dbproperty", ios::in);
     propFile >> res->m_property;
     propFile.close();
-    res->m_bSubTraj = res->m_property["bSubTraj"];
-    res->m_trajIdx = m_trajIdx;
-    res->m_isro = true;
+    m_bSubTraj = m_property["bSubTraj"];
+    m_isro = true;
     return res;
 }
 
-void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
-    xTrajEntry te;
-    te = (*m_trajIdx)[e.m_id];
+void xStoreDB::loadTraj(xTrajectory &out, const xStoreEntry &e) {
+    xTrajEntry te = db_load_traj_entry(e.m_id);
     uint32_t ms = min(te.m_npoint - 1, e.m_s), me = min(te.m_npoint - 1, e.m_e);
     //test code
 //    std::cerr<<"test id "<<e.m_id<<endl;
@@ -381,7 +290,8 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
             pe = min(fp - 1, int(me - cur));
             if (i != pagee && pe == fp - 1) pe--;
             len = 3 * sizeof(prexp) * (pe + 1);
-            m_pStorageManager->loadByteArray(i, tmplen, &data);
+            uint32_t tmp;
+            db_load_page(i,tmp,&data);
             for (ptr = data + 3 * sizeof(prexp) * ps; ptr - data < len;) {
                 x = *((double *) ptr);
                 ptr += sizeof(prexp);
@@ -393,7 +303,6 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
                 //test code
 //                std::cerr<< out.m_points.size() << " " << x<<","<<y<<","<<t<<endl;
             }
-            delete[] data;
             cur += pe + 1;
         }
         out.m_fakehead = (ms != 0);
@@ -409,7 +318,8 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
             ps = max(0, int(ms - cur));
             pe = min(fp - 1, int(me - cur));
             len = 3 * sizeof(prexp) * (pe + 1);
-            m_pStorageManager->loadByteArray(i, tmplen, &data);
+            uint32_t tmp;
+            db_load_page(i,tmp,&data);
             for (ptr = data + 3 * sizeof(prexp) * ps; ptr - data < len;) {
                 x = *((double *) ptr);
                 ptr += sizeof(prexp);
@@ -420,70 +330,105 @@ void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
                 out.m_points.emplace_back(xPoint(x, y, t));
             }
             cur += fp;
-            delete data;
         }
         out.m_fakehead = (ms != 0);
         out.m_fakeback = (me == te.m_npoint - 1);
     }
-    //simulate secondary addressing
-//    int pagenum = random(0,m_pStorageManager->nextPage() - 1);
-//    m_pStorageManager->loadByteArray(pagenum, tmplen, &data);
-//    delete[] data;
 }
 
-xTrajectory xStore::randomSubtraj(double len) {
-    int rnd = random(0, (*m_trajIdx).size() - 1);
+xTrajectory xStoreDB::randomSubtraj(double len) {
+    id_type lastid = db_last_trajid();
+    int rnd = random(1, lastid);
     int i = 0;
-    xTrajectory tj, tj2;
-    for (auto key:(*m_trajIdx)) {
-        if (i == rnd) {
-            loadTraj(tj, xStoreEntry(key.first, 0, 1000000));
-            double t = tj.randomPoint().m_t;
-            tj.getPartialxTrajectory(t - len / 2, t + len / 2, tj2);
-            return tj2;
-        }
-        i++;
-    }
-    return tj;
+    xTrajectory tj,tj2;
+    loadTraj(tj, xStoreEntry(rnd, 0, 1000000));
+    double t = tj.randomPoint().m_t;
+    tj.getPartialxTrajectory(t - len / 2, t + len / 2, tj2);
+    return tj2;
 }
 
-xPoint xStore::randomPoint() {
-    int rnd = random(0, m_trajIdx->size() - 1);
+xPoint xStoreDB::randomPoint() {
+    int rnd = random(1, db_last_trajid());
     int rnd2;
     int i = 0;
     xTrajectory tj;
-    for (auto key:*m_trajIdx) {
-        if (i == rnd) {
-            loadTraj(tj, xStoreEntry(key.first, 0, rnd2+1));
-            rnd2 = random(0, key.second.m_npoint - 1);
-            return tj.m_points[rnd2];
-        }
-        i++;
-    }
+    loadTraj(tj, xStoreEntry(rnd, 0, 1000000));
+    rnd2 = random(0, tj.m_points.size() - 1);
+    return tj.m_points[rnd2];
     throw Tools::IllegalStateException("...");
 }
 
-void xStore::flush() {
+void xStoreDB::flush() {
     if(m_isro) return;
-    m_pStorageManager->flush();
-    ofstream propFile(filedirprefix+m_name + ".property", ios::out);
+    ofstream propFile(filedirprefix+m_name + ".dbproperty", ios::out);
     propFile << m_property;
     propFile.close();
-    ofstream trajidxFile(filedirprefix+m_name + ".trajidx", ios::out);
-    trajidxFile << m_trajIdx->size() << endl;
-    for (auto s = m_trajIdx->begin(); s != m_trajIdx->end(); s++) {
-        trajidxFile << s->first << " " << s->second.m_page << " " << s->second.m_npoint << "\n";
+}
+
+void xStoreDB::loadByteArray(const id_type page, uint32_t& len, uint8_t** data)
+{
+    db_load_page(page,len,data);
+}
+void xStoreDB::storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data){
+    db_insert_page(page,len,data);
+}
+void xStoreDB::deleteByteArray(const id_type page){
+    return;
+}
+
+
+
+xSBBStream::xSBBStream(xStore *p, CUTFUNC f)
+        : m_cutFunc(f),m_pstore(p) {
+    if(m_pstore->m_trajIdx!=NULL) {
+        m_isdb = false;
+        m_it = m_pstore->m_trajIdx->begin();
+    }else{
+        m_isdb = true;
+        m_size = db_last_trajid();
     }
-    trajidxFile.close();
 }
 
-
-ostream & SpatialIndex::StorageManager::operator<<(ostream &os, const xTrajEntry &c) {
-    os << c.m_page<<" "<<c.m_npoint;
-    return os;
+bool xSBBStream::hasNext() {
+    return !m_buf.empty() ||
+           (m_isdb && m_id < m_size)
+           || (!m_isdb && m_it != m_pstore->m_trajIdx->end());
 }
 
-istream & SpatialIndex::StorageManager::operator>>(istream &is, xTrajEntry &c) {
-    is>>c.m_page>>c.m_npoint;
-    return is;
+xSBBData *xSBBStream::getNext() {
+    bool isFirst = false;
+    if (m_buf.empty()) {
+        xTrajectory tj;
+        if(!m_isdb)
+            m_pstore->loadTraj(tj, xStoreEntry(m_it->first, 0, m_it->second.m_npoint));
+        else
+        {
+            m_pstore->loadTraj(tj, xStoreEntry(m_numit, 0, 10000000));
+        }
+        m_buf = m_cutFunc(tj);
+        if(!m_isdb) {
+            m_id = m_it->first;
+            m_it++;
+        }else{
+            m_id = m_numit;
+            m_numit ++;
+        }
+        isFirst = true;
+    }
+    auto b = m_buf.front();
+    m_buf.pop();
+    return new xSBBData(m_count++,
+                        xStoreEntry(m_id, b.first.first, b.first.second), b.second, !isFirst, !m_buf.empty());
+}
+
+uint32_t xSBBStream::size() {
+    throw Tools::NotSupportedException("xsbbstream has no size");
+}
+
+void xSBBStream::rewind() {
+    if(!m_isdb)
+        m_it = m_pstore->m_trajIdx->begin();
+    else
+        m_id = 0;
+    m_count = 0;
 }

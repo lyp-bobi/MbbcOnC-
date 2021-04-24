@@ -7,6 +7,7 @@ rsync -v -r ./src ${ip1}
 rsync -v -r ./include ${ip1}
 rsync -v -r ./test ${ip1}
 rsync -v -r ./stxxl ${ip1}
+rsync -v -r ./sqlite ${ip1}
 rsync -v ./CMakeLists.txt ${ip1}
 rsync -v ./COPYING ${ip1}
 
