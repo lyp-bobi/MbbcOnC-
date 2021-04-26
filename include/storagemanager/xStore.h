@@ -125,7 +125,7 @@ namespace SpatialIndex
             queue<CUTENTRY> m_buf;
             xStore *m_pstore;
             //tmp recorder for split sbbs
-            id_type m_id;
+            id_type m_id=0;
 //#ifdef WIN32
             std::map<id_type,xTrajEntry>::iterator m_it;
 //#else

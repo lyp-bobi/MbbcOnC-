@@ -21,6 +21,7 @@
 #include <strings.h>
 #include "storagemanager/xStore.h"
 #include "../../src/xrtree/xRTree.h"
+#include <storagemanager/tjsql.h>
 #if !WIN32
 
 #include <sys/mman.h>
@@ -813,6 +814,7 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
     res->indexIO = 1.0 * ts->m_indexIO / num;
     res->trajIO = 1.0 * ts->m_trajIO / num;
     res->nresult = 1.0 * vis.m_resultGet / num;
+    dbt.release();
     return;
 }
 

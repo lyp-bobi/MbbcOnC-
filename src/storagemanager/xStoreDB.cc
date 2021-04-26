@@ -263,8 +263,8 @@ xStore * xStoreDB::clone()
     ifstream propFile(filedirprefix+res->m_name + ".dbproperty", ios::in);
     propFile >> res->m_property;
     propFile.close();
-    m_bSubTraj = m_property["bSubTraj"];
-    m_isro = true;
+    res->m_bSubTraj = res->m_property["bSubTraj"];
+    res->m_isro = true;
     return res;
 }
 

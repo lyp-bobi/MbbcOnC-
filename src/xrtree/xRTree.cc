@@ -932,6 +932,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
     xTrajectory simpleTraj;
     xTrajectory ssTraj;
     double delta=0, ssdelta= 0;
+    dist_sense_thres = (queryTraj->m_endTime() - queryTraj->m_startTime())/ 10;
     if(m_bUsingSBBD&& m_bUsingSimp && m_bStoringLinks) {
         vector<xPoint> simpp;
         int segnum = std::floor((queryTraj->m_endTime() - queryTraj->m_startTime()) / (tjstat->bt));

@@ -18,7 +18,14 @@ using std::string;
 * | TRAJID | PAGEID | LENGTH |
 */
 
+class db_thread{
+public:
+    db_thread();
+    void release();
+    ~db_thread();
+};
 
+extern thread_local db_thread dbt;
 
 SIDX_DLL bool db_insert_page(int64_t &pageid, uint32_t len, const uint8_t* const data);
 
