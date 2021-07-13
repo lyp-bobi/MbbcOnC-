@@ -725,7 +725,7 @@ struct queryRet{
         stringstream s;
         if(testxfirstOutput){
             testxfirstOutput =false;
-            s<<"qps\ttime\tindexVisit\tleafVisit\tindexIO\ttrajIO\n";
+            s<<"qps\ttime\tindexVisit\tleafVisit\tindexIO\ttrajIO\nleaf1\nleaf2\nnresult\ntotalIO";
         }
         s<<qps<<"\t"<<time<<"\t"<<indexVisit<<"\t"<<leafVisit<<"\t"<<indexIO<<"\t"<<trajIO<<"\t"<<leaf1<<"\t"<<leaf2<<"\t"<<nresult<<"\t"<<indexIO+trajIO<<"\n";
         return s.str();

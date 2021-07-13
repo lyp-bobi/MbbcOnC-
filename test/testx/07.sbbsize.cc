@@ -11,15 +11,15 @@ int main(int argc,char *argv[]){
     xTrajectory tj;
     for(double bt=300;bt<3600;bt+=300) {
         double sum1, sum2;
-        for (auto &s:*(x.m_trajIdx)) {
-            x.loadTraj(tj, xStoreEntry(s.first, 0, 10000));
-            auto bbs = xTrajectory::OPTS(tj, bt);
-            while (!bbs.empty()) {
-                auto b = bbs.front();
-                sum1 += b.second.br.getArea();
-                sum2 += b.second.bc.getArea();
-            }
-        }
+//        for (auto &s:*(x.m_trajIdx)) {
+//            x.loadTraj(tj, xStoreEntry(s.first, 0, 10000));
+//            auto bbs = xTrajectory::OPTS(tj, bt);
+//            while (!bbs.empty()) {
+//                auto b = bbs.front();
+//                sum1 += b.second.br.getArea();
+//                sum2 += b.second.bc.getArea();
+//            }
+//        }
         cerr << "br" << sum1 / tjstat->M << endl << sum2 / tjstat->M << endl;
     }
 }

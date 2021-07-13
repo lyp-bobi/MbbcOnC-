@@ -7,15 +7,11 @@ using std::endl;
 #include <sqlite3.h>
 #include "../../include/storagemanager/tjsql.h"
 #include <thread>
-#if !WIN32
-#define SQLFILE "/root/run/sqldb"
-#else
-#define SQLFILE "D://run/sqldb"
-#endif
+
 
 /* todo: free these stmts*/
 thread_local sqlite3* db = NULL;
-static string dbname;
+static string dbfile;
 thread_local sqlite3_stmt *stmt_page_insert = NULL;
 thread_local sqlite3_stmt *stmt_page_load = NULL;
 thread_local sqlite3_stmt *stmt_traj_insert = NULL;
@@ -50,36 +46,35 @@ db_thread::~db_thread() noexcept {
     }
 }
 
-bool conn_init(string name){
+bool conn_init(string path){
     int rc;
-    int dotpos = name.find('.');
-    dbname=name.substr(0,dotpos);
+    dbfile = path;
     if(db==NULL){
-        rc = sqlite3_open(SQLFILE,&db);
+        rc = sqlite3_open(path.c_str(), &db);
         if (rc != SQLITE_OK) {
             cerr << "db open failed: " << sqlite3_errmsg(db) << endl;
         }
         sqlite3_busy_timeout(db, 30000);
         db_create_table();
         string sql;
-        sql ="INSERT OR REPLACE INTO "+dbname+"_page(PAGEID, DATA)"
+        sql ="INSERT OR REPLACE INTO page(PAGEID, DATA)"
                                        " VALUES(?1,?2)";
         rc = sqlite3_prepare(db,sql.c_str(),-1, &stmt_page_insert, NULL);
         if (rc != SQLITE_OK) {
             cerr << sqlite3_errmsg(db) << endl;
         }
-        sql = "SELECT DATA FROM "+dbname+"_page WHERE PAGEID = ?1";
+        sql = "SELECT DATA FROM page WHERE PAGEID = ?1";
         rc = sqlite3_prepare(db,sql.c_str(),-1, &stmt_page_load, NULL);
         if (rc != SQLITE_OK) {
             cerr << sqlite3_errmsg(db) << endl;
         }
-        sql ="INSERT INTO "+dbname+"_traj(TRAJID, PAGEID, LENGTH)"
+        sql ="INSERT INTO traj(TRAJID, PAGEID, LENGTH)"
                                 " VALUES(?1,?2,?3)";
         rc = sqlite3_prepare(db,sql.c_str(),-1, &stmt_traj_insert, NULL);
         if (rc != SQLITE_OK) {
             cerr << sqlite3_errmsg(db) << endl;
         }
-        sql = "SELECT PAGEID, LENGTH FROM "+dbname+"_traj WHERE TRAJID = ?1";
+        sql = "SELECT PAGEID, LENGTH FROM traj WHERE TRAJID = ?1";
         rc = sqlite3_prepare(db,sql.c_str(),-1, &stmt_traj_load, NULL);
         if (rc != SQLITE_OK) {
             cerr << sqlite3_errmsg(db) << endl;
@@ -91,15 +86,13 @@ bool conn_init(string name){
 bool db_create_table(){
     int rc;
     string sql =
-            "create table if not exists "+dbname
-            +"_page(PAGEID INTEGER PRIMARY KEY ASC, DATA BLOB)";
+            "create table if not exists page(PAGEID INTEGER PRIMARY KEY ASC, DATA BLOB)";
     rc = sqlite3_exec(db,sql.c_str(),NULL,NULL,NULL);
     if (rc != SQLITE_OK) {
         cerr << "create table " << sqlite3_errmsg(db) << endl;
     }
     sql =
-            "create table if not exists "+dbname
-            +"_traj(TRAJID INTEGER PRIMARY KEY ASC, PAGEID INT8, LENGTH INT4)";
+            "create table if not exists traj(TRAJID INTEGER PRIMARY KEY ASC, PAGEID INT8, LENGTH INT4)";
     rc = sqlite3_exec(db,sql.c_str(),NULL,NULL,NULL);
     if (rc != SQLITE_OK) {
         cerr<<"create table " << sqlite3_errmsg(db) << endl;
@@ -127,7 +120,7 @@ bool db_insert_page(int64_t &pageid, uint32_t len, const uint8_t* const data){
 
 bool db_load_page(int64_t pageid, uint32_t& len, uint8_t** data){
     int rc;
-    if(db == NULL) conn_init(dbname);
+    if(db == NULL) conn_init(dbfile);
     rc = sqlite3_reset(stmt_page_load);
     rc = sqlite3_bind_int64(stmt_page_load,1,pageid);
     rc = sqlite3_step(stmt_page_load);
@@ -141,13 +134,13 @@ bool db_load_page(int64_t pageid, uint32_t& len, uint8_t** data){
 }
 
 int64_t db_last_pageid(void){
-    if(db == NULL) conn_init(dbname);
+    if(db == NULL) conn_init(dbfile);
     if(next_page>=0)
         return next_page;
     int rc;
     sqlite3_stmt *stmt;
     string sql;
-    sql ="SELECT max(PAGEID) FROM "+dbname+"_page";
+    sql ="SELECT max(PAGEID) FROM page";
     rc = sqlite3_prepare(db,sql.c_str(),-1, &stmt, NULL);
     rc = sqlite3_step(stmt);
     if(rc != SQLITE_ROW)
@@ -162,13 +155,13 @@ int64_t db_last_pageid(void){
 }
 
 int64_t db_last_trajid(void){
-    if(db == NULL) conn_init(dbname);
+    if(db == NULL) conn_init(dbfile);
     if(next_traj>=0)
         return next_traj;
     int rc;
     sqlite3_stmt *stmt;
     string sql;
-    sql ="SELECT max(TRAJID) FROM "+dbname+"_traj";
+    sql ="SELECT max(TRAJID) FROM traj";
     rc = sqlite3_prepare(db,sql.c_str(),-1, &stmt, NULL);
     rc = sqlite3_step(stmt);
     if(rc != SQLITE_ROW)
@@ -183,7 +176,7 @@ int64_t db_last_trajid(void){
 }
 
 bool db_insert_traj(int64_t id, int64_t pageid, uint32_t npoint){
-    if(db == NULL) conn_init(dbname);
+    if(db == NULL) conn_init(dbfile);
     int rc;
     rc = sqlite3_reset(stmt_traj_insert);
     rc = sqlite3_bind_int64(stmt_traj_insert,1,(int64_t)id);
@@ -197,7 +190,7 @@ bool db_insert_traj(int64_t id, int64_t pageid, uint32_t npoint){
 }
 
 xTrajEntry db_load_traj_entry(int64_t trajid){
-    if(db == NULL) conn_init(dbname);
+    if(db == NULL) conn_init(dbfile);
     int rc;
     xTrajEntry res;
     rc = sqlite3_reset(stmt_traj_load);

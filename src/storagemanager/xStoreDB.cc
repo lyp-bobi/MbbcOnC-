@@ -355,7 +355,6 @@ xPoint xStoreDB::randomPoint() {
     loadTraj(tj, xStoreEntry(rnd, 0, 1000000));
     rnd2 = random(0, tj.m_points.size() - 1);
     return tj.m_points[rnd2];
-    throw Tools::IllegalStateException("...");
 }
 
 void xStoreDB::flush() {
@@ -380,19 +379,12 @@ void xStoreDB::deleteByteArray(const id_type page){
 
 xSBBStream::xSBBStream(xStore *p, CUTFUNC f)
         : m_cutFunc(f),m_pstore(p) {
-    if(m_pstore->m_trajIdx!=NULL) {
-        m_isdb = false;
-        m_it = m_pstore->m_trajIdx->begin();
-    }else{
-        m_isdb = true;
-        m_size = db_last_trajid();
-    }
+    m_isdb = true;
+    m_size = db_last_trajid();
 }
 
 bool xSBBStream::hasNext() {
-    return !m_buf.empty() ||
-           (m_isdb && m_id < m_size)
-           || (!m_isdb && m_it != m_pstore->m_trajIdx->end());
+    return !m_buf.empty() || (m_isdb && m_id < m_size);
 }
 
 xSBBData *xSBBStream::getNext() {
@@ -426,9 +418,6 @@ uint32_t xSBBStream::size() {
 }
 
 void xSBBStream::rewind() {
-    if(!m_isdb)
-        m_it = m_pstore->m_trajIdx->begin();
-    else
-        m_id = 0;
+    m_id = 0;
     m_count = 0;
 }

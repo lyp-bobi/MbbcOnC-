@@ -10,7 +10,7 @@ int main(int argc,char *argv[]){
         string target;
         if(argc==1) {
             target = "tdexpand.datas";
-            seglens = {600,900,1200,1800,2700,3600};
+            seglens = {600,900,1200,1800,2700,3600,5400,7200,9000};
         }else {
             target = "glexpand.datas";
             seglens = {100,200,300,600,900,1200,1800,2700};

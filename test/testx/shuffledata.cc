@@ -14,7 +14,7 @@ int main(int argc,char *argv[]){
     }
     xStore x(target, testFileName(target), true);
     vector<id_type> ids;
-    for(auto &s:*(x.m_trajIdx)) ids.emplace_back(s.first);
+//    for(auto &s:*(x.m_trajIdx)) ids.emplace_back(s.first);
     std::random_shuffle(ids.begin(),ids.end());
     ofstream outFile(testFileName(target)+"s", ios::out);
     xTrajectory tj;

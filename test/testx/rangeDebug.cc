@@ -17,15 +17,15 @@ int main(){
         xCylinder query(xPoint(116.327,40,6516),4,226516,226516,2);
         xTrajectory tj2;
         int sum = 0;
-        for(auto &s:*(x.m_trajIdx)){
-            x.loadTraj(tj2,xStoreEntry(s.first,0,100000));
-            if(tj2.intersectsxCylinder(query)){
-                sum +=1;
-            }else{
-                cerr<<s.first<<"\t"<<tj2<<endl;
-                cerr<<tj2.intersectsxCylinder(query)<<endl;
-            }
-        }
+//        for(auto &s:*(x.m_trajIdx)){
+//            x.loadTraj(tj2,xStoreEntry(s.first,0,100000));
+//            if(tj2.intersectsxCylinder(query)){
+//                sum +=1;
+//            }else{
+//                cerr<<s.first<<"\t"<<tj2<<endl;
+//                cerr<<tj2.intersectsxCylinder(query)<<endl;
+//            }
+//        }
         cerr<<sum<<endl;
         auto r = buildMBCRTreeWP(&x, xTrajectory::ISS, len);
         MyVisitor vis;

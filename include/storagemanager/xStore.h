@@ -1,7 +1,8 @@
 //
 // Created by Chuang on 2019/6/10.
 //
-
+#ifndef STORAGEMANGER_XSTORE_H
+#define STORAGEMANGER_XSTORE_H
 #pragma once
 #define CUTENTRY pair<pair<int,int>,xSBB>
 #define CUTFUNC function<queue<CUTENTRY>(xTrajectory&)>
@@ -19,6 +20,7 @@ using std::vector;
 
 extern bool bSecondaryIndex;
 #include "xTrajIdx.h"
+#include "tjsql.h"
 namespace SpatialIndex
 {
     struct xStoreEntry{
@@ -87,7 +89,6 @@ namespace SpatialIndex
 
             json m_property;
             /* for file implemntation*/
-            xTrajIdx *m_trajIdx=nullptr;
             IStorageManager* m_pStorageManager=nullptr;
             /* for db implementation */
 
@@ -143,3 +144,4 @@ namespace SpatialIndex
         };
     }//namespace StorageManager
 }
+#endif

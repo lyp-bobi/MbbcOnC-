@@ -42,7 +42,7 @@ SIDX_DLL int64_t db_last_trajid(void);
 SIDX_DLL bool db_create_table();
 SIDX_DLL bool db_drop_table(string name);
 
-SIDX_DLL bool conn_init(string name);
+SIDX_DLL bool conn_init(string path);
 
 
 

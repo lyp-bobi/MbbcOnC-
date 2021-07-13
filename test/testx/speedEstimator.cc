@@ -34,12 +34,12 @@ int main(int argc,char *argv[]){
     }
     xTrajectory tj;
     double vmax = 0;
-    for(auto &s:*(x.m_trajIdx)){
-        x.loadTraj(tj,xStoreEntry(s.first,0,100000));
-        if (0.1 < tj.maxSpeed()) {
-            cerr<<s.first <<"\t"<<vmax<<endl;
-            vmax = tj.maxSpeed();
-        }
-    }
+//    for(auto &s:*(x.m_trajIdx)){
+//        x.loadTraj(tj,xStoreEntry(s.first,0,100000));
+//        if (0.1 < tj.maxSpeed()) {
+//            cerr<<s.first <<"\t"<<vmax<<endl;
+//            vmax = tj.maxSpeed();
+//        }
+//    }
     return 0;
 }

@@ -35,10 +35,10 @@ int main(int argc,char *argv[]){
             {
                 MTQ q;
                 SBBFMAP lens;
-                lens[make_pair(0,1500)]=600;
-                lens[make_pair(1500,2500)]=900;
-                lens[make_pair(2500,4800)]=1200;
-                lens[make_pair(4800,1e300)]=1800;
+                lens[make_pair(0,1500)]=1200;
+                lens[make_pair(1500,3200)]=1800;
+                lens[make_pair(3200,4000)]=2700;
+                lens[make_pair(4000,1e300)]=3600;
                 q.prepareForest(&x,lens);
                 q.appendQueries(queries);
                 std::cerr << q.runQueries().toString();

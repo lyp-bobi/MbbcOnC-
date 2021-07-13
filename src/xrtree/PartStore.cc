@@ -303,7 +303,8 @@ void PartsStoreBFMST::loadPartTraj(id_type id, leafInfo *e, double dist){
     bool pv = e->m_hasPrev, nt = e->m_hasNext;
     if (!m_pTree->m_bStoringLinks) {
         pv = e->m_se.m_s > 0 || e->m_ts > tmpTraj.m_startTime();
-        nt = e->m_se.m_e < (*(m_ts->m_trajIdx))[e->m_se.m_id].m_npoint-1 || e->m_te < tmpTraj.m_endTime();
+        xTrajEntry xte = db_load_traj_entry(e->m_se.m_id);
+        nt = e->m_se.m_e < xte.m_npoint-1 || e->m_te < tmpTraj.m_endTime();
     }
     pv = pv && (m_query.m_startTime() < e->m_ts);
     nt = nt && (m_query.m_endTime() > e->m_te);
