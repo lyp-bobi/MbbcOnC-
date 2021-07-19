@@ -36,7 +36,7 @@
 #include <cmath>
 
 extern bool bulkloadt;
-
+extern bool partstoreskip;
 //#define SKIPMAXSPEED
 
 namespace SpatialIndex

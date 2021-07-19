@@ -6,6 +6,8 @@
 
 using namespace xRTreeNsp;
 
+bool partstoreskip = false;
+
 void PartsStore::Parts::insert(xSBB &r, id_type prev, id_type next, xStoreEntry &entry) {
     is_modified = true;
     m_UCsbbs.emplace_back(r);
@@ -195,12 +197,17 @@ DISTE PartsStoreBFMST::update(id_type id) {
             }
         }
         //we don't know if it has sbbs, so can't use
-//                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
-//                        pd.opt = std::max(pd.opt, m_lastNodeDist *
-//                                                  (timeInterval.second - timeInterval.first) /
-//                                                  (m_query.m_endTime() - m_query.m_startTime()));
-//                        pd.pes = max(pd.opt,pd.pes);
-//                    }
+        if(partstoreskip) {
+            if (parts->m_computedDist[timeInterval].infer &&
+                !m_nodespq.empty()) {
+                pd.opt = std::max(pd.opt, m_lastNodeDist *
+                                          (timeInterval.second -
+                                           timeInterval.first) /
+                                          (m_query.m_endTime() -
+                                           m_query.m_startTime()));
+                pd.pes = max(pd.opt, pd.pes);
+            }
+        }
         res = res+pd;
     }
     //mid dist
@@ -261,12 +268,17 @@ DISTE PartsStoreBFMST::update(id_type id) {
             }
         }
         //we don't know if it has sbbs, so can't use
-//                    if(parts->m_computedDist[timeInterval].infer&&!m_nodespq.empty()){
-//                        pd.opt = std::max(pd.opt, m_lastNodeDist *
-//                                                  (timeInterval.second - timeInterval.first) /
-//                                                  (m_query.m_endTime() - m_query.m_startTime()));
-//                        pd.pes = max(pd.opt,pd.pes);
-//                    }
+        if(partstoreskip) {
+            if (parts->m_computedDist[timeInterval].infer &&
+                !m_nodespq.empty()) {
+                pd.opt = std::max(pd.opt, m_lastNodeDist *
+                                          (timeInterval.second -
+                                           timeInterval.first) /
+                                          (m_query.m_endTime() -
+                                           m_query.m_startTime()));
+                pd.pes = max(pd.opt, pd.pes);
+            }
+        }
         res = res+pd;
     }
 

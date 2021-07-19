@@ -5,87 +5,60 @@
 #include "random"
 
 int main(int argc,char *argv[]){
-    {
-        string target = "tdexpand.datas";
-        double qts[] = {300,1800,3600,7200,10800};
-        cerr<<"03,mix, with TB,STR,SBB1800,SBBF(600,900,1200,1800)"<<endl;
+    try {
+        vector<double> seglens;
+        string target;
+        if(argc==1) {
+            target = "tdexpand.datas";
+            seglens = {1800};
+        }else {
+            target = "glexpand.datas";
+            seglens = {1800};
+        }
+        cerr<<"debug"<<endl;
+        cerr<<"seglen: ";
+        for(auto len:seglens){cerr<<len<<" ";}
+        cerr<<endl;
         xStore x(target, testFileName(target), true);
-        vector<xTrajectory> queries;
-        default_random_engine e;
-        auto queryLen1 =uniform_real_distribution<double>(60,300);
-        auto queryLen2 =uniform_real_distribution<double>(3600,7200);
-        auto queryLen3 = uniform_real_distribution<double>(86400);
-        double count1=0,count2=0,count3=0;
-        testtime*=2;
-        for (int i = 0; i < testtime; i++) {
-            int c = uniform_int_distribution<int>(1,3)(e);
-            switch (c) {
-                case 1:
-                    queries.emplace_back(x.randomSubtraj(queryLen1(e)));
-                    count1++;
-                    break;
-                case 2:
-                    queries.emplace_back(x.randomSubtraj(queryLen2(e)));
-                    count2++;
-                    break;
-                case 3:
-                    queries.emplace_back(x.randomSubtraj(queryLen3(e)));
-                    count3++;
-                    break;
+        cerr<<"qt is " << 3600<<endl;
+        for(int p=0;p<1000;p++) {
+            vector<xTrajectory> queries;
+            testtime = 1;
+            NUMTHREAD = 1;
+            fillQuerySet(queries, x, 3600);
+//        xTrajectory tj;
+//        tj.loadFromString("115.928240,39.716420,3456049.000000 115.928310,39.716470,3456349.000000 115.928290,39.716470,3456649.000000 115.928280,39.716450,3456949.000000 115.928290,39.716470,3457549.000000 115.928300,39.716490,3457849.000000 115.928270,39.716490,3458149.000000 115.928270,39.716450,3458449.000000 115.928280,39.716480,3458749.000000 115.928250,39.716450,3459049.000000 115.928270,39.716480,3459349.000000 115.928290,39.716450,3459649.000000");
+//                queries.emplace_back(tj);
+            cerr << queries[0].toString()<<"\n";
+            partstoreskip = false;
+            for (auto len:seglens) {
+                MTQ q;
+                q.prepareTrees(&x, [&len](auto x) {
+                    xRTree *r = buildMBCRTreeWP(x, xTrajectory::OPTS, len);
+//                r->m_bUsingSBBD=false;
+                    return r;
+                });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
+            partstoreskip = true;
+            for (auto len:seglens) {
+                MTQ q;
+                q.prepareTrees(&x, [&len](auto x) {
+                    xRTree *r = buildMBCRTreeWP(x, xTrajectory::OPTS, len);
+//                r->m_bUsingSBBD=false;
+                    return r;
+                });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
             }
         }
-        cerr<<count1<<"\t"<<count2<<"\t"<<count3<<"\t";
-        vector<int> nnks;
-        for(int i=0;i<testtime;i++){
-            nnks.emplace_back(random(6,201));
-        }
-//        {
-//            MTQ q;
-//            q.prepareTrees(&x, [](auto x) { return buildTBTreeWP(x); });
-//            q.appendQueries(queries,nnks);
-//            std::cerr << q.runQueries().toString();
-//        }
-        {
-            MTQ q;
-            q.prepareTrees(&x, [](auto x) { return buildSTRTreeWP(x); });
-            q.appendQueries(queries,nnks);
-            std::cerr << q.runQueries().toString();
-        }
-//        {
-//            MTQ q;
-//            q.prepareTrees(&x, [](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, 1800); });
-//            q.appendQueries(queries,nnks);
-//            std::cerr << q.runQueries().toString();
-//        }
-//        {
-//            MTQ q;
-//            SBBFMAP lens;
-//            lens[make_pair(0,500)]=300;
-//            lens[make_pair(500,20000)]=1800;
-//            lens[make_pair(20000,1e300)]=10800;
-//            q.prepareForest(&x,lens,4000);
-//            q.appendQueries(queries,nnks);
-//            std::cerr << q.runQueries().toString();
-//        }
         cerr<<"mission complete.\n";
+    }catch (Tools::Exception &e) {
+        cerr << "******ERROR******" << endl;
+        std::string s = e.what();
+        cerr << s << endl;
+        return -1;
     }
-    cerr<<"mission complete.\n";
     return 0;
 }
-// td
-//300 - 600
-//600-600
-//900-900
-//1200-900
-//1300 - 1200
-//1800-1200
-//2100-1800
-//2300 - 1800
-//3300 - 1800
-//4300-1800
-//5300-1800
-//6300-1800
-//7300-2700
-//8300-2700
-//9300-2700
-//10300-2700

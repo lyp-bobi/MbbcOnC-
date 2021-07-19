@@ -61,12 +61,13 @@ using namespace SpatialIndex;
 using namespace xRTreeNsp;
 #if defined(TJDEBUG) || defined(WIN32) || !defined(NDEBUG)
 #define NUMCORE 1
-#define NUMTHREAD (NUMCORE)
+
+extern int NUMTHREAD=NUMCORE;
 extern double testtime = 100;
 #else
 #define NUMCORE 4
 extern double testtime = 400;
-#define NUMTHREAD (NUMCORE*2)
+extern int NUMTHREAD=NUMCORE;
 #endif
 extern bool testxfirstOutput = true;
 
@@ -725,7 +726,7 @@ struct queryRet{
         stringstream s;
         if(testxfirstOutput){
             testxfirstOutput =false;
-            s<<"qps\ttime\tindexVisit\tleafVisit\tindexIO\ttrajIO\nleaf1\nleaf2\nnresult\ntotalIO";
+            s<<"qps\ttime\tindexVisit\tleafVisit\tindexIO\ttrajIO\tleaf1\tleaf2\tnresult\ttotalIO\n";
         }
         s<<qps<<"\t"<<time<<"\t"<<indexVisit<<"\t"<<leafVisit<<"\t"<<indexIO<<"\t"<<trajIO<<"\t"<<leaf1<<"\t"<<leaf2<<"\t"<<nresult<<"\t"<<indexIO+trajIO<<"\n";
         return s.str();
