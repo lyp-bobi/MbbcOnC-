@@ -20,28 +20,32 @@ int main(int argc,char *argv[]){
         for(auto len:seglens){cerr<<len<<" ";}
         cerr<<endl;
         xStore x(target, testFileName(target), true);
-        cerr<<"qt is " << 3600<<endl;
-        vector<xTrajectory> queries;
-        fillQuerySet(queries,x,3600);
-        for (auto len:seglens) {
-            MTQ q;
-            q.prepareTrees(&x, [&len](auto x) {
-                xRTree* r =buildMBRRTreeWP(x, xTrajectory::OPTS, len);
+        for(auto &qt:{900,3600}) {
+            cerr << "qt is " << qt << endl;
+            vector<xTrajectory> queries;
+            fillQuerySet(queries, x, qt);
+            cerr << "MBR" << endl;
+//            for (auto len:seglens) {
+//                MTQ q;
+//                q.prepareTrees(&x, [&len](auto x) {
+//                    xRTree *r = buildMBRRTreeWP(x, xTrajectory::OPTS, len);
+////                r->m_bUsingSBBD=false;
+//                    return r;
+//                });
+//                q.appendQueries(queries);
+//                std::cerr << q.runQueries().toString();
+//            }
+            cerr << "MBC" << endl;
+            for (auto len:seglens) {
+                MTQ q;
+                q.prepareTrees(&x, [&len](auto x) {
+                    xRTree *r = buildMBCRTreeWP(x, xTrajectory::OPTS, len);
 //                r->m_bUsingSBBD=false;
-                return r;
-            });
-            q.appendQueries(queries);
-            std::cerr << q.runQueries().toString();
-        }
-        for (auto len:seglens) {
-            MTQ q;
-            q.prepareTrees(&x, [&len](auto x) {
-                xRTree* r =buildMBCRTreeWP(x, xTrajectory::OPTS, len);
-//                r->m_bUsingSBBD=false;
-                return r;
-            });
-            q.appendQueries(queries);
-            std::cerr << q.runQueries().toString();
+                    return r;
+                });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
         }
         cerr<<"mission complete.\n";
     }catch (Tools::Exception &e) {

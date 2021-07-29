@@ -47,8 +47,7 @@ xLine* xLine::clone() {
 // ISerializable interface
 //
 uint32_t xLine::getByteArraySize() const {
-    if(bCompactMBC) return 7*sizeof(prex);
-    else return 8*sizeof(prex);
+    return 6*sizeof(prex);
 }
 
 void xLine::loadFromByteArray(const uint8_t* ptr) {

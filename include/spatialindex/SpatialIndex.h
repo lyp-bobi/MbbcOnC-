@@ -407,7 +407,7 @@ namespace SpatialIndex
                 Sr = 0.5;
                 Df = 1.56;
                 P = 5333150;
-                vmax =0.1;
+                vmax = 1e-3;
                 std::cerr<<"use tdexpand sta\n";
             }
 			else if(dataset == "td"){
@@ -419,7 +419,7 @@ namespace SpatialIndex
 				Sr = 0.5;
 				Df = 1.56;
 				P = 533315;
-                vmax =0.1;
+                vmax = 1e-3;
 				std::cerr<<"use td sta\n";
 			}
 			else if (dataset == "od"){

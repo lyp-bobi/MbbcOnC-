@@ -77,7 +77,8 @@ void xMBC::storeToByteArray(uint8_t **data, uint32_t &len) {
     ptr+=tmp;
     memcpy(ptr, &m_rd, sizeof(double));
     ptr += sizeof(double);
-    memcpy(ptr, &m_rv, sizeof(double));
+    if(!bCompactMBC)
+        memcpy(ptr, &m_rv, sizeof(double));
     len = getByteArraySize();
 //    ptr += sizeof(double);
     //ptr += m_dimension * sizeof(double);
@@ -95,7 +96,8 @@ void xMBC::storeToByteArrayE(uint8_t **data, uint32_t &len) {
     ptr+=tmp;
     memcpy(ptr, &m_rd, sizeof(double));
     ptr += sizeof(double);
-    memcpy(ptr, &m_rv, sizeof(double));
+    if(!bCompactMBC)
+        memcpy(ptr, &m_rv, sizeof(double));
     len = getByteArraySize();
 //    ptr += sizeof(double);
     //ptr += m_dimension * sizeof(double);

@@ -66,7 +66,7 @@ extern int NUMTHREAD=NUMCORE;
 extern double testtime = 100;
 #else
 #define NUMCORE 4
-extern double testtime = 400;
+extern double testtime = 4000;
 extern int NUMTHREAD=NUMCORE;
 #endif
 extern bool testxfirstOutput = true;
@@ -934,6 +934,7 @@ void fillQuerySet(vector<xTrajectory>& list, xStore& x, double len, double var=0
             list.emplace_back(x.randomSubtraj(len));
         }
     }
+    cerr<<"sampled queries from "<<db_last_trajid()<<"trajs\n";
 }
 
 void fillQuerySetRand(vector<xTrajectory>& list, xStore& x){

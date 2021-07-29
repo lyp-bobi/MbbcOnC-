@@ -48,7 +48,11 @@ SpatialIndex::xRTreeNsp::xRTree * SpatialIndex::xRTreeNsp::createNewxRTree(IStor
 }
 
 inline int idsize(){return 8;}
-inline int nodeheadersize(){return 56+48;} //node id+mbr  + sqlitedbcost
+inline int nodeheadersize(){return 56+48;} //node id+mbr
+inline int mbcnodesize(){
+    if(bCompactMBC) return 8;
+    else return 0;
+}
 inline int mbrsize(){return 48;}
 inline int mbcsize(){
     if(bCompactMBC) return 56;
@@ -117,8 +121,8 @@ xRTree * xRTreeNsp::buildMBCRTreeWP(IStorageManager *st,
     }
     else {
         std::cerr<<"start building "<<name<<"\n";
-        int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbcsize()),
-                bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + mbcsize() + pointersize() + entrysize());
+        int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
+                bleaf = (PageSizeDefault - nodeheadersize() - mbcnodesize()) / (idsize() + mbcsize() + pointersize() + entrysize());
         r = createNewxRTree(store, bindex, bleaf, len);
         r->m_bUsingMBC = true;
         store->m_property[name] = r->m_headerID;
@@ -265,7 +269,7 @@ xRTree * xRTreeNsp::buildMBCRTreeWoP(IStorageManager *st,
         std::cerr<<"load existing "<<name<<"\n";
     }
     else {
-        int bindex = (PageSizeDefault - nodeheadersize()) / (idsize() + mbcsize()),
+        int bindex = (PageSizeDefault - nodeheadersize()-mbcnodesize()) / (idsize() + mbrsize()),
                 bleaf = (PageSizeDefault - nodeheadersize()) / (idsize() + mbcsize() + entrysize());
         r = createNewxRTree(store, bindex, bleaf, len);
         r->m_bUsingMBC = true;

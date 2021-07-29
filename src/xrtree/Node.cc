@@ -46,17 +46,6 @@ Tools::IObject* Node::clone()
 	throw Tools::NotSupportedException("IObject::clone should never be called.");
 }
 
-
-inline int idsize(){return 8;}
-inline int nodeheadersize(){return 56;} //node id+mbr
-inline int mbrsize(){return 48;}
-inline int mbcsize(){
-    if(bCompactMBC) return 56;
-    else return 64;
-}
-inline int linesize(){return 48;}
-inline int pointersize(){return 16;}
-inline int entrysize(){return 32;}
 //
 // Tools::ISerializable interface
 //
@@ -85,6 +74,12 @@ void Node::loadFromByteArray(const uint8_t* ptr)
             ptr += (m_ptrMBR[u32Child])->getByteArraySize();
         }
     }else{//leaf
+        double rv;
+        if(bCompactMBC && m_pTree->m_bUsingMBC)
+        {
+            memcpy(&rv, ptr, sizeof(double));
+            ptr += sizeof(double);
+        }
         for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
             memcpy(&(m_pIdentifier[u32Child]), ptr, sizeof(id_type));
             ptr += sizeof(id_type);
@@ -104,6 +99,10 @@ void Node::loadFromByteArray(const uint8_t* ptr)
             }else if(m_pTree->m_bUsingMBC){
                 m_ptrxSBB[u32Child]->loadFromByteArray(2,ptr);
                 ptr+=m_ptrxSBB[u32Child]->bc.getByteArraySize();
+                if(bCompactMBC)
+                {
+                    m_ptrxSBB[u32Child]->bc.m_rv = rv;
+                }
             }else if(m_pTree->m_bUsingMBL){
                 m_ptrxSBB[u32Child]->loadFromByteArray(3,ptr);
                 ptr+=m_ptrxSBB[u32Child]->bl.getByteArraySize();
@@ -127,7 +126,6 @@ void Node::storeToByteArray(uint8_t** data, uint32_t& len)
     memcpy(ptr, &m_children, sizeof(uint32_t));
     ptr += sizeof(uint32_t);
 
-
     if(m_level >0) {//inner
         for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
             memcpy(ptr, &(m_pIdentifier[u32Child]), sizeof(id_type));
@@ -136,6 +134,14 @@ void Node::storeToByteArray(uint8_t** data, uint32_t& len)
             ptr += (m_ptrMBR[u32Child])->getByteArraySize();
         }
     }else{//leaf
+        double rv = 0;
+        if(m_pTree->m_bUsingMBC && bCompactMBC) {
+            for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
+                rv = std::max(rv, m_ptrxSBB[u32Child]->bc.m_rv);
+            }
+            memcpy(ptr,&rv,  sizeof(double));
+            ptr += sizeof(double);
+        }
         for (uint32_t u32Child = 0; u32Child < m_children; ++u32Child) {
             memcpy(ptr,&(m_pIdentifier[u32Child]),  sizeof(id_type));
             ptr += sizeof(id_type);
@@ -224,7 +230,6 @@ bool Node::isIndex() const
 //
 // Internal
 //
-
 Node::Node()=default;
 
 Node::Node(SpatialIndex::xRTreeNsp::xRTree* pTree, id_type id, uint32_t level, uint32_t capacity) :

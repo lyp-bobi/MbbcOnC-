@@ -178,6 +178,7 @@ int64_t db_last_trajid(void){
 bool db_insert_traj(int64_t id, int64_t pageid, uint32_t npoint){
     if(db == NULL) conn_init(dbfile);
     int rc;
+    next_traj = id;
     rc = sqlite3_reset(stmt_traj_insert);
     rc = sqlite3_bind_int64(stmt_traj_insert,1,(int64_t)id);
     rc = sqlite3_bind_int64(stmt_traj_insert,2,(int64_t)pageid);

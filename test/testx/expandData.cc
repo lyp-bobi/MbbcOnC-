@@ -19,7 +19,7 @@ int main(int argc,char *argv[]){
     else{
         auto trajs = loadDumpedFiledToTrajs(testFileName("glfilter.txt"));
         dumpToFile(trajs,testFileName("glexpand.datas"));
-        for(int i=0;i<1;i++) {
+        for(int i=0;i<10;i++) {
             auto repli = trajs;
             affine_transform(repli, xPoint(116.3972282409668, 39.90960456049752, 0),
                              0.2*i, xPoint(0, 0, 86400*i));

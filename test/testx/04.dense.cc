@@ -13,7 +13,6 @@ int main(int argc,char *argv[]){
         files.emplace_back(fileFolder+to_string(i)+".out");
     }
     xStore x("od","od");
-    testtime = 400;
     for(int i=0;i<6;i++){
         cerr<<"size is "<<i<<endl;
         //don't load it if exist

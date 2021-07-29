@@ -15,7 +15,7 @@ int main(int argc,char *argv[]){
             target = "glexpand.datas";
             seglens = {100,200,300,600,900,1200,1800,2700};
         }
-        testtime=400;
+//        testtime=400;
         cerr<<"seglen: ";
         for(auto len:seglens){cerr<<len<<" ";}
         cerr<<endl;

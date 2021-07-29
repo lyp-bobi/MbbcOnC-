@@ -129,7 +129,11 @@ void xStore::loadFile(string file) {
             string str;
             stringstream ss(lineStr);
             getline(ss, str);
-            id_type id = stoll(str);
+            id_type id;
+            id = stoll(str);
+            if(id>10) {
+                id = db_last_trajid()+1;
+            }
             getline(inFile, str);
             tj.loadFromString(str);
             //test code
