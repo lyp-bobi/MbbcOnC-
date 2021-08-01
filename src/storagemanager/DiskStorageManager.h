@@ -55,13 +55,14 @@ namespace SpatialIndex
 		protected:
 			std::fstream m_dataFile;
 			std::fstream m_indexFile;
+			int m_datafd; /* linux direct io*/
 			uint32_t m_pageSize;
 			id_type m_nextPage;
 			std::set<id_type> m_emptyPages;
 			std::map<id_type, Entry*> m_pageIndex;
             std::map<id_type, Entry*> *m_fakepageIndex= nullptr;
-
-			uint8_t* m_buffer;
+            char* m_rawbuffer; // delete this instead of m_buffer.
+			uint8_t* m_buffer; //aligned buffer
         public:
 			id_type nextPage() override {return m_nextPage;}
 		}; // DiskStorageManager

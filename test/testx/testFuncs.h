@@ -65,8 +65,8 @@ using namespace xRTreeNsp;
 extern int NUMTHREAD=NUMCORE;
 extern double testtime = 100;
 #else
-#define NUMCORE 4
-extern double testtime = 4000;
+#define NUMCORE 12
+extern double testtime = 600;
 extern int NUMTHREAD=NUMCORE;
 #endif
 extern bool testxfirstOutput = true;
