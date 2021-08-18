@@ -65,9 +65,9 @@ using namespace xRTreeNsp;
 extern int NUMTHREAD=NUMCORE;
 extern double testtime = 100;
 #else
-#define NUMCORE 12
-extern double testtime = 600;
-extern int NUMTHREAD=NUMCORE;
+#define NUMCORE 4
+extern double testtime = 1200;
+extern int NUMTHREAD= 3 * NUMCORE;
 #endif
 extern bool testxfirstOutput = true;
 
@@ -121,7 +121,7 @@ public:
             m_indexvisited++;
         }
     }
-    void visitData(std::vector<const IData*>& v){}
+    void visitData(std::vector<const IData*>& v){m_resultGet++;}
     void visitData(const IData &d) {
         m_resultGet++;
         m_lastResult = d.getIdentifier();
@@ -709,6 +709,7 @@ struct queryRet{
     double trajIO=0;
     double nresult=0;
     double qps=0;
+    double rad = 0;
     queryRet operator+(const queryRet& r) const{
         queryRet res;
         res.time= time+r.time;
@@ -720,15 +721,16 @@ struct queryRet{
         res.trajIO= trajIO+r.trajIO;
         res.nresult = nresult+r.nresult;
         res.qps = qps+r.qps;
+        res.rad = rad + r.rad;
         return res;
     }
     string toString() const{
         stringstream s;
         if(testxfirstOutput){
             testxfirstOutput =false;
-            s<<"qps\ttime\tindexVisit\tleafVisit\tindexIO\ttrajIO\tleaf1\tleaf2\tnresult\ttotalIO\n";
+            s<<"qps\ttotalIO\tindexIO\ttrajIO\ttime\tindexVisit\tleafVisit\tleaf1\tleaf2\tnresult\trad\n";
         }
-        s<<qps<<"\t"<<time<<"\t"<<indexVisit<<"\t"<<leafVisit<<"\t"<<indexIO<<"\t"<<trajIO<<"\t"<<leaf1<<"\t"<<leaf2<<"\t"<<nresult<<"\t"<<indexIO+trajIO<<"\n";
+        s<<qps<<"\t"<<indexIO+trajIO<<"\t"<<indexIO<<"\t"<<trajIO<<"\t"<<time<<"\t"<<indexVisit<<"\t"<<leafVisit<<"\t"<<leaf1<<"\t"<<leaf2<<"\t"<<nresult<<"\t"<<rad<<"\n";
         return s.str();
     }
 };
@@ -815,6 +817,7 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
     res->indexIO = 1.0 * ts->m_indexIO / num;
     res->trajIO = 1.0 * ts->m_trajIO / num;
     res->nresult = 1.0 * vis.m_resultGet / num;
+    res->rad = rad/num;
     dbt.release();
     return;
 }

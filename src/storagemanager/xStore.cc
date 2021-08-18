@@ -6,6 +6,8 @@
 #include <cmath>
 #include <cstring>
 #include <sys/stat.h>
+#include <spatialindex/tools/rand48.h>
+
 #define fp (int(m_pageSize/sizeof(prexp)/3))
 
 bool CheckFilesExists(const string &s) {
@@ -66,6 +68,7 @@ xTrajEntry::xTrajEntry::xTrajEntry(string &s) {
 }
 
 xStore::~xStore() {
+    for(auto &it:m_pagecache) delete it.second;
     delete m_pStorageManager;
 }
 
@@ -118,7 +121,6 @@ void xStore::loadFile(string file) {
     }
     ifstream inFile(file, ios::in);
     string lineStr;
-    set<id_type> ids;
     xTrajectory tj;
     xMBR r;
     uint8_t *data;
@@ -171,7 +173,6 @@ void xStore::loadFile(string file) {
                     delete[] data;
                 }
                 db_insert_traj(id,firstpage,tj.m_points.size());
-                ids.insert(id);
                 curLine++;
                 tj.getxMBR(r);
                 if (r.m_xmax > tjstat->maxx) tjstat->maxx = r.m_xmax;
@@ -246,7 +247,6 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew)
         tjstat->init();
         ifstream inFile(file, ios::in);
         string lineStr;
-        set<id_type> ids;
         xTrajectory tj;
         xMBR r;
         uint8_t *data;
@@ -295,7 +295,6 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew)
                         delete[] data;
                     }
                     db_insert_traj(id,firstpage,tj.m_points.size());
-                    ids.insert(id);
                     curLine++;
                     tj.getxMBR(r);
                     if (r.m_xmax > tjstat->maxx) tjstat->maxx = r.m_xmax;
@@ -356,6 +355,67 @@ xStore * xStore::clone()
     res->m_bSubTraj = res->m_property["bSubTraj"];
     res->m_isro = true;
     return res;
+}
+
+// for inner node
+void xStore::storeByteArray(id_type &page, const uint32_t len, const uint8_t *const data) {
+    m_pStorageManager->storeByteArray(page,len,data);
+    auto it = m_pagecache.find(page);
+    if(it != m_pagecache.end())
+    {
+        delete (*it).second;
+        m_pagecache.erase(it);
+    }
+}
+
+void xStore::drop_one_cache() {
+    while(true) {
+        double random;
+        random = drand48();
+
+        uint32_t entry = static_cast<uint32_t>(floor(
+                ((double) m_pagecache.size()) * random));
+
+        auto it2 = m_pagecache.begin();
+        for (uint32_t cIndex = 0; cIndex < entry; cIndex++) ++it2;
+        if (it2->second->m_bUsing == false) {
+            delete (*it2).second;
+            m_pagecache.erase(it2);
+            return;
+        }
+    }
+}
+
+//for inner nodes
+void xStore::loadByteArray(const id_type page, uint32_t &len, uint8_t **data) {
+    auto start = std::chrono::system_clock::now();
+    if(!m_bPageCache)
+    {
+        m_pStorageManager->loadByteArray(page, len, data);
+    }
+    else {
+        auto it = m_pagecache.find(page);
+        if (it != m_pagecache.end() && it->second->m_bDirty == false) {
+            it->second->m_bUsing = true;
+            len = (*it).second->m_length;
+            *data = new uint8_t[len];
+            memcpy(*data, (*it).second->m_pData, len);
+            it->second->m_bUsing = false;
+        } else {
+            m_pStorageManager->loadByteArray(page, len, data);
+            if (m_pagecache.size() >= m_buffersize) {
+                drop_one_cache();
+            }
+            m_pagecache.insert(std::pair<id_type, PageCahce *>(page,
+                                                               new PageCahce(
+                                                                       len,
+                                                                       *data)));
+        }
+    }
+    auto end = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    m_IOtime+=double(duration.count()) * std::chrono::microseconds::period::num
+              / std::chrono::microseconds::period::den;
 }
 
 void xStore::loadTraj(xTrajectory &out, const xStoreEntry &e) {
@@ -436,7 +496,7 @@ xTrajectory xStore::randomSubtraj(double len) {
     int i = 0;
     xTrajectory tj,tj2;
     loadTraj(tj, xStoreEntry(rnd, 0, 1000000));
-    double t = tj.randomPoint().m_t;
+    double t = tj.m_startTime() + (tj.m_endTime()-tj.m_startTime()) * drand48();
     tj.getPartialxTrajectory(t - len / 2, t + len / 2, tj2);
     return tj2;
 }

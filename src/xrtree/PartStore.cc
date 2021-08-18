@@ -11,24 +11,24 @@ bool partstoreskip = false;
 void PartsStore::Parts::insert(xSBB &r, id_type prev, id_type next, xStoreEntry &entry) {
     is_modified = true;
     m_UCsbbs.emplace_back(r);
-    m_loadedTime += min(r.m_endTime, m_ps->m_query.m_endTime()) -
-                    max(r.m_startTime, m_ps->m_query.m_startTime());
+    m_loadedTime += min(r.m_endTime, m_ps->m_simpquery.m_endTime()) -
+                    max(r.m_startTime, m_ps->m_simpquery.m_startTime());
     if(r.m_endTime > m_maxtime){
-        m_maxtime=min(r.m_endTime, m_ps->m_query.m_endTime());
-        if(next==-1|| r.m_endTime > m_ps->m_query.m_endTime()) {
+        m_maxtime=min(r.m_endTime, m_ps->m_simpquery.m_endTime());
+        if(next==-1|| r.m_endTime > m_ps->m_simpquery.m_endTime()) {
             m_hasNext=false;
-            m_loadedTime+=m_ps->m_query.m_endTime()-m_maxtime;
+            m_loadedTime+= m_ps->m_simpquery.m_endTime() - m_maxtime;
         }
     }
     if(r.m_startTime < m_mintime){
-        m_mintime=max(r.m_startTime, m_ps->m_query.m_startTime());
-        if(prev==-1|| r.m_startTime < m_ps->m_query.m_startTime()) {
+        m_mintime=max(r.m_startTime, m_ps->m_simpquery.m_startTime());
+        if(prev==-1|| r.m_startTime < m_ps->m_simpquery.m_startTime()) {
             m_hasPrev=false;
-            m_loadedTime+=m_mintime-m_ps->m_query.m_startTime();
+            m_loadedTime+=m_mintime-m_ps->m_simpquery.m_startTime();
         }
     }
-    if(prev>=0&&m_loadedLeaf.count(prev)==0) m_missingLeaf.insert(prev);
-    if(next>=0&&m_loadedLeaf.count(next)==0) m_missingLeaf.insert(next);
+    if(prev>=0&&m_ps->m_loadedLeaf.find(prev)==m_ps->m_loadedLeaf.end()) m_missingLeaf.insert(prev);
+    if(next>=0&&m_ps->m_loadedLeaf.find(next)==m_ps->m_loadedLeaf.end()) m_missingLeaf.insert(next);
     m_ses[r.m_startTime]=entry;
 }
 
@@ -41,7 +41,6 @@ bool PartsStore::insert(id_type id, xSBB &b, id_type leafid, id_type prev, id_ty
         res = true;
     }
     it->second.insert(b,prev,next,entry);
-    it->second.m_loadedLeaf.insert(leafid);
     it->second.m_missingLeaf.erase(leafid);
     return res;
 }
@@ -50,22 +49,34 @@ DISTE PartsStore::updateValue(id_type id,bool Inqueue) {
     Parts *parts = &m_parts[id];
     if(!parts->is_modified) return parts->m_calcMin;
     std::pair<double, double> timeInterval;
+    double timesum=0;
+//    for(auto &b:parts->m_UCsbbs){
+//        timesum +=b.m_endTime-b.m_startTime;
+//    }
+//    if(!parts->m_missingLeaf.empty()
+//        &&timesum*5<m_simpquery.m_endTime() - m_simpquery.m_startTime())
+//    {
+//        return parts->m_calcMin;
+//    }
     for(auto &b:parts->m_UCsbbs){
         parts->putSBB(b);
     }
     parts->m_UCsbbs.clear();
     DISTE res;
-    for(auto it=parts->m_line.begin();it!=parts->m_line.end();it++){
-        if(!it->d.infer){
+    for (auto it = parts->m_line.begin(); it != parts->m_line.end(); it++) {
+        if (!it->d.infer) {
             res += it->d;
-        }
-        else{
-            if(it == parts->m_line.begin() || it == (--parts->m_line.end())) {
+        } else {
+            if (it == parts->m_line.begin() ||
+                it == (--parts->m_line.end())) {
                 res.infer = true;
                 continue;
             }
-            if(!m_nodespq.empty())
-                res +=DISTE((it->te-it->ts)*m_nodespq.top()->m_dist.opt/(m_query.m_endTime()-m_query.m_startTime()),1e300,true);
+            if (!m_nodespq.empty())
+                res += DISTE(
+                        (it->te - it->ts) * m_nodespq.top()->m_dist.opt /
+                        (m_simpquery.m_endTime() -
+                         m_simpquery.m_startTime()), 1e300, true);
         }
     }
     parts->m_calcMin = res;
@@ -88,18 +99,18 @@ void PartsStore::loadLeaf(const Node &n, double dist) {
 //                    std::cerr<<"load leaf"<<n.m_nodeMBR<<"\n";
 //                    std::cerr<<"leaf dist"<<m_query.getNodeMinimumDistance(n.m_nodeMBR,100)/(m_query.m_endTime()-m_query.m_startTime())<<"\n";
 //                    std::cerr<<"load leaf"<<n.m_identifier<<"\n";
-    loadedLeaf.insert(n.m_identifier);
+    m_loadedLeaf.insert(n.m_identifier);
     std::set<id_type> nid;
     for(int i=0;i<n.m_children;i++){
         id_type trajid=n.m_se[i].m_id;
         xStoreEntry entry= n.m_se[i];
         double bts= n.m_ptrxSBB[i]->m_startTime,bte= n.m_ptrxSBB[i]->m_endTime;
-        if(bts>=m_query.m_endTime()||
-           bte<=m_query.m_startTime()||m_except.count(trajid)>0){}
+        if(bts >= m_simpquery.m_endTime() ||
+           bte <= m_simpquery.m_startTime() || m_except.find(trajid) != m_except.end()){}
         else {
             if(insert(trajid, *n.m_ptrxSBB[i],n.m_identifier,
-                   (m_query.m_startTime()<bts)?n.m_prevNode[i]:-1
-                    , (m_query.m_endTime()>bte)?n.m_nextNode[i]:-1,
+                      (m_simpquery.m_startTime() < bts) ? n.m_prevNode[i] : -1
+                    , (m_simpquery.m_endTime() > bte) ? n.m_nextNode[i] : -1,
                    entry)){
                 nid.insert(trajid);
             }
@@ -114,6 +125,7 @@ void PartsStore::loadLeaf(const Node &n, double dist) {
 
 NNEntry* PartsStore::top() {
     id_type lastid = -1;
+    if(m_mpq.empty()&&m_nodespq.empty()) return NULL;
     while(true){
         if(m_mpq.empty()||(!m_nodespq.empty()&&m_nodespq.top()->m_dist < m_mpq.top()->m_dist)){
             return m_nodespq.top();
@@ -121,7 +133,7 @@ NNEntry* PartsStore::top() {
         if(m_mpq.top()->m_type>=3)
             return m_mpq.top();
         if(lastid!=m_mpq.top()->m_id) {
-            if(m_except.count(m_mpq.top()->m_id)>0){
+            if(m_except.find(m_mpq.top()->m_id)!=m_except.end()){
                 NNEntry* p = m_mpq.top();
                 m_mpq.pop();
                 delete p;
@@ -154,7 +166,7 @@ void PartsStore::push(NNEntry *e) {
 
 
 void PartsStoreBFMST::insert(id_type id, xTrajectory &r, id_type prev, id_type next, xStoreEntry &entry){
-    if(m_parts.count(id)==0){
+    if(m_parts.find(id)==m_parts.end()){
         m_parts[id]=Parts(this);
     }
 //                    m_parts[id].insert(r,prev,next,entry);
@@ -169,7 +181,7 @@ void PartsStoreBFMST::insert(id_type id, xTrajectory &r, id_type prev, id_type n
 }
 
 DISTE PartsStoreBFMST::update(id_type id) {
-    if(m_except.count(id)>0){
+    if(m_except.find(id)!=m_except.end()){
         return DISTE(1e300);
     }
     Parts *parts = &m_parts[id];
@@ -288,7 +300,7 @@ DISTE PartsStoreBFMST::update(id_type id) {
     if (parts->m_loadedTime + 1e-7 >= (m_query.m_endTime() - m_query.m_startTime())) type = 3;
     res.opt -= m_error;
     res.pes += m_error;
-    if (m_handlers.count(id) == 0) {
+    if (m_handlers.find(id) == m_handlers.end()) {
         auto handle = m_mpq.push(new NNEntry(id, res, type));
         m_handlers[id] = handle;
     } else {
@@ -305,21 +317,21 @@ void PartsStoreBFMST::loadPartTraj(id_type id, leafInfo *e, double dist){
     xTrajectory tmpTraj;
     id_type trajid = e->m_se.m_id;
     m_ts->loadTraj(tmpTraj, e->m_se);
-    if (m_except.count(trajid) > 0) return;
+    if (m_except.find(trajid) != m_except.end()) return;
     xTrajectory inter;
-    tmpTraj.getPartialxTrajectory(max(m_query.m_startTime(), e->m_ts),
-                                  min(m_query.m_endTime(), e->m_te), inter);
+    tmpTraj.getPartialxTrajectory(max(m_query.m_startTime(), e->b.m_startTime),
+                                  min(m_query.m_endTime(), e->b.m_endTime), inter);
 #ifdef TJDEBUG
 //    cerr<<"load traj into id "<<trajid<<endl<<inter.toString()<<endl;
 #endif
     bool pv = e->m_hasPrev, nt = e->m_hasNext;
     if (!m_pTree->m_bStoringLinks) {
-        pv = e->m_se.m_s > 0 || e->m_ts > tmpTraj.m_startTime();
+        pv = e->m_se.m_s > 0 || e->b.m_startTime > tmpTraj.m_startTime();
         xTrajEntry xte = db_load_traj_entry(e->m_se.m_id);
-        nt = e->m_se.m_e < xte.m_npoint-1 || e->m_te < tmpTraj.m_endTime();
+        nt = e->m_se.m_e < xte.m_npoint-1 || e->b.m_endTime < tmpTraj.m_endTime();
     }
-    pv = pv && (m_query.m_startTime() < e->m_ts);
-    nt = nt && (m_query.m_endTime() > e->m_te);
+    pv = pv && (m_query.m_startTime() < e->b.m_startTime);
+    nt = nt && (m_query.m_endTime() > e->b.m_endTime);
     insert(trajid, inter, pv ? 1 : -1, nt ? 1 : -1, e->m_se);
 }
 
@@ -330,7 +342,7 @@ NNEntry* PartsStoreBFMST::top() {
     if(!m_mpq.empty()){
         id_type prevtop=-1;
         while(m_mpq.top()->m_id!=prevtop){
-            while(m_except.count(m_mpq.top()->m_id)>0){
+            while(m_except.find(m_mpq.top()->m_id)!=m_except.end()){
                 auto s= m_mpq.top();
                 m_mpq.pop();
                 delete s;
@@ -363,7 +375,7 @@ NNEntry* PartsStoreBFMST::pop(){
 }
 
 string PartsStoreBFMST::explain(id_type id){
-    if(m_parts.count(id)==0) return "";
+    if(m_parts.find(id)==m_parts.end()) return "";
      stringstream  ss;
      auto s =m_parts[id];
      ss<<"id is "<<id<<endl;
@@ -387,12 +399,12 @@ void PartsStoreBFMST::push(NNEntry *e) {
 }
 
 void PartsStore::Parts::putSBB(xSBB& b) {
-    double s=max(m_ps->m_query.m_startTime(),b.m_startTime);
-    double e=min(m_ps->m_query.m_endTime(),b.m_endTime);
+    double s=max(m_ps->m_simpquery.m_startTime(), b.m_startTime);
+    double e=min(m_ps->m_simpquery.m_endTime(), b.m_endTime);
     auto it = m_line.begin();
     while(it!=m_line.end()&&(it->ts>=e||it->te<=s)) it++;
     if(it->ts==s&&it->te==e){
-        it->d=m_ps->m_query.sbbDist(b);
+        it->d=m_ps->m_simpquery.sbbDist(b);
         auto lit=it,nit =it;
         lit--;nit++;
         if(lit!=m_line.end()&& !lit->d.infer){
@@ -411,7 +423,7 @@ void PartsStore::Parts::putSBB(xSBB& b) {
         double gaps=it->ts,gape=s;
         if(b.m_startTime<=m_mintime&&!m_hasPrev){
             m_line.insert(it,slab(gaps,gape,
-                    m_ps->m_query.frontDistStatic(b)));
+                    m_ps->m_simpquery.frontDistStatic(b)));
         }else{
             m_line.insert(it,slab(gaps,gape));
         }
@@ -422,7 +434,7 @@ void PartsStore::Parts::putSBB(xSBB& b) {
         nit++;
         if(b.m_endTime>=m_maxtime&&!m_hasNext){
             m_line.insert(nit,slab(gaps,gape,
-                                  m_ps->m_query.backDistStatic(b)));
+                                  m_ps->m_simpquery.backDistStatic(b)));
         }else{
             m_line.insert(nit,slab(gaps,gape));
         }
@@ -432,7 +444,7 @@ void PartsStore::Parts::putSBB(xSBB& b) {
         lit--;
         if(lit!=m_line.end() && !lit->d.infer){
             lit->te= e;
-            lit->d+=m_ps->m_query.sbbDist(b);
+            lit->d+=m_ps->m_simpquery.sbbDist(b);
             m_line.erase(it);
             return;
         }
@@ -441,12 +453,12 @@ void PartsStore::Parts::putSBB(xSBB& b) {
         nit++;
         if(nit!=m_line.end() && !nit->d.infer){
             nit->ts= s;
-            nit->d+=m_ps->m_query.sbbDist(b);
+            nit->d+=m_ps->m_simpquery.sbbDist(b);
             m_line.erase(it);
             return;
         }
     }
     it->ts=s;
     it->te=e;
-    it->d=m_ps->m_query.sbbDist(b);
+    it->d=m_ps->m_simpquery.sbbDist(b);
 }

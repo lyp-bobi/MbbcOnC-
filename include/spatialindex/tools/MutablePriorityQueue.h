@@ -70,6 +70,10 @@ public:
     }
     value_type top()
     {
+        if(empty())
+        {
+            std::cerr<<"sdafsdf";
+        }
         assert(!empty());
         return m_vElements[m_vHandleHeap[1]];
     }

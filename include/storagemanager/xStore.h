@@ -61,17 +61,8 @@ namespace SpatialIndex
             virtual xStore* clone();
             virtual void loadFile(string filename);
             virtual void flush();
-            virtual void loadByteArray(const id_type page, uint32_t& len, uint8_t** data){
-                auto start = std::chrono::system_clock::now();
-                m_pStorageManager->loadByteArray(page,len,data);
-                auto end = std::chrono::system_clock::now();
-                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-                m_IOtime+=double(duration.count()) * std::chrono::microseconds::period::num
-                        / std::chrono::microseconds::period::den;
-            }//for inner nodes
-            virtual void storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data){
-                m_pStorageManager->storeByteArray(page,len,data);
-            }//for inner nodes
+            virtual void loadByteArray(const id_type page, uint32_t& len, uint8_t** data);
+            virtual void storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data);
             virtual void deleteByteArray(const id_type page){
                 m_pStorageManager->deleteByteArray(page);
             }//should not be used in bulkload mode i guess
@@ -87,11 +78,35 @@ namespace SpatialIndex
             virtual xTrajectory randomSubtraj(double len);
             virtual xPoint randomPoint();
 
+
+
             json m_property;
             /* for file implemntation*/
             IStorageManager* m_pStorageManager=nullptr;
             /* for db implementation */
 
+            class PageCahce
+            {
+            public:
+                PageCahce(uint32_t l, const uint8_t* const d) : m_pData(0), m_length(l), m_bDirty(false)
+                {
+                    m_pData = new uint8_t[m_length];
+                    memcpy(m_pData, d, m_length);
+                }
+
+                ~PageCahce() { delete[] m_pData; }
+
+                uint8_t* m_pData;
+                uint32_t m_length;
+                bool m_bDirty;
+                bool m_bUsing = false;
+            }; // Entry
+            void drop_one_cache();
+
+#define PAGECACHE_DEFAULT false
+            bool m_bPageCache = PAGECACHE_DEFAULT;
+            int m_buffersize = 1024 * 16;
+            std::map<id_type, PageCahce*> m_pagecache;
 
             std::string m_name;
             bool m_bSubTraj=false;

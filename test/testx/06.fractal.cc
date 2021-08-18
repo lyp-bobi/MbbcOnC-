@@ -19,7 +19,7 @@ int main(int argc,char *argv[]){
             cerr << "seglen: ";
             cerr << endl;
             xStore x(target, testFileName(target), true);
-            for (double rd = 4; rd > 0.001; rd /= 2) {
+            for (double rd = 4; rd > 0.0001; rd /= 2) {
                 cerr << "rd is " << rd << endl;
                 vector<xCylinder> queries;
                 fillQuerySet(queries, x, rd, 0);

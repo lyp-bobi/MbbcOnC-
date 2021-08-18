@@ -25,16 +25,16 @@ int main(int argc,char *argv[]){
             vector<xTrajectory> queries;
             fillQuerySet(queries, x, qt);
             cerr << "MBR" << endl;
-//            for (auto len:seglens) {
-//                MTQ q;
-//                q.prepareTrees(&x, [&len](auto x) {
-//                    xRTree *r = buildMBRRTreeWP(x, xTrajectory::OPTS, len);
-////                r->m_bUsingSBBD=false;
-//                    return r;
-//                });
-//                q.appendQueries(queries);
-//                std::cerr << q.runQueries().toString();
-//            }
+            for (auto len:seglens) {
+                MTQ q;
+                q.prepareTrees(&x, [&len](auto x) {
+                    xRTree *r = buildMBRRTreeWP(x, xTrajectory::OPTS, len);
+//                r->m_bUsingSBBD=false;
+                    return r;
+                });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
             cerr << "MBC" << endl;
             for (auto len:seglens) {
                 MTQ q;

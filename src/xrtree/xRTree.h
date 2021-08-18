@@ -34,6 +34,7 @@
 #include "Node.h"
 #include "PointerPoolNode.h"
 #include <cmath>
+#include <unordered_set>
 
 extern bool bulkloadt;
 extern bool partstoreskip;
@@ -192,7 +193,7 @@ namespace SpatialIndex
         struct leafInfo{
             xStoreEntry m_se;
             bool m_hasPrev, m_hasNext;
-            double m_ts, m_te;
+            xSBB b;
         };
 
         class NNEntry
@@ -339,23 +340,23 @@ namespace SpatialIndex
                     xMBR ms,me;
                     slab(double s, double e):
                             ts(s),te(e),d(0,0,true){}
-                    slab(double s, double e,DISTE dd):
+                    slab(double s, double e, DISTE dd):
                             ts(s),te(e),d(dd){}
                 };
                 PartsStore* m_ps;
-                std::set<id_type> m_missingLeaf, m_loadedLeaf;
+                std::unordered_set<id_type> m_missingLeaf;
                 std::vector<xSBB> m_UCsbbs;
                 std::list<slab> m_line;
                 std::map<std::pair<double,double>,DISTE> m_computedDist;
                 std::map<double,xStoreEntry> m_ses;
-                DISTE m_calcMin;
+                DISTE m_calcMin=DISTE(0,1e300,true);
                 double m_mintime=1e300,m_maxtime=-1e300;
                 bool m_hasPrev=true,m_hasNext=true;
                 double m_computedTime=0,m_loadedTime=0;
                 bool is_modified = true;
                 Parts(PartsStore* ps= nullptr){
                     m_ps = ps;
-                    m_line.emplace_back(slab(ps->m_query.m_startTime(),ps->m_query.m_endTime()));
+                    m_line.emplace_back(slab(ps->m_simpquery.m_startTime(), ps->m_simpquery.m_endTime()));
                 }
                 void insert(xSBB &r,id_type prev,id_type next,xStoreEntry &entry);
                 void putSBB(xSBB &b);
@@ -364,16 +365,17 @@ namespace SpatialIndex
             std::map<id_type ,MutablePriorityQueue<NNEntry>::handle_type > m_handlers;
             EntryMPQ m_mpq;
             EntryMPQ m_nodespq;
-            xTrajectory m_query;
+            xTrajectory m_simpquery;
+            xTrajectory m_exactquery;
             double m_error;
             xStore* m_ts;
             poppq m_pes;
-            std::set<id_type> m_except;
+            std::unordered_set<id_type> m_except;
+            std::unordered_set<id_type> m_loadedLeaf;
             xRTree * m_pTree;
             trajStat* stat = trajStat::instance();
-            std::map<id_type ,Parts> m_parts;
+            std::unordered_map<id_type ,Parts> m_parts;
             int m_dimension=2;
-            std::set<id_type > loadedLeaf;
             bool insert(id_type id, xSBB &b, id_type leafid,id_type prev,id_type next,xStoreEntry &entry);
 
             DISTE updateValue(id_type id,bool Inqueue=true) ;
@@ -393,7 +395,7 @@ namespace SpatialIndex
                 }
                 return ss.str();
             }
-            bool isLoaded(id_type id){ return loadedLeaf.count(id)>0;}
+            bool isLoaded(id_type id){ return m_loadedLeaf.find(id) != m_loadedLeaf.end();}
             void loadLeaf(const Node &n, double dist = 0);
 
             NNEntry* top();
@@ -416,8 +418,8 @@ namespace SpatialIndex
 
             auto nodetop(){return m_nodespq.top();}
 
-             PartsStore(xTrajectory &traj,double error, xRTree *r, int nnk)
-                    :m_query(traj),m_error(error), m_pTree(r),m_ts(r->m_ts){
+             PartsStore(const xTrajectory &exact, xTrajectory &simp, double error, xRTree *r, int nnk)
+                    : m_exactquery(exact), m_simpquery(simp), m_error(error), m_pTree(r), m_ts(r->m_ts){
                 m_pes.setLen(nnk);
             }
             ~PartsStore(){}
@@ -439,7 +441,6 @@ namespace SpatialIndex
             class Parts{
             public:
                 PartsStoreBFMST* m_ps;
-                std::set<id_type> m_missingLeaf, m_loadedLeaf;
                 std::list<xTrajectory> m_pTrajs;
                 std::map<std::pair<double,double>,DISTE> m_computedDist;
                 std::map<double,xStoreEntry> m_entries;
@@ -486,7 +487,6 @@ namespace SpatialIndex
             trajStat* stat = trajStat::instance();
             std::map<id_type ,Parts> m_parts;
             int m_dimension=2;
-            std::set<id_type > loadedLeaf;
             void insert(id_type id, xTrajectory &r,id_type prev,id_type next,xStoreEntry &entry);
             DISTE update(id_type id) ;
         public:

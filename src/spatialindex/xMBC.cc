@@ -11,7 +11,7 @@
 
 #include <spatialindex/SpatialIndex.h>
 
-extern bool bCompactMBC = false;
+bool bCompactMBC = true;
 
 using namespace SpatialIndex;
 xMBC::xMBC()

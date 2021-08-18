@@ -155,6 +155,7 @@ namespace SpatialIndex
         static DISTE line2MBRDistance(const xPoint &ps,const xPoint &pe,const xMBR &r);
         static double line2MBRIED_impl(const xPoint &ps, const xPoint &pe, const xMBR &r, int sr);
         static double line2MBRMinSED(const xPoint &ps, const xPoint &pe, const xMBR &r);
+        static double line2MBRMinSED_approx(const xPoint &ps, const xPoint &pe, const xMBR &r);
         static double line2MBRMaxSED(const xPoint &ps, const xPoint &pe, const xMBR &r);
         static double line2MBRMinSED_impl(const xPoint &ps, const xPoint &pe, const xMBR &r, int sr);
         static DISTE line2MBCDistance(const xPoint &ps,const xPoint &pe,const xMBC &r);

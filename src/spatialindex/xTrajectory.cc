@@ -773,7 +773,7 @@ inline double xTrajectory::line2MBRMinSED_impl(const SpatialIndex::xPoint &ps, c
     }
 }
 
-inline double xTrajectory::line2MBRMinSED(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
+double xTrajectory::line2MBRMinSED(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
                                           const SpatialIndex::xMBR &r) {
     assert(r.m_tmin<=ps.m_t);
     assert(r.m_tmax>=pe.m_t);
@@ -811,6 +811,16 @@ inline double xTrajectory::line2MBRIED_impl(const SpatialIndex::xPoint &ps, cons
         return line2lineIED(ps, pe, xPoint(px,py,ts), xPoint(px,py,te));
     }
 }
+
+inline double xTrajectory::line2MBRMinSED_approx(const xPoint &ps, const xPoint &pe, const xMBR &r) {
+    double ts = std::max(ps.m_t, r.m_tmin), te=std::min(pe.m_t, r.m_tmax);
+    xPoint p2s((r.m_xmax+r.m_xmin)/2,(r.m_ymax+r.m_ymin)/2,ts),
+            p2e((r.m_xmax+r.m_xmin)/2,(r.m_ymax+r.m_ymin)/2,te);
+    double d = line2lineMinSED(ps,pe,p2s,p2e);
+    double rad=(sqrt(sq(r.m_xmax-r.m_xmin)+sq(r.m_ymax-r.m_ymin)))/2;
+    return max(0.0, d-rad);
+}
+
 
 inline double xTrajectory::line2MBRMaxSED(const SpatialIndex::xPoint &ps, const SpatialIndex::xPoint &pe,
                                           const SpatialIndex::xMBR &r) {
