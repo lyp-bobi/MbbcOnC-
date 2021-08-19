@@ -47,7 +47,7 @@ bool PartsStore::insert(id_type id, xSBB &b, id_type leafid, id_type prev, id_ty
 
 DISTE PartsStore::updateValue(id_type id,bool Inqueue) {
     Parts *parts = &m_parts[id];
-    if(!parts->is_modified) return parts->m_calcMin;
+//    if(!parts->is_modified) return parts->m_calcMin;
     std::pair<double, double> timeInterval;
     double timesum=0;
 //    for(auto &b:parts->m_UCsbbs){
@@ -67,16 +67,11 @@ DISTE PartsStore::updateValue(id_type id,bool Inqueue) {
         if (!it->d.infer) {
             res += it->d;
         } else {
-            if (it == parts->m_line.begin() ||
-                it == (--parts->m_line.end())) {
-                res.infer = true;
-                continue;
-            }
             if (!m_nodespq.empty())
                 res += DISTE(
-                        (it->te - it->ts) * m_nodespq.top()->m_dist.opt /
+                        min(it->d.opt, (it->te - it->ts) * m_nodespq.top()->m_dist.opt /
                         (m_simpquery.m_endTime() -
-                         m_simpquery.m_startTime()), 1e300, true);
+                         m_simpquery.m_startTime())), 1e300, true);
         }
     }
     parts->m_calcMin = res;
@@ -137,6 +132,7 @@ NNEntry* PartsStore::top() {
                 NNEntry* p = m_mpq.top();
                 m_mpq.pop();
                 delete p;
+                lastid = -1;
             }else {
                 lastid = m_mpq.top()->m_id;
                 updateValue(lastid);
@@ -425,7 +421,8 @@ void PartsStore::Parts::putSBB(xSBB& b) {
             m_line.insert(it,slab(gaps,gape,
                     m_ps->m_simpquery.frontDistStatic(b)));
         }else{
-            m_line.insert(it,slab(gaps,gape));
+            m_line.insert(it,slab(gaps,gape,
+                                  m_ps->m_simpquery.frontDist(b, tjstat->vmax*2)));
         }
     }
     if(e!=it->te){ //fill next one
@@ -436,7 +433,8 @@ void PartsStore::Parts::putSBB(xSBB& b) {
             m_line.insert(nit,slab(gaps,gape,
                                   m_ps->m_simpquery.backDistStatic(b)));
         }else{
-            m_line.insert(nit,slab(gaps,gape));
+            m_line.insert(it,slab(gaps,gape,
+                                  m_ps->m_simpquery.backDist(b, tjstat->vmax*2)));
         }
     }
     if(s==it->ts){//try to merge into prev one

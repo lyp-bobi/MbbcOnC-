@@ -27,7 +27,7 @@
 #ifndef SPATIALINDEX_H
 #define SPATIALINDEX_H
 
-#define TJDEBUG
+//#define TJDEBUG
 #include "tools/Tools.h"
 #include "tools/MutablePriorityQueue.h"
 #include "tools/DiskMultiMap.h"

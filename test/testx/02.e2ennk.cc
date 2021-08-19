@@ -10,10 +10,10 @@ int main(int argc,char *argv[]){
         string target;
         if(argc==1) {
             target = "tdexpand.datas";
-            seglens = {1800};
+            seglens = {1200};
         }else {
             target = "glexpand.datas";
-            seglens = {600};
+            seglens = {1200};
         }
         double qt = 3600;
         cerr<<"02, e2ennk, TB,STR, and SBB1800/600";

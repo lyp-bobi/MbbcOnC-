@@ -339,7 +339,7 @@ namespace SpatialIndex
                     DISTE d;
                     xMBR ms,me;
                     slab(double s, double e):
-                            ts(s),te(e),d(0,0,true){}
+                            ts(s),te(e),d(0,1e300,true){}
                     slab(double s, double e, DISTE dd):
                             ts(s),te(e),d(dd){}
                 };

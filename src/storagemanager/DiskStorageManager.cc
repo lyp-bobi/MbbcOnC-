@@ -315,7 +315,7 @@ DiskStorageManager::~DiskStorageManager()
 #ifdef NEW_READ_STYLE
     close(m_datafd);
 #endif
-    delete[] m_rawbuffer;
+//    delete[] m_rawbuffer;
 
     std::map<id_type, Entry*>::iterator it;
     for (it = m_pageIndex.begin(); it != m_pageIndex.end(); ++it) delete (*it).second;
