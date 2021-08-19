@@ -108,7 +108,7 @@ set (SOURCES
         queryLenVarying
         expandData
         btqtMat
-        btqtMatDB
+#        btqtMatDB
         storeExplorer
         11.splitMethod
         speedEstimator

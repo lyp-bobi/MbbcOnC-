@@ -120,21 +120,21 @@ namespace SpatialIndex
             uint32_t m_boundingVisited=0;
             double m_IOtime=0;
         };
-        class SIDX_DLL xStoreDB: public xStore{
-        public:
-            xStoreDB();
-            xStoreDB(string myname, string file, bool subtrajs=true, bool forceNew=false);
-            virtual xStore* clone();
-            virtual void loadFile(string filename);
-            virtual void flush();
-            virtual void loadByteArray(const id_type page, uint32_t& len, uint8_t** data);
-            virtual void storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data);
-            virtual void deleteByteArray(const id_type page);
-
-            virtual void loadTraj(xTrajectory &out, const xStoreEntry &e);
-            virtual xTrajectory randomSubtraj(double len);
-            virtual xPoint randomPoint();
-        };
+//        class SIDX_DLL xStoreDB: public xStore{
+//        public:
+//            xStoreDB();
+//            xStoreDB(string myname, string file, bool subtrajs=true, bool forceNew=false);
+//            virtual xStore* clone();
+//            virtual void loadFile(string filename);
+//            virtual void flush();
+//            virtual void loadByteArray(const id_type page, uint32_t& len, uint8_t** data);
+//            virtual void storeByteArray(id_type& page, const uint32_t len, const uint8_t* const data);
+//            virtual void deleteByteArray(const id_type page);
+//
+//            virtual void loadTraj(xTrajectory &out, const xStoreEntry &e);
+//            virtual xTrajectory randomSubtraj(double len);
+//            virtual xPoint randomPoint();
+//        };
         class xSBBStream:public IDataStream{
         public:
             CUTFUNC m_cutFunc;

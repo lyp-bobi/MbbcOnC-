@@ -142,7 +142,7 @@ set(SIDX_STORAGEMANAGER_CPP
   "${SIDX_SRC_DIR}/storagemanager/RandomEvictionsBuffer.h"
   "${SIDX_SRC_DIR}/storagemanager/tjsql.cc"
   "${SIDX_SRC_DIR}/storagemanager/xStore.cc"
-  "${SIDX_SRC_DIR}/storagemanager/xStoreDB.cc"
+#  "${SIDX_SRC_DIR}/storagemanager/xStoreDB.cc"
 )
 list (APPEND SIDX_CPP ${SIDX_STORAGEMANAGER_CPP})
 

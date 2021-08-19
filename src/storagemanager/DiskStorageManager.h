@@ -59,8 +59,8 @@ namespace SpatialIndex
 			uint32_t m_pageSize;
 			id_type m_nextPage;
 			std::set<id_type> m_emptyPages;
-			std::map<id_type, Entry*> m_pageIndex;
-            std::map<id_type, Entry*> *m_fakepageIndex= nullptr;
+//			std::map<id_type, Entry*> m_pageIndex;
+//            std::map<id_type, Entry*> *m_fakepageIndex= nullptr;
             char* m_rawbuffer; // delete this instead of m_buffer.
 			uint8_t* m_buffer; //aligned buffer
         public:

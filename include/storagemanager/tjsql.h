@@ -11,7 +11,7 @@ using std::string;
 
 /**
  * page table
- * | PAGEID | DATA |
+ * | PAGEID | PAGENUM | APPEND
  */
 /**
 * traj table
@@ -27,9 +27,9 @@ public:
 
 extern thread_local db_thread dbt;
 
-SIDX_DLL bool db_insert_page(int64_t &pageid, uint32_t len, const uint8_t* const data);
+SIDX_DLL bool db_insert_page(int64_t pageid, std::vector<id_type> pages);
 
-SIDX_DLL bool db_load_page(int64_t page, uint32_t& len, uint8_t** data);
+SIDX_DLL std::vector<id_type> db_load_page(int64_t pageid);
 
 SIDX_DLL int64_t db_last_pageid(void);
 
@@ -40,7 +40,7 @@ SIDX_DLL xTrajEntry db_load_traj_entry(int64_t trajid);
 SIDX_DLL int64_t db_last_trajid(void);
 
 SIDX_DLL bool db_create_table();
-SIDX_DLL bool db_drop_table(string name);
+
 
 SIDX_DLL bool conn_init(string path);
 

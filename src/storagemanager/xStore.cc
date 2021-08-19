@@ -529,3 +529,49 @@ istream & SpatialIndex::StorageManager::operator>>(istream &is, xTrajEntry &c) {
     is>>c.m_page>>c.m_npoint;
     return is;
 }
+
+
+xSBBStream::xSBBStream(xStore *p, CUTFUNC f)
+        : m_cutFunc(f),m_pstore(p) {
+    m_isdb = true;
+    m_size = db_last_trajid();
+}
+
+bool xSBBStream::hasNext() {
+    return !m_buf.empty() || (m_isdb && m_id < m_size);
+}
+
+xSBBData *xSBBStream::getNext() {
+    bool isFirst = false;
+    if (m_buf.empty()) {
+        xTrajectory tj;
+        if(!m_isdb)
+            m_pstore->loadTraj(tj, xStoreEntry(m_it->first, 0, m_it->second.m_npoint));
+        else
+        {
+            m_pstore->loadTraj(tj, xStoreEntry(m_numit, 0, 10000000));
+        }
+        m_buf = m_cutFunc(tj);
+        if(!m_isdb) {
+            m_id = m_it->first;
+            m_it++;
+        }else{
+            m_id = m_numit;
+            m_numit ++;
+        }
+        isFirst = true;
+    }
+    auto b = m_buf.front();
+    m_buf.pop();
+    return new xSBBData(m_count++,
+                        xStoreEntry(m_id, b.first.first, b.first.second), b.second, !isFirst, !m_buf.empty());
+}
+
+uint32_t xSBBStream::size() {
+    throw Tools::NotSupportedException("xsbbstream has no size");
+}
+
+void xSBBStream::rewind() {
+    m_id = 0;
+    m_count = 0;
+}

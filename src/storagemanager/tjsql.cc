@@ -57,13 +57,13 @@ bool conn_init(string path){
         sqlite3_busy_timeout(db, 30000);
         db_create_table();
         string sql;
-        sql ="INSERT OR REPLACE INTO page(PAGEID, DATA)"
-                                       " VALUES(?1,?2)";
+        sql ="INSERT OR REPLACE INTO page(PAGEID, PAGENUM, OTHER)"
+                                       " VALUES(?1,?2,?3)";
         rc = sqlite3_prepare(db,sql.c_str(),-1, &stmt_page_insert, NULL);
         if (rc != SQLITE_OK) {
             cerr << sqlite3_errmsg(db) << endl;
         }
-        sql = "SELECT DATA FROM page WHERE PAGEID = ?1";
+        sql = "SELECT PAGENUM, OTHER FROM page WHERE PAGEID = ?1";
         rc = sqlite3_prepare(db,sql.c_str(),-1, &stmt_page_load, NULL);
         if (rc != SQLITE_OK) {
             cerr << sqlite3_errmsg(db) << endl;
@@ -86,7 +86,7 @@ bool conn_init(string path){
 bool db_create_table(){
     int rc;
     string sql =
-            "create table if not exists page(PAGEID INTEGER PRIMARY KEY ASC, DATA BLOB)";
+            "create table if not exists page(PAGEID INTEGER PRIMARY KEY ASC, PAGENUM INT8, OTHER TEXT)";
     rc = sqlite3_exec(db,sql.c_str(),NULL,NULL,NULL);
     if (rc != SQLITE_OK) {
         cerr << "create table " << sqlite3_errmsg(db) << endl;
@@ -100,15 +100,19 @@ bool db_create_table(){
     return true;
 }
 
-bool db_insert_page(int64_t &pageid, uint32_t len, const uint8_t* const data){
+bool db_insert_page(int64_t pageid, std::vector<id_type> pages){
+    return true;
     if(pageid == -1) {
         pageid = db_last_pageid() + 1;
     }
+    if(pages.size()!=1)
+        throw Tools::NotSupportedException("multiple pages not supported");
     int rc = SQLITE_ABORT;
     while(rc !=SQLITE_DONE) {
         rc = sqlite3_reset(stmt_page_insert);
         rc = sqlite3_bind_int64(stmt_page_insert, 1, pageid);
-        rc = sqlite3_bind_blob(stmt_page_insert, 2, data, len, SQLITE_STATIC);
+        rc = sqlite3_bind_int64(stmt_page_insert, 2, pages[0]);
+        rc = sqlite3_bind_null(stmt_page_insert, 3);
         rc = sqlite3_step(stmt_page_insert);
         if (rc != SQLITE_DONE) {
             cerr << "insert page: " << sqlite3_errmsg(db) << endl;
@@ -118,7 +122,10 @@ bool db_insert_page(int64_t &pageid, uint32_t len, const uint8_t* const data){
     return true;
 }
 
-bool db_load_page(int64_t pageid, uint32_t& len, uint8_t** data){
+std::vector<id_type> db_load_page(int64_t pageid){
+    std::vector<id_type> res;
+    res.emplace_back(pageid);
+    return res;
     int rc;
     if(db == NULL) conn_init(dbfile);
     rc = sqlite3_reset(stmt_page_load);
@@ -127,10 +134,13 @@ bool db_load_page(int64_t pageid, uint32_t& len, uint8_t** data){
     if(rc!= SQLITE_ROW) {
         cerr << "load page " << pageid << "failed";
         cerr << sqlite3_errmsg(db) << endl;
+        return res;
     }
-    *data = (unsigned char*) sqlite3_column_blob(stmt_page_load,0);
-    len = sqlite3_column_bytes(stmt_page_load, 0);
-    return true;
+    id_type page;
+    page = sqlite3_column_int(stmt_page_load,0);
+
+    res.emplace_back(page);
+    return res;
 }
 
 int64_t db_last_pageid(void){
