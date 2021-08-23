@@ -212,5 +212,6 @@ xTrajEntry db_load_traj_entry(int64_t trajid){
     }
     res.m_page = sqlite3_column_int64(stmt_traj_load,0);
     res.m_npoint = sqlite3_column_int(stmt_traj_load,1);
+    rc = sqlite3_reset(stmt_traj_load);
     return res;
 }

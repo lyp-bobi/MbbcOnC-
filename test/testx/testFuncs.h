@@ -747,6 +747,7 @@ static queryRet average(vector<queryRet> &sum){
     res.indexIO/=sum.size();
     res.trajIO/=sum.size();
     res.nresult/=sum.size();
+    res.rad/=sum.size();
     return res;
 }
 
@@ -773,6 +774,7 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
     vis.ts = ts;
     auto start = std::chrono::system_clock::now();
     double rad = 0;
+    double stash=0;
     if(inp.type == qt_knn) {
         num = inp.knn_queries.size();
         for (int i = 0; i < inp.knn_queries.size(); i++) {
@@ -781,6 +783,10 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
                 vis.m_query = (IShape *) &(inp.knn_queries.at(i));
                 inp.tree->nearestNeighborQuery(inp.nnk, inp.knn_queries.at(i), vis);
                 rad += vis.m_lastDist;
+
+//                cerr<<vis.m_lastDist<<ts->m_trajIO-stash<<endl;
+//                stash = ts->m_trajIO;
+
             } catch (Tools::Exception &e) {
                 cerr<<"error occurs at query \n "<<inp.knn_queries.at(i)<<endl;
                 cerr << "******ERROR******" << endl;

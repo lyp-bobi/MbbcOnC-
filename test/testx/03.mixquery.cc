@@ -16,8 +16,9 @@ int main(int argc,char *argv[]){
 //        auto queryLen2 =uniform_real_distribution<double>(3600,10800);
 //        auto queryLen3 = uniform_real_distribution<double>(86400,86400*2);
         double count1=0,count2=0,count3=0;
-        queries.emplace_back(x.randomSubtraj(queryLen1(e)));
-//        for (int i = 0; i < testtime; i++) {
+
+        for (int i = 0; i < testtime; i++) {
+            queries.emplace_back(x.randomSubtraj(queryLen1(e)));
 //            int c = uniform_int_distribution<int>(1,3)(e);
 //            switch (c) {
 //                case 1:
@@ -33,7 +34,7 @@ int main(int argc,char *argv[]){
 //                    count3++;
 //                    break;
 //            }
-//        }
+        }
 //        cerr<<count1<<"\t"<<count2<<"\t"<<count3<<"\t";
         vector<int> nnks;
         for(int i=0;i<testtime;i++){
@@ -62,7 +63,7 @@ int main(int argc,char *argv[]){
             SBBFMAP lens;
             lens[make_pair(0,1500)]=600;
             lens[make_pair(1500,4500)]=1800;
-            lens[make_pair(4500,1e300)]=7200;
+            lens[make_pair(4500,1e300)]=2700;
             q.prepareForest(&x,lens,400000);
             q.appendQueries(queries,nnks);
             std::cerr << q.runQueries().toString();

@@ -8,7 +8,7 @@ int main(){
         char a[100];
     };
     cerr<<sizeof(str)<<endl;
-    string target = "tdexpand.datas";
+    string target = "glexpand.datas";
     xStore x(target, testFileName(target), true);
     double seglen[]={600};//900,1200,1800
     xCylinder query(xPoint(40,116.327,6516),0.0001,6516,9516,2);
@@ -30,7 +30,7 @@ int main(){
 
 
     try {
-        for(int i=0;i<100;i++) {
+        for(int i=0;i<10;i++) {
             tj = x.randomSubtraj(3000);
 //            tj.loadFromString("116.329232,39.879030,5029569.186606 116.329230,39.879030,5029643.000000 116.329243,39.879049,5032569.186606");
 //            cerr<<tj.toString()<<endl;
@@ -76,6 +76,7 @@ int main(){
             r->nearestNeighborQuery(6, tj, vis);
             std::cerr << vis.m_resultGet << " " << vis.m_lastResult << endl;
             vis.clear();
+            delete r;
         }
 //        for (auto querylen:querylens) {
 //            tjstat->bt = querylen;

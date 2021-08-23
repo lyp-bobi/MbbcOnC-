@@ -11,10 +11,10 @@ int main(int argc,char *argv[]){
         string target;
         if(argc==1) {
             target = "tdexpand.datas";
-            seglens = {600,900,1200,1800,2700,3600};
+            seglens = {600,900,1200,1500,1800};
         }else {
             target = "glexpand.datas";
-            seglens = {600};
+            seglens = {300,600,900,1200};
         }
         double qt =3600;
         std::cerr<<testFileName(target)<<endl;
