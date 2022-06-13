@@ -19,6 +19,7 @@ using std::endl;
 using std::sqrt;
 
 double splitSoftThres = 0.2;
+thread_local double global_maxe = 0;
 
 xTrajectory::xTrajectory() {
 
@@ -610,7 +611,13 @@ double xTrajectory::line2lineIED(const SpatialIndex::xPoint &p1s, const SpatialI
     prec dys=p1s.m_y-p2s.m_y;
     prec dxe=p1e.m_x-p2e.m_x;
     prec dye=p1e.m_y-p2e.m_y;
-    double ub = (sqrtp(sq(dxs)+sq(dys)) + sqrtp(sq(dxe)+sq(dye)))/2 *(te-ts);
+    double ds = sqrtp(sq(dxs)+sq(dys));
+    double de = sqrtp(sq(dxe)+sq(dye));
+    if(global_maxe < ds)
+        global_maxe = ds;
+    if(global_maxe < de)
+        global_maxe = de;
+    double ub = (ds + de)/2 *(te-ts);
     if(te - ts < dist_sense_thres){
         return ub;
     }
@@ -624,6 +631,13 @@ double xTrajectory::line2lineIED(const SpatialIndex::xPoint &p1s, const SpatialI
     }else{
         return min(ub,(double)(theF(c1,c2,c3,c4,te)-theF(c1,c2,c3,c4,ts)));
     }
+}
+
+double xTrajectory::line2lineMaxSED(const SpatialIndex::xPoint &p1s, const SpatialIndex::xPoint &p1e,
+                                 const SpatialIndex::xPoint &p2s, const SpatialIndex::xPoint &p2e) {
+    double d1 = p1s.getMinimumDistance(p2s);
+    double d2 = p1e.getMinimumDistance(p2e);
+    return max(d1,d2);
 }
 
 double xTrajectory::line2lineIEDA(const SpatialIndex::xPoint &p1s, const SpatialIndex::xPoint &p1e,
@@ -925,21 +939,7 @@ double xTrajectory::getMinimumDistance(const SpatialIndex::xTrajectory &in) cons
     double sum=0;
     double max=0;
     fakeTpVector midTraj(&m_points,cut1,cut2);
-    if(m_startTime()<cut1){
-        double pd;
-        pd= getStaticIED(timedTraj2[0].m_x, timedTraj2[0].m_y, m_startTime(), cut1);
-        sum += pd;
-        //test code
-//        std::cerr<<cut1<<" "<<pd<<endl;
-    }
-    if(m_endTime()>cut2){
-        double pd;
-        pd= getStaticIED(timedTraj2[timedTraj2.m_size - 1].m_x,
-                         timedTraj2[timedTraj2.m_size - 1].m_y, cut2, m_endTime());
-        sum += pd;
-        //test code
-//        std::cerr<<m_endTime()<<" "<<pd<<endl;
-    }
+    double maxe = 0;
     if(midTraj.m_size!=0) {
         double newtime = midTraj[0].m_t, lasttime = midTraj[0].m_t;
         auto iter1 = midTraj.m_vectorPointer->begin()+midTraj.m_is;
@@ -975,7 +975,11 @@ double xTrajectory::getMinimumDistance(const SpatialIndex::xTrajectory &in) cons
                 iter2++;
             }
             lasttime = newtime;
+
             double pd = line2lineIED(lastp1, newp1, lastp2, newp2);
+            double mindd = line2lineMaxSED(lastp1, newp1, lastp2, newp2);
+            if(mindd > maxe)
+                maxe = mindd;
 //                std::cerr<<"distance\n"<<lastp1<<"\t"<<newp1<<"\n"<<lastp2<<"\t"<<newp2<<"\n"<<pd<<"\n";
             sum += pd;
             //test code
@@ -984,11 +988,27 @@ double xTrajectory::getMinimumDistance(const SpatialIndex::xTrajectory &in) cons
             lastp2 = newp2;
         }
     }
+    global_maxe = maxe;
+    if(m_startTime()<cut1){
+        double pd;
+        pd= getStaticIED(timedTraj2[0].m_x, timedTraj2[0].m_y, m_startTime(), cut1, maxe);
+        sum += pd;
+        //test code
+//        std::cerr<<cut1<<" "<<pd<<endl;
+    }
+    if(m_endTime()>cut2){
+        double pd;
+        pd= getStaticIED(timedTraj2[timedTraj2.m_size - 1].m_x,
+                         timedTraj2[timedTraj2.m_size - 1].m_y, cut2, m_endTime(), maxe);
+        sum += pd;
+        //test code
+//        std::cerr<<m_endTime()<<" "<<pd<<endl;
+    }
     return sum;
 }
 
 
-double xTrajectory::getStaticIED(double x, double y, double t1, double t2) const {
+double xTrajectory::getStaticIED(double x, double y, double t1, double t2, double maxe) const {
     double tstart, tend;
     tstart = std::max(m_startTime(), t1);
     tend = std::min(m_endTime(), t2);
@@ -999,22 +1019,36 @@ double xTrajectory::getStaticIED(double x, double y, double t1, double t2) const
     for (int i = 0; i < timedTraj.m_size-1; i++) {
         ps.m_t=timedTraj[i].m_t;
         pe.m_t=timedTraj[i+1].m_t;
-        double pd = line2lineIED(timedTraj[i], timedTraj[i + 1], ps, pe);
-        sum += pd;
+        if(ps.getMinimumDistance(timedTraj[i]) < maxe || pe.getMinimumDistance(timedTraj[i + 1]) < maxe)
+            sum += maxe * (timedTraj[i + 1].m_t - timedTraj[i].m_t); //an approxiamation
+        else {
+            double pd = line2lineIED(timedTraj[i], timedTraj[i + 1], ps, pe);
+            sum += pd;
+        }
     }
     return sum;
 }
 
 
-double xTrajectory::getStaticIED(SpatialIndex::xMBR in,double ints, double inte) const {
-    assert(ints>=m_startTime()&&inte<=m_endTime());
+double xTrajectory::getStaticIED(SpatialIndex::xMBR in,double ints, double inte, double maxe) const {
+    if(ints>=m_startTime()&&inte<=m_endTime())
+    {
+        return 0;
+    }
     in.m_tmin=ints;
     in.m_tmax=inte;
     fakeTpVector timedTraj(&m_points,ints,inte);
     double sum = 0;
     for (int i = 0; i < timedTraj.m_size-1; i++) {
-        double pd = line2MBRDistance(timedTraj[i],timedTraj[i+1],in).opt;
-        sum+=pd;
+        double ds = in.getMinimumDistance(timedTraj[i]);
+        double de = in.getMinimumDistance(timedTraj[i+1]);
+        if(ds < maxe || de < maxe)
+            sum += maxe * (timedTraj[i + 1].m_t - timedTraj[i].m_t); //an approxiamation
+        else {
+            double pd = line2MBRDistance(timedTraj[i], timedTraj[i + 1],
+                                         in).opt;
+            sum += pd;
+        }
     }
     return sum;
 }
@@ -1042,6 +1076,7 @@ DISTE xTrajectory::sbbDist(const xSBB &b) const {
     if(tstart>=tend) return DISTE(1e300);
     fakeTpVector timedTraj(&m_points,tstart,tend);
     DISTE res;
+    global_maxe = 0;
     if(b.hasbr){
         for (int i = 0; i < timedTraj.m_size-1; i++) {
             res = res + line2MBRDistance(timedTraj[i], timedTraj[i + 1], b.br);
@@ -1102,23 +1137,23 @@ DISTE xTrajectory::gapDist(const xSBB &prev,const xSBB &next, double v) const{
 }
 
 
-DISTE xTrajectory::frontDistStatic(const xSBB &b) const {
+DISTE xTrajectory::frontDistStatic(const xSBB &b, double maxe) const {
     if(b.hasbc) {
-        return DISTE(getStaticIED(b.bc.m_ps.m_x, b.bc.m_ps.m_y, m_startTime(), b.bc.m_ps.m_t));
+        return DISTE(getStaticIED(b.bc.m_ps.m_x, b.bc.m_ps.m_y, m_startTime(), b.bc.m_ps.m_t, maxe));
     } else if (b.hasbl){
-        return DISTE(getStaticIED(b.bl.m_ps.m_x, b.bl.m_ps.m_y, m_startTime(), b.bl.m_ps.m_t));
+        return DISTE(getStaticIED(b.bl.m_ps.m_x, b.bl.m_ps.m_y, m_startTime(), b.bl.m_ps.m_t, maxe));
     }else{
-        return DISTE(getStaticIED(b.br,m_startTime(),b.br.m_tmin));
+        return DISTE(getStaticIED(b.br, m_startTime(), b.br.m_tmin, maxe));
     }
 }
 
-DISTE xTrajectory::backDistStatic(const xSBB &b) const {
+DISTE xTrajectory::backDistStatic(const xSBB &b, double maxe) const {
     if(b.hasbc) {
-        return DISTE(getStaticIED(b.bc.m_pe.m_x, b.bc.m_pe.m_y, b.bc.m_pe.m_t, m_endTime()));
+        return DISTE(getStaticIED(b.bc.m_pe.m_x, b.bc.m_pe.m_y, b.bc.m_pe.m_t, m_endTime(), maxe));
     } else if (b.hasbl){
-        return DISTE(getStaticIED(b.bl.m_pe.m_x, b.bl.m_pe.m_y, b.bl.m_pe.m_t, m_endTime()));
+        return DISTE(getStaticIED(b.bl.m_pe.m_x, b.bl.m_pe.m_y, b.bl.m_pe.m_t, m_endTime(), maxe));
     }else{
-        return DISTE(getStaticIED(b.br,b.br.m_tmax, m_endTime()));
+        return DISTE(getStaticIED(b.br, b.br.m_tmax, m_endTime(), maxe));
     }
 }
 
@@ -1154,12 +1189,12 @@ DISTE xTrajectory::gapDist(const xPoint &prev,const xPoint &next, double v) cons
 }
 
 
-DISTE xTrajectory::frontDistStatic(const xPoint &b) const {
-    return DISTE(getStaticIED(b.m_x, b.m_y, m_startTime(), b.m_t));
+DISTE xTrajectory::frontDistStatic(const xPoint &b, double maxe) const {
+    return DISTE(getStaticIED(b.m_x, b.m_y, m_startTime(), b.m_t, maxe), 1e200, false);
 }
 
-DISTE xTrajectory::backDistStatic(const xPoint &b) const {
-    return DISTE(getStaticIED(b.m_x, b.m_y, b.m_t, m_endTime()));
+DISTE xTrajectory::backDistStatic(const xPoint &b, double maxe) const {
+    return DISTE(getStaticIED(b.m_x, b.m_y, b.m_t, m_endTime(), maxe), 1e200, false);
 }
 
 
@@ -1419,9 +1454,32 @@ queue<CUTENTRY> xTrajectory::ISS(xTrajectory &traj, double len) {
     return res;
 }
 
-queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj, double len) {
-    vector<xPoint> seg;
+int xTrajectory::locate_time_cut(double t, int dir) {
+    int i=0;
+    while(m_points[i].m_t<t&&i<=m_points.size()-1) i++;
+    if(i==0) return 0;
+    if(i==m_points.size()) return m_points.size() -1;
+    i--;
+    if(m_points[i].m_t==t||dir<0) return i;
+    i++;
+    return i;
+}
+
+static queue<CUTENTRY> pack_entry(xTrajectory &traj, vector<xTrajectory> &sub)
+{
     queue<CUTENTRY> res;
+    for(auto &s:sub){
+        res.push(make_pair(make_pair(
+                traj.locate_time_cut(s.m_startTime(), -1),
+                traj.locate_time_cut(s.m_endTime(), 1))
+                ,subtrajToSBB(s)));
+    }
+    return res;
+}
+
+static vector<xTrajectory> gss_impl(xTrajectory &traj, double len){
+    vector<xPoint> seg;
+    vector<xTrajectory> res;
     xTrajectory subtraj;
     bool fakehead=false,fakeback=false;
     int ms=0,me=0;
@@ -1444,8 +1502,7 @@ queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj, double len) {
                 seg.emplace_back(traj.m_points[i]);
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i;
-                res.push(make_pair(make_pair(ms,me)
-                        ,subtrajToSBB(subtraj)));
+                res.emplace_back(subtraj);
                 ms = i;
                 fakehead = false;
                 seg.clear();
@@ -1456,8 +1513,7 @@ queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj, double len) {
                 //previous point is acceptable, so choose it.
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i-1;
-                res.push(make_pair(make_pair(ms,me)
-                        ,subtrajToSBB(subtraj)));
+                res.emplace_back(subtraj);
                 ms = i-1;
                 fakehead=false;
                 seg.clear();
@@ -1467,8 +1523,7 @@ queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj, double len) {
                 seg.emplace_back(traj.m_points[i]);
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i;
-                res.push(make_pair(make_pair(ms,me)
-                        ,subtrajToSBB(subtraj)));
+                res.emplace_back(subtraj);
                 ms = i;
                 seg.emplace_back(traj.m_points[i]);
                 fakehead=false;
@@ -1481,8 +1536,7 @@ queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj, double len) {
                 seg.emplace_back(mid);
                 subtraj=xTrajectory(fakehead, fakeback, seg);
                 me=i;
-                res.push(make_pair(make_pair(ms,me)
-                        ,subtrajToSBB(subtraj)));
+                res.emplace_back(subtraj);
                 ms = i-1;
                 fakehead=true;
                 seg.clear();
@@ -1495,11 +1549,15 @@ queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj, double len) {
     if(seg.size()>1){
         me=traj.m_points.size()-1;
         subtraj=xTrajectory(fakehead, false, seg);
-        res.push(make_pair(make_pair(ms,me)
-                ,subtrajToSBB(subtraj)));
+        res.emplace_back(subtraj);
         seg.clear();
     }
     return res;
+}
+
+queue<CUTENTRY> xTrajectory::GSS(xTrajectory &traj, double len) {
+    auto subtrajs = gss_impl(traj,len);
+    return pack_entry(traj, subtrajs);
 }
 
 queue<pair<pair<int, int>, xSBB> > xTrajectory::OPTS(xTrajectory &traj, double len) {
@@ -1509,7 +1567,8 @@ queue<pair<pair<int, int>, xSBB> > xTrajectory::OPTS(xTrajectory &traj, double l
         res.emplace( make_pair(make_pair(0,int(traj.m_points.size()-1)), subtrajToSBB(traj)));
         return res;
     }
-    int seg1 = std::min(std::ceil(sqrt(segNum)), std::ceil(sqrt(traj.m_points.size()-1)));
+    int seg1 = std::min(std::ceil(segNum/5), std::ceil(sqrt(traj.m_points.size()-1)));
+
     auto m=simplifyWithRDPN(traj.m_points,seg1);
     int pointPrev=0;
     for(auto &pts:m)
@@ -1527,6 +1586,8 @@ queue<pair<pair<int, int>, xSBB> > xTrajectory::OPTS(xTrajectory &traj, double l
     }
     return res;
 }
+
+
 
 queue<CUTENTRY> xTrajectory::FP(xTrajectory &traj, double np) {
     int ms;
@@ -1594,3 +1655,25 @@ queue<pair<pair<int, int>, xSBB> > xTrajectory::RDP(xTrajectory &traj, double le
     }
     return res;
 }
+
+//queue<pair<pair<int, int>, xSBB> > xTrajectory::OPTS(xTrajectory &traj, double len) {
+//    vector<xTrajectory> res,subres;
+//    auto subtrajs = gss_impl(traj, 8*len);
+//    //for each part, gss or opts
+//    for(auto &s:subtrajs){
+//        subres.clear();
+//        if(s.m_points.size()<16){
+//            subres =  gss_impl(s,len);
+//            for(auto &subtj:subres)
+//            {
+//                res.emplace_back(subtj);
+//            }
+//        }else{
+//            std::vector<std::vector<SpatialIndex::xPoint>> m=simplifyWithRDPN(s.m_points,8);
+//            for(auto &pts:m) {
+//                res.emplace_back(xTrajectory(pts));
+//            }
+//        }
+//    }
+//    return pack_entry(traj,res);
+//}

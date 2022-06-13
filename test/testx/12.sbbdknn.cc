@@ -11,10 +11,10 @@ int main(int argc,char *argv[]){
         vector<double> seglens;
         if(argc==1) {
             target = "tdexpand.datas";
-            seglens = {600,900,1200,1800,2700,3600};
+            seglens = {1200};
         }else {
             target = "glexpand.datas";
-            seglens = {100,200,300,600,900,1200,1800,2700};
+            seglens = {1200};
         }
         cerr<<"seglen: ";
         for(auto len:seglens){cerr<<len<<" ";}

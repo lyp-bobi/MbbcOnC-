@@ -22,6 +22,7 @@ using namespace SpatialIndex;
 
 extern double splitSoftThres;
 extern thread_local double dist_sense_thres;
+extern thread_local double global_maxe;
 
 namespace SpatialIndex
 {
@@ -152,6 +153,7 @@ namespace SpatialIndex
         static double line2lineIED(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
         static double line2lineIEDA(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
         static double line2lineMinSED(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
+        static double line2lineMaxSED(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
         static DISTE line2MBRDistance(const xPoint &ps,const xPoint &pe,const xMBR &r);
         static double line2MBRIED_impl(const xPoint &ps, const xPoint &pe, const xMBR &r, int sr);
         static double line2MBRMinSED(const xPoint &ps, const xPoint &pe, const xMBR &r);
@@ -161,8 +163,8 @@ namespace SpatialIndex
         static DISTE line2MBCDistance(const xPoint &ps,const xPoint &pe,const xMBC &r);
         static DISTE line2MBLDistance(const xPoint &ps,const xPoint &pe,const xLine &r);
 
-        double getStaticIED(double x, double y, double t1, double t2) const;
-        double getStaticIED(SpatialIndex::xMBR in,double ints, double inte) const;
+        double getStaticIED(double x, double y, double t1, double t2, double maxe) const;
+        double getStaticIED(SpatialIndex::xMBR in,double ints, double inte, double maxe) const;
         double getMinimumDistance(const SpatialIndex::xTrajectory &in) const;
 
         double nodeDist(const xSBB &b) const;
@@ -171,14 +173,14 @@ namespace SpatialIndex
         DISTE frontDist(const xSBB &b, double vmax) const;
         DISTE backDist(const xSBB &b, double vmax) const;
         DISTE gapDist(const xSBB &prev,const xSBB &next, double vmax) const;
-        DISTE frontDistStatic(const xSBB &b) const;
-        DISTE backDistStatic(const xSBB &b) const;
+        DISTE frontDistStatic(const xSBB &b, double maxe) const;
+        DISTE backDistStatic(const xSBB &b, double maxe) const;
 
         DISTE frontDist(const xPoint &b, double vmax) const;
         DISTE backDist(const xPoint &b, double vmax) const;
         DISTE gapDist(const xPoint &prev,const xPoint &next, double vmax) const;
-        DISTE frontDistStatic(const xPoint &b) const;
-        DISTE backDistStatic(const xPoint &b) const;
+        DISTE frontDistStatic(const xPoint &b, double maxe) const;
+        DISTE backDistStatic(const xPoint &b, double maxe) const;
 
 
         virtual bool intersectsxMBR(const xMBR& in) const;
@@ -200,9 +202,10 @@ namespace SpatialIndex
         std::vector<xTrajectory> getGlobalSegmentsCut(double len) const;
         std::vector<xTrajectory> getItself() const;
 
+        int locate_time_cut(double t, int dir);
         static queue<CUTENTRY> ISS(xTrajectory &traj, double len);
         static queue<CUTENTRY> GSS(xTrajectory &traj, double len);
-        static queue<CUTENTRY> OPTS(xTrajectory &traj, double len);
+        static queue<CUTENTRY> OPTS(xTrajectory &traj, double len1);
         static queue<CUTENTRY> FP(xTrajectory &traj, double np);
         static queue<CUTENTRY> RDP(xTrajectory &traj, double len);
         static queue<CUTENTRY> EveryLine(xTrajectory &traj);

@@ -974,7 +974,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
         std::map<id_type, int> insertedTrajId;
         while (!ps.empty()) {
             iternum++;
-            if(iternum>100000) break; /*avoid memory leak,force stop*/
+            if(iternum>10000) break; /*avoid memory leak,force stop*/
             NNEntry *pFirst;
             if(btopnode) {
                 pFirst = ps.nodetop();
@@ -1066,9 +1066,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
 //                std::cerr<<"trajIO"<<m_ts->m_trajIO<<"\n";
 //                std::cerr<<"getTraj"<<traj<<"\n";
 //                xTrajectory traj = m_ts->getTrajByTime(pFirst->m_id, queryTraj->m_startTime(), queryTraj->m_endTime());
-                        double di = queryTraj->getMinimumDistance(traj);
-                        ps.push(new NNEntry(pFirst->m_id, DISTE(di), 4));
-                        cerr<<"debug "<<pFirst->m_dist.opt<<"\t"<<di<<"\n"<<traj.toString()<<"\n";
+                        ps.push(new NNEntry(pFirst->m_id, DISTE(queryTraj->getMinimumDistance(traj)), 4));
                         delete pFirst;
                         break;
                     }

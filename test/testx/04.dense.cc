@@ -34,10 +34,22 @@ int main(int argc,char *argv[]){
 //            std::cerr << q.runQueries().toString();
 //        }
         for (auto len:seglens) {
-            MTQ q;
-            q.prepareTrees(&x, [&len,&idxnum](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, len,idxnum); });
-            q.appendQueries(queries);
-            std::cerr << q.runQueries().toString();
+            {
+                MTQ q;
+                q.prepareTrees(&x, [&len, &idxnum](auto x) {
+                    return buildMBCRTreeWP(x, xTrajectory::OPTS, len, idxnum);
+                });
+                q.appendQueries(queries);
+                std::cerr << q.runQueries().toString();
+            }
+//            {
+//                MTQ q;
+//                q.prepareTrees(&x, [&len, &idxnum](auto x) {
+//                    return buildMBRRTreeWP(x, xTrajectory::OPTS, len, idxnum);
+//                });
+//                q.appendQueries(queries);
+//                std::cerr << q.runQueries().toString();
+//            }
         }
     }
 }

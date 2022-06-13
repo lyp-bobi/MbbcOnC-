@@ -37,7 +37,6 @@
 #include <unordered_set>
 
 extern bool bulkloadt;
-extern bool partstoreskip;
 //#define SKIPMAXSPEED
 
 namespace SpatialIndex
@@ -344,9 +343,13 @@ namespace SpatialIndex
                             ts(s),te(e),d(dd){}
                 };
                 PartsStore* m_ps;
+#ifndef NDEBUG
+                vector<xSBB> m_sbbs;
+#endif
                 std::unordered_set<id_type> m_missingLeaf;
                 std::vector<xSBB> m_UCsbbs;
                 std::list<slab> m_line;
+                xSBB m_firstsbb, m_lastsbb;
                 std::map<std::pair<double,double>,DISTE> m_computedDist;
                 std::map<double,xStoreEntry> m_ses;
                 DISTE m_calcMin=DISTE(0,1e300,true);
@@ -354,6 +357,7 @@ namespace SpatialIndex
                 bool m_hasPrev=true,m_hasNext=true;
                 double m_computedTime=0,m_loadedTime=0;
                 bool is_modified = true;
+                double m_maxe = 0;
                 Parts(PartsStore* ps= nullptr){
                     m_ps = ps;
                     m_line.emplace_back(slab(ps->m_simpquery.m_startTime(), ps->m_simpquery.m_endTime()));
@@ -448,6 +452,8 @@ namespace SpatialIndex
                 double m_mintime=1e300,m_maxtime=-1e300;
                 bool m_hasPrev=true,m_hasNext=true;
                 double m_computedTime=0,m_loadedTime=0;
+                double m_maxe = 0;
+
                 Parts(PartsStoreBFMST* ps= nullptr):m_ps(ps){}
                 void insert(xTrajectory &r,id_type prev,id_type next,xStoreEntry &entry){
                     if(m_pTrajs.empty()) m_pTrajs.emplace_back(r);

@@ -78,7 +78,10 @@ namespace SpatialIndex
 	    explicit DISTE(double optimistic,double pessimistic, bool isinferred)
 	    {
 #ifndef NDEBUG
-	        assert(optimistic<=pessimistic);
+	        if(optimistic>pessimistic)
+            {
+	            throw Tools::IllegalStateException("optimistic>pessimistic");
+            }
 #endif
 	        opt=optimistic;pes=pessimistic;infer=isinferred;
 	    }
@@ -373,6 +376,7 @@ namespace SpatialIndex
 			vmax=0;
 		}
 		void usedata(string str){
+		    cerr<<toString()<<endl;
 			dataset = str;
             if (dataset == "glexpand"){
                 dataset="gl";

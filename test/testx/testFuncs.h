@@ -66,8 +66,8 @@ extern int NUMTHREAD=NUMCORE;
 extern double testtime = 100;
 #else
 #define NUMCORE 4
-extern double testtime = 1200;
-extern int NUMTHREAD= 3 * NUMCORE;
+extern double testtime = 500;
+extern int NUMTHREAD= 2 * NUMCORE;
 #endif
 extern bool testxfirstOutput = true;
 
