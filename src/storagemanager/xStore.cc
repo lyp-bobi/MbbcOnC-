@@ -262,6 +262,7 @@ xStore::xStore(string myname, string file, bool bsubtraj, bool forceNew)
                 tj.loadFromString(str);
                 //test code
 //                std::cerr<<"test id"<<id<<endl;
+
                 if (tj.m_points.size() >= 2) {
                     int rem = tj.m_points.size();
                     int cur = 0;

@@ -23,6 +23,7 @@ using namespace SpatialIndex;
 extern double splitSoftThres;
 extern thread_local double dist_sense_thres;
 extern thread_local double global_maxe;
+extern thread_local double global_rdpn_ed;
 
 namespace SpatialIndex
 {

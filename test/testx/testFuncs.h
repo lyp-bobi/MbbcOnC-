@@ -66,8 +66,8 @@ extern int NUMTHREAD=NUMCORE;
 extern double testtime = 100;
 #else
 #define NUMCORE 4
-extern double testtime = 500;
-extern int NUMTHREAD= 2 * NUMCORE;
+extern double testtime = 600;
+extern int NUMTHREAD= 3 * NUMCORE;
 #endif
 extern bool testxfirstOutput = true;
 
@@ -129,7 +129,7 @@ public:
         if(mou!=nullptr){
             m_lastDist=mou->m_dist;
 #if !defined(NDEBUG) || defined(TJDEBUG)
-            cerr <<"result" << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
+//            cerr <<"result" << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
 #endif
         }
     }

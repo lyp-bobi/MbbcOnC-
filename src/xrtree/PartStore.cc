@@ -68,11 +68,11 @@ DISTE PartsStore::updateValue(id_type id,bool Inqueue) {
     if(type == 3) {
         if (parts->m_firstsbb.m_startTime > m_simpquery.m_startTime())
         {
-            parts->m_line.front().d.opt = m_simpquery.frontDistStatic(parts->m_firstsbb, parts->m_maxe).opt;
+            parts->m_line.front().d.opt = m_simpquery.frontDistStatic(parts->m_firstsbb, parts->m_maxe - m_ederror).opt;
         }
         if (parts->m_lastsbb.m_endTime < m_simpquery.m_endTime())
         {
-            parts->m_line.back().d.opt = m_simpquery.backDistStatic(parts->m_lastsbb, parts->m_maxe).opt;
+            parts->m_line.back().d.opt = m_simpquery.backDistStatic(parts->m_lastsbb, parts->m_maxe - m_ederror).opt;
         }
     }
 
@@ -415,9 +415,10 @@ void PartsStore::Parts::putSBB(xSBB& b) {
     double e=min(m_ps->m_simpquery.m_endTime(), b.m_endTime);
     auto it = m_line.begin();
     while(it != m_line.end() && (it->ts >= e || it->te <= s)) it++;
-    if(b.m_startTime<m_ps->m_simpquery.m_startTime()) m_firstsbb = b;
-    if(b.m_endTime> m_ps->m_simpquery.m_endTime()) m_lastsbb = b;
+    if(b.m_startTime<=m_ps->m_simpquery.m_startTime()) m_firstsbb = b;
+    if(b.m_endTime>= m_ps->m_simpquery.m_endTime()) m_lastsbb = b;
     if(it->ts==s&&it->te==e){
+        global_maxe = 0;
         it->d=m_ps->m_simpquery.sbbDist(b);
         if(global_maxe>m_maxe)
             m_maxe=global_maxe;
@@ -464,6 +465,7 @@ void PartsStore::Parts::putSBB(xSBB& b) {
         lit--;
         if(lit != m_line.end() && !lit->d.infer && lit != m_line.begin()){ //prevent the first
             lit->te= e;
+            global_maxe = 0;
             lit->d+=m_ps->m_simpquery.sbbDist(b);
             if(global_maxe>m_maxe)
                 m_maxe=global_maxe;
@@ -476,6 +478,7 @@ void PartsStore::Parts::putSBB(xSBB& b) {
         auto nnit = nit++;
         if(nit != m_line.end() && !nit->d.infer && nnit != m_line.end()){//prevent the last
             nit->ts= s;
+            global_maxe = 0;
             nit->d+=m_ps->m_simpquery.sbbDist(b);
             if(global_maxe>m_maxe)
                 m_maxe=global_maxe;
@@ -485,6 +488,7 @@ void PartsStore::Parts::putSBB(xSBB& b) {
     }
     it->ts=s;
     it->te=e;
+    global_maxe = 0;
     it->d=m_ps->m_simpquery.sbbDist(b);
     if(global_maxe>m_maxe)
         m_maxe=global_maxe;

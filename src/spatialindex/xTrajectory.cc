@@ -313,7 +313,7 @@ std::vector<SpatialIndex::xPoint> xTrajectory::simplifyWithRDP(const std::vector
         return r;
     }
 }
-
+thread_local double global_rdpn_ed;
 std::vector<std::vector<SpatialIndex::xPoint>> xTrajectory::simplifyWithRDPN(const std::vector<SpatialIndex::xPoint> &Points,
                                                                              int numPart){
     if(Points.size()<numPart+1){  //base case 1
@@ -332,6 +332,7 @@ std::vector<std::vector<SpatialIndex::xPoint>> xTrajectory::simplifyWithRDPN(con
                 md=maxDistance;
             }
         }
+        global_rdpn_ed = md.second;
         if(md.second==0) break;
         int placeIndex=md.first;
         vector<SpatialIndex::xPoint> *p=&paths[pathIndex];
@@ -1031,10 +1032,12 @@ double xTrajectory::getStaticIED(double x, double y, double t1, double t2, doubl
 
 
 double xTrajectory::getStaticIED(SpatialIndex::xMBR in,double ints, double inte, double maxe) const {
+#ifndef NDEBUG
     if(ints>=m_startTime()&&inte<=m_endTime())
     {
-        return 0;
+        throw Tools::IllegalStateException("ints>=m_startTime()&&inte<=m_endTime()");
     }
+#endif
     in.m_tmin=ints;
     in.m_tmax=inte;
     fakeTpVector timedTraj(&m_points,ints,inte);
@@ -1076,7 +1079,6 @@ DISTE xTrajectory::sbbDist(const xSBB &b) const {
     if(tstart>=tend) return DISTE(1e300);
     fakeTpVector timedTraj(&m_points,tstart,tend);
     DISTE res;
-    global_maxe = 0;
     if(b.hasbr){
         for (int i = 0; i < timedTraj.m_size-1; i++) {
             res = res + line2MBRDistance(timedTraj[i], timedTraj[i + 1], b.br);

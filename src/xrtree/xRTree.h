@@ -372,6 +372,7 @@ namespace SpatialIndex
             xTrajectory m_simpquery;
             xTrajectory m_exactquery;
             double m_error;
+
             xStore* m_ts;
             poppq m_pes;
             std::unordered_set<id_type> m_except;
@@ -385,6 +386,7 @@ namespace SpatialIndex
             DISTE updateValue(id_type id,bool Inqueue=true) ;
 
         public:
+            double m_ederror=0;
             string explain(id_type id){
                 stringstream  ss;
                 auto s =m_parts[id];

@@ -4,7 +4,7 @@
 #include "testFuncs.h"
 
 int main(int argc,char *argv[]){
-    double seglens[] = {5,10,20,40,80,160};
+    double seglens[] = {20}; // 5,10,20,40,80,160
     cerr<<"seglen: ";
     for(auto len:seglens){cerr<<len<<" ";}
     cerr<<endl;

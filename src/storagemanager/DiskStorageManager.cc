@@ -44,9 +44,9 @@
 #ifdef WIN32
 #define COPENFLG O_RDONLY
 #else
-#define COPENFLG O_RDONLY
-//#define NEW_READ_STYLE
-//#define COPENFLG (O_RDONLY|O_DIRECT)
+//#define COPENFLG O_RDONLY
+#define NEW_READ_STYLE
+#define COPENFLG (O_RDONLY|O_DIRECT)
 #endif
 
 using namespace SpatialIndex;

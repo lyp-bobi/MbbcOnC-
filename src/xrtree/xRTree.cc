@@ -931,17 +931,18 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
     const xTrajectory *queryTraj= &query;
     xTrajectory simpleTraj;
     xTrajectory ssTraj;
-    double delta=0, ssdelta= 0;
+    double delta=0, ssdelta= 0, maxeddelta =0;
     dist_sense_thres = (queryTraj->m_endTime() - queryTraj->m_startTime())/ 10;
     if(m_bUsingSBBD&& m_bUsingSimp && m_bStoringLinks) {
         vector<xPoint> simpp;
-        int segnum = std::floor((queryTraj->m_endTime() - queryTraj->m_startTime()) / (tjstat->bt));
-        if (segnum * 2 < queryTraj->m_points.size()){
+        int segnum = std::ceil((queryTraj->m_endTime() - queryTraj->m_startTime()) / (tjstat->bt));
+        if (segnum /5 < queryTraj->m_points.size() || queryTraj->m_points.size() <10){
             simpleTraj = *queryTraj;
         }else {
             vector<vector<xPoint>> simpseg;
             simpseg = xTrajectory::simplifyWithRDPN(queryTraj->m_points,
-                                                    std::min(segnum, int(std::sqrt(queryTraj->m_points.size()))));
+                                                    segnum);
+            maxeddelta = global_rdpn_ed;
             for (const auto &s:simpseg) {
                 simpp.emplace_back(s.front());
             }
@@ -967,6 +968,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
     /*SBB-Driven*/
     if(m_bUsingSBBD == true && m_bStoringLinks) {
         PartsStore ps(query,simpleTraj, delta, this,k);
+        ps.m_ederror = maxeddelta;
         ps.push(new NNEntry(m_rootID, DISTE(0), 0));
 
         uint32_t count = 0;
@@ -974,7 +976,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &query, IVisitor
         std::map<id_type, int> insertedTrajId;
         while (!ps.empty()) {
             iternum++;
-            if(iternum>10000) break; /*avoid memory leak,force stop*/
+            if(iternum>1000000) break; /*avoid memory leak,force stop*/
             NNEntry *pFirst;
             if(btopnode) {
                 pFirst = ps.nodetop();
