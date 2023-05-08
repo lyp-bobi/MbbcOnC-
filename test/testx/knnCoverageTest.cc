@@ -19,7 +19,7 @@ int main(){
     MyVisitor vis;
     try {
         for(auto sl:segLens) {
-            CUTFUNC f=[](auto tj){return xTrajectory::OPTS(tj,tjstat->bt);};
+            CUTFUNC f=[](auto tj){return xTrajectory::GSS(tj,tjstat->bt);};
             for (auto qs:querySets) {
                 for (auto querylen:segLens) {
                     xRP r(buildMBCRTreeWP(&x, xTrajectory::ISS,sl));

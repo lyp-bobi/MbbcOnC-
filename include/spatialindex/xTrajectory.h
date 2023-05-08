@@ -12,7 +12,6 @@
 
 #define random(x, y) (rand()%(y-x+1)+x)
 
-
 #define bip auto start = std::chrono::system_clock::now();
 #define bbip auto end = std::chrono::system_clock::now();auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);calcuTime[testPhase]+=double(duration.count()) * std::chrono::microseconds::period::num/ std::chrono::microseconds::period::den;
 using std::vector;
@@ -22,8 +21,17 @@ using namespace SpatialIndex;
 
 extern double splitSoftThres;
 extern thread_local double dist_sense_thres;
-extern thread_local double global_maxe;
 extern thread_local double global_rdpn_ed;
+extern int TIME_SLAB;
+//#define TJDEBUG
+
+enum supported_distance{
+    IED = 0,
+    RMDTW = 1,
+    SDDTW = 2
+};
+extern supported_distance current_distance;
+
 
 namespace SpatialIndex
 {
@@ -152,36 +160,31 @@ namespace SpatialIndex
         virtual double getMinimumDistance(const IShape& in) const;
 
         static double line2lineIED(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
-        static double line2lineIEDA(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
         static double line2lineMinSED(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
-        static double line2lineMaxSED(const xPoint &p1s, const xPoint &p1e, const xPoint &p2s, const xPoint &p2e);
-        static DISTE line2MBRDistance(const xPoint &ps,const xPoint &pe,const xMBR &r);
+        static DISTE line2MBRIED(const xPoint &ps, const xPoint &pe, const xMBR &r);
         static double line2MBRIED_impl(const xPoint &ps, const xPoint &pe, const xMBR &r, int sr);
         static double line2MBRMinSED(const xPoint &ps, const xPoint &pe, const xMBR &r);
-        static double line2MBRMinSED_approx(const xPoint &ps, const xPoint &pe, const xMBR &r);
-        static double line2MBRMaxSED(const xPoint &ps, const xPoint &pe, const xMBR &r);
         static double line2MBRMinSED_impl(const xPoint &ps, const xPoint &pe, const xMBR &r, int sr);
-        static DISTE line2MBCDistance(const xPoint &ps,const xPoint &pe,const xMBC &r);
-        static DISTE line2MBLDistance(const xPoint &ps,const xPoint &pe,const xLine &r);
+        static DISTE line2MBCIED(const xPoint &ps, const xPoint &pe, const xMBC &r);
+        static DISTE line2MBLIED(const xPoint &ps, const xPoint &pe, const xLine &r);
 
-        double getStaticIED(double x, double y, double t1, double t2, double maxe) const;
-        double getStaticIED(SpatialIndex::xMBR in,double ints, double inte, double maxe) const;
+        double getStaticDistance(double x, double y, double t1, double t2) const;
+        double getStaticDistance(SpatialIndex::xMBR in, double ints, double inte) const;
         double getMinimumDistance(const SpatialIndex::xTrajectory &in) const;
+        DISTE getPartialRMDTW(const SpatialIndex::xTrajectory &parttraj) const;
 
+        int nPointDuring(double tmin, double tmax) const;
         double nodeDist(const xSBB &b) const;
         DISTE sbbDist(const xSBB &b) const;
-        DISTE sbbDistInfer(const xSBB &b, double vmax) const;
         DISTE frontDist(const xSBB &b, double vmax) const;
         DISTE backDist(const xSBB &b, double vmax) const;
         DISTE gapDist(const xSBB &prev,const xSBB &next, double vmax) const;
-        DISTE frontDistStatic(const xSBB &b, double maxe) const;
-        DISTE backDistStatic(const xSBB &b, double maxe) const;
+        DISTE frontDistStatic(const xSBB &b) const;
+        DISTE backDistStatic(const xSBB &b) const;
 
-        DISTE frontDist(const xPoint &b, double vmax) const;
-        DISTE backDist(const xPoint &b, double vmax) const;
         DISTE gapDist(const xPoint &prev,const xPoint &next, double vmax) const;
-        DISTE frontDistStatic(const xPoint &b, double maxe) const;
-        DISTE backDistStatic(const xPoint &b, double maxe) const;
+        DISTE frontDistStatic(const xPoint &b) const;
+        DISTE backDistStatic(const xPoint &b) const;
 
 
         virtual bool intersectsxMBR(const xMBR& in) const;
@@ -189,6 +192,7 @@ namespace SpatialIndex
 
         virtual void getxMBC(xMBC& out) const;
         xPoint getPointAtTime(double time) const;
+        xTrajectory resampleQuery(double ts, double te, int nsegment) const;
         static std::vector<std::vector<SpatialIndex::xPoint>> simplifyWithRDPN(const std::vector<SpatialIndex::xPoint>& Points, int numPart);
         static std::vector<SpatialIndex::xPoint> simplifyWithRDP(const std::vector<SpatialIndex::xPoint>& Points, double threshold);
         std::vector<xTrajectory> cuttraj(std::vector<SpatialIndex::xPoint>);
@@ -210,6 +214,7 @@ namespace SpatialIndex
         static queue<CUTENTRY> FP(xTrajectory &traj, double np);
         static queue<CUTENTRY> RDP(xTrajectory &traj, double len);
         static queue<CUTENTRY> EveryLine(xTrajectory &traj);
+        static queue<CUTENTRY> OneBox(xTrajectory &traj, double len);
 
         void linkxTrajectory(xTrajectory &other);
 

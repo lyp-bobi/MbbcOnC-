@@ -192,6 +192,7 @@ xRTree *xRTreeNsp::buildTBTreeWP(IStorageManager *mng, string add) {
         mng->flush();
     }
     r->m_bUsingSBBD = r->m_bUsingSimp = false;
+    r->m_bUsingLoadleaf = false;
     delete stream;
     store->m_bPageCache = PAGECACHE_DEFAULT;
     return r;
@@ -233,6 +234,7 @@ xRTree *xRTreeNsp::buildSTRTreeWP(IStorageManager *mng, string add) {
     store->m_bPageCache = PAGECACHE_DEFAULT;
     r->m_bUsingSBBD = true;
     r->m_bUsingSimp = false;
+    r->m_bUsingLoadleaf = false;
     return r;
 }
 
@@ -258,7 +260,7 @@ xRTree *xRTreeNsp::buildMBRRTreeWoP(IStorageManager *st,
         r->m_bUsingMBR = true;
         r->m_bStoringLinks = false;
         r->m_ts = store;
-        std::cerr << "load existing " << name << "\n";
+//        std::cerr << "load existing " << name << "\n";
     } else {
         int bindex =
                 (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
@@ -303,7 +305,7 @@ xRTree *xRTreeNsp::buildMBCRTreeWoP(IStorageManager *st,
         r->m_bUsingMBC = true;
         r->m_bStoringLinks = false;
         r->m_ts = store;
-        std::cerr << "load existing " << name << "\n";
+//        std::cerr << "load existing " << name << "\n";
     } else {
         int bindex = (PageSizeDefault - nodeheadersize() - mbcnodesize()) /
                      (idsize() + mbrsize()),
@@ -344,7 +346,7 @@ xRTree *xRTreeNsp::buildTBTreeWoP(IStorageManager *mng) {
         r->m_bUsingMBR = true;
         r->m_bStoringLinks = false;
         r->m_ts = store;
-        std::cerr << "load existing " << name << "\n";
+//        std::cerr << "load existing " << name << "\n";
     } else {
         int bindex =
                 (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),
@@ -382,7 +384,7 @@ xRTree *xRTreeNsp::buildSTRTreeWoP(IStorageManager *mng) {
         r->m_bUsingMBL = true;
         r->m_bStoringLinks = false;
         r->m_ts = store;
-        std::cerr << "load existing " << name << "\n";
+//        std::cerr << "load existing " << name << "\n";
     } else {
         int bindex =
                 (PageSizeDefault - nodeheadersize()) / (idsize() + mbrsize()),

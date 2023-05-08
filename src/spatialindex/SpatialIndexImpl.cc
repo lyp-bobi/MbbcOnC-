@@ -28,6 +28,7 @@
 
 bool bUsingSimp=true;
 bool bUsingSBBD=true;
+bool bUsingLoadleaf=true;
 
 SpatialIndex::trajStat *tjstat = SpatialIndex::trajStat::instance();
 

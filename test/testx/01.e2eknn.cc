@@ -6,42 +6,61 @@
 
 int main(int argc,char *argv[]){
     try {
-        string target = "tdexpand.datas";
-        double qts[] = {300,1800,3600,7200,10800};
-        cerr<<"01,e2eknn, with TB,STR,SBB1200,SBBF(600,900,1200,1800)"<<endl;
+        vector<double> seglens;
+        string target;
+        if(argc==1) {
+            target = "tdexpand.datas";
+            seglens = {300,600,900,1200,1800,2400,3600};//600,900,1200,1800,2700,3600,5400,7200,9000
+        }else {
+            target = "glexpand.datas";
+            seglens = {300,600,900,1200,1800,2400,3600};
+        }
+//        testtime=400;
+        cerr<<"seglen: ";
+        for(auto len:seglens){cerr<<len<<" ";}
+        cerr<<"TB STR ";
+        cerr<<endl;
         xStore x(target, testFileName(target), true);
-        for(double qt=300;qt<=5300;qt+=500) {
-            cerr<<"qt is " << qt<<endl;
-            vector<xTrajectory> queries;
-            fillQuerySet(queries,x,qt);
-            {
-                MTQ q;
-                q.prepareTrees(&x, [](auto x) { return buildTBTreeWP(x); });
-                q.appendQueries(queries);
-                std::cerr << q.runQueries().toString();
-            }
-            {
-                MTQ q;
-                q.prepareTrees(&x, [](auto x) { return buildSTRTreeWP(x); });
-                q.appendQueries(queries);
-                std::cerr << q.runQueries().toString();
-            }
-            {
-                MTQ q;
-                q.prepareTrees(&x, [](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, 1200); });
-                q.appendQueries(queries);
-                std::cerr << q.runQueries().toString();
-            }
-            {
-                MTQ q;
-                SBBFMAP lens;
-                lens[make_pair(0,1500)]=1200;
-                lens[make_pair(1500,3200)]=1800;
-                lens[make_pair(3200,4000)]=2700;
-                lens[make_pair(4000,1e300)]=3600;
-                q.prepareForest(&x,lens);
-                q.appendQueries(queries);
-                std::cerr << q.runQueries().toString();
+        for(current_distance = IED; current_distance <= RMDTW; current_distance = supported_distance(current_distance + 1)) {
+            for (double qt = 300; qt <= 3900; qt += 600) {
+                cerr << "qt is " << qt << endl;
+                vector<xTrajectory> queries;
+//            xTrajectory tj;
+//            tj.loadFromString("116.502520,40.007630,3921202.717629 116.502520,40.007631,3921502.717629");
+//            queries.emplace_back(tj);
+                fillQuerySet(queries, x, qt);
+
+                for (auto len:seglens) {
+                    MTQ q;
+                    q.prepareTrees(&x, [&len](auto x) {
+                        return buildMBCRTreeWP(x, xTrajectory::GSS, len);
+                    });
+                    q.appendQueries(queries);
+                    std::cerr << q.runQueries().toString();
+                }
+                {
+                    MTQ q;
+                    q.prepareTrees(&x, [](auto x) { return buildTBTreeWP(x); });
+                    q.appendQueries(queries);
+                    std::cerr << q.runQueries().toString();
+                }
+                {
+                    MTQ q;
+                    q.prepareTrees(&x,
+                                   [](auto x) { return buildSTRTreeWP(x); });
+                    q.appendQueries(queries);
+                    std::cerr << q.runQueries().toString();
+                }
+//                {
+//                    MTQ q;
+//                    q.prepareTrees(&x,
+//                                   [](auto x) {
+//                        xRTree* r = buildSTRTreeWP(x);
+//                        r->m_bUsingSBBD = true;
+//                        return r;});
+//                    q.appendQueries(queries);
+//                    std::cerr << q.runQueries().toString();
+//                }
             }
         }
         cerr<<"mission complete.\n";

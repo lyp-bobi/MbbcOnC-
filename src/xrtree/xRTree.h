@@ -78,7 +78,7 @@ namespace SpatialIndex
 			virtual void getStatistics(IStatistics** out) const;
 
             virtual void intersectsWithQuery(const xCylinder& query, IVisitor& v);
-            virtual void nearestNeighborQuery(uint32_t k, const xTrajectory& query, IVisitor& v);
+            virtual void nearestNeighborQuery(uint32_t k, const xTrajectory& ori, IVisitor& v);
             virtual void findid(id_type id);
         public:
 			void initNew(Tools::PropertySet&);
@@ -98,12 +98,15 @@ namespace SpatialIndex
 
             bool m_bUsingSimp=true;
             bool m_bUsingSBBD=true;
+            bool m_bUsingLoadleaf=true;
 
             bool m_bStoringLinks = true;
 
             xStore *m_ts=nullptr;
 
             string m_name="";
+
+            int m_precision = 10;
 
             double m_bt = 100000;
 
@@ -357,7 +360,6 @@ namespace SpatialIndex
                 bool m_hasPrev=true,m_hasNext=true;
                 double m_computedTime=0,m_loadedTime=0;
                 bool is_modified = true;
-                double m_maxe = 0;
                 Parts(PartsStore* ps= nullptr){
                     m_ps = ps;
                     m_line.emplace_back(slab(ps->m_simpquery.m_startTime(), ps->m_simpquery.m_endTime()));
@@ -424,7 +426,7 @@ namespace SpatialIndex
 
             auto nodetop(){return m_nodespq.top();}
 
-             PartsStore(const xTrajectory &exact, xTrajectory &simp, double error, xRTree *r, int nnk)
+             PartsStore(const xTrajectory &exact, xTrajectory &simp, xRTree *r, int nnk, double error)
                     : m_exactquery(exact), m_simpquery(simp), m_error(error), m_pTree(r), m_ts(r->m_ts){
                 m_pes.setLen(nnk);
             }
@@ -485,8 +487,6 @@ namespace SpatialIndex
             std::map<id_type ,MutablePriorityQueue<NNEntry>::handle_type > m_handlers;
             EntryMPQ m_mpq;
             EntryMPQ m_nodespq;
-            std::set<id_type> m_except;
-            poppq m_pes;
             xTrajectory m_query;
             double m_error;
             xRTree * m_pTree;
@@ -512,9 +512,8 @@ namespace SpatialIndex
             }
 
             auto empty(){return m_mpq.empty()&&m_nodespq.empty();}
-            PartsStoreBFMST(xTrajectory &traj,double error,xRTree* r, int nnk)
+            PartsStoreBFMST(xTrajectory &traj,xRTree* r, int nnk, double error)
                     :m_query(traj),m_error(error), m_pTree(r),m_ts(r->m_ts){
-                m_pes.setLen(nnk);
             }
             ~PartsStoreBFMST(){}
         };//PartStoreBFMST

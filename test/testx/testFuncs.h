@@ -65,8 +65,8 @@ using namespace xRTreeNsp;
 extern int NUMTHREAD=NUMCORE;
 extern double testtime = 100;
 #else
-#define NUMCORE 4
-extern double testtime = 600;
+#define NUMCORE 8
+extern double testtime = 1200;
 extern int NUMTHREAD= 3 * NUMCORE;
 #endif
 extern bool testxfirstOutput = true;
@@ -107,7 +107,7 @@ public:
     size_t m_resultGet;
     id_type m_lastResult;
     double m_lastDist = 0;
-    IShape *m_query;
+    IxShape *m_query;
     xStore *ts = nullptr;
 
 public:
@@ -129,7 +129,7 @@ public:
         if(mou!=nullptr){
             m_lastDist=mou->m_dist;
 #if !defined(NDEBUG) || defined(TJDEBUG)
-//            cerr <<"result" << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
+           cerr <<"result" << d.getIdentifier()<<"\t"<<mou->m_dist << endl;
 #endif
         }
     }
@@ -624,7 +624,7 @@ static double kNNQueryBatch(xRTree *tree, const vector<xTrajectory> &queries, xS
     int indio = 0;
     std::vector<int> indios;
     for (int i = 0; i < queries.size(); i++) {
-        vis.m_query = (IShape *) &(queries[i]);
+        vis.m_query = (IxShape *) &(queries[i]);
         tree->nearestNeighborQuery(thennk, queries[i], vis);
         rad += vis.m_lastDist;
         if (reportEnd) std::cerr << "end\n";
@@ -780,7 +780,7 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
         for (int i = 0; i < inp.knn_queries.size(); i++) {
             try {
 //                drop_cache(1);
-                vis.m_query = (IShape *) &(inp.knn_queries.at(i));
+                vis.m_query = (IxShape *) &(inp.knn_queries.at(i));
                 inp.tree->nearestNeighborQuery(inp.nnk, inp.knn_queries.at(i), vis);
                 rad += vis.m_lastDist;
 
@@ -793,13 +793,22 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
                 std::string s = e.what();
                 cerr << s << endl;
             }
+            double time;
+            auto end = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+            time = double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
+            if(time > 3000)
+            { /*each test only last for 5 minute*/
+                num = i + 1;
+                break;
+            }
         }
     }else if(inp.type == qt_range){
         num = inp.range_queries.size();
         for (int i = 0; i < inp.range_queries.size(); i++) {
 //            drop_cache(1);
             try {
-                vis.m_query = (IShape *) &(inp.range_queries.at(i));
+                vis.m_query = (IxShape *) &(inp.range_queries.at(i));
                 inp.tree->intersectsWithQuery(inp.range_queries.at(i), vis);
                 rad += vis.m_lastDist;
             } catch (Tools::Exception &e) {
@@ -861,10 +870,10 @@ public:
         }
     }
     void prepareForest(xStore* x,map<pair<double, double>, double> &lens, double slab=1e300){
-        delete buildSBBForest(x,xTrajectory::OPTS,lens,slab);
+        delete buildSBBForest(x,xTrajectory::GSS,lens,slab);
         for(int i=0;i<nthread;i++) {
             m_stores.emplace_back(x->clone());
-            m_trees.emplace_back(buildSBBForest(m_stores.back(),xTrajectory::OPTS,lens,slab));
+            m_trees.emplace_back(buildSBBForest(m_stores.back(),xTrajectory::GSS,lens,slab));
             queryInput q;
             q.tree = m_trees.back();
             q.store=m_stores.back();

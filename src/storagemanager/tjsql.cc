@@ -195,7 +195,7 @@ bool db_insert_traj(int64_t id, int64_t pageid, uint32_t npoint){
     rc = sqlite3_bind_int(stmt_traj_insert,3,(int32_t)npoint);
     rc = sqlite3_step(stmt_traj_insert);
     if (rc != SQLITE_DONE) {
-        cerr <<"insert traj:" << sqlite3_errmsg(db) << endl;
+        cerr <<"insert traj:"<<id <<"\t" << sqlite3_errmsg(db) << endl;
     }
     return true;
 }
@@ -208,7 +208,7 @@ xTrajEntry db_load_traj_entry(int64_t trajid){
     rc = sqlite3_bind_int64(stmt_traj_load,1,trajid);
     rc = sqlite3_step(stmt_traj_load);
     if (rc != SQLITE_ROW) {
-        cerr <<"load traj entry:" << sqlite3_errmsg(db) << endl;
+        cerr <<"load traj entry:"<<trajid <<"\t" << sqlite3_errmsg(db) << endl;
     }
     res.m_page = sqlite3_column_int64(stmt_traj_load,0);
     res.m_npoint = sqlite3_column_int(stmt_traj_load,1);

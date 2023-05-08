@@ -8,8 +8,8 @@ project(spatialindex)
 
 
 
-set (CMAKE_CXX_FLAGS "$ENV{CMAKE_CXX_FLAGS} -g -std=c++14")
-set (CMAKE_CXX_FLAGS_DEBUG  "$ENV{CMAKE_CXX_FLAGS}")
+set (CMAKE_CXX_FLAGS "$ENV{CMAKE_CXX_FLAGS} -std=c++14 -O3")
+set (CMAKE_CXX_FLAGS_DEBUG  "$ENV{CMAKE_CXX_FLAGS}  -g -O0")
 #------------------------------------------------------------------------------
 # internal cmake settings
 #------------------------------------------------------------------------------

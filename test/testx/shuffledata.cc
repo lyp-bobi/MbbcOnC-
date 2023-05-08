@@ -19,7 +19,7 @@ int main(int argc,char *argv[]){
     ofstream outFile(testFileName(target)+"s", ios::out);
     xTrajectory tj;
     for(auto id:ids){
-        x.loadTraj(tj,xStoreEntry(id,0,1e10));
+        x.loadTraj(tj,xStoreEntry(id,0,1e8));
         outFile<<id<<"\n"<<tj.toString()<<"\n";
     }
     outFile.flush();

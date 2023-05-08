@@ -100,6 +100,7 @@ endforeach()
 
 set (DIR testx)
 set (SOURCES
+        00.getsubtraj
         odconvert
         regressTest
         knnCoverageTest
@@ -114,14 +115,13 @@ set (SOURCES
         speedEstimator
         rangeQuery
         changek
-        06.fractal
         01.e2eknn
         mbcknn
         rangeDebug
         02.e2ennk
-        03.mixquery
-        04.dense
-        05.range
+        03.precision
+        04.loadleaf
+        05.btchange
         07.sbbsize
         08.estimate
         09.mbcknn

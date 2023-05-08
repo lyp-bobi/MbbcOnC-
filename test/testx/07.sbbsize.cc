@@ -13,7 +13,7 @@ int main(int argc,char *argv[]){
         double sum1, sum2;
 //        for (auto &s:*(x.m_trajIdx)) {
 //            x.loadTraj(tj, xStoreEntry(s.first, 0, 10000));
-//            auto bbs = xTrajectory::OPTS(tj, bt);
+//            auto bbs = xTrajectory::GSS(tj, bt);
 //            while (!bbs.empty()) {
 //                auto b = bbs.front();
 //                sum1 += b.second.br.getArea();

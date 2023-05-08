@@ -20,7 +20,7 @@ int main(int argc,char *argv[]){
             double sum = 0, count = 0, v1 = 0, v2 = 0;
             for (int i = 0; i < testtime * 10; i++) {
                 auto r = x.randomSubtraj(100000);
-                auto sbbs = xTrajectory::OPTS(r, stLen);
+                auto sbbs = xTrajectory::GSS(r, stLen);
                 while (!sbbs.empty()) {
                     xSBB b = sbbs.front().second;
                     sbbs.pop();
@@ -43,7 +43,7 @@ int main(int argc,char *argv[]){
             double sum = 0, count = 0, v1 = 0, v2 = 0;
             for (int i = 0; i < testtime * 10; i++) {
                 auto r = x.randomSubtraj(100000);
-                auto sbbs = xTrajectory::OPTS(r, stLen);
+                auto sbbs = xTrajectory::GSS(r, stLen);
                 while (!sbbs.empty()) {
                     xSBB b = sbbs.front().second;
                     sbbs.pop();

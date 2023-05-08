@@ -37,7 +37,7 @@ int main(int argc,char *argv[]){
             }
             {
                 MTQ q;
-                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::OPTS, bt, "OPTS"); });
+                q.prepareTrees(&x, [&bt](auto x) { return buildMBCRTreeWP(x, xTrajectory::GSS, bt, "OPTS"); });
                 q.appendQueries(queries);
                 std::cerr << q.runQueries().toString();
             }
