@@ -475,7 +475,8 @@ void PartsStore::Parts::putSBB(xSBB& b) {
     }else if(e==it->te){//try to merge into next one
         auto nit=it;
         nit++;
-        auto nnit = nit++;
+        auto nnit = nit;
+        nnit ++;
         if(nit != m_line.end() && !nit->d.infer && nnit != m_line.end()){//prevent the last
             nit->ts= s;
             global_maxe = 0;
