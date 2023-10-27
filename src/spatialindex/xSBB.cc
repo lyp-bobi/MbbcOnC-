@@ -113,6 +113,21 @@ double xSBB::tdist(const xPoint &p) const {
     return 0;
 }
 
+std::pair<xPoint, double> xSBB::crossSec(double t) {
+    if(hasbr){
+        double rad = sqrt(sq(br.m_xmax-br.m_xmin)+sq(br.m_ymax-br.m_ymin));
+        xPoint tp = xPoint((br.m_xmin+br.m_xmax)/2,(br.m_ymin+br.m_ymax)/2, t);
+        return std::make_pair(tp, rad);
+    }
+    if(hasbc){
+        return bc.getCenterRdAtTime(t);
+    }
+    if(hasbl){
+        return bl.getCenterRdAtTime(t);
+    }
+    throw Tools::NotSupportedException("");
+    return std::make_pair(xPoint(0,0,0),0);
+}
 
 
 std::string xSBB::toString() const {

@@ -172,6 +172,7 @@ namespace SpatialIndex
         double getStaticDistance(SpatialIndex::xMBR in, double ints, double inte) const;
         double getMinimumDistance(const SpatialIndex::xTrajectory &in) const;
         DISTE getPartialRMDTW(const SpatialIndex::xTrajectory &parttraj) const;
+        DISTE getRMDTW(std::vector<std::pair<xPoint, double>> &cross) const;
 
         int nPointDuring(double tmin, double tmax) const;
         double nodeDist(const xSBB &b) const;

@@ -10,10 +10,10 @@ int main(int argc,char *argv[]){
         string target;
         if(argc==1) {
             target = "tdexpand.datas";
-            seglens = {600,900,1200,1800,2700,3600};
+            seglens = {600,900,1200,1800};
         }else {
             target = "glexpand.datas";
-            seglens = {100,200,300,600,900,1200,1800,2700};
+            seglens = {100,200,300,600,900,1200,1800};
         }
         current_distance = RMDTW;
         cerr<<"09,mbcknn, SBBs"<<endl;
@@ -30,7 +30,7 @@ int main(int argc,char *argv[]){
                 for (auto len:seglens) {
                     MTQ q;
                     q.prepareTrees(&x, [&len](auto x) {
-                        xRTree *r = buildMBRRTreeWP(x, xTrajectory::OPTS, len);
+                        xRTree *r = buildMBRRTreeWP(x, xTrajectory::OPTS, len, "OPTS");
 //                r->m_bUsingSBBD=false;
                         return r;
                     });
@@ -41,7 +41,7 @@ int main(int argc,char *argv[]){
                 for (auto len:seglens) {
                     MTQ q;
                     q.prepareTrees(&x, [&len](auto x) {
-                        xRTree *r = buildMBCRTreeWP(x, xTrajectory::OPTS, len);
+                        xRTree *r = buildMBCRTreeWP(x, xTrajectory::OPTS, len, "OPTS");
 //                r->m_bUsingSBBD=false;
                         return r;
                     });

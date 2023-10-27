@@ -346,13 +346,13 @@ namespace SpatialIndex
                             ts(s),te(e),d(dd){}
                 };
                 PartsStore* m_ps;
-#ifndef NDEBUG
-                vector<xSBB> m_sbbs;
-#endif
+                std::vector<xSBB> m_sbbs;
+                DISTE m_completelb = DISTE(-1, -1, true);
+                xSBB m_firstsbb, m_lastsbb;
                 std::unordered_set<id_type> m_missingLeaf;
                 std::vector<xSBB> m_UCsbbs;
                 std::list<slab> m_line;
-                xSBB m_firstsbb, m_lastsbb;
+                std::vector<std::pair<xPoint, double>> m_resampled;
                 std::map<std::pair<double,double>,DISTE> m_computedDist;
                 std::map<double,xStoreEntry> m_ses;
                 DISTE m_calcMin=DISTE(0,1e300,true);

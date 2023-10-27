@@ -1006,34 +1006,6 @@ xTrajectory::getMinimumDistance(const SpatialIndex::xTrajectory &in) const {
             ps2[pn].emplace_back(in.m_points.back().m_x);
             ps2[pn++].emplace_back(in.m_points.back().m_y);
         }
-        try {
-            return DTW::dtw_distance_only(ps1, ps2, 2);
-        }
-        catch (...) {
-            cout << this->toString() << endl << in.toString() << endl;
-        }
-        return DTW::dtw_distance_only(ps1, ps2, 2);
-    }
-    if (current_distance == RMDTW) {
-        //resampling mirroring dtw
-        vector<vector<double>> ps1, ps2;
-        ps1.resize(m_points.size());
-        ps2.resize(in.m_points.size() );
-        for (int i = 0; i < m_points.size(); i++) {
-            ps1[i].emplace_back(m_points[i].m_x);
-            ps1[i].emplace_back(m_points[i].m_y);
-        }
-        int pn = 0;
-        for (int i = 0; i < in.m_points.size(); i++) {
-            ps2[pn].emplace_back(in.m_points[i].m_x);
-            ps2[pn++].emplace_back(in.m_points[i].m_y);
-        }
-        try {
-            return DTW::dtw_distance_only(ps1, ps2, 2);
-        }
-        catch (...) {
-            cout << this->toString() << endl << in.toString() << endl;
-        }
         return DTW::dtw_distance_only(ps1, ps2, 2);
     }
     else //SDDTW
@@ -1144,6 +1116,44 @@ xTrajectory::getPartialRMDTW(const SpatialIndex::xTrajectory &parttraj) const
     }
 
     return res;
+}
+
+
+DISTE xTrajectory::getRMDTW(std::vector<std::pair<xPoint, double> > &cross) const {
+    double interval = m_points[1].m_t - m_points[0].m_t;
+    //resampling mirroring dtw
+    int padprev = 0, padnext = 0;
+    if (cross.front().first.m_t > m_startTime())
+        padprev = ceil((cross.front().first.m_t - m_startTime()) / interval);
+    if (cross.back().first.m_t < m_endTime())
+        padnext = ceil((m_endTime() - cross.back().first.m_t) / interval);
+
+    vector<vector<double>> ps1, ps2;
+    ps1.resize(m_points.size());
+    ps2.resize(cross.size() + 2 * padnext + 2 * padprev);
+    for (int i = 0; i < m_points.size(); i++) {
+        ps1[i].emplace_back(m_points[i].m_x);
+        ps1[i].emplace_back(m_points[i].m_y);
+    }
+    int pn = 0;
+    double err = 0;
+    for (int j = 0; j < padprev * 2; j++) {
+        ps2[pn].emplace_back(cross.front().first.m_x);
+        ps2[pn++].emplace_back(cross.front().first.m_y);
+        err += cross.front().second;
+    }
+    for (int i = 0; i < cross.size(); i++) {
+        ps2[pn].emplace_back(cross[i].first.m_x);
+        ps2[pn++].emplace_back(cross[i].first.m_y);
+        err += cross[i].second;
+    }
+    for (int j = 0; j < padnext * 2; j++) {
+        ps2[pn].emplace_back(cross.back().first.m_x);
+        ps2[pn++].emplace_back(cross.back().first.m_y);
+        err += cross.back().second;
+    }
+    double dtw = DTW::dtw_distance_only(ps1, ps2, 2);
+    return DISTE(dtw - err, dtw + err, false);
 }
 
 double

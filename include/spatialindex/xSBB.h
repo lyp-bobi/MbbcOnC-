@@ -23,6 +23,8 @@ namespace SpatialIndex
         double m_endTime=1e300;
         double tdist(const xPoint &p) const;
 
+        std::pair<xPoint,double> crossSec(double t);
+
         virtual bool operator==(const xSBB &r) const;
         virtual xSBB *clone();
 
