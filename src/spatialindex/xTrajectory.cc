@@ -970,7 +970,85 @@ double xTrajectory::getMinimumDistance(const IShape &s) const {
 
 double
 xTrajectory::getMinimumDistance(const SpatialIndex::xTrajectory &in) const {
-    if (current_distance == RMDTW) {
+    if (current_distance == IED)
+    {
+        if (m_startTime() >= in.m_endTime() || m_endTime() <= in.m_startTime())
+            return 1e300;
+        fakeTpVector timedTraj2(&in.m_points, m_startTime(), m_endTime());
+        double cut1 = timedTraj2[0].m_t, cut2 = timedTraj2[timedTraj2.m_size -
+                                                           1].m_t;
+        double sum = 0;
+        double max = 0;
+        fakeTpVector midTraj(&m_points, cut1, cut2);
+        double maxe = 0;
+        if (midTraj.m_size != 0) {
+            double newtime = midTraj[0].m_t, lasttime = midTraj[0].m_t;
+            auto iter1 = midTraj.m_vectorPointer->begin() + midTraj.m_is;
+            auto iter2 = timedTraj2.m_vectorPointer->begin() + timedTraj2.m_is;
+            xPoint lastp1 = midTraj[0], lastp2 = timedTraj2[0], newp1, newp2;
+            newp1.makeInfinite(2);
+            newp2.makeInfinite(2);
+            while (lasttime != timedTraj2[timedTraj2.m_size - 1].m_t) {
+                if ((iter1 + 1)->m_t == (iter2 + 1)->m_t) {
+                    newtime = (iter1 + 1)->m_t;
+                    newp1 = *(iter1 + 1);
+                    newp2 = *(iter2 + 1);
+                    iter1++;
+                    iter2++;
+                } else if ((iter1 + 1)->m_t < (iter2 + 1)->m_t) {
+                    newtime = (iter1 + 1)->m_t;
+                    newp1 = *(iter1 + 1);
+                    double ratio = (newtime - iter2->m_t) /
+                                   ((iter2 + 1)->m_t - (iter2)->m_t);
+                    double x = midpos(iter2->m_x, (iter2 + 1)->m_x, ratio);
+                    double y = midpos(iter2->m_y, (iter2 + 1)->m_y, ratio);
+                    newp2.m_x = x;
+                    newp2.m_y = y;
+                    newp2.m_t = newtime;
+                    iter1++;
+                } else {
+                    newtime = (iter2 + 1)->m_t;
+                    double ratio = (newtime - iter1->m_t) /
+                                   ((iter1 + 1)->m_t - (iter1)->m_t);
+                    double x = midpos(iter1->m_x, (iter1 + 1)->m_x, ratio);
+                    double y = midpos(iter1->m_y, (iter1 + 1)->m_y, ratio);
+                    newp1.m_x = x;
+                    newp1.m_y = y;
+                    newp1.m_t = newtime;
+                    newp2 = *(iter2 + 1);
+                    iter2++;
+                }
+                lasttime = newtime;
+
+                double pd = line2lineIED(lastp1, newp1, lastp2, newp2);
+//                std::cerr<<"distance\n"<<lastp1<<"\t"<<newp1<<"\n"<<lastp2<<"\t"<<newp2<<"\n"<<pd<<"\n";
+                sum += pd;
+                //test code
+//            std::cerr<<newtime<<" "<<pd<<endl;
+                lastp1 = newp1;
+                lastp2 = newp2;
+            }
+        }
+        if (m_startTime() < cut1) {
+            double pd;
+            pd = getStaticDistance(timedTraj2[0].m_x, timedTraj2[0].m_y, m_startTime(),
+                              cut1);
+            sum += pd;
+            //test code
+//        std::cerr<<cut1<<" "<<pd<<endl;
+        }
+        if (m_endTime() > cut2) {
+            double pd;
+            pd = getStaticDistance(timedTraj2[timedTraj2.m_size - 1].m_x,
+                              timedTraj2[timedTraj2.m_size - 1].m_y, cut2,
+                              m_endTime());
+            sum += pd;
+            //test code
+//        std::cerr<<m_endTime()<<" "<<pd<<endl;
+        }
+        return sum;
+    }
+    else if (current_distance == RMDTW) {
         //resampling mirroring dtw
         xTrajectory subin;
         in.getPartialxTrajectory(m_startTime(), m_endTime(), subin);

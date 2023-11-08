@@ -67,33 +67,30 @@ DISTE PartsStore::updateValue(id_type id,bool Inqueue) {
         return DISTE(0);
     }
 
-    if(type == 3) {
-        if (current_distance == RMDTW)
-        {
-            if (parts->m_UCsbbs.size() > 0) {
-                parts->m_sbbs.insert(parts->m_sbbs.end(),
-                                     parts->m_UCsbbs.begin(),
-                                     parts->m_UCsbbs.end());
-                parts->m_UCsbbs.clear();
-            }
-            if (parts->m_completelb.infer) {
-                std::sort(parts->m_sbbs.begin(), parts->m_sbbs.end(),[](const xSBB &a, const xSBB &b)
-                {
-                    return a.m_startTime < b.m_startTime;
-                });
-                vector<pair<xPoint, double>> cross;
-                int cur1 = 0, cur2 = 0;
-                for(cur1 = 0; cur1 < m_simpquery.m_points.size();cur1++)
-                {
-                    while(parts->m_sbbs[cur2].m_endTime < m_simpquery.m_points[cur1].m_t
-                        && cur2 != parts->m_sbbs.size() - 1)
-                        cur2++;
-                    cross.emplace_back(parts->m_sbbs[cur2].crossSec(m_simpquery.m_points[cur1].m_t));
-                }
-                parts->m_completelb = m_simpquery.getRMDTW(cross);
-            }
-            res = parts->m_completelb;
+    if(type == 3 && current_distance == RMDTW) {
+        if (parts->m_UCsbbs.size() > 0) {
+            parts->m_sbbs.insert(parts->m_sbbs.end(),
+                                 parts->m_UCsbbs.begin(),
+                                 parts->m_UCsbbs.end());
+            parts->m_UCsbbs.clear();
         }
+        if (parts->m_completelb.infer) {
+            std::sort(parts->m_sbbs.begin(), parts->m_sbbs.end(),[](const xSBB &a, const xSBB &b)
+            {
+                return a.m_startTime < b.m_startTime;
+            });
+            vector<pair<xPoint, double>> cross;
+            int cur1 = 0, cur2 = 0;
+            for(cur1 = 0; cur1 < m_simpquery.m_points.size();cur1++)
+            {
+                while(parts->m_sbbs[cur2].m_endTime < m_simpquery.m_points[cur1].m_t
+                    && cur2 != parts->m_sbbs.size() - 1)
+                    cur2++;
+                cross.emplace_back(parts->m_sbbs[cur2].crossSec(m_simpquery.m_points[cur1].m_t));
+            }
+            parts->m_completelb = m_simpquery.getRMDTW(cross);
+        }
+        res = parts->m_completelb;
     } else {
         for(auto &b:parts->m_UCsbbs){
             parts->putSBB(b);
