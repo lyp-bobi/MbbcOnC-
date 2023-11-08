@@ -10,18 +10,18 @@ int main(int argc,char *argv[]){
         string target;
         if(argc==1) {
             target = "tdexpand.datas";
-            seglens = {300, 1200, 1800, 3600};
+            seglens = {600};
         }else {
             target = "glexpand.datas";
-            seglens = {300, 1200, 1800, 3600};
+            seglens = {600};
         }
         double qt = 3600;
-        cerr<<"02, e2ennk, TB,STR, and SBB 600, 1200, 1800, 3600";
+        cerr<<"02, e2ennk, TB,STR, and SBB 600";
         xStore x(target, testFileName(target), true);
         vector<xTrajectory> queries;
         fillQuerySet(queries,x,qt);
         for(current_distance = IED; current_distance <= RMDTW; current_distance = supported_distance(current_distance + 1)) {
-            for (int k = 10; k < 200; k += 20) {
+            for (int k = 10; k < 100; k += 20) {
                 cerr << "k is " << k << endl;
                 for (auto len:seglens) {
                     MTQ q;

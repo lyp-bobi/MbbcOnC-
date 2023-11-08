@@ -20,7 +20,7 @@ using std::endl;
 using std::sqrt;
 
 double splitSoftThres = 0.2;
-int TIME_SLAB = 60;
+int rmdtwprecision = 8;
 supported_distance current_distance = IED;
 
 xTrajectory::xTrajectory() {
@@ -1183,7 +1183,7 @@ xTrajectory::getStaticDistance(double x, double y, double t1, double t2) const {
             double pd = line2lineIED(timedTraj[i], timedTraj[i + 1], ps, pe);
             sum += pd;
         }
-        return sum;
+        return 2*sum;
     }
 }
 
@@ -1220,7 +1220,7 @@ double xTrajectory::getStaticDistance(SpatialIndex::xMBR in, double ints,
                                     in).opt;
             sum += pd;
         }
-        return sum;
+        return 2*sum;
     }
 }
 
@@ -1243,14 +1243,24 @@ double xTrajectory::nodeDist(const xSBB &b) const {
     n.m_tmin = m_startTime();
     n.m_tmax = m_endTime();
     double mindist = 1e300;
-    for (auto &p:m_points) {
-        double d = n.getMinimumDistance(p);
-        if (d < mindist) mindist = d;
+    double rmin = 1e300;
+    if (current_distance == IED)
+    {
+        for (int i = 0; i < m_points.size()-1; i++) {
+            double pd = line2MBRMinSED(m_points[i], m_points[i+1], n);
+            rmin=std::min(rmin,pd);
+        }
+        if(rmin<0) return 0;
+        return rmin*(m_endTime()-m_startTime());
     }
-    if (current_distance != IED)
-        return m_points.size() * mindist;
     else
-        return mindist * (m_endTime() - m_startTime());
+    {
+        for (auto &p:m_points) {
+            double d = n.getMinimumDistance(p);
+            if (d < mindist) mindist = d;
+        }
+        return m_points.size() * mindist;
+    }
 }
 
 DISTE xTrajectory::sbbDist(const xSBB &b) const {
@@ -1344,15 +1354,19 @@ DISTE xTrajectory::backDist(const xSBB &b, double v) const {
 }
 
 DISTE xTrajectory::gapDist(const xSBB &prev, const xSBB &next, double v) const {
-    double opti = 0, pessi = 0;
-    double ints = prev.m_endTime, inte = next.m_startTime;
-    double ds = prev.tdist(getPointAtTime(ints));
-    double de = prev.tdist(getPointAtTime(inte));
-    double to = (ints + inte + (de - ds) / (v)) / 2;
-    double tp = (ints + inte + (ds - de) / (v)) / 2;
-    opti = ldd(ds, -v, to - ints) + ldd(de, -v, inte - to);
-    pessi = ldd(ds, v, tp - ints) + ldd(de, v, inte - tp);
-    return DISTE(opti, pessi, true);
+    if(current_distance == IED) {
+        double opti = 0, pessi = 0;
+        double ints = prev.m_endTime, inte = next.m_startTime;
+        double ds = prev.tdist(getPointAtTime(ints));
+        double de = prev.tdist(getPointAtTime(inte));
+        double to = (ints + inte + (de - ds) / (v)) / 2;
+        double tp = (ints + inte + (ds - de) / (v)) / 2;
+        opti = ldd(ds, -v, to - ints) + ldd(de, -v, inte - to);
+        pessi = ldd(ds, v, tp - ints) + ldd(de, v, inte - tp);
+        return DISTE(opti, pessi, true);
+    }
+    else
+        return DISTE(0, 1e300, true);
 }
 
 
@@ -1387,25 +1401,29 @@ DISTE xTrajectory::backDistStatic(const xSBB &b) const {
 
 DISTE
 xTrajectory::gapDist(const xPoint &prev, const xPoint &next, double v) const {
-    double opti = 0, pessi = 0;
-    double ints = prev.m_t, inte = next.m_t;
-    double ds = prev.getMinimumDistance(getPointAtTime(ints));
-    double de = prev.getMinimumDistance(getPointAtTime(inte));
-    double to = (ints + inte + (de - ds) / (v)) / 2;
-    double tp = (ints + inte + (ds - de) / (v)) / 2;
-    opti = ldd(ds, -v, to - ints) + ldd(de, -v, inte - to);
-    pessi = ldd(ds, v, tp - ints) + ldd(de, v, inte - tp);
-    return DISTE(opti, pessi, true);
+    if(current_distance == IED) {
+        double opti = 0, pessi = 0;
+        double ints = prev.m_t, inte = next.m_t;
+        double ds = prev.getMinimumDistance(getPointAtTime(ints));
+        double de = prev.getMinimumDistance(getPointAtTime(inte));
+        double to = (ints + inte + (de - ds) / (v)) / 2;
+        double tp = (ints + inte + (ds - de) / (v)) / 2;
+        opti = ldd(ds, -v, to - ints) + ldd(de, -v, inte - to);
+        pessi = ldd(ds, v, tp - ints) + ldd(de, v, inte - tp);
+        return DISTE(opti, pessi, true);
+    }
+    else
+        return DISTE(0, 1e300, true);
 }
 
 
 DISTE xTrajectory::frontDistStatic(const xPoint &b) const {
-    return DISTE(getStaticDistance(b.m_x, b.m_y, m_startTime(), b.m_t), 1e200,
+    return DISTE(getStaticDistance(b.m_x, b.m_y, m_startTime(), b.m_t), 1e300,
                  false);
 }
 
 DISTE xTrajectory::backDistStatic(const xPoint &b) const {
-    return DISTE(getStaticDistance(b.m_x, b.m_y, b.m_t, m_endTime()), 1e200, false);
+    return DISTE(getStaticDistance(b.m_x, b.m_y, b.m_t, m_endTime()), 1e300, false);
 }
 
 

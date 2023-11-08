@@ -57,10 +57,7 @@ DISTE PartsStore::updateValue(id_type id,bool Inqueue) {
 //    {
 //        return parts->m_calcMin;
 //    }
-    for(auto &b:parts->m_UCsbbs){
-        parts->putSBB(b);
-    }
-    parts->m_UCsbbs.clear();
+
     DISTE res;
     int type = 2;
     if (parts->m_missingLeaf.empty()) type = 3;
@@ -73,6 +70,12 @@ DISTE PartsStore::updateValue(id_type id,bool Inqueue) {
     if(type == 3) {
         if (current_distance == RMDTW)
         {
+            if (parts->m_UCsbbs.size() > 0) {
+                parts->m_sbbs.insert(parts->m_sbbs.end(),
+                                     parts->m_UCsbbs.begin(),
+                                     parts->m_UCsbbs.end());
+                parts->m_UCsbbs.clear();
+            }
             if (parts->m_completelb.infer) {
                 std::sort(parts->m_sbbs.begin(), parts->m_sbbs.end(),[](const xSBB &a, const xSBB &b)
                 {
@@ -92,6 +95,10 @@ DISTE PartsStore::updateValue(id_type id,bool Inqueue) {
             res = parts->m_completelb;
         }
     } else {
+        for(auto &b:parts->m_UCsbbs){
+            parts->putSBB(b);
+        }
+        parts->m_UCsbbs.clear();
         double slab = (m_simpquery.m_endTime() - m_simpquery.m_startTime()) /
                       (m_simpquery.m_points.size() - 1);
 

@@ -23,8 +23,8 @@ int main(int argc,char *argv[]){
         xStore x(target, testFileName(target), true);
         current_distance = RMDTW;
         double qt = 3600;
-        for (TIME_SLAB = 1800; TIME_SLAB >= 30; TIME_SLAB /= 2) {
-            cerr << "precision is " << qt/TIME_SLAB << endl;
+        for (rmdtwprecision = 2; rmdtwprecision < 128; rmdtwprecision *= 2) {
+            cerr << "precision is " << qt/rmdtwprecision << endl;
             vector<xTrajectory> queries;
 //            xTrajectory tj;
 //            tj.loadFromString("116.502520,40.007630,3921202.717629 116.502520,40.007631,3921502.717629");

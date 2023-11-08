@@ -934,11 +934,10 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &ori, IVisitor &
     double delta=0, ssdelta= 0;
     const xTrajectory *queryTraj;
     if(current_distance != IED) {
-        double nts = (std::ceil(((int) ori.m_startTime()) / TIME_SLAB) *
-                      TIME_SLAB), nte = (((int) ori.m_endTime()) / TIME_SLAB *
-                                         TIME_SLAB);
-        if (nte - nts < TIME_SLAB) return;
-        q = ori.resampleQuery(nts, nte, (nte - nts) / TIME_SLAB + 1);
+        double nts = (std::ceil(((int) ori.m_startTime()) / 60) *
+                      60), nte = (((int) ori.m_endTime()) / 60*60);
+        if (nte - nts < 60) return;
+        q = ori.resampleQuery(nts, nte, rmdtwprecision);
         if (q.m_points.size() < 2) {
             return;
         }
@@ -1077,7 +1076,7 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &ori, IVisitor &
 #ifdef TJDEBUG
                     cerr<<iternum<<"\tCB with "<<pFirst->m_dist.opt<<"\t"<<ps.explain(pFirst->m_id)<<endl;
 #endif
-                    if ((ps.top()==NULL||pFirst->m_dist.pes < ps.top()->m_dist.opt)){
+                    if ((ps.top()==NULL||pFirst->m_dist.pes  < ps.top()->m_dist.opt)){
                         // we judge by sbbs instead of subtraj, 1 for error caused by float point numbers
                         ++(m_stats.m_u64QueryResults);
                         ++count;

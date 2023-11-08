@@ -30,7 +30,7 @@ int main(int argc,char *argv[]){
                 for (auto len:seglens) {
                     MTQ q;
                     q.prepareTrees(&x, [&len](auto x) {
-                        xRTree *r = buildMBRRTreeWP(x, xTrajectory::OPTS, len, "OPTS");
+                        xRTree *r = buildMBRRTreeWP(x, xTrajectory::OPTS, len);
 //                r->m_bUsingSBBD=false;
                         return r;
                     });
@@ -41,7 +41,7 @@ int main(int argc,char *argv[]){
                 for (auto len:seglens) {
                     MTQ q;
                     q.prepareTrees(&x, [&len](auto x) {
-                        xRTree *r = buildMBCRTreeWP(x, xTrajectory::OPTS, len, "OPTS");
+                        xRTree *r = buildMBCRTreeWP(x, xTrajectory::OPTS, len);
 //                r->m_bUsingSBBD=false;
                         return r;
                     });

@@ -67,7 +67,7 @@ extern double testtime = 100;
 #else
 #define NUMCORE 8
 extern double testtime = 1200;
-extern int NUMTHREAD= 3 * NUMCORE;
+extern int NUMTHREAD= NUMCORE + 4;
 #endif
 extern bool testxfirstOutput = true;
 
@@ -797,8 +797,8 @@ static void QueryBatchThread(queryInput inp, queryRet *res) {
             auto end = std::chrono::system_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
             time = double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
-            if(time > 3000)
-            { /*each test only last for 5 minute*/
+            if(time > 600)
+            { /*each test only last for 10 minute*/
                 num = i + 1;
                 break;
             }

@@ -10,10 +10,10 @@ int main(int argc,char *argv[]){
         string target;
         if(argc==1) {
             target = "tdexpand.datas";
-            seglens = {300,600,900,1200,1800,2400,3600};//600,900,1200,1800,2700,3600,5400,7200,9000
+            seglens = {300,600,1200,1800,2400,3600};//600,900,1200,1800,2700,3600,5400,7200,9000
         }else {
             target = "glexpand.datas";
-            seglens = {300,600,900,1200,1800,2400,3600};
+            seglens = {300,600,1200,1800,2400,3600};
         }
 //        testtime=400;
         cerr<<"seglen: ";
