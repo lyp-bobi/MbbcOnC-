@@ -19,7 +19,7 @@ int main(){
     tjstat->mint = 0;
     auto tmpsdf = xTrajectory::GSS(tj, 100);
     xStore x(target, testFileName(target), true);
-    double seglen[]={100, 200, 400};//800,1200,1600
+    double seglen[]={100, 200};//800,1200,1600
     xCylinder query(xPoint(40,116.327,6516),0.0001,6516,9516,2);
 
 //    tj.getMinimumDistance(tj2);
