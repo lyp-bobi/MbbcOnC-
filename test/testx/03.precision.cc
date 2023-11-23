@@ -24,7 +24,7 @@ int main(int argc,char *argv[]){
         current_distance = RMDTW;
         double qt = 3600;
         for (rmdtwprecision = 2; rmdtwprecision < 128; rmdtwprecision *= 2) {
-            cerr << "precision is " << qt/rmdtwprecision << endl;
+            cerr << "precision is " << rmdtwprecision << endl;
             vector<xTrajectory> queries;
 //            xTrajectory tj;
 //            tj.loadFromString("116.502520,40.007630,3921202.717629 116.502520,40.007631,3921502.717629");

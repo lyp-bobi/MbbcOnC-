@@ -13,7 +13,7 @@ int main(int argc,char *argv[]){
             seglens = {300,900, 1500,2100,2700,3300, 3900};//600,900,1200,1800,2700,3600,5400,7200,9000
         }else {
             target = "glexpand.datas";
-            seglens = {300,900, 1500,2100,2700,3300, 3900};
+            seglens = {100, 300, 600, 900, 1200, 1800};
         }
 //        testtime=400;
         cerr<<"seglen: ";

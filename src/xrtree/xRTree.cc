@@ -962,12 +962,12 @@ void xRTree::nearestNeighborQuery(uint32_t k, const xTrajectory &ori, IVisitor &
             simpp.emplace_back(simpseg.back().back());
             simpleTraj = xTrajectory(simpp);
         }
-        delta = queryTraj->getMinimumDistance(simpleTraj);
+        delta = 2 * queryTraj->getMinimumDistance(simpleTraj);
         simpp.clear();
         simpp.emplace_back(queryTraj->m_points[0]);
         simpp.emplace_back(queryTraj->m_points[queryTraj->m_points.size()-1]);
         ssTraj=xTrajectory(simpp);
-        ssdelta = queryTraj->getMinimumDistance(ssTraj);
+        ssdelta = 2 * queryTraj->getMinimumDistance(ssTraj);
     }
 #ifdef TJDEBUG
     cerr<<"query is "<< *queryTraj<<endl;
